@@ -9,13 +9,16 @@
 //     --control          compare the original with a second unformatted run instead, to show
 //                        the compiler is deterministic on this input
 //     --pin <pin.json>   require the jar's SHA-256 to equal flix-spec's oracleArtifact digest
+//     --timeout <s>      per compiler invocation (default 600)
 //
 // Each file gets its own throwaway Flix project, as flix/flix does in its own test suite
 // (compiling a whole directory at once fails: files redeclare the same modules, and the compiler
 // resolves such conflicts in an order that is not stable even without formatting). Both versions
 // are built with `flix build`; if that succeeds, `flix test` runs too. The normalized outputs must
 // be identical: diagnostics by category, code and message (positions and snippets differ after
-// formatting) or test results. Needs Java 21. Files that do not parse are left as they are.
+// formatting) or test results, and the compiler's exit status. A timeout, a signal or a failure to
+// start the compiler is a broken run (exit 2), never a result. Files that do not parse are left
+// as they are. Needs Java 21 (FLIX_ORACLE_JAVA names another executable, which the tests use).
 import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
 import { cpus, tmpdir } from "node:os";
@@ -29,7 +32,7 @@ const run = promisify(execFile);
 const args = process.argv.slice(2);
 const flag = (name) => { const i = args.indexOf(name); if (i < 0) return false; args.splice(i, 1); return true; };
 const option = (name, dflt) => { const i = args.indexOf(name); if (i < 0) return dflt; const v = args[i + 1]; args.splice(i, 2); return v; };
-const usage = "usage: oracle.mjs <flix.jar> <source-dir> [--prelude f] [--every n] [--jobs n] [--control] [--pin pin.json]";
+const usage = "usage: oracle.mjs <flix.jar> <source-dir> [--prelude f] [--every n] [--jobs n] [--timeout s] [--control] [--pin pin.json]";
 const fail = (message) => { console.error(`${message}\n${usage}`); process.exit(2); };
 /** A positive integer: "0", "1.5", "abc" and "" would otherwise make zero workers or an empty sample. */
 const positiveInt = (name, raw) => {
@@ -40,6 +43,7 @@ const control = flag("--control");
 const pinFile = option("--pin", null);
 const every = positiveInt("--every", option("--every", "1"));
 const jobs = positiveInt("--jobs", option("--jobs", String(Math.max(1, Math.floor(cpus().length / 2)))));
+const timeoutSeconds = positiveInt("--timeout", option("--timeout", "600"));
 const preludeOpt = option("--prelude", null);
 const [jarArg, srcDir] = args;
 if (!jarArg || !srcDir) fail("both <flix.jar> and <source-dir> are required");
@@ -64,13 +68,21 @@ const files = readdirSync(srcDir).sort()
 if (files.length === 0) fail(`no .flix files selected from ${srcDir} (every ${every}); an empty sample would report success without compiling anything`);
 
 const root = mkdtempSync(join(tmpdir(), "flix-oracle-"));
-const strip = (s) => s.replace(/\x1b\[[0-9;]*m/g, "");
-const flix = async (cwd, cmd) => {
+function strip(s) { return s.replace(/\x1b\[[0-9;]*m/g, ""); }
+const java = process.env.FLIX_ORACLE_JAVA ?? "java";
+const harnessFailure = (what, e) => new Error(`harness failure: ${what}: ${e.killed ? `timed out after ${timeoutSeconds} s` : e.signal ? `killed by ${e.signal}` : (e.code ?? e.message)}\n${strip(e.stderr ?? "").slice(0, 800)}`);
+/**
+ * Runs the compiler. A non-zero exit status is a result (a failed build, failing tests) and is
+ * returned; a timeout, a signal, a spawn failure or an output overflow means the run itself broke
+ * and throws, so it can never compare equal to anything.
+ */
+const flix = async (cwd, ...cmd) => {
     try {
-        const r = await run("java", ["-jar", jar, cmd], { cwd, maxBuffer: 1 << 28, timeout: 10 * 60 * 1000 });
+        const r = await run(java, ["-jar", jar, ...cmd], { cwd, maxBuffer: 1 << 28, timeout: timeoutSeconds * 1000 });
         return { status: 0, out: r.stdout + r.stderr };
     } catch (e) {
-        return { status: e.code ?? 1, out: (e.stdout ?? "") + (e.stderr ?? "") + (e.killed ? "\nTIMEOUT" : "") };
+        if (typeof e.code !== "number" || e.killed || e.signal) throw harnessFailure(`flix ${cmd.join(" ")} in ${cwd}`, e);
+        return { status: e.code, out: (e.stdout ?? "") + (e.stderr ?? "") };
     }
 };
 
@@ -97,7 +109,7 @@ async function build(name, variant, text) {
     const text2 = normalize(dir, r.out);
     rmSync(dir, { recursive: true, force: true });
     if (text2 === "") throw new Error(`no recognizable compiler output for ${name} (${variant}, exit ${r.status}):\n${strip(r.out).slice(0, 1200)}`);
-    return { stage, text: text2 };
+    return { stage, status: r.status, text: text2 };
 }
 
 const mismatches = [];
@@ -112,7 +124,7 @@ async function worker() {
             try { second = await format(original, { parser: "flix", plugins: [plugin] }); } catch { unformatted++; }
         }
         const [a, b] = await Promise.all([build(name, "original", original), build(name, control ? "control" : "formatted", second)]);
-        if (a.stage !== b.stage || a.text !== b.text) mismatches.push({ name, a, b, formatted: second });
+        if (a.stage !== b.stage || a.status !== b.status || a.text !== b.text) mismatches.push({ name, a, b, formatted: second });
         if (++done % 10 === 0) console.error(`  ${done}/${files.length}`);
     }
 }
@@ -128,10 +140,10 @@ if (mismatches.length > 0) {
     const keep = join(root, "mismatches");
     mkdirSync(keep, { recursive: true });
     for (const m of mismatches) {
-        writeFileSync(join(keep, m.name + ".original.txt"), m.a.text);
-        writeFileSync(join(keep, m.name + ".second.txt"), m.b.text);
+        writeFileSync(join(keep, m.name + ".original.txt"), `${m.a.stage} exit ${m.a.status}\n${m.a.text}`);
+        writeFileSync(join(keep, m.name + ".second.txt"), `${m.b.stage} exit ${m.b.status}\n${m.b.text}`);
         writeFileSync(join(keep, m.name + ".formatted.flix"), m.formatted);
-        console.error(`MISMATCH ${m.name} (original: ${m.a.stage}, other: ${m.b.stage})`);
+        console.error(`MISMATCH ${m.name} (original: ${m.a.stage}, exit ${m.a.status}; other: ${m.b.stage}, exit ${m.b.status})`);
     }
     console.error(`${mismatches.length} of ${files.length} differ; details in ${keep}`);
     process.exit(1);

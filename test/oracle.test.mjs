@@ -5,7 +5,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { chmodSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -68,4 +68,61 @@ test("checks the digest of a relative jar path and then runs it by absolute path
     assert.doesNotMatch(r.stderr, /Unable to access jarfile/);
     assert.doesNotMatch(r.stderr, /does not match the pinned/);
     assert.match(r.stderr, /corrupt jarfile|Invalid or corrupt/i);
+});
+
+// ---- the comparison itself, driven by a fake `java` so no compiler is needed ----
+// The fake prints what the real compiler prints for a type error and behaves as FAKE_MODE says.
+
+
+const fakeJava = join(work, "fake-java.sh");
+writeFileSync(fakeJava, `#!/bin/sh
+cmd="$3"
+if [ "$cmd" = "--version" ]; then echo "The Flix Programming Language \${FAKE_FLIX_VERSION:-0.80.0}"; exit 0; fi
+if [ -n "$FAKE_LOG" ] && [ -f flix.toml ]; then cat flix.toml >> "$FAKE_LOG"; fi
+dir=$(basename "$PWD")
+case "$FAKE_MODE" in
+  hang) sleep 30; exit 0;;
+  signal) kill -9 $$;;
+  exitdiff)
+    if [ "$cmd" = "build" ]; then
+      echo "-- Type Error [E0001] ---- test/A.flix"; echo ">> boom"
+      case "$dir" in original-*) exit 1;; *) exit 3;; esac
+    fi;;
+  *)
+    if [ "$cmd" = "build" ]; then echo "-- Type Error [E0001] ---- test/A.flix"; echo ">> boom"; exit 1; fi;;
+esac
+`);
+chmodSync(fakeJava, 0o755);
+const posix = process.platform !== "win32";
+const withFake = (extraEnv = {}) => ({ ...process.env, FLIX_ORACLE_JAVA: fakeJava, ...extraEnv });
+const runFake = (args, env) => spawnSync(process.execPath, [script, ...args], { encoding: "utf8", env: withFake(env) });
+
+test("identical reports compare equal", { skip: !posix }, () => {
+    const r = runFake([fakeJar, sources, "--jobs", "1"]);
+    assert.equal(r.status, 0, r.stderr);
+    assert.match(r.stdout, /identical for every file/);
+});
+
+test("the same diagnostics with a different exit status are a mismatch", { skip: !posix }, () => {
+    const r = runFake([fakeJar, sources, "--jobs", "1"], { FAKE_MODE: "exitdiff" });
+    assert.equal(r.status, 1, r.stdout + r.stderr);
+    assert.match(r.stderr, /MISMATCH A\.flix \(original: build, exit 1; other: build, exit 3\)/);
+});
+
+test("a timeout is a broken run, not a result", { skip: !posix }, () => {
+    const r = runFake([fakeJar, sources, "--jobs", "1", "--timeout", "1"], { FAKE_MODE: "hang" });
+    assert.equal(r.status, 2, r.stdout + r.stderr);
+    assert.match(r.stderr, /harness failure.*timed out after 1 s/s);
+});
+
+test("a killed compiler is a broken run, not a result", { skip: !posix }, () => {
+    const r = runFake([fakeJar, sources, "--jobs", "1"], { FAKE_MODE: "signal" });
+    assert.equal(r.status, 2, r.stdout + r.stderr);
+    assert.match(r.stderr, /harness failure.*killed by SIGKILL/s);
+});
+
+test("a compiler that cannot be started is a broken run", () => {
+    const r = spawnSync(process.execPath, [script, fakeJar, sources], { encoding: "utf8", env: { ...process.env, FLIX_ORACLE_JAVA: join(work, "no-such-java") } });
+    assert.equal(r.status, 2, r.stdout + r.stderr);
+    assert.match(r.stderr, /harness failure/);
 });
