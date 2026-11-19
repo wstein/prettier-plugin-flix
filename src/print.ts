@@ -709,13 +709,35 @@ export class Printer {
             }
         };
         collect(n);
-        const rest: Doc[] = ops.map((op, i) => [
-            this.after(lastTerm(operands[i]), " "),
-            this.print(op),
-            this.after(lastTerm(op), this.flat > 0 ? " " : line),
-            this.print(this.ls(operands[i + 1])),
+        const links = ops.map((op, i) => ({
+            operator: [this.after(lastTerm(operands[i]), " "), this.print(op)],
+            after: this.after(lastTerm(op), this.flat > 0 ? " " : line),
+            operand: this.print(this.ls(operands[i + 1])),
+        }));
+        const first = this.print(operands[0]);
+        if (k !== "AddExpr" || !ops.every((op) => isTerm(op) && ttype(op) === L.PLUS)) {
+            return group([first, indent(links.map(({ operator, after, operand }) => [operator, after, operand]))]);
+        }
+
+        // A newline literal acts as a separator. Keep it with the preceding text when that
+        // segment fits, while retaining the ordinary break points at narrower widths.
+        const segments: Doc[][] = [[first]];
+        for (const [i, { operator, after, operand }] of links.entries()) {
+            const segment = segments[segments.length - 1];
+            segment.push(operator);
+            const left = firstTerm(operands[i]);
+            const right = lastTerm(operands[i]);
+            const newline = i > 0 && left && right && right.symbol.stop - left.symbol.start === 3 &&
+                this.root.codePoints.slice(left.symbol.start, right.symbol.stop + 1).join("") === '"\\n"';
+            if (newline) segments.push([after, operand]);
+            else segment.push(after, operand);
+        }
+        const [head, ...tail] = segments;
+        if (tail.length === 0) return group([first, indent(head.slice(1))]);
+        return group([
+            group([head[0], indent(head.slice(1))]),
+            indent(tail.map(([before, ...parts]) => [before, group(parts)])),
         ]);
-        return group([this.print(operands[0]), indent(rest)]);
     }
 
     // ------------------------------------------------------- annotations, strings

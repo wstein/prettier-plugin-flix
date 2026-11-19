@@ -29,14 +29,10 @@ pub def releaseSummary(
     let verification = "Verify the download with SHA-256 ${checksum}";
     let support = "Contact ${maintainer} for release support";
     let guide = "Read the installation guide at ${documentation}";
-    header +
-        "\n" +
-        location +
-        "\n" +
-        verification +
-        "\n" +
-        support +
-        "\n" +
+    header + "\n" +
+        location + "\n" +
+        verification + "\n" +
+        support + "\n" +
         guide
 }
 ```
