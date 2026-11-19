@@ -471,7 +471,7 @@ export class Printer {
     }
 
     /** Prints `open inner close` with its items laid out as a list or as vertical members. */
-    private delimited(children: Node[], i: number, j: number, parentKind: string): Doc {
+    private delimited(children: Node[], i: number, j: number, parentKind: string, groupList = true): Doc {
         const open = children[i] as TerminalNode;
         const close = children[j] as TerminalNode;
         const inner = children.slice(i + 1, j);
@@ -583,10 +583,13 @@ export class Printer {
         const innerFirst = inner.length > 0 ? firstTerm(inner[0]) : null;
         const forceBreak = preserveMultiline && this.flat === 0 &&
             innerFirst !== null && innerFirst.symbol.line > open.symbol.line;
-        return [group(
-            [openDoc, indent([firstSline, list]), trailingTok && this.hasLineTrail(trailingTok) ? hardline : lastSline, closeDoc],
-            { id: layoutId, shouldBreak: forceBreak || comments.length > 0 },
-        ), closeTrail];
+        const contents: Doc = [
+            openDoc, indent([firstSline, list]), trailingTok && this.hasLineTrail(trailingTok) ? hardline : lastSline, closeDoc,
+        ];
+        return [
+            groupList ? group(contents, { id: layoutId, shouldBreak: forceBreak || comments.length > 0 }) : contents,
+            closeTrail,
+        ];
     }
 
     // ------------------------------------------------------------- dispatch
@@ -601,6 +604,7 @@ export class Printer {
             case "Statement": return this.printStatement(n);
             case "Block": return this.printBlock(n);
             case "IfExpr": return this.printIf(n);
+            case "ForYieldExpr": return this.printForYield(n);
             case "RunWithExpr": return this.printRunWith(n);
             case "DeclPrefix": return this.seq(kids(n), k);
             case "AnnotationList": return this.printAnnotations(n);
@@ -750,16 +754,44 @@ export class Printer {
         return kids(n).some((c) => isTerm(c) && BODY_ARROWS.has(ttype(c)));
     }
 
+    private printForYield(n: ParserRuleContext): Doc {
+        const [keyword, fragments, yieldKeyword, body] = kids(n);
+        if (this.flat > 0) return this.seq(kids(n), kind(n));
+        const parts = kids(fragments);
+        // Include the yield expression in the fit check that determines whether
+        // to break the generators. It can still wrap on its own after a break.
+        return group([
+            this.print(keyword), this.after(lastTerm(keyword), " "),
+            this.delimited(parts, 0, parts.length - 1, "ForFragments", false),
+            this.after(lastTerm(fragments), " "), this.print(yieldKeyword),
+            this.after(lastTerm(yieldKeyword), " ", true), this.print(body),
+        ]);
+    }
+
     private printRunWith(n: ParserRuleContext): Doc {
         const children = kids(n);
         const k = kind(n);
         if (this.flat > 0 || children.length === 2) return this.seq(children, k);
 
-        const clauses: Doc[] = [];
+        const head: Doc[] = [this.seq(children.slice(0, 2), k)];
+        const continuation: Doc[] = [];
+        let section = head;
         for (let i = 2; i < children.length; i += 2) {
-            clauses.push(hardline, this.seq([this.ls(children[i]), children[i + 1]], k));
+            const [previous, withKeyword, handler] = children.slice(i - 1, i + 2);
+            const previousEnd = lastTerm(previous);
+            const handlerEnd = lastTerm(handler);
+            const hug = previousEnd !== null && ttype(previousEnd) === L.RBRACE &&
+                (this.isBlockExpr(previous) || kind(previous) === "HandlerExpr") &&
+                kind(handler) === "HandlerExpr" && handlerEnd !== null && ttype(handlerEnd) === L.RBRACE &&
+                !this.hasLineTrail(previousEnd);
+            if (hug) {
+                section.push(" ", this.seq([withKeyword, handler], k));
+            } else {
+                section = continuation;
+                section.push(hardline, this.seq([this.ls(withKeyword), handler], k));
+            }
         }
-        return [this.seq(children.slice(0, 2), k), indent(clauses)];
+        return [head, indent(continuation)];
     }
 
     private alignMatchRules(rules: Node[], layoutId: symbol): Doc[] | undefined {
