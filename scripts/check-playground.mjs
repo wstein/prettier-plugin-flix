@@ -30,9 +30,24 @@ test("the published browser bundle reports syntax error locations", async () => 
     );
 });
 
+test("the browser formatter points to the backslash before a real newline", async () => {
+    const prefix = 'def receipt(): String = "${123} 🚉 ';
+    for (const newline of ["\n", "\r\n", "\r"]) {
+        const input = prefix + "\\" + newline + 'including shipping"\n';
+        await assert.rejects(() => formatFlix(input, {}), (error) => {
+            assert.match(error.message, /backslash cannot continue a string/);
+            assert.deepEqual(error.loc?.start, { line: 1, column: Array.from(prefix).length + 1 });
+            return true;
+        });
+    }
+    const valid = String.raw`def receipt(): String = "cents\nincluding shipping"` + "\n";
+    assert.equal(await formatFlix(valid, {}), valid);
+});
+
 test("Playground examples start at 80 columns and the formatter defaults to 100", async () => {
     assert.match(page, /data-print-width[^>]*\bvalue=(?:"80"|80)(?:\s|>)/);
     assert.match(page, /data-cursor-position[^>]*>Ln 1, Col 1/);
+    assert.match(page, /playground-statusbar[^>]*>\s*<p[^>]*role=(?:"status"|status)>Loading the editor…/);
     const input = 'def sample(): Bool = verifyExample("a moderately long argument", "a second moderately long argument")';
     const defaultOutput = await formatFlix(input, {});
     assert.equal(defaultOutput, await fmt(input, { printWidth: 100 }));

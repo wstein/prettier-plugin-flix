@@ -55,6 +55,25 @@ class FlixSyntaxError extends SyntaxError {
     }
 }
 
+export function findStringContinuationError(tokens: Token[]): FlixSyntaxError | undefined {
+    for (const token of tokens) {
+        if (token.type !== FlixLexer.STRING_CONTENT) continue;
+        const content = token.text ?? "";
+        const escape = /\\[\r\n]/.exec(content);
+        if (escape) {
+            const column = token.column + Array.from(content.slice(0, escape.index)).length;
+            return new FlixSyntaxError("A backslash cannot continue a string on the next line.", token.line, column);
+        }
+    }
+}
+
+function earlierError(first: FlixSyntaxError | null, second: FlixSyntaxError | undefined): FlixSyntaxError | undefined {
+    if (!first || !second) return first ?? second;
+    const a = first.loc.start;
+    const b = second.loc.start;
+    return b.line < a.line || (b.line === a.line && b.column < a.column) ? second : first;
+}
+
 function countNewlines(s: string): number {
     let n = 0;
     for (let i = 0; i < s.length; i++) {
@@ -141,7 +160,8 @@ export function parseFlix(text: string): FlixRoot {
     lexer.addErrorListener(listener);
     const stream = new CommonTokenStream(lexer);
     stream.fill();
-    if (firstError) throw firstError;
+    const syntaxError = earlierError(firstError, findStringContinuationError(stream.getTokens()));
+    if (syntaxError) throw syntaxError;
 
     // Two-stage parse: SLL prediction without error recovery is two orders of magnitude faster
     // and gives the same tree whenever it succeeds; fall back to full LL for the rest, which
