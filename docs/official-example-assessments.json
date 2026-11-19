@@ -1,0 +1,55 @@
+[
+  {
+    "case": "website.front-page.monadic-for.monadic-for-example",
+    "digest": "d804102b1b476102561b91766838f3ef9bea087f8b1b5cdda3da0d35ea3c5d32",
+    "area": "formatter",
+    "title": "Keep forM generators on separate lines",
+    "recommendation": "Preserve the three generator lines when flattening them would force the short yield expression to wrap. Both versions pass Flix 0.80.0. The desired layout has a TODO fixture."
+  },
+  {
+    "case": "website.front-page.effects.effects-example",
+    "digest": "7d008ad46089696bc31883413330a9983e7279a77a02db7b3ac8bd10503bbcdd",
+    "area": "formatter",
+    "title": "Lay out the entire else-if chain together",
+    "recommendation": "When the chain has to break, give each branch the same layout. The current output puts the first result on its own line but combines the remaining branches."
+  },
+  {
+    "case": "website.front-page.http.demonstrates-composing-multiple-http-mid",
+    "digest": "d7b2a46c534a59ffedbde0f5b571d81c1f2924e34c4073a99963da185fd0a431",
+    "area": "formatter",
+    "title": "Keep the HTTP middleware layout",
+    "recommendation": "Each with starts on a separate line and the match arrows share a column. Retain this layout. Flix 0.80.0 reported unresolved names in both standalone versions."
+  },
+  {
+    "case": "website.front-page.purity-reflection.we-can-inspect-the-purity-of-a-function",
+    "digest": "080b455f46daa58486af7395287b07f84bd8366741d21a2029996af81eb3a3bc",
+    "area": "documentation",
+    "title": "Update the website's purity reflection example",
+    "snippet": "reifyEff(f) {",
+    "recommendation": "Flix 0.80.0 rejects the displayed syntax. Update the example to use match purityOf(f), as the book does."
+  },
+  {
+    "case": "book.interoperability-with-java.calling-methods.calling-java-methods-known-to-be-pure",
+    "digest": "7cd22a5effa30f6f59b92edcf5b869f99bcad4c4bbd7a636040bdabc1beb321c",
+    "area": "documentation",
+    "title": "Check the Java example's unsafe syntax",
+    "snippet": "unsafe Math.sqrt((Math.pow(x, 2.0) + Math.pow(y, 2.0)))",
+    "recommendation": "Flix 0.80.0 reports a parse error on the original. Update the example for the documented compiler version and verify it as a complete snippet."
+  },
+  {
+    "case": "book.library-effects.logger.the-logger-module",
+    "digest": "501005ce0e93f67686919a9dcc651117e6524a6a176c8bb3941824c375e99b47",
+    "area": "documentation",
+    "title": "Present the Logger signatures as an excerpt",
+    "snippet": "mod Logger {\n    def trace(m: a): Unit \\ Logger with Formattable[a]\n    …",
+    "recommendation": "The fence ends before the module's closing brace and the declarations have no bodies. Show the API signatures as an explicitly marked excerpt or supply a complete compiling example."
+  },
+  {
+    "case": "book.control-structures.applicative-for-yield.applicatives-are-independent-computation-03",
+    "digest": "6414a4c525df317a659e230270221f50b9d0f08496edec69f7b3de2fa23eed88",
+    "area": "documentation",
+    "title": "Label the compiler diagnostic as output",
+    "snippet": "❌ -- Resolution Error --\n>> Undefined name 'x'.",
+    "recommendation": "Use a text fence for this compiler diagnostic. The input program is already shown earlier in the chapter."
+  }
+]
