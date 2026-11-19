@@ -7,7 +7,9 @@
   "license": "Apache-2.0",
   "main": "dist/index.js",
   "exports": "./dist/index.js",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "generate": "node scripts/generate.mjs",
     "build": "npm run generate && tsc",
@@ -21,6 +23,7 @@
   },
   "devDependencies": {
     "@types/node": "24.10.1",
+    "@wstein/flix-antlr-grammar": "github:wstein/flix-antlr-grammar#f34d33b0ef215ce2401231d724159e7cf60c855e",
     "antlr-ng": "1.0.10",
     "prettier": "3.10.1",
     "typescript": "5.9.3"

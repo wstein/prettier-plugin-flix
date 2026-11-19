@@ -13,13 +13,15 @@
  * Run via `npm run generate`.
  */
 import { execFileSync } from "node:child_process";
-import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const pkg = dirname(fileURLToPath(import.meta.url)).replace(/scripts$/, "");
 const root = pkg;
-const src = join(root, "grammar");
+// The grammar comes from the pinned @wstein/flix-antlr-grammar dependency, never from a copy.
+const grammarPkg = join(root, "node_modules", "@wstein", "flix-antlr-grammar");
+const src = join(grammarPkg, "grammars");
 const staged = join(pkg, "build", "grammar");
 const out = join(pkg, "src", "generated");
 
@@ -44,6 +46,7 @@ function toTypeScript(grammar) {
 }
 
 mkdirSync(staged, { recursive: true });
+copyFileSync(join(grammarPkg, "antlr-ng", "src", "FlixLexerBase.ts"), join(pkg, "src", "FlixLexerBase.ts"));
 for (const file of readdirSync(src).filter((f) => f.endsWith(".g4"))) {
     writeFileSync(join(staged, file), toTypeScript(readFileSync(join(src, file), "utf8")));
 }
