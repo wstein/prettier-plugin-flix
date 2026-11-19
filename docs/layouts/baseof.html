@@ -10,20 +10,19 @@
 </head>
 <body{{ if $isPlayground }} class="playground-page"{{ end }}>
   <header class="site-header">
-    <div class="container">
+    <nav class="site-toolbar" aria-label="Site">
       <a href="{{ site.Home.RelPermalink }}">{{ site.Title }}</a>
-      {{ if $isPlayground }}<h1 class="playground-title">{{ .Title }}</h1>{{ end }}
+      {{ with site.GetPage "playground" }}
+      <a class="site-playground" href="{{ .RelPermalink }}"{{ if $isPlayground }} aria-current="page"{{ end }}>Playground</a>
+      {{ end }}
       <a class="site-github" href="https://github.com/wstein/prettier-plugin-flix">GitHub</a>
-    </div>
+    </nav>
   </header>
   <div class="{{ if $isPlayground }}playground-shell{{ else }}site-shell{{ end }}">
     {{ if not $isPlayground }}<nav class="chapter-nav" aria-label="Documentation">
       <p class="chapter-nav-title">Chapters</p>
       <ul>
         {{ $current := . }}
-        {{ with site.GetPage "playground" }}
-        <li class="playground-nav"><a href="{{ .RelPermalink }}"{{ if eq .RelPermalink $current.RelPermalink }} aria-current="page"{{ end }}>{{ .Title }}</a></li>
-        {{ end }}
         {{ range site.Sections }}
         <li><a href="{{ .RelPermalink }}"{{ if eq .RelPermalink $current.RelPermalink }} aria-current="page"{{ end }}>{{ .Title }}</a></li>
         {{ end }}

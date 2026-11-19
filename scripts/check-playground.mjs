@@ -30,24 +30,29 @@ test("the published browser bundle reports syntax error locations", async () => 
     );
 });
 
-test("all curated examples format safely in the published browser bundle", async () => {
+test("all curated examples match their fixtures in the published browser bundle", async () => {
     const data = await readFile(new URL("../docs/data/playground.json", import.meta.url), "utf8");
     const { fixtures } = JSON.parse(data);
     for (const [path, { input, options }] of Object.entries(fixtures)) {
+        const fixture = loadFixture(fileURLToPath(new URL(`../test/fixtures/${path}`, import.meta.url)));
+        assert.equal(input, fixture.input.code, path);
+        assert.deepEqual(options, fixture.outputs.map((block) => optionsFor(fixture, block)), path);
         const original = fingerprint(input);
         assert.deepEqual(original.errors, [], path);
-        for (const settings of options) {
+        for (const [index, block] of fixture.outputs.entries()) {
+            const settings = options[index];
             const output = await formatFlix(input, settings);
+            assert.equal(output, block.code, path);
             assert.deepEqual(programProblems(original, fingerprint(output)), [], path);
             assert.equal(await formatFlix(output, settings), output, path);
         }
     }
 });
 
-test("the guide handoff preserves Unicode source and formatting options in a URL fragment", () => {
+test("the Playground handoff preserves Unicode source and formatting options in a URL fragment", () => {
     const draft = { source: 'pub def board(): String = "🚉 Köln & Zürich"\n', printWidth: 47, tabWidth: 2, useTabs: true };
-    const url = new URL(writeHandoff("https://example.test/flix/playground/?fixture=examples%2Fitinerary.flix", draft));
-    assert.equal(url.searchParams.get("fixture"), "examples/itinerary.flix");
+    const url = new URL(writeHandoff("https://example.test/flix/playground/?fixture=strings%2Fitinerary.md", draft));
+    assert.equal(url.searchParams.get("fixture"), "strings/itinerary.md");
     assert.deepEqual(readHandoff(url.hash), draft);
     assert.equal(readHandoff("#code=%21"), undefined);
 });
