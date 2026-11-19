@@ -21,7 +21,19 @@ export function fingerprint(text) {
     const tokens = stream.getTokens().filter((t) => t.channel === 0 && t.type !== FlixLexer.EOF).map((t) => t.text);
     const comments = stream.getTokens().filter((t) => t.channel >= 2).map((t) => t.text.trim());
     const shape = (n) => (n.children ? `${n.constructor.name}(${n.children.map(shape).join(",")})` : "t");
-    return { errors, tokens, comments, shape: shape(tree) };
+    // Flix reads `a->b` (field access) and `a -> b` (arrow) differently, and a Datalog constraint
+    // ends only at a dot followed by whitespace; the token text alone does not show a change.
+    const arrows = stream.getTokens().filter((t) => t.type === FlixLexer.ARROW_TIGHT || t.type === FlixLexer.ARROW_WS).map((t) => FlixLexer.symbolicNames[t.type]);
+    const constraintEnds = [];
+    const walk = (n) => {
+        if (n.constructor.name === "DatalogConstraintContext") {
+            const last = n.children[n.children.length - 1];
+            constraintEnds.push(FlixLexer.symbolicNames[last.symbol.type]);
+        }
+        (n.children ?? []).forEach(walk);
+    };
+    walk(tree);
+    return { errors, tokens, comments, arrows, constraintEnds, shape: shape(tree) };
 }
 
 /** Optional trailing commas may legitimately vanish when a list fits on one line. */

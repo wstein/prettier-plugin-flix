@@ -137,6 +137,8 @@ for (const f of files) {
         assert.deepEqual(dropTrailingCommas(after.tokens), dropTrailingCommas(before.tokens), "tokens");
         assert.deepEqual(after.comments, before.comments, "comments");
         assert.equal(after.shape, before.shape, "parse-tree shape");
+        assert.deepEqual(after.arrows, before.arrows, "arrow token classes");
+        assert.ok(after.constraintEnds.every((t) => t === "DOT_WS"), "Datalog constraints end in a dot followed by whitespace");
         assert.equal(await fmt(out), out, "idempotent");
     });
 }
