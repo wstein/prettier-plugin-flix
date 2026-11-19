@@ -5,8 +5,8 @@
   <p class="fixture-links">
     {{ if eq .status "todo" }}<span>Known formatter gap</span>{{ end }}
     {{ if eq .status "error" }}<span>Expected syntax error</span>{{ end }}
-    <a href="https://github.com/wstein/prettier-plugin-flix/blob/main/test/fixtures/{{ .path }}">Fixture source</a>
-    <a href="{{ $playground }}?{{ querify "fixture" .path | safeURL }}">Open in Playground</a>
+    <a class="fixture-playground" href="{{ $playground }}?{{ querify "fixture" .path | safeURL }}">Open in Playground <span aria-hidden="true">↗</span></a>
+    <a href="https://github.com/wstein/prettier-plugin-flix/blob/main/test/fixtures/{{ .path }}">Source on GitHub</a>
     {{ with .upstreamUrl }}<a href="{{ . }}">Upstream example</a>{{ end }}
     {{ if $.showcase }}<a href="{{ .chapter | relURL }}/#{{ .id }}">See in chapter</a>{{ end }}
   </p>
@@ -35,7 +35,7 @@
       <figcaption>
         {{ $variant.options }}
         {{ with $variant.note }}<span>{{ . }}</span>{{ end }}
-        <a href="{{ $playground }}?{{ querify "fixture" $.fixture.path "variant" (add $index 1) | safeURL }}">Try these settings in the Playground</a>
+        <a class="fixture-variant-link" href="{{ $playground }}?{{ querify "fixture" $.fixture.path "variant" (add $index 1) | safeURL }}">Open with these settings <span aria-hidden="true">↗</span></a>
       </figcaption>
     </figure>
   </details>
