@@ -62,6 +62,10 @@ node scripts/check-corpus.mjs <dir-or-file>...
 
 After building, `npm run coverage:syntax` reports named lexer token types, parser rules (including a Datalog breakdown), and labeled alternatives seen in parseable fixture inputs and local Flix files. Pass corpus paths after `--` for a separate report. The denominators come from the generated grammar and include named token types that may be internal or used only for error handling. The fixture mutation tests change known-good outputs and verify that the shared program-preservation checks reject the changes.
 
+On pull requests and main, `npm run coverage:syntax -- --check` requires the Markdown fixtures alone to reach at least 95% of parser rules and 95% of labeled alternatives. The lexer-token counts are informational because the vocabulary includes internal and error tokens. Some fixtures are standalone syntax examples adapted from upstream tests and may rely on surrounding definitions to type-check.
+
+For layout decisions, prefer the [Flix language documentation](https://doc.flix.dev/) and hand-written upstream tests and examples. Wrapped list constructors follow the leading `::` layout shown in [the railroad example](https://github.com/flix/flix/blob/4022083acf86ab8b92308f2fb47ae615d5088de0/examples/datalog/railroad-network.flix#L49). The built-in formatter is recorded separately as a comparison.
+
 The version policy check:
 
 ```sh

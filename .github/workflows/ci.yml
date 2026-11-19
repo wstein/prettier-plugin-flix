@@ -18,3 +18,5 @@ jobs:
       - run: git config --global url."https://github.com/".insteadOf ssh://git@github.com/
       - run: npm ci
       - run: npm test
+      - name: Check Markdown fixture syntax coverage
+        run: npm run coverage:syntax -- --check
