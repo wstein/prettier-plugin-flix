@@ -2,3 +2,14 @@ baseURL = "https://wstein.github.io/prettier-plugin-flix/"
 languageCode = "en"
 title = "Flix Formatter Fixtures"
 disableKinds = ["taxonomy", "term", "RSS"]
+
+[build]
+noJSConfigInAssets = true
+
+[[module.mounts]]
+source = "assets"
+target = "assets"
+
+[[module.mounts]]
+source = "../dist"
+target = "assets/formatter"

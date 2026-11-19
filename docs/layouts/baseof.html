@@ -15,10 +15,13 @@
     </div>
   </header>
   <div class="site-shell">
-    <nav class="chapter-nav" aria-label="Chapters">
+    <nav class="chapter-nav" aria-label="Documentation">
       <p class="chapter-nav-title">Chapters</p>
       <ul>
         {{ $current := . }}
+        {{ with site.GetPage "playground" }}
+        <li class="playground-nav"><a href="{{ .RelPermalink }}"{{ if eq .RelPermalink $current.RelPermalink }} aria-current="page"{{ end }}>{{ .Title }}</a></li>
+        {{ end }}
         {{ range site.Sections }}
         <li><a href="{{ .RelPermalink }}"{{ if eq .RelPermalink $current.RelPermalink }} aria-current="page"{{ end }}>{{ .Title }}</a></li>
         {{ end }}

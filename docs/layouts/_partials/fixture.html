@@ -1,10 +1,12 @@
 {{ with .fixture }}
+{{ $playground := (site.GetPage "playground").RelPermalink }}
 <article id="{{ .id }}" class="fixture">
   {{ if $.group }}<h3><a href="#{{ .id }}">{{ .title }}</a></h3>{{ else }}<h2><a href="#{{ .id }}">{{ .title }}</a></h2>{{ end }}
   <p class="fixture-links">
     {{ if eq .status "todo" }}<span>Known formatter gap</span>{{ end }}
     {{ if eq .status "error" }}<span>Expected syntax error</span>{{ end }}
     <a href="https://github.com/wstein/prettier-plugin-flix/blob/main/test/fixtures/{{ .path }}">Fixture source</a>
+    <a href="{{ $playground }}?{{ querify "fixture" .path | safeURL }}">Open in Playground</a>
     {{ with .upstreamUrl }}<a href="{{ . }}">Upstream example</a>{{ end }}
     {{ if $.showcase }}<a href="{{ .chapter | relURL }}/#{{ .id }}">See in chapter</a>{{ end }}
   </p>
@@ -33,6 +35,7 @@
       <figcaption>
         {{ $variant.options }}
         {{ with $variant.note }}<span>{{ . }}</span>{{ end }}
+        <a href="{{ $playground }}?{{ querify "fixture" $.fixture.path "variant" (add $index 1) | safeURL }}">Try these settings in the Playground</a>
       </figcaption>
     </figure>
   </details>
