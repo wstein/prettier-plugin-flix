@@ -56,3 +56,43 @@ export function programProblems(before, after) {
     if (!after.constraintEnds.every((t) => t === "DOT_WS")) problems.push(`Datalog constraint not ended by a dot followed by whitespace (${after.constraintEnds})`);
     return problems;
 }
+
+function mulberry32(seed) {
+    let a = seed >>> 0;
+    return () => {
+        a = (a + 0x6d2b79f5) >>> 0;
+        let t = Math.imul(a ^ (a >>> 15), 1 | a);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+}
+
+/**
+ * Rewrites every whitespace run of `text` with a random choice (a space, several spaces, a line
+ * break, a blank line, an indented line), keeping the program the same: no whitespace appears where
+ * there was none, so tight tokens (`a->b`, `Foo::Bar`) stay tight, and a run after a `//` comment
+ * keeps a line break. Reproducible for a given seed.
+ */
+export function perturbWhitespace(text, seed) {
+    const lexer = new FlixLexer(CharStream.fromString(text));
+    lexer.removeErrorListeners();
+    const stream = new CommonTokenStream(lexer);
+    stream.fill();
+    const rand = mulberry32(seed);
+    const choices = [" ", "  ", "\n", "\n\n", "\n    ", " \n ", "\t"];
+    let out = "";
+    let previous = null;
+    for (const t of stream.getTokens()) {
+        if (t.type === FlixLexer.EOF) break;
+        if (t.type === FlixLexer.WS) {
+            const afterLineComment = previous && (previous.type === FlixLexer.LINE_COMMENT || previous.type === FlixLexer.DOC_COMMENT);
+            let pick = choices[Math.floor(rand() * choices.length)];
+            if (afterLineComment && !pick.includes("\n")) pick = "\n";
+            out += pick;
+        } else {
+            out += t.text;
+        }
+        previous = t;
+    }
+    return out;
+}
