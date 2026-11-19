@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import test from "node:test";
 import { promisify } from "node:util";
-import { approvalFor, auditExample, changeKind } from "../scripts/audit-flix-examples.mjs";
+import { approvalFor, auditExample, changeKind, compareBaseline } from "../scripts/audit-flix-examples.mjs";
 import { extractExamples, markdownBlocks } from "../scripts/extract-flix-examples.mjs";
 
 const exec = promisify(execFile);
@@ -81,4 +81,16 @@ test("groups byte differences by their main change", () => {
     assert.equal(changeKind("a   = 1\n", "a = 1\n"), "spacing");
     assert.equal(changeKind("a = 1\n", "a =\n  1\n"), "wrapping");
     assert.equal(changeKind("a = 1\n", "a = 2\n"), "other");
+});
+
+test("detects additions, deletions and changes beyond the recorded baseline", () => {
+    const header = "case\tstatus\tchange\tsha256\n";
+    const row = (name, byte) => `${name}\tunchanged\t-\t${byte.repeat(64)}\n`;
+    const previous = header + row("book.same", "a") + row("book.changed", "b") + row("book.removed", "c");
+    const current = header + row("book.same", "a") + row("book.changed", "d") + row("website.new", "e");
+    assert.deepEqual(compareBaseline(previous, previous), { added: [], removed: [], changed: [] });
+    assert.deepEqual(compareBaseline(previous, current), {
+        added: ["website.new"], removed: ["book.removed"], changed: ["book.changed"],
+    });
+    assert.throws(() => compareBaseline(previous, current + row("book.same", "a")), /Invalid official example baseline row/);
 });
