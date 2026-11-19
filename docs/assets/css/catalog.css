@@ -208,3 +208,80 @@ pre.playground-diff-code {
 @media (prefers-color-scheme: dark) {
   .playground-diff .flix-token { color: var(--flix-dark, currentColor); }
 }
+
+.guide-topics { display: flex; flex-wrap: wrap; gap: 0.35rem 1rem; margin-block: 1rem 1.75rem; }
+.guide-example { margin-block: 1.6rem 2.5rem; scroll-margin-top: 1rem; }
+.guide-example > h3 { margin-bottom: 0.35rem; }
+.guide-example > h3 a { color: inherit; text-decoration: none; }
+.guide-example > h3 a:hover,
+.guide-example:target > h3 a { text-decoration: underline; }
+.guide-example > p { margin-block: 0.35rem 0.75rem; }
+.guide-card {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 0.65rem;
+  background: var(--code-background);
+}
+.guide-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.75rem;
+  padding: 0.45rem 0.7rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 0.85rem;
+}
+.guide-edit {
+  border: 1px solid var(--link);
+  border-radius: 0.35rem;
+  padding: 0.35rem 0.7rem;
+  background: var(--link);
+  color: Canvas;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+.guide-edit:disabled { opacity: 0.65; cursor: progress; }
+.guide-static, .guide-live .playground-panes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+}
+.guide-static[hidden] { display: none; }
+.guide-static > section { min-width: 0; }
+.guide-static > section + section,
+.guide-live .playground-pane + .playground-pane { border-inline-start: 1px solid var(--border); }
+.guide-static h4 {
+  margin: 0;
+  padding: 0.45rem 0.7rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 0.9rem;
+}
+.guide-static pre {
+  margin: 0;
+  max-height: 24rem;
+  border: 0;
+  border-radius: 0;
+  overflow: auto;
+  line-height: 1.55;
+}
+.guide-live .playground-pane { border: 0; border-radius: 0; }
+.guide-live .playground-pane + .playground-pane { border-inline-start: 1px solid var(--border); }
+.guide-live .playground-toolbar {
+  margin: 0;
+  padding: 0.5rem 0.7rem;
+  border-bottom: 1px solid var(--border);
+}
+.guide-live :is(.playground-editor .cm-editor, .playground-diff) { height: clamp(14rem, 49vh, 25rem); }
+.guide-live .playground-status { margin-inline: 0.7rem; }
+.guide-live .playground-status:empty { display: none; }
+@media (max-width: 48rem) {
+  .guide-static, .guide-live .playground-panes { grid-template-columns: minmax(0, 1fr); }
+  .guide-static > section + section,
+  .guide-live .playground-pane + .playground-pane {
+    border-inline-start: 0;
+    border-block-start: 1px solid var(--border);
+  }
+}

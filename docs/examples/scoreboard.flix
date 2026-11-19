@@ -1,13 +1,28 @@
 def score(points:List[Int32]):Int32=
 List.foldLeft((sum,next) -> sum+next,0,points)
 
-pub def scoreboard():String={
-let home=List#{3,5,2};
-let away=List#{2,4,3};
-let totals=par (left <- score(home);right <- score(away)) yield (left,right);
-match totals{
+def winner(totals:(Int32,Int32)):String=match totals{
 case (a,b) if a>b =>"Home wins ${a}–${b}"
 case (a,b) if a<b =>"Away wins ${b}–${a}"
 case (a,_) =>"Draw at ${a}"
 }
+
+pub def scoreboard(home:List[Int32],away:List[Int32]):String={
+// Each team's score can be calculated independently.
+let totals=par (
+left <- score(home);
+right <- score(away)
+) yield (left,right);
+winner(totals)
 }
+
+pub def finalScore():String=
+scoreboard(List#{3,5,2},List#{2,4,3})
+
+@Test
+def testDraw():Unit \ Assert=
+Assert.assertEq(expected="Draw at 5",scoreboard(List#{3,2},List#{1,4}))
+
+@Test
+def testHomeWins():Unit \ Assert=
+Assert.assertEq(expected="Home wins 10–9",finalScore())

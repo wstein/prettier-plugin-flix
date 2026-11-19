@@ -2,6 +2,8 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { basename } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createHighlighter } from "shiki";
+import { format } from "prettier";
+import flix from "../dist/index.js";
 import { flixThemes } from "../docs/assets/js/flix-themes.js";
 import { findFixtures, loadFixture, optionsFor, relativeTo } from "../test/fixture.mjs";
 
@@ -11,38 +13,27 @@ const chapters = {};
 const showcase = [];
 const playgroundFixtures = {};
 const playground = {
-    defaultFixture: "expressions/align-map-comment.md",
+    defaultFixture: "examples/transit.flix",
     groups: [
         {
-            title: "Formatting basics",
+            title: "Data and logic",
             examples: [
-                ["Break a long line", "expressions/long-release-summary.md"],
-                ["Checkout with shipping and tests", "examples/checkout.flix"],
+                ["Transit routes", "examples/transit.flix", "Follow the timetable facts, recursive rule, and final query. The comments explain the starting fact and each transfer."],
+                ["Room area and labels", "examples/shape-report.flix", "Compare enum cases, match arms, and an extensible record update in a room report."],
             ],
         },
         {
-            title: "Expressions and collections",
+            title: "Everyday programs",
             examples: [
-                ["Room area with enums and match", "examples/shape-report.flix"],
-                ["Lists with Unicode strings", "strings/unicode-list.md"],
-                ["Maps with comments", "expressions/align-map-comment.md"],
-                ["Inventory with extensible records", "examples/inventory.flix"],
+                ["Departure board", "examples/itinerary.flix", "A Unicode timetable is filtered, rendered with string interpolation, and assembled with Java’s StringBuilder."],
+                ["Checkout and shipping", "examples/checkout.flix", "Compare indentation in a module, a conditional, and tests for shipping and receipt text."],
             ],
         },
         {
-            title: "Traits, effects, and interoperability",
+            title: "Effects and parallelism",
             examples: [
-                ["Donation receipts with a trait", "examples/receipts.flix"],
-                ["Rate quotes with an effect handler", "examples/rate-quote.flix"],
-                ["Scoreboard with parallel bindings", "examples/scoreboard.flix"],
-                ["Shipping labels with Java", "examples/label-builder.flix"],
-            ],
-        },
-        {
-            title: "Datalog",
-            examples: [
-                ["Transit routes with recursive rules", "examples/transit.flix"],
-                ["Guards and queries", "datalog/guarded-query.md"],
+                ["Currency quote", "examples/rate-quote.flix", "Follow an effect handler that provides a fixed rate and a trait that renders the resulting receipt."],
+                ["Parallel scoreboard", "examples/scoreboard.flix", "Two scores are computed in parallel before a match selects the result to display."],
             ],
         },
     ],
@@ -128,7 +119,6 @@ for (const path of findFixtures(root)) {
     };
 }
 
-highlighter.dispose();
 showcase.sort((a, b) => a.order - b.order);
 chapters.examples = { count: showcase.length, groups: [{ title: "", fixtures: showcase.map(({ example }) => example) }] };
 await mkdir(destination, { recursive: true });
@@ -136,16 +126,28 @@ await writeFile(new URL("fixtures.json", destination), JSON.stringify(chapters, 
 const examples = {};
 for (const group of playground.groups) {
     for (const [title, path] of group.examples) {
-        if (path.endsWith(".flix")) {
-            const input = await readFile(new URL(`../docs/${path}`, import.meta.url), "utf8");
-            examples[path] = { title, input, options: [{}] };
-        } else {
-            if (!Object.hasOwn(playgroundFixtures, path)) throw new Error(`Missing playground fixture ${path}`);
-            examples[path] = playgroundFixtures[path];
-        }
+        const input = await readFile(new URL(`../docs/${path}`, import.meta.url), "utf8");
+        examples[path] = { title, input, options: [{}] };
     }
 }
 if (!Object.hasOwn(examples, playground.defaultFixture)) throw new Error("The default playground fixture must be a menu example.");
-const linked = Object.fromEntries(Object.entries(playgroundFixtures).filter(([path]) => !Object.hasOwn(examples, path)));
 await writeFile(new URL("playground.json", destination), JSON.stringify({ ...playground, fixtures: examples }) + "\n");
-await writeFile(new URL("playgroundFixtures.json", destination), JSON.stringify(linked) + "\n");
+await writeFile(new URL("playgroundFixtures.json", destination), JSON.stringify(playgroundFixtures) + "\n");
+
+const guide = [];
+for (const group of playground.groups) {
+    const cards = [];
+    for (const [title, path, description] of group.examples) {
+        const { input, options } = examples[path];
+        const output = await format(input, { ...options[0], parser: "flix", plugins: [flix] });
+        cards.push({
+            id: basename(path, ".flix"),
+            path, title, description,
+            inputHtml: highlight(input),
+            outputHtml: highlight(output),
+        });
+    }
+    guide.push({ title: group.title, cards });
+}
+highlighter.dispose();
+await writeFile(new URL("formattingGuide.json", destination), JSON.stringify(guide) + "\n");
