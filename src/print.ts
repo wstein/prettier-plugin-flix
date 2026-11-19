@@ -142,11 +142,13 @@ export class Printer {
         return parts;
     }
 
-    private trailDoc(info: TokenInfo): Doc[] {
+    /** `glued`: no space before the comment (after a tight arrow a space would change its class). */
+    private trailDoc(info: TokenInfo, glued = false): Doc[] {
+        const gap = glued ? "" : " ";
         return info.trail.map((c) =>
             c.isLine || c.nlNext > 0
-                ? [lineSuffix([" ", this.commentText(c)]), breakParent]
-                : [" ", this.commentText(c)],
+                ? [lineSuffix([gap, this.commentText(c)]), breakParent]
+                : [gap, this.commentText(c)],
         );
     }
 
@@ -177,7 +179,8 @@ export class Printer {
 
     private tokTrail(t: TerminalNode): Doc {
         const info = this.info(t);
-        return info ? this.trailDoc(info) : "";
+        // `s->// c\nfield`: whitespace after the arrow would turn the field access into a lambda arrow.
+        return info ? this.trailDoc(info, ttype(t) === L.ARROW_TIGHT) : "";
     }
 
     /** A `//` comment ends the line: whatever follows the token must start a new line. */
