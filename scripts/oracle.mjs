@@ -20,7 +20,7 @@ import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
 import { cpus, tmpdir } from "node:os";
 import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
-import { basename, join } from "node:path";
+import { join, resolve } from "node:path";
 import { promisify } from "node:util";
 import { format } from "prettier";
 import plugin from "../dist/index.js";
@@ -29,24 +29,30 @@ const run = promisify(execFile);
 const args = process.argv.slice(2);
 const flag = (name) => { const i = args.indexOf(name); if (i < 0) return false; args.splice(i, 1); return true; };
 const option = (name, dflt) => { const i = args.indexOf(name); if (i < 0) return dflt; const v = args[i + 1]; args.splice(i, 2); return v; };
+const usage = "usage: oracle.mjs <flix.jar> <source-dir> [--prelude f] [--every n] [--jobs n] [--control] [--pin pin.json]";
+const fail = (message) => { console.error(`${message}\n${usage}`); process.exit(2); };
+/** A positive integer: "0", "1.5", "abc" and "" would otherwise make zero workers or an empty sample. */
+const positiveInt = (name, raw) => {
+    if (!/^[1-9]\d{0,8}$/.test(String(raw))) fail(`${name} must be a positive integer, got "${raw}"`);
+    return Number(raw);
+};
 const control = flag("--control");
 const pinFile = option("--pin", null);
-const every = Number(option("--every", 1));
-const jobs = Number(option("--jobs", Math.max(1, Math.floor(cpus().length / 2))));
+const every = positiveInt("--every", option("--every", "1"));
+const jobs = positiveInt("--jobs", option("--jobs", String(Math.max(1, Math.floor(cpus().length / 2)))));
 const preludeOpt = option("--prelude", null);
-const [jar, srcDir] = args;
-if (!jar || !srcDir || !(every >= 1)) {
-    console.error("usage: oracle.mjs <flix.jar> <source-dir> [--prelude f] [--every n] [--jobs n] [--control] [--pin pin.json]");
-    process.exit(2);
-}
+const [jarArg, srcDir] = args;
+if (!jarArg || !srcDir) fail("both <flix.jar> and <source-dir> are required");
+// The compiler runs with a throwaway project as its working directory, so a relative jar path
+// would no longer resolve there: use one absolute path for the digest check and for `java -jar`.
+const jar = resolve(jarArg);
+let jarBytes;
+try { jarBytes = readFileSync(jar); } catch (e) { fail(`cannot read the jar ${jar}: ${e.message}`); }
 
 if (pinFile) {
     const want = JSON.parse(readFileSync(pinFile, "utf8")).oracleArtifact.sha256;
-    const got = createHash("sha256").update(readFileSync(jar)).digest("hex");
-    if (got !== want) {
-        console.error(`flix.jar digest ${got} does not match the pinned ${want}`);
-        process.exit(2);
-    }
+    const got = createHash("sha256").update(jarBytes).digest("hex");
+    if (got !== want) fail(`flix.jar digest ${got} does not match the pinned ${want}`);
 }
 
 const preludePath = preludeOpt ?? join(srcDir, "Prelude.flix");
@@ -55,6 +61,7 @@ try { prelude = readFileSync(preludePath, "utf8"); } catch { /* optional */ }
 const files = readdirSync(srcDir).sort()
     .filter((f) => f.endsWith(".flix") && join(srcDir, f) !== preludePath && statSync(join(srcDir, f)).isFile())
     .filter((_, i) => i % every === 0);
+if (files.length === 0) fail(`no .flix files selected from ${srcDir} (every ${every}); an empty sample would report success without compiling anything`);
 
 const root = mkdtempSync(join(tmpdir(), "flix-oracle-"));
 const strip = (s) => s.replace(/\x1b\[[0-9;]*m/g, "");
