@@ -13,7 +13,8 @@
   "scripts": {
     "generate": "node scripts/generate.mjs",
     "build": "npm run generate && tsc",
-    "test": "npm run build && node --test test/*.test.mjs"
+    "test": "npm run build && node --test test/*.test.mjs",
+    "test:update": "npm run build && UPDATE_FIXTURES=1 node --test test/fixtures.test.mjs"
   },
   "peerDependencies": {
     "prettier": "^3.0.0"
