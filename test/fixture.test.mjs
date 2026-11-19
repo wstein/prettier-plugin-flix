@@ -57,3 +57,19 @@ rejects("no output", sample('title: a\nflix: "0.80"', `## Input\n\n${fence}flix\
 rejects("unclosed block", sample('title: a\nflix: "0.80"', `## Input\n\n${fence}flix\nx\n`), /not closed/);
 rejects("option on first output", sample('title: a\nflix: "0.80"', `## Input\n\n${fence}flix\nx\n${fence}\n## Output\n${fence}flix printWidth=9\nx\n${fence}\n`), /first Output block takes no options/);
 rejects("unknown section", sample('title: a\nflix: "0.80"', "## Notes\n"), /unknown section "## Notes"/);
+
+const withInfo = (info) => sample('title: a\nflix: "0.80"', `## Input\n\n${fence}flix\nx\n${fence}\n\n## Output\n\n${fence}flix\nx\n${fence}\n\n${fence}flix ${info}\nx\n${fence}\n`);
+rejects("misspelled boolean", withInfo("useTabs=treu"), /option "useTabs" must be true or false, found "treu"/);
+rejects("non-numeric width", withInfo("printWidth=abc"), /option "printWidth" must be a positive integer, found "abc"/);
+rejects("fractional width", withInfo("tabWidth=2.5"), /positive integer/);
+rejects("zero width", withInfo("printWidth=0"), /positive integer/);
+rejects("negative width", withInfo("printWidth=-4"), /positive integer/);
+rejects("empty value", withInfo("printWidth="), /positive integer, found ""/);
+rejects("duplicate option", withInfo("printWidth=30 printWidth=60"), /duplicate option "printWidth"/);
+rejects("unknown inline option", withInfo("semi=true"), /unknown option "semi"/);
+
+test("accepts literal booleans and integers inline", () => {
+    const f = parseFixture(withInfo("useTabs=true tabWidth=8 printWidth=100"));
+    assert.deepEqual(f.outputs[1].options, { useTabs: true, tabWidth: 8, printWidth: 100 });
+    assert.deepEqual(parseFixture(withInfo("useTabs=false")).outputs[1].options, { useTabs: false });
+});
