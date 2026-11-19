@@ -14,6 +14,8 @@
     "generate": "node scripts/generate.mjs",
     "build": "npm run generate && tsc",
     "test": "npm run build && node --test test/*.test.mjs",
+    "coverage:syntax": "node scripts/syntax-coverage.mjs",
+    "format:checked": "node scripts/format-checked.mjs",
     "test:update": "npm run build && UPDATE_FIXTURES=1 node --test test/fixtures.test.mjs"
   },
   "peerDependencies": {
