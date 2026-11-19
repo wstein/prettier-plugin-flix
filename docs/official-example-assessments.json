@@ -1,14 +1,14 @@
 [
   {
     "case": "website.front-page.monadic-for.monadic-for-example",
-    "digest": "d804102b1b476102561b91766838f3ef9bea087f8b1b5cdda3da0d35ea3c5d32",
+    "digest": "0b66b3802c4e14b0a8838ef644d0b198c420c86d9e658fba6d12bb2363a39eeb",
     "area": "formatter",
     "title": "Keep forM generators on separate lines",
-    "recommendation": "Preserve the three generator lines when flattening them would force the short yield expression to wrap. Both versions pass Flix 0.80.0. The desired layout has a TODO fixture."
+    "recommendation": "The formatter preserves the three generator lines and the short yield expression. The only byte difference is the final newline. A fixture also checks the compact layout at a wider line width."
   },
   {
     "case": "website.front-page.effects.effects-example",
-    "digest": "7d008ad46089696bc31883413330a9983e7279a77a02db7b3ac8bd10503bbcdd",
+    "digest": "dd2db0f236c0b0fde6de06cbc31c7afb9749fecaacb421f6a1b440cf38045c86",
     "area": "formatter",
     "title": "Lay out the entire else-if chain together",
     "recommendation": "When the chain has to break, give each branch the same layout. The current output puts the first result on its own line but combines the remaining branches."
