@@ -1,6 +1,6 @@
 ---
 title: "Map arrows with and without an inline comment"
-description: "Both maps contain the same retry limits. The first aligns its arrows. The second uses one space around each arrow and keeps the retry note beside the export entry."
+description: "The same retry limits align in both maps. Line comments stay beside their entries and keep their usual spacing."
 flix: "0.80"
 ---
 
@@ -10,13 +10,13 @@ flix: "0.80"
 pub def retryLimits(): Map[String, Int32] = Map#{
 "export"=>1,
 "batch"      =>2,
-"sync"=>3
+"sync"=>120
 }
 
 pub def documentedRetryLimits(): Map[String, Int32] = Map#{
 "export"=>1, // Exports are expensive to retry.
 "batch"      =>2,
-"sync"=>3
+"sync"=>120 // Sync attempts are cheap.
 }
 ```
 
@@ -26,12 +26,12 @@ pub def documentedRetryLimits(): Map[String, Int32] = Map#{
 pub def retryLimits(): Map[String, Int32] = Map#{
     "export" => 1,
     "batch"  => 2,
-    "sync"   => 3
+    "sync"   => 120
 }
 
 pub def documentedRetryLimits(): Map[String, Int32] = Map#{
     "export" => 1, // Exports are expensive to retry.
-    "batch" => 2,
-    "sync" => 3
+    "batch"  => 2,
+    "sync"   => 120 // Sync attempts are cheap.
 }
 ```

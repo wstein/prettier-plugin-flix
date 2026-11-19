@@ -21,8 +21,9 @@ Prettier aligns the `=>` of multiline maps and the `=` of multiline record
 literals when all entries are simple names or literals. A map laid out with one
 entry per line stays multiline when it qualifies for alignment. A map that
 fits inline uses ordinary spacing. Padding is limited to eight extra spaces
-and is skipped when the rows leave too little room within `printWidth` or
-contain comments or compound expressions. See the [map example](https://wstein.github.io/prettier-plugin-flix/expressions/#align-map-entries).
+and is skipped when the code leaves too little room within `printWidth`, or a
+row contains a compound expression or a comment between its code tokens.
+Trailing comments stay with their entries and use ordinary spacing. See the [map example](https://wstein.github.io/prettier-plugin-flix/expressions/#align-map-entries).
 
 | Construct | Flix 0.80 | Prettier plugin |
 | --- | --- | --- |

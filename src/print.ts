@@ -374,17 +374,17 @@ export class Printer {
         return docs.flatMap((d, i) => (i < docs.length - 1 ? [d, seps[i], afters[i]] : [d]));
     }
 
-    private hasComment(t: TerminalNode): boolean {
+    private hasComment(t: TerminalNode, ignoreTrailing = false): boolean {
         const info = this.info(t);
-        return !!info && (info.lead.length > 0 || info.trail.length > 0);
+        return !!info && (info.lead.length > 0 || (!ignoreTrailing && info.trail.length > 0));
     }
 
     /** Measure only atoms whose printed spelling is the same as their source spelling. */
-    private atomWidth(n: Node): number | undefined {
-        if (isTerm(n)) return this.hasComment(n) ? undefined : util.getStringWidth(this.src(n));
+    private atomWidth(n: Node, rowEnd: TerminalNode | null = null): number | undefined {
+        if (isTerm(n)) return this.hasComment(n, n === rowEnd) ? undefined : util.getStringWidth(this.src(n));
         const cs = kids(n);
-        if (cs.length === 1) return this.atomWidth(cs[0]);
-        if (kind(n) !== "PlainString" || !cs.every((t) => isTerm(t) && !this.hasComment(t))) return;
+        if (cs.length === 1) return this.atomWidth(cs[0], rowEnd);
+        if (kind(n) !== "PlainString" || !cs.every((t) => isTerm(t) && !this.hasComment(t, t === rowEnd))) return;
         const spelling = (cs as TerminalNode[]).map((t) => this.src(t)).join("");
         if (!/[\t\r\n]/.test(spelling)) return util.getStringWidth(spelling);
     }
@@ -400,7 +400,8 @@ export class Printer {
             const expected = entryKind === "MapEntry" ? L.ARROW_THICK_R : L.EQUAL;
             if (rest.length || !right || !isTerm(delimiter) || ttype(delimiter) !== expected || this.hasComment(delimiter)) return;
             const leftWidth = this.atomWidth(left);
-            const rightWidth = this.atomWidth(right);
+            // Suffix comments stay with their entry and take no space in the code columns.
+            const rightWidth = this.atomWidth(right, lastTerm(right));
             if (leftWidth === undefined || rightWidth === undefined) return;
             rows.push({ left, delimiter, right, leftWidth, rightWidth });
         }
@@ -493,7 +494,8 @@ export class Printer {
         const isMap = parentKind === "CollectionLiteral" && isTerm(collection) && ttype(collection) === L.MAP_HASH;
         const layoutId = Symbol();
         const aligned = (isMap || parentKind === "RecordOperation") &&
-            ![open, close, ...split.seps].some((t) => this.hasComment(t))
+            !this.hasComment(open) && !this.hasComment(close) &&
+            !split.seps.some((t) => this.hasComment(t, true))
             ? this.alignEntries(items, layoutId)
             : undefined;
         const docs = aligned ?? items.map((it) => this.seq(it.length > 0 ? [this.ls(it[0]), ...it.slice(1)] : it, parentKind));
