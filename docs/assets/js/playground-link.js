@@ -19,7 +19,7 @@ export function readHandoff(hash) {
         const tabWidth = Number(params.get("tabWidth"));
         return {
             source,
-            printWidth: Number.isSafeInteger(printWidth) && printWidth > 0 ? printWidth : 80,
+            printWidth: Number.isSafeInteger(printWidth) && printWidth > 0 ? printWidth : undefined,
             tabWidth: Number.isSafeInteger(tabWidth) && tabWidth > 0 ? tabWidth : 4,
             useTabs: params.get("useTabs") === "true",
         };

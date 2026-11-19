@@ -75,9 +75,8 @@ def withFallback(
             def ask(k) = k(fallback)
         }
 
-def withoutLogging(
-    f: Unit -> Int32 \ ef
-): Int32 \ ef - Log =
+def withoutLogging(f: Unit -> Int32 \ ef):
+    Int32 \ ef - Log =
     run f()
         with handler Log {
             def log(_message, k) = k()
