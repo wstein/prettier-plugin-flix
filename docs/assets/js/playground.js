@@ -8,6 +8,10 @@ let formatter;
 let nextRequest = 0;
 
 function readableDiagnostic(message) {
+    if (message.startsWith("no viable alternative at input ")) {
+        return message.replace(/^[^\r\n]+/, "Invalid syntax.");
+    }
+
     return message.replace(
         /^(?:mismatched|extraneous) input ([^\r\n]+) expecting \{[^\r\n]*\}(?=\r?\n|$)/,
         (_, token) => token === "'<EOF>'" ? "Unexpected end of input." : `Unexpected input ${token}.`,
