@@ -183,9 +183,20 @@ export class Printer {
         return info ? this.trailDoc(info, ttype(t) === L.ARROW_TIGHT) : "";
     }
 
-    /** A `//` comment ends the line: whatever follows the token must start a new line. */
+    /** A `//` comment (or a block comment that ends its line) ends the line: whatever follows the token must start a new line. */
     private hasLineTrail(t: TerminalNode): boolean {
-        return !!this.info(t)?.trail.some((c) => c.isLine);
+        return !!this.info(t)?.trail.some((c) => c.isLine || c.nlNext > 0);
+    }
+
+    /**
+     * What to print after `t`: `soft` (a space, a line, nothing), unless `t` carries a trailing
+     * comment that ends its line. That comment is deferred to the end of the output line, so a
+     * space here would let the following tokens move in front of it; a hard break (indented when
+     * `indented`) flushes it where it was written.
+     */
+    private after(t: TerminalNode | null, soft: Doc, indented = false): Doc {
+        if (t !== null && this.hasLineTrail(t)) return indented ? indent(hardline) : hardline;
+        return soft;
     }
 
     tok(t: TerminalNode): Doc {
@@ -573,26 +584,30 @@ export class Printer {
     private printIf(n: ParserRuleContext): Doc {
         const cs = kids(n);
         // IF LPAREN expr RPAREN expr (ELSE expr)?
-        const head: Doc = [this.tok(cs[0] as TerminalNode), " ", this.delimited(cs, 1, 3, "IfExpr")];
+        const ifTok = cs[0] as TerminalNode;
+        const closeParen = cs[3] as TerminalNode;
+        const head: Doc = [this.tok(ifTok), this.after(ifTok, " ", true), this.delimited(cs, 1, 3, "IfExpr")];
         const thenNode = cs[4];
         const elseTok = cs[5] as TerminalNode | undefined;
         const elseNode = cs[6];
         const thenHug = this.isBlockExpr(thenNode);
         const thenDoc = this.print(thenHug ? thenNode : this.ls(thenNode));
         const hugs = (e: Node) => this.isBlockExpr(e) || kind(e) === "IfExpr";
-        if (this.isBlockExpr(thenNode)) {
-            const parts: Doc[] = [head, " ", thenDoc];
+        const thenLast = lastTerm(thenNode);
+        if (thenHug) {
+            const parts: Doc[] = [head, this.after(closeParen, " ", true), thenDoc];
             if (elseTok) {
-                parts.push(" ", this.tok(elseTok));
+                parts.push(this.after(thenLast, " "), this.tok(elseTok));
                 const elseDoc = this.print(hugs(elseNode) ? elseNode : this.ls(elseNode));
-                parts.push(hugs(elseNode) ? [" ", elseDoc] : group(indent([line, elseDoc])));
+                parts.push(hugs(elseNode) ? [this.after(elseTok, " ", true), elseDoc] : group(indent([line, elseDoc])));
             }
             return parts;
         }
-        const parts: Doc[] = [head, indent([line, thenDoc])];
+        const parts: Doc[] = [head, indent([this.after(closeParen, line), thenDoc])];
         if (elseTok) {
+            this.lineStart.add(elseTok.symbol.tokenIndex); // a line break precedes `else` here
             const elseDoc = this.print(hugs(elseNode) ? elseNode : this.ls(elseNode));
-            parts.push(line, this.tok(elseTok), hugs(elseNode) ? [" ", elseDoc] : indent([line, elseDoc]));
+            parts.push(this.after(thenLast, line), this.tok(elseTok), hugs(elseNode) ? [this.after(elseTok, " ", true), elseDoc] : indent([line, elseDoc]));
         }
         return group(parts);
     }
@@ -607,9 +622,9 @@ export class Printer {
         const l = lastTerm(body);
         const sameLine = !!f && f.symbol.line === arrow.symbol.line;
         // Hug when the author kept the body on the arrow's line and it closes with a brace.
-        if (sameLine && l !== null && ttype(l) === L.RBRACE) return [" ", this.print(body)];
+        if (sameLine && l !== null && ttype(l) === L.RBRACE) return [this.after(arrow, " ", true), this.print(body)];
         const d = this.print(this.ls(body));
-        if (sameLine && willBreak(d)) return [" ", d];
+        if (sameLine && willBreak(d)) return [this.after(arrow, " ", true), d];
         return group(indent([line, d]));
     }
 
@@ -619,7 +634,8 @@ export class Printer {
         const k = kind(n);
         const ai = cs.findIndex((c) => isTerm(c) && BODY_ARROWS.has(ttype(c)));
         const arrow = cs[ai] as TerminalNode;
-        const head = [this.seq(cs.slice(0, ai), k), " ", this.tok(arrow)];
+        const headLast = ai > 0 ? lastTerm(cs[ai - 1]) : null;
+        const head = [this.seq(cs.slice(0, ai), k), this.after(headLast, " ", true), this.tok(arrow)];
         const body = cs[ai + 1];
         const rest = cs.slice(ai + 2);
         const restDoc = rest.length > 0 ? this.seq(rest, k) : "";
