@@ -41,11 +41,11 @@ def handleExc(n: Int32): Int32 = n
 
 def main(): Unit \ IO = {
     // Apply the exception handler first.
-    handleAmb(handleExc(42)) |>
-        println;
+    handleAmb(handleExc(42))
+        |> println;
 
     // Apply the ambiguity handler first.
-    handleExc(handleAmb(42)) |>
-        println
+    handleExc(handleAmb(42))
+        |> println
 }
 ```

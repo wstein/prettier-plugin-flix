@@ -1,5 +1,31 @@
 [
   {
+    "case": "book.functions.functions.pipelines",
+    "digest": "23d3a536cc7e672a0173909d17c0ff8e2a9e43388dae8566ac503088f1b8a6dc",
+    "area": "formatter",
+    "title": "Begin each pipeline step with its operator",
+    "recommendation": "The input is on its own line and each |> starts at the same indentation.",
+    "transformations": [
+      {
+        "type": "leading-pipeline-operators",
+        "scope": "The List.map, List.filter and List.count steps"
+      }
+    ]
+  },
+  {
+    "case": "book.mutable-data.mutable-collections.mutable-collections-02",
+    "digest": "5347f4140d3f94f61319cb6d6d2bb6836fb179063d1837f2a0c889cbe32bbca9",
+    "area": "formatter",
+    "title": "Align operators in the fruit pipeline",
+    "recommendation": "The initial mutable list is on its own line and each !> starts at the same indentation.",
+    "transformations": [
+      {
+        "type": "leading-pipeline-operators",
+        "scope": "The three MutList.push steps"
+      }
+    ]
+  },
+  {
     "case": "book.data-types.tuples.tuples-04",
     "digest": "06f174155b016eb28de88aea3436be274d338ad991398c99c2791510378b2c3d",
     "area": "formatter",

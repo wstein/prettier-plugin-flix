@@ -1062,6 +1062,8 @@ export class Printer {
         const rightAssoc = k === "ConsExpr";
         const operands: Node[] = [];
         const ops: Node[] = [];
+        const isPipe = (operator: Node): boolean =>
+            k === "UserOpExpr" && isTerm(operator) && ["|>", "!>"].includes(this.src(operator));
         const collect = (m: ParserRuleContext): void => {
             const [l, op, r] = kids(m);
             if (rightAssoc) {
@@ -1070,7 +1072,7 @@ export class Printer {
                 if (kind(r) === k) collect(r as ParserRuleContext);
                 else operands.push(r);
             } else {
-                if (kind(l) === k) collect(l as ParserRuleContext);
+                if (kind(l) === k && isPipe(kids(l)[1]) === isPipe(op)) collect(l as ParserRuleContext);
                 else operands.push(l);
                 ops.push(op);
                 operands.push(r);
@@ -1078,13 +1080,25 @@ export class Printer {
         };
         collect(n);
         const firstToken = firstTerm(operands[0]);
-        const isPipeline = k === "UserOpExpr" && ops.every((op) => isTerm(op) && this.src(op) === "|>");
+        const isPipeline = isPipe(ops[0]);
         let leading: Doc[] = [];
         if (isPipeline && firstToken && (this.info(firstToken)?.lead[0]?.nl ?? 0) > 0) {
             // Comments above the pipeline must not force the pipeline itself to wrap.
             leading = this.tokenLeadingDoc(firstToken);
             this.consumed.add(firstToken.symbol.tokenIndex);
         }
+        if (isPipeline) {
+            const first = this.print(operands[0]);
+            const breakPoint = this.flat > 0 ? " " : line;
+            const steps = ops.map((op, i) => [
+                this.after(lastTerm(operands[i]), breakPoint),
+                this.print(this.ls(op)),
+                this.after(lastTerm(op), " "),
+                this.print(operands[i + 1]),
+            ]);
+            return [leading, group([first, indent(steps)])];
+        }
+
         const links = ops.map((op, i) => {
             // Multiline list constructors follow the leading :: style in the Flix examples.
             const leadingCons = rightAssoc && isTerm(op) && ttype(op) !== L.COLON_COLON_COLON;
@@ -1096,11 +1110,8 @@ export class Printer {
             };
         });
         const first = this.print(operands[0]);
-        if (isPipeline && firstToken && [L.QUERY, L.PQUERY, L.SELECT].includes(ttype(firstToken))) {
-            return [leading, group([first, indent(links.map(({ operator, after, operand }) => group([operator, after, operand])))])];
-        }
         if (k !== "AddExpr" || !ops.every((op) => isTerm(op) && ttype(op) === L.PLUS)) {
-            return [leading, group([first, indent(links.map(({ operator, after, operand }) => [operator, after, operand]))])];
+            return group([first, indent(links.map(({ operator, after, operand }) => [operator, after, operand]))]);
         }
 
         // A newline literal acts as a separator. Keep it with the preceding text when that

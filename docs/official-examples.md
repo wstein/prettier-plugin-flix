@@ -100,6 +100,8 @@ match. Review a new diff before updating that hash.
   expression to its header when the whole line fits.
 - `layout-with-chain` attaches the first `with` to the closing brace when it
   fits and aligns subsequent clauses with that keyword.
+- `leading-pipeline-operators` moves operators to the start of each step
+  when a pipeline wraps.
 - `final-newline` records the addition of a terminating newline.
 
 The weekly drift check still compares the exact recorded examples. These
