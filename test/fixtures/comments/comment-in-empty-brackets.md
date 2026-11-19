@@ -15,6 +15,6 @@ def e(): #{ A(Int32) } = #{ // c
 ## Output
 
 ```flix
-def e(): #{ A(Int32) } = #{ // c
+def e(): #{ A(Int32) } = #{  // c
 }
 ```

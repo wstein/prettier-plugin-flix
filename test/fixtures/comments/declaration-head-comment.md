@@ -15,6 +15,6 @@ def f(x: a): Bool with Eq[a] // c
 ## Output
 
 ```flix
-def f(x: a): Bool with Eq[a] // c
+def f(x: a): Bool with Eq[a]  // c
     = x == x
 ```

@@ -23,12 +23,12 @@ def c(): Unit = g(1,
 
 ```flix
 def a(): Unit = g(
-    1, // after the comma
+    1,  // after the comma
     x -> { println(x) }
 )
 
 def b(): Unit = g(
-    1, // before the comma
+    1,  // before the comma
     x -> { println(x) }
 )
 
