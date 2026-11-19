@@ -104,6 +104,7 @@ const CALL_LIKE = new Set([
 export class Printer {
     private flat = 0;
     private consumed = new Set<number>();
+    private commentGaps = new Map<number, number>();
     /** Tokens that start a line in the output, so own-line comments need no extra line break. */
     private lineStart = new Set<number>();
 
@@ -146,14 +147,15 @@ export class Printer {
         return parts;
     }
 
-    /** `glued`: no space before the comment (after a tight arrow a space would change its class). */
-    private trailDoc(info: TokenInfo, glued = false): Doc[] {
-        const gap = glued ? "" : " ";
-        return info.trail.map((c) =>
-            c.isLine || c.nlNext > 0
-                ? lineSuffix([gap, this.commentText(c)])
-                : [gap, this.commentText(c)],
-        );
+    private trailDoc(info: TokenInfo, gap = " ", alignedGap?: number): Doc[] {
+        return info.trail.map((c) => {
+            const comment = this.commentText(c);
+            if (alignedGap && alignedGap > 1 && c.isLine) {
+                // Check the full comment at its actual column, including the enclosing indentation.
+                return lineSuffix(group([ifBreak(gap, " ".repeat(alignedGap)), comment]));
+            }
+            return c.isLine || c.nlNext > 0 ? lineSuffix([gap, comment]) : [gap, comment];
+        });
     }
 
     /** The token with its leading comments, without trailing comments. */
@@ -195,7 +197,8 @@ export class Printer {
     private tokTrail(t: TerminalNode): Doc {
         const info = this.info(t);
         // `s->// c\nfield`: whitespace after the arrow would turn the field access into a lambda arrow.
-        return info ? this.trailDoc(info, ttype(t) === L.ARROW_TIGHT) : "";
+        const gap = ttype(t) === L.ARROW_TIGHT ? "" : " ";
+        return info ? this.trailDoc(info, gap, this.commentGaps.get(t.symbol.tokenIndex)) : "";
     }
 
     /** A `//` comment (or a block comment that ends its line) ends the line: whatever follows the token must start a new line. */
@@ -389,7 +392,25 @@ export class Printer {
         if (!/[\t\r\n]/.test(spelling)) return util.getStringWidth(spelling);
     }
 
-    private alignEntries(items: Node[][], layoutId: symbol): Doc[] | undefined {
+    private alignEntryComments(rows: { end: TerminalNode | null; width: number }[], seps: TerminalNode[]): void {
+        const entries = rows.flatMap(({ end, width }, i) => {
+            const comma = seps[i];
+            const tokens = [end, comma];
+            const trail = tokens.flatMap((t) => t ? (this.info(t)?.trail ?? []).map((comment) => ({ t, comment })) : []);
+            if (trail.length !== 1) return [];
+            const [{ t, comment }] = trail;
+            if (!comment.isLine || comment.text.includes("\t")) return [];
+            return [{ t, width }];
+        });
+        if (entries.length < 2) return;
+        const column = entries.reduce((max, entry) => Math.max(max, entry.width), 0);
+        for (const { t, width } of entries) {
+            const padding = column - width;
+            if (padding > 0 && padding <= 8) this.commentGaps.set(t.symbol.tokenIndex, padding + 1);
+        }
+    }
+
+    private alignEntries(items: Node[][], seps: TerminalNode[], layoutId: symbol): Doc[] | undefined {
         if (this.flat > 0 || items.length < 2) return;
         const rows = [];
         for (const item of items) {
@@ -401,19 +422,24 @@ export class Printer {
             if (rest.length || !right || !isTerm(delimiter) || ttype(delimiter) !== expected || this.hasComment(delimiter)) return;
             const leftWidth = this.atomWidth(left);
             // Suffix comments stay with their entry and take no space in the code columns.
-            const rightWidth = this.atomWidth(right, lastTerm(right));
+            const end = lastTerm(right);
+            const rightWidth = this.atomWidth(right, end);
             if (leftWidth === undefined || rightWidth === undefined) return;
-            rows.push({ left, delimiter, right, leftWidth, rightWidth });
+            rows.push({ left, delimiter, right, end, leftWidth, rightWidth });
         }
 
         const column = rows.reduce((max, row) => Math.max(max, row.leftWidth), 0);
         const shortest = rows.reduce((min, row) => Math.min(min, row.leftWidth), column);
         const padding = column - shortest;
-        if (padding === 0 || padding > 8) return;
-        // Budget for two indent levels, the separator spaces, and an optional comma.
-        if (rows.some((row) =>
-            column + this.src(row.delimiter).length + 3 + row.rightWidth + 2 * this.tabWidth > this.printWidth
-        )) return;
+        if (padding > 8) return;
+        const measured = rows.map(({ end, delimiter, rightWidth }, i) => ({
+            end,
+            width: column + this.src(delimiter).length + 2 + rightWidth + (seps[i] ? 1 : 0),
+        }));
+        // Each row needs room for the code plus two levels of indentation.
+        if (measured.some(({ width }) => width + 2 * this.tabWidth > this.printWidth)) return;
+        this.alignEntryComments(measured, seps);
+        if (padding === 0) return;
 
         return rows.map(({ left, delimiter, right, leftWidth }) => [
             this.print(this.ls(left)),
@@ -496,7 +522,7 @@ export class Printer {
         const aligned = (isMap || parentKind === "RecordOperation") &&
             !this.hasComment(open) && !this.hasComment(close) &&
             !split.seps.some((t) => this.hasComment(t, true))
-            ? this.alignEntries(items, layoutId)
+            ? this.alignEntries(items, split.seps, layoutId)
             : undefined;
         const docs = aligned ?? items.map((it) => this.seq(it.length > 0 ? [this.ls(it[0]), ...it.slice(1)] : it, parentKind));
         const itemLast = (it: Node[]): TerminalNode | null => (it.length > 0 ? lastTerm(it[it.length - 1]) : null);
