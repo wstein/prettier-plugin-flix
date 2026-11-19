@@ -2,8 +2,6 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { basename } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createHighlighter } from "shiki";
-import { format } from "prettier";
-import flix from "../dist/index.js";
 import { flixThemes } from "../docs/assets/js/flix-themes.js";
 import { findFixtures, loadFixture, optionsFor, relativeTo } from "../test/fixture.mjs";
 
@@ -18,22 +16,22 @@ const playground = {
         {
             title: "Data and logic",
             examples: [
-                ["Transit routes", "examples/transit.flix", "Follow the timetable facts, recursive rule, and final query. The comments explain the starting fact and each transfer."],
-                ["Room area and labels", "examples/shape-report.flix", "Compare enum cases, match arms, and an extensible record update in a room report."],
+                ["Transit routes", "examples/transit.flix"],
+                ["Room area and labels", "examples/shape-report.flix"],
             ],
         },
         {
             title: "Everyday programs",
             examples: [
-                ["Departure board", "examples/itinerary.flix", "A Unicode timetable is filtered, rendered with string interpolation, and assembled with Java’s StringBuilder."],
-                ["Checkout and shipping", "examples/checkout.flix", "Compare indentation in a module, a conditional, and tests for shipping and receipt text."],
+                ["Departure board", "examples/itinerary.flix"],
+                ["Checkout and shipping", "examples/checkout.flix"],
             ],
         },
         {
             title: "Effects and parallelism",
             examples: [
-                ["Currency quote", "examples/rate-quote.flix", "Follow an effect handler that provides a fixed rate and a trait that renders the resulting receipt."],
-                ["Parallel scoreboard", "examples/scoreboard.flix", "Two scores are computed in parallel before a match selects the result to display."],
+                ["Currency quote", "examples/rate-quote.flix"],
+                ["Parallel scoreboard", "examples/scoreboard.flix"],
             ],
         },
     ],
@@ -111,7 +109,16 @@ for (const path of findFixtures(root)) {
         reference,
     };
     group.fixtures.push(example);
-    if (meta.showcase) showcase.push({ order: meta.showcase, example });
+    if (meta.showcase) {
+        if (meta.status === "pass" && outputs[0]) {
+            example.initial = {
+                source: input.code,
+                output: outputs[0].code,
+                ...optionsFor(fixture, outputs[0]),
+            };
+        }
+        showcase.push({ order: meta.showcase, example });
+    }
     playgroundFixtures[relative] = {
         title: meta.title,
         input: input.code,
@@ -119,6 +126,7 @@ for (const path of findFixtures(root)) {
     };
 }
 
+highlighter.dispose();
 showcase.sort((a, b) => a.order - b.order);
 chapters.examples = { count: showcase.length, groups: [{ title: "", fixtures: showcase.map(({ example }) => example) }] };
 await mkdir(destination, { recursive: true });
@@ -133,21 +141,3 @@ for (const group of playground.groups) {
 if (!Object.hasOwn(examples, playground.defaultFixture)) throw new Error("The default playground fixture must be a menu example.");
 await writeFile(new URL("playground.json", destination), JSON.stringify({ ...playground, fixtures: examples }) + "\n");
 await writeFile(new URL("playgroundFixtures.json", destination), JSON.stringify(playgroundFixtures) + "\n");
-
-const guide = [];
-for (const group of playground.groups) {
-    const cards = [];
-    for (const [title, path, description] of group.examples) {
-        const { input, options } = examples[path];
-        const output = await format(input, { ...options[0], parser: "flix", plugins: [flix] });
-        cards.push({
-            id: basename(path, ".flix"),
-            path, title, description,
-            inputHtml: highlight(input),
-            outputHtml: highlight(output),
-        });
-    }
-    guide.push({ title: group.title, cards });
-}
-highlighter.dispose();
-await writeFile(new URL("formattingGuide.json", destination), JSON.stringify(guide) + "\n");

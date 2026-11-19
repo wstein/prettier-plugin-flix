@@ -1,33 +1,41 @@
 import { Transaction } from "@codemirror/state";
 import { renderDiff } from "./playground-diff.js";
 import { createEditor, createFlixHighlighter } from "./playground-editor.js";
-import { readHandoff } from "./playground-link.js";
+import { readHandoff, writeHandoff } from "./playground-link.js";
 
 let highlighterPromise;
+let formatter;
+let nextRequest = 0;
 
-export function mountWorkbench(playground, { initial, onChange } = {}) {
+function readableDiagnostic(message) {
+    return message.replace(
+        /^(?:mismatched|extraneous) input ([^\r\n]+) expecting \{[^\r\n]*\}(?=\r?\n|$)/,
+        (_, token) => token === "'<EOF>'" ? "Unexpected end of input." : `Unexpected input ${token}.`,
+    );
+}
+
+function mountWorkbench(playground, { initial, onChange } = {}) {
     const select = playground.querySelector("#playground-example");
-    const printWidth = playground.querySelector("#print-width");
-    const tabWidth = playground.querySelector("#tab-width");
+    const printWidth = playground.querySelector("[data-print-width]");
+    const tabWidth = playground.querySelector("[data-tab-width]");
     const status = playground.querySelector(".playground-status");
     const copy = playground.querySelector(".playground-copy");
-    const diff = playground.querySelector("#flix-diff");
-    const formatted = playground.querySelector("#flix-output");
+    const diff = playground.querySelector("[data-diff]");
+    const formatted = playground.querySelector("[data-output]");
     const previewModes = playground.querySelectorAll("[data-preview-mode]");
 
     let timer;
     let revision = 0;
-    let useTabs = false;
-    let preview;
+    let useTabs = initial?.useTabs ?? false;
+    let preview = initial?.output === undefined ? undefined : { source: initial.source, output: initial.output };
     let highlighter;
     let fixtures;
     let formatterFailed = false;
     let highlightingFailed = false;
-    let destroyed = false;
 
-    const input = createEditor(playground.querySelector("#flix-input"), queuePreview);
-    const output = createEditor(formatted);
-    const formatter = new Worker(playground.dataset.worker, { type: "module" });
+    const input = createEditor(playground.querySelector("[data-input]"), queuePreview, initial?.source);
+    const output = createEditor(formatted, undefined, preview?.output);
+    formatter ??= new Worker(playground.dataset.worker, { type: "module" });
 
     function replaceCode(view, code) {
         if (view.state.doc.toString() !== code) {
@@ -44,11 +52,17 @@ export function mountWorkbench(playground, { initial, onChange } = {}) {
     }
 
     function queuePreview() {
-        const id = ++revision;
+        const id = revision = ++nextRequest;
         clearTimeout(timer);
         copy.disabled = true;
         onChange?.(snapshot());
         timer = setTimeout(() => updatePreview(id), 250);
+    }
+
+    function setEditorIndent(width) {
+        input.setTabWidth(width);
+        output.setTabWidth(width);
+        diff.style.tabSize = width;
     }
 
     function updatePreview(id) {
@@ -59,9 +73,7 @@ export function mountWorkbench(playground, { initial, onChange } = {}) {
             return;
         }
         const width = tabWidth.valueAsNumber;
-        input.setTabWidth(width);
-        output.setTabWidth(width);
-        diff.style.tabSize = width;
+        setEditorIndent(width);
         formatter.postMessage({
             id,
             asset: playground.dataset.formatter,
@@ -75,11 +87,12 @@ export function mountWorkbench(playground, { initial, onChange } = {}) {
         if (data.error) {
             const { location, message } = data.error;
             const where = location ? `Line ${location.line}, column ${location.column}. ` : "";
-            const stale = preview ? "Preview is out of date. " : "";
-            showStatus(stale + where + message, true);
+            input.markError(location);
+            showStatus("Error. " + where + readableDiagnostic(message), true);
             return;
         }
         preview = { source: input.view.state.doc.toString(), output: data.output };
+        if (input.view.contentDOM.hasAttribute("aria-invalid")) input.markError();
         replaceCode(output.view, preview.output);
         highlighter?.apply(output.view);
         refreshDiff();
@@ -131,7 +144,7 @@ export function mountWorkbench(playground, { initial, onChange } = {}) {
 
     select?.addEventListener("change", () => useExample(select.value));
     playground.querySelector(".playground-clear")?.addEventListener("click", () => {
-        select.value = "";
+        if (select) select.value = "";
         input.view.dispatch({ changes: { from: 0, to: input.view.state.doc.length, insert: "" } });
         input.view.focus();
     });
@@ -187,33 +200,40 @@ export function mountWorkbench(playground, { initial, onChange } = {}) {
         }
     }
 
-    if (initial) loadDraft(initial);
+    if (initial) {
+        printWidth.value = initial.printWidth ?? 80;
+        tabWidth.value = initial.tabWidth ?? 4;
+        setEditorIndent(tabWidth.valueAsNumber);
+        if (preview) copy.disabled = preview.output.length === 0;
+        else queuePreview();
+    }
     if (select) void loadExamples();
     highlighterPromise ??= createFlixHighlighter();
     void highlighterPromise.then((flix) => {
-        if (destroyed) return;
         highlighter = flix;
         highlighter.apply(input.view);
         highlighter.apply(output.view);
         refreshDiff();
     }).catch(() => {
-        if (destroyed) return;
         highlightingFailed = true;
         if (preview && !status.textContent) showStatus("Syntax highlighting could not load.");
     });
-
-    return {
-        snapshot,
-        focus: () => input.view.focus(),
-        destroy() {
-            destroyed = true;
-            clearTimeout(timer);
-            formatter.terminate();
-            input.view.destroy();
-            output.view.destroy();
-        },
-    };
 }
 
 const page = document.querySelector("[data-full-playground]");
 if (page) mountWorkbench(page, { initial: readHandoff(location.hash) });
+
+for (const embedded of document.querySelectorAll("[data-embedded-playground]")) {
+    const link = embedded.querySelector(".playground-handoff");
+    const originalLink = link.href;
+    const initial = JSON.parse(embedded.dataset.initial);
+    const lines = Math.max(initial.source.split("\n").length, initial.output.split("\n").length);
+    embedded.style.setProperty("--source-lines", lines);
+    mountWorkbench(embedded, {
+        initial,
+        onChange: (draft) => { link.href = writeHandoff(originalLink, draft); },
+    });
+    embedded.hidden = false;
+    embedded.previousElementSibling.hidden = true;
+    embedded.closest(".fixture").querySelector("[data-static-handoff]").hidden = true;
+}
