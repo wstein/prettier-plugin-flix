@@ -156,7 +156,7 @@ book.effect-system.effect-polymorphism.sub-effecting-04	unchanged	-	09e979413354
 book.effect-system.effect-polymorphism.sub-effecting-05	layout-change	spacing	3c85b87010b3379cc0fb7aca8b5615d3c038d11df5071b745c8f290bd297737f
 book.effect-system.effect-polymorphism.sub-effecting-06	unchanged	-	9867bb586f952babdaaf02390677bbfaee37487f66661eb9f2972b175476a176
 book.effect-system.effects-and-handlers.multiple-effects-and-handlers	layout-change	wrapping	4f223e9fb9e10c61a08ae4877f3e060cce12c16369468e6936e18a78717313b3
-book.effect-system.effects-and-handlers.multiple-resumptions	layout-change	wrapping	9280369333044c6fae5ea6340c9a0ddeeda4f8e697869f5e7301afe0d855cd1b
+book.effect-system.effects-and-handlers.multiple-resumptions	layout-change	blank-lines	0051990ca1085a78250dadafc95b2ae52647666f6cd9b3f8df5dbe9d9efe6237
 book.effect-system.effects-and-handlers.non-resumable-effects-exceptions	unchanged	-	06ccb8b5e730118f5b2941fe8d7df73ca7106d8d83097088e3a70fd1e41b4d19
 book.effect-system.effects-and-handlers.non-resumable-effects-exceptions-02	unchanged	-	8b295a73ed8858f64f6c9760c3bde16800f38cc0f47932c402c2cef6375496ca
 book.effect-system.effects-and-handlers.polymorphic-effects	unchanged	-	780729de0336a1f5fe8ddf7bb83cc4cc65e0e051a4043b08846c4b9d4a386f7f
