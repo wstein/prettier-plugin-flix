@@ -71,7 +71,10 @@ function parseInfo(file, line, info) {
 
 /** Parses fixture text. `file` is only used in error messages. */
 export function parseFixture(text, file = "<fixture>") {
-    const lines = text.split("\n");
+    // CRLF files (Windows editors, autocrlf checkouts) parse like LF files; the convention is kept
+    // when the Output blocks are rewritten.
+    const eol = text.includes("\r\n") ? "\r\n" : "\n";
+    const lines = text.split(/\r?\n/);
     if (lines[0] !== "---") fail(file, 1, "a fixture must start with a --- front matter line");
     const close = lines.indexOf("---", 1);
     if (close < 0) fail(file, 1, "front matter is not closed by ---");
@@ -122,7 +125,7 @@ export function parseFixture(text, file = "<fixture>") {
     } else if (Object.keys(outputs[0].options).length > 0) {
         fail(file, outputs[0].line, "the first Output block takes no options (use the front matter for those)");
     }
-    return { file, meta, lines, input: inputs[0], outputs };
+    return { file, meta, lines, eol, input: inputs[0], outputs };
 }
 
 export function loadFixture(path, label = path) {
@@ -140,7 +143,7 @@ export function withOutputs(fixture, actual) {
         const body = actual[i] === "" ? [] : actual[i].replace(/\n$/, "").split("\n");
         lines.splice(start, end - start, ...body);
     }
-    return lines.join("\n");
+    return lines.join(fixture.eol);
 }
 
 export function writeOutputs(path, fixture, actual) {
