@@ -842,25 +842,26 @@ export class Printer {
         const k = kind(n);
         if (this.flat > 0 || children.length === 2) return this.seq(children, k);
 
-        const head: Doc[] = [this.seq(children.slice(0, 2), k)];
-        const continuation: Doc[] = [];
-        let section = head;
-        for (let i = 2; i < children.length; i += 2) {
-            const [previous, withKeyword, handler] = children.slice(i - 1, i + 2);
-            const previousEnd = lastTerm(previous);
-            const handlerEnd = lastTerm(handler);
-            const hug = previousEnd !== null && ttype(previousEnd) === L.RBRACE &&
-                (this.isBlockExpr(previous) || kind(previous) === "HandlerExpr") &&
-                kind(handler) === "HandlerExpr" && handlerEnd !== null && ttype(handlerEnd) === L.RBRACE &&
-                !this.hasLineTrail(previousEnd);
-            if (hug) {
-                section.push(" ", this.seq([withKeyword, handler], k));
-            } else {
-                section = continuation;
-                section.push(hardline, this.seq([this.ls(withKeyword), handler], k));
+        const [runKeyword, body] = children;
+        const head = this.seq([runKeyword, body], k);
+        if (children.length === 4 && this.isBlockExpr(body)) {
+            const [, , withKeyword, handler] = children;
+            const bodyEnd = lastTerm(body);
+            if (bodyEnd && !this.hasLineTrail(bodyEnd)) {
+                if (kind(handler) === "HandlerExpr") {
+                    return [head, " ", this.seq([withKeyword, handler], k)];
+                }
+                const clause = this.seq([this.ls(withKeyword), handler], k);
+                return [head, group([line, clause])];
             }
         }
-        return [head, indent(continuation)];
+
+        const clauses: Doc[] = [];
+        for (let i = 2; i < children.length; i += 2) {
+            const [withKeyword, handler] = children.slice(i, i + 2);
+            clauses.push(hardline, this.seq([this.ls(withKeyword), handler], k));
+        }
+        return [head, clauses];
     }
 
     private alignMatchRules(rules: Node[], layoutId: symbol): Doc[] | undefined {

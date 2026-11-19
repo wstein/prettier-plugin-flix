@@ -22,6 +22,6 @@ def map04(): Unit \ Assert =
     let m = Map#{0 => 1, 1 => 2, 2 => 3, 3 => 4};
     assertTrue(
         run m[3] == 4
-            with handle
+        with handle
     )
 ```
