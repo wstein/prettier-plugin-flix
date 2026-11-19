@@ -39,3 +39,20 @@ export function fingerprint(text) {
 /** Optional trailing commas may legitimately vanish when a list fits on one line. */
 export const dropTrailingCommas = (tokens) =>
     tokens.filter((t, i) => !(t === "," && [")", "]", "}"].includes(tokens[i + 1])));
+
+/**
+ * Everything a formatter must preserve, as a list of problems (empty when the program is intact):
+ * the output parses, has the same tokens (optional trailing commas aside), comments, parse-tree
+ * shape and arrow token classes, and every Datalog constraint ends in a dot followed by whitespace.
+ */
+export function programProblems(before, after) {
+    if (after.errors.length > 0) return [`output does not parse: ${after.errors[0]}`];
+    const problems = [];
+    const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+    if (!same(dropTrailingCommas(before.tokens), dropTrailingCommas(after.tokens))) problems.push("tokens differ");
+    if (!same(before.comments, after.comments)) problems.push("comments differ");
+    if (before.shape !== after.shape) problems.push("parse-tree shape differs");
+    if (!same(before.arrows, after.arrows)) problems.push("arrow token classes differ");
+    if (!after.constraintEnds.every((t) => t === "DOT_WS")) problems.push(`Datalog constraint not ended by a dot followed by whitespace (${after.constraintEnds})`);
+    return problems;
+}
