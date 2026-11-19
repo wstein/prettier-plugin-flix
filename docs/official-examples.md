@@ -26,12 +26,16 @@ audit below, check out the listed commits before running the command.
   outcome, and any parse diagnostics. Layout candidates include a review hash.
 - `changes.diff` shows the before/after differences. Both versions of each
   candidate are also saved under `before/` and `after/`.
+- `baseline.tsv` records the state of every example. With `--baseline`,
+  `drift.json` lists additions, removals and changes to that state.
 - `node scripts/extract-flix-examples.mjs /tmp/flix-book /tmp/flix-website /tmp/flix-examples.json`
   exports the inventory without formatting.
 
 GitHub Actions uploads these files in the `official-flix-examples` artifact.
-The workflow runs on relevant pull requests and can also run manually with
-different source revisions. Pull request runs use the fixed revisions below.
+The workflow runs weekly against the current upstream branches. It also runs on
+relevant pull requests with fixed source revisions and can run manually with
+other revisions. A changed example makes the job fail and appears in its build
+summary. The artifact remains available for review.
 
 The extractor reads fenced `flix` and `java` blocks from the book and Flix
 templates referenced by `Feature` and `CodeSnippet` on the website, including
@@ -77,6 +81,23 @@ The hash covers the original, formatted output, context and formatting options.
 The audit exits with status 1 for an invariant failure, or for an unapproved
 or changed layout candidate in review mode. It still writes the report.
 Cases awaiting context remain visible in either mode.
+
+### Review a weekly failure
+
+The workflow compares with [the observed baseline](../test/official-docs-baseline.tsv).
+Each row records the case, its outcome and a hash covering the extracted
+source, formatted bytes and any parse diagnostics. Changes to unrelated prose
+can pass if they leave the examples unchanged.
+
+1. Download the artifact and open `drift.json` for the cases that triggered the
+   alert. Inspect source links in `report.json` and layout changes in `findings.md`.
+2. Review new formatting with the plan above. Use `--reviews` to require a
+   written reason for each layout candidate in a strict review run. A baseline
+   row records an observation and is separate from that approval.
+3. When accepting a new upstream snapshot, update the pinned revisions in the
+   workflow and replace `test/official-docs-baseline.tsv` with the reviewed
+   `baseline.tsv` from the artifact. Put the reasons for changes in the pull
+   request. An invariant failure still fails the audit with any baseline.
 
 ## First audit
 

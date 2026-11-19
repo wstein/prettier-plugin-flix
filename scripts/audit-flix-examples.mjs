@@ -9,6 +9,8 @@ import { extractExamples } from "./extract-flix-examples.mjs";
 
 const exec = promisify(execFile);
 const formatOptions = { printWidth: 80, tabWidth: 4, useTabs: false, endOfLine: "lf" };
+const hash = (value) => createHash("sha256").update(JSON.stringify(value)).digest("hex");
+const baselineHeader = "case\tstatus\tchange\tsha256";
 const wrapper = "def auditSnippet(): Unit = {\n";
 const declaration = /^(?:@|(?:def|eff|enum|instance|mod|pub|redef|restrictable|sealed|struct|trait|type|val)\b)/;
 
@@ -103,7 +105,7 @@ export async function auditExample(example) {
         formatted = snippet;
     }
     if (original === formatted) return { context, status: "unchanged" };
-    const digest = createHash("sha256").update(JSON.stringify([context, formatOptions, original, formatted])).digest("hex");
+    const digest = hash([context, formatOptions, original, formatted]);
     return {
         context, status: "layout-change", input: original, formatted, digest,
         changeKind: changeKind(original, formatted),
@@ -140,8 +142,32 @@ export function approvalFor(result, approval) {
     return approval.reason.trim();
 }
 
-async function audit(book, website, output, reviewsPath) {
+export function compareBaseline(previous, current) {
+    const parse = (value) => {
+        const [header, ...rows] = value.trimEnd().split(/\r?\n/);
+        if (header !== baselineHeader) throw new Error("Invalid official example baseline header");
+        const entries = new Map();
+        for (const row of rows) {
+            const fields = row.split("\t");
+            const [name, status, , digest] = fields;
+            if (!/^[a-z0-9.-]+$/.test(name) || !status || !/^[a-f0-9]{64}$/.test(digest) ||
+                fields.length !== 4 || entries.has(name)) throw new Error(`Invalid official example baseline row: ${row}`);
+            entries.set(name, row);
+        }
+        return entries;
+    };
+    const before = parse(previous);
+    const after = parse(current);
+    return {
+        added: [...after.keys()].filter((name) => !before.has(name)),
+        removed: [...before.keys()].filter((name) => !after.has(name)),
+        changed: [...after.keys()].filter((name) => before.has(name) && before.get(name) !== after.get(name)),
+    };
+}
+
+async function audit(book, website, output, reviewsPath, baselinePath) {
     const reviews = reviewsPath ? JSON.parse(await readFile(reviewsPath, "utf8")) : {};
+    const previous = baselinePath ? await readFile(baselinePath, "utf8") : undefined;
     if (!reviews || typeof reviews !== "object" || Array.isArray(reviews)) throw new Error("Expected an object keyed by case name in the review file");
     const inventory = await extractExamples(book, website);
     const { examples, revisions } = inventory;
@@ -152,6 +178,7 @@ async function audit(book, website, output, reviewsPath) {
 
     const cases = [];
     const totals = {};
+    const baselineRows = [];
     let failed = false;
     for (const { code, ...example } of examples) {
         const result = await auditExample({ ...example, code });
@@ -171,6 +198,20 @@ async function audit(book, website, output, reviewsPath) {
             ...example, ...outcome, approval, hasDiff,
             changeKind: outcome.status === "invariant-failure" ? "unsafe" : outcome.changeKind,
         });
+        const signature = hash([example.file, example.language, code, outcome.status, outcome.context,
+            outcome.diagnostic, outcome.wrappedDiagnostic, formatted]);
+        baselineRows.push([example.case_name, outcome.status, outcome.changeKind ?? "-", signature].join("\t"));
+    }
+    const baseline = [baselineHeader, ...baselineRows.sort(), ""].join("\n");
+    const drift = previous === undefined ? undefined : compareBaseline(previous, baseline);
+    if (drift && Object.values(drift).some((names) => names.length)) failed = true;
+    const summary = ["# Official Flix examples", "", ...Object.entries(totals).map(([key, count]) => `- ${key} · ${count}`), ""];
+    if (drift) {
+        summary.push("## Changes since the recorded baseline", "");
+        for (const [type, names] of Object.entries(drift)) {
+            summary.push(`- ${type} · ${names.length}`, ...names.slice(0, 20).map((name) => `  - \`${name}\``));
+        }
+        summary.push("", "See `drift.json` in the audit artifact for the full list.", "");
     }
     const { stdout: diff } = await exec("git", ["diff", "--no-index", "--no-ext-diff", "--no-color", "--no-renames", "--", "before", "after"], {
         cwd: output, maxBuffer: 16 * 1024 * 1024,
@@ -183,22 +224,28 @@ async function audit(book, website, output, reviewsPath) {
         writeFile(join(output, "report.json"), JSON.stringify({ revisions, formatOptions, totals, cases }, null, 2) + "\n"),
         writeFile(join(output, "changes.diff"), diff),
         writeFile(join(output, "findings.md"), groupedReport(cases)),
+        writeFile(join(output, "baseline.tsv"), baseline),
+        writeFile(join(output, "summary.md"), summary.join("\n")),
+        ...(drift ? [writeFile(join(output, "drift.json"), JSON.stringify(drift, null, 2) + "\n")] : []),
     ]);
     console.log(JSON.stringify(totals, null, 2));
     if (reviewsPath) {
         console.log(`Reviewed layout changes: ${cases.filter((item) => item.approval).length}/${totals["layout-change"] ?? 0}`);
     }
+    if (drift) console.log(`Baseline drift: ${drift.added.length} added, ${drift.removed.length} removed, ${drift.changed.length} changed`);
     console.log(`Report: ${join(output, "report.json")}`);
     return failed ? 1 : 0;
 }
 
 if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url) {
     try {
-        const { positionals, values } = parseArgs({ allowPositionals: true, options: { reviews: { type: "string" } } });
+        const { positionals, values } = parseArgs({
+            allowPositionals: true, options: { reviews: { type: "string" }, baseline: { type: "string" } },
+        });
         if (positionals.length !== 3) {
-            throw new Error("Usage: npm run test:docs-examples -- <book> <flix.dev> <new-report-directory> [--reviews reviews.json]");
+            throw new Error("Usage: npm run test:docs-examples -- <book> <flix.dev> <new-report-directory> [--reviews reviews.json] [--baseline baseline.tsv]");
         }
-        process.exitCode = await audit(...positionals.map((path) => resolve(path)), values.reviews);
+        process.exitCode = await audit(...positionals.map((path) => resolve(path)), values.reviews, values.baseline);
     } catch (error) {
         console.error(error.message);
         process.exitCode = 2;

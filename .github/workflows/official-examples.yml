@@ -1,6 +1,8 @@
 name: Official Flix examples
 
 on:
+  schedule:
+    - cron: "17 6 * * 1"
   workflow_dispatch:
     inputs:
       book_ref:
@@ -14,6 +16,7 @@ on:
       - ".github/workflows/official-examples.yml"
       - "scripts/audit-flix-examples.mjs"
       - "scripts/extract-flix-examples.mjs"
+      - "test/official-docs-baseline.tsv"
       - "test/lib.mjs"
       - "src/**"
       - "package.json"
@@ -38,16 +41,22 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: flix/book
-          ref: ${{ inputs.book_ref || '64d81bd6984ede06442ef7b63235092b9fe3c29c' }}
+          ref: ${{ github.event_name == 'schedule' && 'refs/heads/master' || inputs.book_ref || '64d81bd6984ede06442ef7b63235092b9fe3c29c' }}
           path: upstream-book
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
           repository: flix/flix.dev
-          ref: ${{ inputs.website_ref || '655c94385f09855e88b333e98577194cedf91ce7' }}
+          ref: ${{ github.event_name == 'schedule' && 'refs/heads/master' || inputs.website_ref || '655c94385f09855e88b333e98577194cedf91ce7' }}
           path: upstream-website
           persist-credentials: false
-      - run: npm run test:docs-examples -- upstream-book upstream-website official-examples-audit
+      - run: npm run test:docs-examples -- upstream-book upstream-website official-examples-audit --baseline test/official-docs-baseline.tsv
+      - name: Publish drift summary
+        if: ${{ !cancelled() }}
+        run: |
+          if [ -f official-examples-audit/summary.md ]; then
+            cat official-examples-audit/summary.md >> "$GITHUB_STEP_SUMMARY"
+          fi
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
