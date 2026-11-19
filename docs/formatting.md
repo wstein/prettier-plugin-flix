@@ -18,11 +18,12 @@ Flix classifies some tokens by the whitespace around them (`->` in `s->field` ve
 ## Column alignment
 
 Prettier aligns the `=>` of multiline maps and the `=` of multiline record
-literals when all entries are simple names or literals. A map laid out with one
-entry per line stays multiline when it qualifies for alignment. A map that
-fits inline uses ordinary spacing. Padding is limited to eight extra spaces
-and is skipped when the code leaves too little room within `printWidth`, or a
-row contains a compound expression or a comment between its code tokens.
+literals when all keys and values are simple names or literals. Map values
+also support flat `List#{…}` literals containing simple elements. A map laid
+out with one entry per line stays multiline when it qualifies for alignment.
+A map that fits inline uses ordinary spacing. Padding is capped at eight
+extra spaces. Rows that exceed `printWidth`, contain more complex expressions,
+or have comments between code tokens use ordinary spacing.
 Trailing line comments stay with their entries. When two or more share a
 column, each receives up to eight extra spaces if the padded comment fits in
 the preferred line width. See the [map example](https://wstein.github.io/prettier-plugin-flix/expressions/#align-map-entries).

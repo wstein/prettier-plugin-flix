@@ -382,14 +382,34 @@ export class Printer {
         return !!info && (info.lead.length > 0 || (!ignoreTrailing && info.trail.length > 0));
     }
 
-    /** Measure only atoms whose printed spelling is the same as their source spelling. */
-    private atomWidth(n: Node, rowEnd: TerminalNode | null = null): number | undefined {
+    /** Measure atoms and, for map values, flat lists of atoms. */
+    private inlineWidth(n: Node, rowEnd: TerminalNode | null = null, allowList = false): number | undefined {
         if (isTerm(n)) return this.hasComment(n, n === rowEnd) ? undefined : util.getStringWidth(this.src(n));
         const cs = kids(n);
-        if (cs.length === 1) return this.atomWidth(cs[0], rowEnd);
+        if (cs.length === 1) return this.inlineWidth(cs[0], rowEnd, allowList);
+        if (allowList && kind(n) === "CollectionLiteral" && isTerm(cs[0]) && ttype(cs[0]) === L.LIST_HASH) {
+            return this.flatListWidth(cs, rowEnd);
+        }
         if (kind(n) !== "PlainString" || !cs.every((t) => isTerm(t) && !this.hasComment(t, t === rowEnd))) return;
         const spelling = (cs as TerminalNode[]).map((t) => this.src(t)).join("");
         if (!/[\t\r\n]/.test(spelling)) return util.getStringWidth(spelling);
+    }
+
+    private flatListWidth(children: Node[], rowEnd: TerminalNode | null): number | undefined {
+        const tokens = [children[0], children[1], children[children.length - 1]];
+        if (tokens.some((token) => !isTerm(token) || this.hasComment(token, token === rowEnd))) return;
+        let width = "List#{}".length;
+        if (children.length === 3) return width;
+
+        const { items, seps } = this.splitOn(children.slice(2, -1), L.COMMA);
+        if (seps.some((separator) => this.hasComment(separator))) return;
+        for (const item of items) {
+            if (item.length !== 1) return;
+            const itemWidth = this.inlineWidth(item[0]);
+            if (itemWidth === undefined) return;
+            width += itemWidth;
+        }
+        return width + 2 * seps.length;
     }
 
     private alignEntryComments(rows: { end: TerminalNode | null; width: number }[], seps: TerminalNode[]): void {
@@ -420,10 +440,10 @@ export class Printer {
             const [left, delimiter, right, ...rest] = kids(item[0]);
             const expected = entryKind === "MapEntry" ? L.ARROW_THICK_R : L.EQUAL;
             if (rest.length || !right || !isTerm(delimiter) || ttype(delimiter) !== expected || this.hasComment(delimiter)) return;
-            const leftWidth = this.atomWidth(left);
+            const leftWidth = this.inlineWidth(left);
             // Suffix comments stay with their entry and take no space in the code columns.
             const end = lastTerm(right);
-            const rightWidth = this.atomWidth(right, end);
+            const rightWidth = this.inlineWidth(right, end, entryKind === "MapEntry");
             if (leftWidth === undefined || rightWidth === undefined) return;
             rows.push({ left, delimiter, right, end, leftWidth, rightWidth });
         }
@@ -520,7 +540,7 @@ export class Printer {
         const isMap = parentKind === "CollectionLiteral" && isTerm(collection) && ttype(collection) === L.MAP_HASH;
         const layoutId = Symbol();
         const aligned = (isMap || parentKind === "RecordOperation") &&
-            !this.hasComment(open) && !this.hasComment(close) &&
+            !this.hasComment(open) && !this.hasComment(close, true) &&
             !split.seps.some((t) => this.hasComment(t, true))
             ? this.alignEntries(items, split.seps, layoutId)
             : undefined;
