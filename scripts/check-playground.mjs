@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadFixture, optionsFor } from "../test/fixture.mjs";
+import { readHandoff, writeHandoff } from "../docs/assets/js/playground-link.js";
 import { fingerprint, fmt, programProblems } from "../test/lib.mjs";
 
 const site = new URL("../docs/public/", import.meta.url);
@@ -41,4 +42,12 @@ test("all curated examples format safely in the published browser bundle", async
             assert.equal(await formatFlix(output, settings), output, path);
         }
     }
+});
+
+test("the guide handoff preserves Unicode source and formatting options in a URL fragment", () => {
+    const draft = { source: 'pub def board(): String = "🚉 Köln & Zürich"\n', printWidth: 47, tabWidth: 2, useTabs: true };
+    const url = new URL(writeHandoff("https://example.test/flix/playground/?fixture=examples%2Fitinerary.flix", draft));
+    assert.equal(url.searchParams.get("fixture"), "examples/itinerary.flix");
+    assert.deepEqual(readHandoff(url.hash), draft);
+    assert.equal(readHandoff("#code=%21"), undefined);
 });

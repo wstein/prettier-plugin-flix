@@ -2,38 +2,9 @@
 <h1 class="playground-title">{{ .Title }}</h1>
 {{ $examples := resources.FromString "data/playground.json" (site.Data.playground | jsonify) | fingerprint }}
 {{ $linked := resources.FromString "data/playground-fixtures.json" (site.Data.playgroundFixtures | jsonify) | fingerprint }}
-{{/* The formatter dispatches on generated parser class names. */}}
-{{ $formatter := resources.Get "js/format-flix.js" | js.Build (dict "shims" (dict "prettier-plugin-flix" "formatter/index.js") "format" "esm" "target" "es2022") | fingerprint }}
-{{ $worker := resources.Get "js/playground-worker.js" | fingerprint }}
-<div class="playground" data-examples="{{ $examples.RelPermalink }}" data-linked-fixtures="{{ $linked.RelPermalink }}" data-formatter="{{ $formatter.RelPermalink }}" data-worker="{{ $worker.RelPermalink }}">
-  <div class="playground-toolbar">
-    <label class="playground-example">Example
-      <select id="playground-example" disabled><option value="">Custom code</option></select>
-    </label>
-    <label>Line width <input id="print-width" type="number" min="1" step="1" required value="80"></label>
-    <label>Indent <input id="tab-width" type="number" min="1" step="1" required value="4"></label>
-    <button type="button" class="playground-copy" disabled>Copy output</button>
-  </div>
-  <div class="playground-panes">
-    <section class="playground-pane">
-      <h2 id="flix-input-label">Flix input</h2>
-      <div id="flix-input" class="playground-editor"></div>
-    </section>
-    <section class="playground-pane">
-      <div class="playground-preview-header">
-        <h2 id="flix-output-label">Preview</h2>
-        <div class="playground-preview-modes" role="group" aria-label="Preview mode">
-          <button type="button" data-preview-mode="formatted" aria-controls="flix-output" aria-pressed="true">Formatted</button>
-          <button type="button" data-preview-mode="diff" aria-controls="flix-diff" aria-pressed="false">Diff</button>
-        </div>
-      </div>
-      <div id="flix-output" class="playground-editor"></div>
-      <div id="flix-diff" class="playground-diff" role="region" aria-label="Formatting differences" tabindex="0" hidden></div>
-    </section>
-  </div>
-  <p class="playground-status" role="status">Loading the editor…</p>
-</div>
+{{ $assets := partial "playground-assets.html" . }}
+{{ partial "playground-workbench.html" (dict "full" true "examples" $examples "linked" $linked "assets" $assets) }}
 <noscript><p>Enable JavaScript to use the Playground.</p></noscript>
-{{ $script := resources.Get "js/playground.js" | js.Build (dict "minify" true "format" "esm" "target" "es2022") | fingerprint }}
-<script type="module" src="{{ $script.RelPermalink }}" integrity="{{ $script.Data.Integrity }}"></script>
+
+<script type="module" src="{{ $assets.script.RelPermalink }}" integrity="{{ $assets.script.Data.Integrity }}"></script>
 {{ end }}

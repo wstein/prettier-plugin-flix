@@ -1,5 +1,6 @@
 mod Checkout{
 pub def total(subtotal:Int32):Int32={
+// Orders of at least 50 currency units ship free.
 let shipping=if(subtotal>=5000) 0 else 599;
 subtotal+shipping
 }
@@ -19,3 +20,7 @@ Assert.assertEq(expected=5000,Checkout.total(5000))
 def testPaidShipping():Unit \ Assert={
 Assert.assertEq(expected=1599,Checkout.total(1000))
 }
+
+@Test
+def testPrintedReceipt():Unit \ Assert=
+Assert.assertEq(expected="Jo: 1599 cents including shipping",Checkout.receipt("Jo",1000))
