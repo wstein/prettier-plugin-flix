@@ -3,7 +3,7 @@ import { doc, type Doc } from "prettier";
 import { FlixLexer as L } from "./generated/FlixLexer.js";
 import type { Comment, FlixRoot, TokenInfo } from "./parse.js";
 
-const { group, indent, line, softline, hardline, join, ifBreak, lineSuffix, breakParent, literalline } = doc.builders;
+const { group, indent, line, softline, hardline, join, ifBreak, lineSuffix, literalline } = doc.builders;
 const { willBreak } = doc.utils;
 
 type Node = ParserRuleContext | TerminalNode;
@@ -147,7 +147,7 @@ export class Printer {
         const gap = glued ? "" : " ";
         return info.trail.map((c) =>
             c.isLine || c.nlNext > 0
-                ? [lineSuffix([gap, this.commentText(c)]), breakParent]
+                ? lineSuffix([gap, this.commentText(c)])
                 : [gap, this.commentText(c)],
         );
     }
@@ -169,6 +169,17 @@ export class Printer {
         }
         parts.push(this.src(t));
         return parts;
+    }
+
+    /**
+     * A separator (`,` `;`) printed right after the token `prev`. When `prev` ends its line with a
+     * comment and the separator has a trailing comment of its own, the two would fuse into one
+     * comment at the end of the line; the separator's comments then go on lines of their own.
+     */
+    private separatorTok(prev: TerminalNode | null, sep: TerminalNode): Doc {
+        const info = this.info(sep);
+        if (prev === null || !this.hasLineTrail(prev) || !info || info.trail.length === 0) return this.tok(sep);
+        return [this.tokCore(sep), info.trail.map((c) => [hardline, this.commentText(c)])];
     }
 
     private touchesTightArrow(t: TerminalNode): boolean {
@@ -355,8 +366,8 @@ export class Printer {
         return { items, seps };
     }
 
-    private joinWithSeps(docs: Doc[], seps: Doc[], after: Doc): Doc[] {
-        return docs.flatMap((d, i) => (i < docs.length - 1 ? [d, seps[i], after] : [d]));
+    private joinWithSeps(docs: Doc[], seps: Doc[], afters: Doc[]): Doc[] {
+        return docs.flatMap((d, i) => (i < docs.length - 1 ? [d, seps[i], afters[i]] : [d]));
     }
 
     /** Prints `open inner close` with its items laid out as a list or as vertical members. */
@@ -380,6 +391,9 @@ export class Printer {
 
         const sline = pad ? line : softline;
         const flatSline: Doc = this.flat > 0 ? (pad ? " " : "") : sline;
+        const innerLast = inner.length > 0 ? lastTerm(inner[inner.length - 1]) : null;
+        const firstSline = this.after(open, flatSline);
+        const lastSline = this.after(innerLast, flatSline);
         const tail: Doc[] = comments.flatMap((c) => [hardline, c]);
 
         const ruleKids = inner.filter((n) => !isTerm(n));
@@ -400,15 +414,18 @@ export class Printer {
                 const node = entry[0];
                 if (k > 0) {
                     const blank = this.blankBefore(firstTerm(node));
-                    docs.push(sourceMultiline || blank ? hardline : line);
+                    const prevLast = lastTerm(entries[k - 1][entries[k - 1].length - 1]);
+                    docs.push(sourceMultiline || blank ? hardline : this.after(structSplit ? structSplit.seps[k - 1] : prevLast, line));
                     if (blank) docs.push(hardline);
                 }
                 docs.push(entryDocs[k]);
-                if (structSplit && (k < entries.length - 1 || trailingComma)) docs.push(this.tok(structSplit.seps[k]));
+                if (structSplit && (k < entries.length - 1 || trailingComma)) {
+                    docs.push(this.separatorTok(lastTerm(entry[entry.length - 1]), structSplit.seps[k]));
+                }
             });
-            const body: Doc = [flatSline, docs, tail];
+            const body: Doc = [firstSline, docs, tail];
             if (sourceMultiline || comments.length > 0) return [openDoc, indent([hardline, docs, tail]), hardline, closeDoc, closeTrail];
-            return [group([openDoc, indent(body), flatSline, closeDoc]), closeTrail];
+            return [group([openDoc, indent(body), lastSline, closeDoc]), closeTrail];
         }
 
         const sepType = SEMI_LISTS.has(parentKind) ? L.SEMI : L.COMMA;
@@ -420,7 +437,11 @@ export class Printer {
             trailingTok = split.seps[split.seps.length - 1];
         }
         const docs = items.map((it) => this.seq(it.length > 0 ? [this.ls(it[0]), ...it.slice(1)] : it, parentKind));
-        const sepDocs = split.seps.slice(0, docs.length - 1).map((t) => this.tok(t));
+        const itemLast = (it: Node[]): TerminalNode | null => (it.length > 0 ? lastTerm(it[it.length - 1]) : null);
+        const sepDocs = split.seps.slice(0, docs.length - 1).map((t, k) => this.separatorTok(itemLast(items[k]), t));
+        // After a separator the next item starts on a new line if a comment ends the line there.
+        const sepAfters = split.seps.slice(0, docs.length - 1).map((t, k) =>
+            this.hasLineTrail(t) || (itemLast(items[k]) !== null && this.hasLineTrail(itemLast(items[k])!)) ? hardline : this.flat > 0 ? " " : line);
 
         // Hug a final brace-closed argument (`f(a, x -> {...})`). Decided from the syntax alone, never
         // from how a doc happens to break, so that a second formatting pass changes nothing.
@@ -441,9 +462,9 @@ export class Printer {
             !pad && comments.length === 0 && !commentAtBoundary && sepType === L.COMMA && lastTok !== null && ttype(lastTok) === L.RBRACE &&
             !items.slice(0, -1).some((it) => it.length > 0 && lastTerm(it[it.length - 1]) !== null && ttype(lastTerm(it[it.length - 1])!) === L.RBRACE) &&
             !docs.slice(0, -1).some(willBreak);
-        if (huggable) return [openDoc, this.joinWithSeps(docs, sepDocs, " "), closeDoc, closeTrail];
+        if (huggable) return [openDoc, this.joinWithSeps(docs, sepDocs, sepDocs.map(() => " ")), closeDoc, closeTrail];
 
-        const list: Doc[] = this.joinWithSeps(docs, sepDocs, this.flat > 0 ? " " : line);
+        const list: Doc[] = this.joinWithSeps(docs, sepDocs, sepAfters);
         if (trailingTok) {
             const ti = this.info(trailingTok);
             const quiet = !ti || (ti.lead.length === 0 && ti.trail.length === 0);
@@ -453,7 +474,7 @@ export class Printer {
         const forceBreak =
             pad && openType === L.LBRACE && this.flat === 0 && inner.length > 0 && !!firstTerm(inner[0]) &&
             firstTerm(inner[0])!.symbol.line > open.symbol.line;
-        return [group([openDoc, indent([flatSline, list]), flatSline, closeDoc], { shouldBreak: forceBreak || comments.length > 0 }), closeTrail];
+        return [group([openDoc, indent([firstSline, list]), trailingTok && this.hasLineTrail(trailingTok) ? hardline : lastSline, closeDoc], { shouldBreak: forceBreak || comments.length > 0 }), closeTrail];
     }
 
     // ------------------------------------------------------------- dispatch
@@ -470,7 +491,7 @@ export class Printer {
             case "IfExpr": return this.printIf(n);
             case "DeclPrefix": return this.seq(kids(n), k);
             case "AnnotationList": return this.printAnnotations(n);
-            case "ModifierList": return [join(" ", kids(n).map((m) => this.print(m))), " "];
+            case "ModifierList": return kids(n).map((m) => [this.print(m), this.after(lastTerm(m), " ")]);
             case "PlainString":
             case "InterpolatedString": return this.printString(n);
             case "DebugPrimary": return kids(n).map((c) => this.print(c));
@@ -535,7 +556,7 @@ export class Printer {
                 if (this.blankBefore(firstTerm(parts[k].expr))) out.push(hardline);
             }
             out.push(this.print(this.ls(parts[k].expr)));
-            if (parts[k].semi) out.push(this.tok(parts[k].semi!));
+            if (parts[k].semi) out.push(this.separatorTok(lastTerm(parts[k].expr), parts[k].semi!));
         }
         return out;
     }
@@ -625,7 +646,7 @@ export class Printer {
         if (sameLine && l !== null && ttype(l) === L.RBRACE) return [this.after(arrow, " ", true), this.print(body)];
         const d = this.print(this.ls(body));
         if (sameLine && willBreak(d)) return [this.after(arrow, " ", true), d];
-        return group(indent([line, d]));
+        return group(indent([this.after(arrow, line), d]));
     }
 
     /** `head = body`, `case p => body`, `x -> body`; `let` and local `def` own the rest of their block. */
@@ -651,14 +672,14 @@ export class Printer {
             // belongs to this binding.
             const first = parts[0];
             const out: Doc[] = [head, this.placeBody(first.expr, arrow)];
-            if (first.semi) out.push(this.tok(first.semi));
+            if (first.semi) out.push(this.separatorTok(lastTerm(first.expr), first.semi));
             if (parts.length > 1) out.push(hardline, ...this.restSeparator(parts[1].expr), ...this.printParts(parts, 1));
             return [out, tailDoc];
         }
         if (this.isMultiStatement(stmt)) return [head, indent([hardline, this.printStatement(stmt)]), tailDoc];
         const only = parts[0];
         const out: Doc[] = [head, this.placeBody(only.expr, arrow)];
-        if (only.semi) out.push(this.tok(only.semi));
+        if (only.semi) out.push(this.separatorTok(lastTerm(only.expr), only.semi));
         return [out, tailDoc];
     }
 
@@ -688,7 +709,12 @@ export class Printer {
             }
         };
         collect(n);
-        const rest: Doc[] = ops.map((op, i) => [" ", this.print(op), this.flat > 0 ? " " : line, this.print(this.ls(operands[i + 1]))]);
+        const rest: Doc[] = ops.map((op, i) => [
+            this.after(lastTerm(operands[i]), " "),
+            this.print(op),
+            this.after(lastTerm(op), this.flat > 0 ? " " : line),
+            this.print(this.ls(operands[i + 1])),
+        ]);
         return group([this.print(operands[0]), indent(rest)]);
     }
 
