@@ -1,5 +1,4 @@
 ---
-title: Comments
+title: "Comments"
+description: "See where line, block, and documentation comments attach, including cases where whitespace changes how Flix reads an operator."
 ---
-
-Cases that check how the Prettier plugin formats comments without changing the Flix program.

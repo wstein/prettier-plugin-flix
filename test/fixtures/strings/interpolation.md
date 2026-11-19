@@ -1,5 +1,6 @@
 ---
 title: Interpolated expressions are formatted tight
+description: "The formatter spaces the expression inside interpolation while preserving the surrounding string."
 flix: "0.80"
 ---
 

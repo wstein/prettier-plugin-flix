@@ -14,6 +14,10 @@ const parserSource = readFileSync(new URL("../dist/generated/FlixParser.js", imp
 const alternatives = [...parserSource.matchAll(/^export class (\w+Context) extends \w+Context \{/gm)]
     .map((match) => match[1]);
 const tokenNames = FlixLexer.symbolicNames.filter(Boolean);
+const datalogRules = [
+    "fixpointExpr", "fixpointClause", "fixpointExpressions", "predicateAndArity",
+    "constraintSet", "datalogConstraint", "predicateHead", "predicateBody", "predicateAtom",
+];
 
 function* flixFiles(path) {
     if (!statSync(path).isDirectory()) {
@@ -68,6 +72,7 @@ function report(label, { tokens, rules, contexts, parsed, skipped }) {
     for (const [name, universe, observed] of [
         ["Named lexer tokens", tokenNames, tokens],
         ["Parser rules", FlixParser.ruleNames, rules],
+        ["Datalog parser rules", datalogRules, rules],
         ["Labeled alternatives", alternatives, contexts],
     ]) {
         const missing = universe.filter((item) => !observed.has(item));

@@ -1,5 +1,6 @@
 ---
 title: A long list constructor chain wraps at the requested width
+description: "The Prettier width setting wraps the :: chain. The Flix 0.80 reference leaves the chain on a single line."
 flix: "0.80"
 flixFormat: "0.80.0"
 options: { printWidth: 60 }

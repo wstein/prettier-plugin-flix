@@ -1,5 +1,7 @@
 ---
 title: A comment after a closing bracket does not break the call
+description: "A trailing comment on the call as a whole must not make the argument list expand."
+group: "Calls, blocks, and control flow"
 flix: "0.80"
 ---
 

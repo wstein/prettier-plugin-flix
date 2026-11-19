@@ -1,5 +1,7 @@
 ---
 title: An inline block comment stays on its line
+description: "An inline block comment belongs on the same line as its surrounding tokens."
+group: "Line endings and comment placement"
 flix: "0.80"
 ---
 

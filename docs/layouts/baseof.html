@@ -4,7 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ if not .IsHome }}{{ .Title }} · {{ end }}{{ site.Title }}</title>
-  <link rel="stylesheet" href="{{ "css/catalog.css" | relURL }}">
+  {{ $stylesheet := resources.Get "css/catalog.css" | minify | fingerprint }}
+  <link rel="stylesheet" href="{{ $stylesheet.RelPermalink }}" integrity="{{ $stylesheet.Data.Integrity }}">
 </head>
 <body>
   <header class="site-header">

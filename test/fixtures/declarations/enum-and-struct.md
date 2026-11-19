@@ -1,5 +1,6 @@
 ---
 title: Enum cases and struct fields
+description: "The formatter lays out enum cases and struct fields without changing the declared shapes."
 flix: "0.80"
 ---
 

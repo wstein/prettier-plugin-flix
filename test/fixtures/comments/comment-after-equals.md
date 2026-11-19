@@ -1,5 +1,7 @@
 ---
 title: A line comment right after = keeps the body on the next line
+description: "The body starts on the next line so its first expression does not become part of the comment."
+group: "Calls, blocks, and control flow"
 flix: "0.80"
 ---
 

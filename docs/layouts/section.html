@@ -1,51 +1,26 @@
 {{ define "main" }}
-{{ $fixtures := index site.Data.fixtures .Section }}
+{{ $chapter := index site.Data.fixtures .Section }}
+{{ $isShowcase := eq .Section "examples" }}
 <h1>{{ .Title }}</h1>
-{{ .Content }}
+<p>{{ .Description }}</p>
 <nav aria-label="Test cases" class="toc">
-  <h2>Test cases</h2>
-  <ul>
-    {{ range $fixtures }}
-    <li><a href="#{{ .id }}">{{ .title }}</a></li>
-    {{ end }}
-  </ul>
-</nav>
-{{ range $fixtures }}
-<article id="{{ .id }}" class="fixture">
-  <h2><a href="#{{ .id }}">{{ .title }}</a></h2>
-  <p class="fixture-links">
-    {{ if eq .status "todo" }}<span>Known formatter gap</span>{{ end }}
-    {{ if eq .status "error" }}<span>Expected syntax error</span>{{ end }}
-    <a href="https://github.com/wstein/prettier-plugin-flix/blob/main/test/fixtures/{{ .path }}">Fixture source</a>
-  </p>
-  {{ with .description }}<p>{{ . }}</p>{{ end }}
-  <div class="comparison">
-    <section>
-      <h3>Input</h3>
-      {{ .inputHtml | safeHTML }}
-    </section>
-    {{ with .outputs }}
-    {{ $first := index . 0 }}
-    <section>
-      <h3>Expected Prettier output</h3>
-      {{ with $first.options }}<p class="options">{{ . }}</p>{{ end }}
-      {{ $first.html | safeHTML }}
-    </section>
+  <h2>On this page</h2>
+  <div class="toc-groups">
+    {{ range $chapter.groups }}
+    <div>
+      {{ with .title }}<h3><a href="#group-{{ . | anchorize }}">{{ . }}</a></h3>{{ end }}
+      <ul>
+        {{ range .fixtures }}
+        <li><a href="#{{ .id }}">{{ .title }}</a></li>
+        {{ end }}
+      </ul>
+    </div>
     {{ end }}
   </div>
-  {{ range after 1 .outputs }}
-  <details>
-    <summary>Prettier output{{ with .options }} ({{ . }}){{ end }}</summary>
-    {{ .html | safeHTML }}
-  </details>
-  {{ end }}
-  {{ with .reference }}
-  <details>
-    <summary>Flix {{ .version }} reference{{ if .invalid }} (output fails to compile){{ else if eq .language "text" }} (compiler diagnostics){{ end }}</summary>
-    {{ with .note }}{{ . | markdownify }}{{ end }}
-    {{ if eq .language "flix" }}{{ .html | safeHTML }}{{ else }}<pre><code>{{ .code }}</code></pre>{{ end }}
-  </details>
-  {{ end }}
-</article>
+</nav>
+{{ range $chapter.groups }}
+  {{ with .title }}<h2 class="fixture-group" id="group-{{ . | anchorize }}">{{ . }}</h2>{{ end }}
+  {{ $group := .title }}
+  {{ range .fixtures }}{{ partial "fixture.html" (dict "fixture" . "group" $group "showcase" $isShowcase) }}{{ end }}
 {{ end }}
 {{ end }}

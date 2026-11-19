@@ -5,7 +5,8 @@
 <ul class="chapters">
   {{ range .Sections }}
   <li><a href="{{ .RelPermalink }}">{{ .Title }}</a>
-    <span>{{ len (index site.Data.fixtures .Section) }} test cases</span>
+    <span>{{ (index site.Data.fixtures .Section).count }} test cases</span>
+    <p>{{ .Description }}</p>
   </li>
   {{ end }}
 </ul>

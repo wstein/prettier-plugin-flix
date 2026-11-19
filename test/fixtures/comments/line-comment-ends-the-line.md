@@ -1,5 +1,7 @@
 ---
 title: Code after a line comment starts on a new line
+description: "A line break protects the next token from becoming part of the preceding line comment."
+group: "Line endings and comment placement"
 flix: "0.80"
 ---
 
