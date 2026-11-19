@@ -5,6 +5,7 @@ import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { parseArgs, promisify } from "node:util";
 import { fingerprint, fmt, programProblems } from "../test/lib.mjs";
+import { renderFindings } from "./docs-example-findings.mjs";
 import { extractExamples } from "./extract-flix-examples.mjs";
 
 const exec = promisify(execFile);
@@ -13,16 +14,6 @@ const hash = (value) => createHash("sha256").update(JSON.stringify(value)).diges
 const baselineHeader = "case\tstatus\tchange\tsha256";
 const wrapper = "def auditSnippet(): Unit = {\n";
 const declaration = /^(?:@|(?:def|eff|enum|instance|mod|pub|redef|restrictable|sealed|struct|trait|type|val)\b)/;
-
-const changeGroups = {
-    "line-endings": ["Line endings and final newline", "Treat as a mechanical change when the destination convention requires it."],
-    "blank-lines": ["Blank lines", "Check paragraph boundaries in the example and keep any that clarify the explanation."],
-    indentation: ["Indentation", "Check that nesting reads clearly and follows the configured indent width."],
-    spacing: ["Spacing and alignment", "Prefer consistent spacing and preserve alignment when it makes code easier to scan."],
-    wrapping: ["Line wrapping and layout", "Review syntax units together. Keep generator, handler or rule boundaries visible."],
-    other: ["Other source edits", "Inspect the exact diff and verify the syntax change with the Flix compiler."],
-    unsafe: ["Formatter invariant failures", "Reduce to a regression fixture and fix the formatter before approval."],
-};
 
 export function changeKind(input, output) {
     const withoutEndings = (value) => value.replace(/\r\n?/g, "\n").replace(/\n+$/, "");
@@ -113,29 +104,6 @@ export async function auditExample(example) {
     };
 }
 
-function groupedReport(cases) {
-    const lines = [
-        "# Flix documentation formatter findings", "",
-        "Each entry compares the extracted snippet with the formatter output byte for byte.",
-        "Book code includes the last line break in the fence. Website code is the cooked JavaScript string.",
-        "For fragments, the displayed result excludes the synthetic function. See report.json for locations and diagnostics.",
-        "Groups use the most significant change. For example, wrapping can also change spaces.", "",
-    ];
-    for (const [group, [title, recommendation]] of Object.entries(changeGroups)) {
-        const entries = cases.filter((item) => item.changeKind === group);
-        if (!entries.length) continue;
-        lines.push(`## ${title} (${entries.length})`, "", recommendation, "");
-        for (const item of entries) {
-            const name = item.case_name;
-            const files = item.hasDiff ? ` · [before](before/${name}.flix) · [after](after/${name}.flix)` : "";
-            const context = item.context === "expression-or-statements" ? " · formatted as a fragment" : "";
-            lines.push(`- [${name}](${item.url})${files}${context}`);
-        }
-        lines.push("");
-    }
-    return lines.join("\n");
-}
-
 export function approvalFor(result, approval) {
     if (result.status !== "layout-change" || !approval || approval.digest !== result.digest ||
         typeof approval.reason !== "string" || !approval.reason.trim()) return undefined;
@@ -194,12 +162,12 @@ async function audit(book, website, output, reviewsPath, baselinePath) {
                 writeFile(join(afterDir, filename), formatted),
             ]);
         }
-        cases.push({
-            ...example, ...outcome, approval, hasDiff,
-            changeKind: outcome.status === "invariant-failure" ? "unsafe" : outcome.changeKind,
-        });
         const signature = hash([example.file, example.language, code, outcome.status, outcome.context,
             outcome.diagnostic, outcome.wrappedDiagnostic, formatted]);
+        cases.push({
+            ...example, ...outcome, approval, hasDiff, signature,
+            changeKind: outcome.status === "invariant-failure" ? "unsafe" : outcome.changeKind,
+        });
         baselineRows.push([example.case_name, outcome.status, outcome.changeKind ?? "-", signature].join("\t"));
     }
     const baseline = [baselineHeader, ...baselineRows.sort(), ""].join("\n");
@@ -213,17 +181,21 @@ async function audit(book, website, output, reviewsPath, baselinePath) {
         }
         summary.push("", "See `drift.json` in the audit artifact for the full list.", "");
     }
-    const { stdout: diff } = await exec("git", ["diff", "--no-index", "--no-ext-diff", "--no-color", "--no-renames", "--", "before", "after"], {
+    const { stdout: diff } = await exec("git", [
+        "diff", "--no-index", "--no-ext-diff", "--no-color", "--no-renames", "--src-prefix=a/", "--dst-prefix=b/", "--", "before", "after",
+    ], {
         cwd: output, maxBuffer: 16 * 1024 * 1024,
     }).catch((error) => {
         if (error.code !== 1) throw error;
         return error;
     });
+    const findings = renderFindings(cases, diff);
     await Promise.all([
         writeFile(join(output, "examples.json"), JSON.stringify(inventory, null, 2) + "\n"),
         writeFile(join(output, "report.json"), JSON.stringify({ revisions, formatOptions, totals, cases }, null, 2) + "\n"),
         writeFile(join(output, "changes.diff"), diff),
-        writeFile(join(output, "findings.md"), groupedReport(cases)),
+        writeFile(join(output, "findings.md"), findings.markdown),
+        writeFile(join(output, "findings.html"), findings.html),
         writeFile(join(output, "baseline.tsv"), baseline),
         writeFile(join(output, "summary.md"), summary.join("\n")),
         ...(drift ? [writeFile(join(output, "drift.json"), JSON.stringify(drift, null, 2) + "\n")] : []),

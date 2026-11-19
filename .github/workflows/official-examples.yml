@@ -15,7 +15,9 @@ on:
     paths:
       - ".github/workflows/official-examples.yml"
       - "scripts/audit-flix-examples.mjs"
+      - "scripts/docs-example-findings.mjs"
       - "scripts/extract-flix-examples.mjs"
+      - "docs/official-example-assessments.json"
       - "test/official-docs-baseline.tsv"
       - "test/lib.mjs"
       - "src/**"
