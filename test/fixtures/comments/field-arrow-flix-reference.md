@@ -43,7 +43,7 @@ mod Reference {
 
 ## Flix Format
 
-Flix v0.80.0 inserts a space after the arrow, changing its lexer class. Rechecking the formatted file reports a type error (E6925) and an undefined name (E2136).
+Flix v0.80.0 inserts a space after the arrow, changing its lexer class. Rechecking the formatted file reports a type error (E6925) and an undefined name (E2136); the Flix Format Diagnostics section records both, so a change in them is reported.
 
 ```flix
 mod Reference {
@@ -59,4 +59,11 @@ mod Reference {
         }
     }
 }
+```
+
+## Flix Format Diagnostics
+
+```text
+Type Error [E6925]: Unable to unify the function type 't0 -> t1 \ e2' with the non-function type 'String'.
+Resolution Error [E2136]: Undefined name 'fstName'.
 ```

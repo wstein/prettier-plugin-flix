@@ -139,7 +139,67 @@ test("requires one correctly tagged reference and an exact version", () => {
 
 test("requires explicit acceptance of a compiler-invalid Flix reference", () => {
     const source = versioned.replace('flixFormat: "0.80.0"', 'flixFormat: "0.80.0"\nflixFormatInvalid: true');
-    assert.equal(parseFixture(source + reference("flix", "invalid\n")).meta.flixFormatInvalid, true);
+    const diagnostics = "\n## Flix Format Diagnostics\n\n" + fence + "text\nType Error [E1234]: example\n" + fence + "\n";
+    assert.equal(parseFixture(source + reference("flix", "invalid\n") + diagnostics).meta.flixFormatInvalid, true);
     assert.throws(() => parseFixture(source + reference("text", "diagnostic\n")), /requires a Flix Format code block/);
     assert.throws(() => parseFixture(source.replace(": true", ": false") + reference("flix", "invalid\n")), /must be true/);
+});
+
+const diagnosticsBlock = (code = "Type Error [E1234]: example\n", language = "text") => `\n## Flix Format Diagnostics\n\n${fence}${language}\n${code}${fence}\n`;
+const invalidSource = versioned.replace('flixFormat: "0.80.0"', 'flixFormat: "0.80.0"\nflixFormatInvalid: true');
+
+test("a flixFormatInvalid reference records its output diagnostics", () => {
+    const source = invalidSource + reference("flix", "invalid\n") + diagnosticsBlock();
+    const fixture = parseFixture(source);
+    assert.equal(fixture.flixFormatDiagnostics.code, "Type Error [E1234]: example\n");
+    const changed = withFlixFormat(fixture, { language: "flix", code: "other\n", outputDiagnostics: "Type Error [E9999]: new\nResolution Error [E2136]: x\n" });
+    const again = parseFixture(changed);
+    assert.equal(again.flixFormat.code, "other\n");
+    assert.equal(again.flixFormatDiagnostics.code, "Type Error [E9999]: new\nResolution Error [E2136]: x\n");
+    assert.equal(withFlixFormat(fixture, { language: "flix", code: "invalid\n", outputDiagnostics: fixture.flixFormatDiagnostics.code }), source);
+    // A fixture without a diagnostics block ignores outputDiagnostics.
+    const plain = parseFixture(versioned + reference("flix", "x\n"));
+    assert.equal(withFlixFormat(plain, { language: "flix", code: "x\n", outputDiagnostics: "ignored\n" }), versioned + reference("flix", "x\n"));
+});
+
+test("Flix Format Diagnostics and flixFormatInvalid require each other", () => {
+    assert.throws(() => parseFixture(invalidSource + reference("flix", "invalid\n")), /requires a Flix Format Diagnostics section/);
+    assert.throws(() => parseFixture(versioned + reference("flix", "x\n") + diagnosticsBlock()), /requires flixFormatInvalid: true/);
+    assert.throws(() => parseFixture(invalidSource + reference("flix", "x\n") + diagnosticsBlock() + diagnosticsBlock()), /duplicate Flix Format Diagnostics/);
+    assert.throws(() => parseFixture(invalidSource + reference("flix", "x\n") + "\n## Flix Format Diagnostics\n"), /exactly one block/);
+    assert.throws(() => parseFixture(invalidSource + reference("flix", "x\n") + diagnosticsBlock("x\n", "flix")), /must be tagged "text"/);
+    assert.throws(() => parseFixture(invalidSource + diagnosticsBlock() + reference("flix", "x\n")), /must follow ## Flix Format/);
+});
+
+test("the reference sections must follow Input and Output", () => {
+    const front = 'title: a\nflix: "0.80"\nflixFormat: "0.80.0"';
+    const input = `## Input\n\n${fence}flix\nx\n${fence}\n`;
+    const output = `\n## Output\n\n${fence}flix\nx\n${fence}\n`;
+    const ref = reference("flix", "x\n");
+    assert.ok(parseFixture(sample(front, input + output + ref)));
+    assert.throws(() => parseFixture(sample(front, ref.trimStart() + input + output)), /must come after ## Input and ## Output/);
+    assert.throws(() => parseFixture(sample(front, input + ref + output)), /must come after ## Input and ## Output/);
+    assert.throws(() => parseFixture(sample(front, ref.trimStart() + input)), /must come after ## Input and ## Output/);
+});
+
+test("the flixFormat version must belong to the fixture's Flix release", () => {
+    assert.throws(() => parseFixture(good.replace('flix: "0.80"', 'flix: "0.80"\nflixFormat: "0.81.0"') + reference("flix", "x\n")), /same major\.minor release/);
+    assert.ok(parseFixture(good.replace('flix: "0.80"', 'flix: "0.80"\nflixFormat: "0.80.7"') + reference("flix", "x\n")));
+});
+
+test("status: error fixtures cannot have a reference", () => {
+    const source = sample('title: Bad\nflix: "0.80"\nstatus: error\nflixFormat: "0.80.0"', `## Input\n\n${fence}flix\ndef (\n${fence}\n${reference("text", "x\n")}`);
+    assert.throws(() => parseFixture(source), /status: error fixtures cannot have a Flix Format reference/);
+});
+
+test("Output and reference updates compose in either order", () => {
+    const fixture = parseFixture(versioned + reference("flix", "ref\nmore\n"));
+    const outputFirst = parseFixture(withOutputs(fixture, ["A\nB\n", "C\n"]));
+    const both = parseFixture(withFlixFormat(outputFirst, { language: "text", code: "T\n" }));
+    assert.deepEqual(both.outputs.map((b) => b.code), ["A\nB\n", "C\n"]);
+    assert.equal(both.flixFormat.code, "T\n");
+    const referenceFirst = parseFixture(withFlixFormat(fixture, { language: "text", code: "T\n" }));
+    const final = parseFixture(withOutputs(referenceFirst, ["A\nB\n", "C\n"]));
+    assert.equal(final.flixFormat.code, "T\n");
+    assert.deepEqual(final.outputs.map((b) => b.code), ["A\nB\n", "C\n"]);
 });
