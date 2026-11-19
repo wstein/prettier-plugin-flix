@@ -5,24 +5,21 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
+import { normalize, summarizeDiagnostics } from "./flix-format-lib.mjs";
 import { findFixtures, loadFixture, relativeTo, withFlixFormat } from "../test/fixture.mjs";
 
 const run = promisify(execFile);
 const fixtures = fileURLToPath(new URL("../test/fixtures", import.meta.url));
-const normalize = (text) => text.replace(/\x1b\[[0-9;]*m/g, "").replace(/\r\n/g, "\n");
 
 async function readDiagnostics(path, fixture) {
     let output;
     try {
-        output = normalize(await readFile(path, "utf8"));
+        output = await readFile(path, "utf8");
     } catch (error) {
         if (error.code === "ENOENT") return "";
         throw error;
     }
-    const diagnostics = [...output.matchAll(/^-- (.+? \[E\d+\]) -+[^\n]*\n+>> ([^\n]+)/gm)]
-        .map(([, header, message]) => `${header}: ${message.trimEnd()}\n`);
-    if (diagnostics.length === 0) throw new Error(`Unrecognized Flix diagnostics for ${fixture.file}:\n${output}`);
-    return diagnostics.join("");
+    return summarizeDiagnostics(output, fixture.file);
 }
 
 async function capture(jar, version, selected) {
