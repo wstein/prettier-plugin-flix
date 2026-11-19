@@ -2,7 +2,7 @@
 {{ with .id }}{{ $prefix = printf "%s-" . }}{{ end }}
 <div class="playground" {{ if .full }}data-full-playground data-examples="{{ .examples.RelPermalink }}" data-linked-fixtures="{{ .linked.RelPermalink }}"{{ else }}data-embedded-playground data-initial="{{ .initial | jsonify }}" hidden{{ end }} data-formatter="{{ .assets.formatter.RelPermalink }}" data-worker="{{ .assets.worker.RelPermalink }}">
   <div class="playground-toolbar">
-    <span class="playground-live" title="Updates 250 ms after editing">Live</span>
+    {{ if not .full }}<span class="playground-live" title="Updates 250 ms after editing">Live</span>{{ end }}
     {{ if .full }}<label class="playground-example">Example
       <select id="playground-example" disabled><option value="" selected disabled hidden>Choose an example</option></select>
     </label>{{ end }}
