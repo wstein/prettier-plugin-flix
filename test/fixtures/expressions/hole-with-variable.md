@@ -20,7 +20,7 @@ def testHoleWithExp01(): Int32 = match (None : Option[Int32]) {
 ```flix
 @CompileTest
 def testHoleWithExp01(): Int32 = match (None: Option[Int32]) {
-    case None => 1
+    case None    => 1
     case Some(n) => n?
 }
 ```

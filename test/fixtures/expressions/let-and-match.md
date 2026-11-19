@@ -19,7 +19,7 @@ def f(x: Option[Int32]): Int32 = {
     let y = 1;
     match x {
         case Some(v) => v + y
-        case None => y
+        case None    => y
     }
 }
 ```

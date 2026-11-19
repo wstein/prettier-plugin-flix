@@ -508,7 +508,9 @@ export class Printer {
             const structSplit = parentKind === "StructDeclaration" ? this.splitOn(inner, L.COMMA) : null;
             const entries = structSplit ? structSplit.items.filter((x) => x.length > 0) : ruleKids.map((n) => [n]);
             const trailingComma = parentKind === "StructDeclaration" && isTerm(inner[inner.length - 1]);
-            const entryDocs = entries.map((entry) => this.seq([this.ls(entry[0]), ...entry.slice(1)], kind(entry[0])));
+            const layoutId = Symbol();
+            const entryDocs = this.alignMatchRules(ruleKids, layoutId) ??
+                entries.map((entry) => this.seq([this.ls(entry[0]), ...entry.slice(1)], kind(entry[0])));
             const docs: Doc[] = [];
             entries.forEach((entry, k) => {
                 const node = entry[0];
@@ -523,9 +525,10 @@ export class Printer {
                     docs.push(this.separatorTok(lastTerm(entry[entry.length - 1]), structSplit.seps[k]));
                 }
             });
-            const body: Doc = [firstSline, docs, tail];
-            if (sourceMultiline || comments.length > 0) return [openDoc, indent([hardline, docs, tail]), hardline, closeDoc, closeTrail];
-            return [group([openDoc, indent(body), lastSline, closeDoc]), closeTrail];
+            const vertical = sourceMultiline || comments.length > 0;
+            return [group([
+                openDoc, indent([vertical ? hardline : firstSline, docs, tail]), vertical ? hardline : lastSline, closeDoc,
+            ], { id: layoutId, shouldBreak: vertical }), closeTrail];
         }
 
         const sepType = SEMI_LISTS.has(parentKind) ? L.SEMI : L.COMMA;
@@ -598,6 +601,7 @@ export class Printer {
             case "Statement": return this.printStatement(n);
             case "Block": return this.printBlock(n);
             case "IfExpr": return this.printIf(n);
+            case "RunWithExpr": return this.printRunWith(n);
             case "DeclPrefix": return this.seq(kids(n), k);
             case "AnnotationList": return this.printAnnotations(n);
             case "ModifierList": return kids(n).map((m) => [this.print(m), this.after(lastTerm(m), " ")]);
@@ -746,6 +750,40 @@ export class Printer {
         return kids(n).some((c) => isTerm(c) && BODY_ARROWS.has(ttype(c)));
     }
 
+    private printRunWith(n: ParserRuleContext): Doc {
+        const children = kids(n);
+        const k = kind(n);
+        if (this.flat > 0 || children.length === 2) return this.seq(children, k);
+
+        const clauses: Doc[] = [];
+        for (let i = 2; i < children.length; i += 2) {
+            clauses.push(hardline, this.seq([this.ls(children[i]), children[i + 1]], k));
+        }
+        return [this.seq(children.slice(0, 2), k), indent(clauses)];
+    }
+
+    private alignMatchRules(rules: Node[], layoutId: symbol): Doc[] | undefined {
+        if (this.flat > 0 || rules.length < 2 || !rules.every((rule) => kind(rule) === "MatchRule")) return;
+        const rows = rules.map((rule) => this.eqBodyDocs(this.ls(rule as ParserRuleContext)));
+        const options = { printWidth: this.printWidth, tabWidth: this.tabWidth };
+        const measure = (value: Doc): number => {
+            const { formatted } = doc.printer.printDocToString(value, options);
+            return formatted.includes("\n") ? Infinity : util.getStringWidth(formatted);
+        };
+        const widths = rows.map(({ head }) => measure(head));
+        const column = Math.max(...widths);
+        if (!Number.isFinite(column) || widths.every((width) => width === column)) {
+            return rows.map(({ head, gap, tail }) => [head, gap, tail]);
+        }
+        const fits = rows.every(({ head, gap, tail }, i) =>
+            gap === " " && measure([head, gap, tail]) + column - widths[i] + 2 * this.tabWidth <= this.printWidth);
+        return rows.map(({ head, gap, tail }, i) => [
+            head,
+            fits ? ifBreak(" ".repeat(column - widths[i] + 1), gap, { groupId: layoutId }) : gap,
+            tail,
+        ]);
+    }
+
     /** Places `body` after `arrow`: hugged on the arrow's line when it spans lines, else wrapped. */
     private placeBody(body: Node, arrow: TerminalNode): Doc {
         const f = firstTerm(body);
@@ -760,19 +798,29 @@ export class Printer {
 
     /** `head = body`, `case p => body`, `x -> body`; `let` and local `def` own the rest of their block. */
     private printEqBody(n: ParserRuleContext): Doc {
+        const { head, gap, tail } = this.eqBodyDocs(n);
+        return [head, gap, tail];
+    }
+
+    private eqBodyDocs(n: ParserRuleContext): { head: Doc; gap: Doc; tail: Doc } {
         const cs = kids(n);
         const k = kind(n);
         const ai = cs.findIndex((c) => isTerm(c) && BODY_ARROWS.has(ttype(c)));
         const arrow = cs[ai] as TerminalNode;
         const headLast = ai > 0 ? lastTerm(cs[ai - 1]) : null;
-        const head = [this.seq(cs.slice(0, ai), k), this.after(headLast, " ", true), this.tok(arrow)];
+        const head = this.seq(cs.slice(0, ai), k);
+        const gap = this.after(headLast, " ", true);
+        return { head, gap, tail: [this.tok(arrow), this.printEqBodyTail(cs, ai, k, arrow)] };
+    }
+
+    private printEqBodyTail(cs: Node[], ai: number, k: string, arrow: TerminalNode): Doc {
         const body = cs[ai + 1];
         const rest = cs.slice(ai + 2);
         const restDoc = rest.length > 0 ? this.seq(rest, k) : "";
         const comma = rest.length > 0 && isTerm(rest[0]) && ttype(rest[0] as TerminalNode) === L.COMMA;
         const tailDoc: Doc = rest.length > 0 ? (comma ? restDoc : [" ", restDoc]) : "";
 
-        if (kind(body) !== "Statement") return [head, this.placeBody(body, arrow), tailDoc];
+        if (kind(body) !== "Statement") return [this.placeBody(body, arrow), tailDoc];
 
         const stmt = body as ParserRuleContext;
         const parts = this.statementParts(stmt);
@@ -780,14 +828,14 @@ export class Printer {
             // The statement is the remainder of the enclosing block: only its first expression
             // belongs to this binding.
             const first = parts[0];
-            const out: Doc[] = [head, this.placeBody(first.expr, arrow)];
+            const out: Doc[] = [this.placeBody(first.expr, arrow)];
             if (first.semi) out.push(this.separatorTok(lastTerm(first.expr), first.semi));
             if (parts.length > 1) out.push(hardline, ...this.restSeparator(parts[1].expr), ...this.printParts(parts, 1));
             return [out, tailDoc];
         }
-        if (this.isMultiStatement(stmt)) return [head, indent([hardline, this.printStatement(stmt)]), tailDoc];
+        if (this.isMultiStatement(stmt)) return [indent([hardline, this.printStatement(stmt)]), tailDoc];
         const only = parts[0];
-        const out: Doc[] = [head, this.placeBody(only.expr, arrow)];
+        const out: Doc[] = [this.placeBody(only.expr, arrow)];
         if (only.semi) out.push(this.separatorTok(lastTerm(only.expr), only.semi));
         return [out, tailDoc];
     }
