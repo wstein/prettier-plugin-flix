@@ -17,8 +17,9 @@
 // are built with `flix build`; if that succeeds, `flix test` runs too. The normalized outputs must
 // be identical: diagnostics by category, code and message (positions and snippets differ after
 // formatting) or test results, and the compiler's exit status. A timeout, a signal or a failure to
-// start the compiler is a broken run (exit 2), never a result. Files that do not parse are left
-// as they are. Needs Java 21 (FLIX_ORACLE_JAVA names another executable, which the tests use).
+// start the compiler is a broken run (exit 2), never a result. Files the grammar cannot parse are
+// skipped and counted; a formatter failure on a file that does parse is a failure of the run.
+// Needs Java 21 (FLIX_ORACLE_JAVA names another executable, which the tests use).
 import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
 import { cpus, tmpdir } from "node:os";
@@ -113,7 +114,9 @@ async function build(name, variant, text) {
 }
 
 const mismatches = [];
-let unformatted = 0;
+const formatterFailures = [];
+let syntaxSkipped = 0;
+let compared = 0;
 let done = 0;
 const queue = [...files];
 async function worker() {
@@ -121,9 +124,20 @@ async function worker() {
         const original = readFileSync(join(srcDir, name), "utf8");
         let second = original;
         if (!control) {
-            try { second = await format(original, { parser: "flix", plugins: [plugin] }); } catch { unformatted++; }
+            try {
+                second = await format(original, { parser: "flix", plugins: [plugin] });
+            } catch (e) {
+                // Unsupported syntax is a skip; a printer failure on a file the grammar does parse is not.
+                let parses = true;
+                try { plugin.parsers.flix.parse(original); } catch { parses = false; }
+                if (!parses) syntaxSkipped++;
+                else formatterFailures.push({ name, message: String(e.message).split("\n")[0] });
+                if (++done % 10 === 0) console.error(`  ${done}/${files.length}`);
+                continue;
+            }
         }
         const [a, b] = await Promise.all([build(name, "original", original), build(name, control ? "control" : "formatted", second)]);
+        compared++;
         if (a.stage !== b.stage || a.status !== b.status || a.text !== b.text) mismatches.push({ name, a, b, formatted: second });
         if (++done % 10 === 0) console.error(`  ${done}/${files.length}`);
     }
@@ -135,7 +149,16 @@ try {
     console.error(e.message);
     process.exit(2);
 }
-console.log(`${files.length} files (every ${every}), ${jobs} jobs, ${unformatted} kept unformatted (do not parse)`);
+console.log(`${files.length} files (every ${every}), ${jobs} jobs: ${compared} compared, ${syntaxSkipped} skipped (do not parse), ${formatterFailures.length} formatter failures`);
+let failed = false;
+for (const f of formatterFailures) {
+    console.error(`FORMATTER FAILURE ${f.name}: ${f.message}`);
+    failed = true;
+}
+if (compared === 0 && formatterFailures.length === 0) {
+    console.error("no file could be compared: every selected file was skipped");
+    process.exit(2);
+}
 if (mismatches.length > 0) {
     const keep = join(root, "mismatches");
     mkdirSync(keep, { recursive: true });
@@ -145,8 +168,9 @@ if (mismatches.length > 0) {
         writeFileSync(join(keep, m.name + ".formatted.flix"), m.formatted);
         console.error(`MISMATCH ${m.name} (original: ${m.a.stage}, exit ${m.a.status}; other: ${m.b.stage}, exit ${m.b.status})`);
     }
-    console.error(`${mismatches.length} of ${files.length} differ; details in ${keep}`);
-    process.exit(1);
+    console.error(`${mismatches.length} of ${compared} differ; details in ${keep}`);
+    failed = true;
 }
-console.log("identical for every file");
+if (failed) process.exit(1);
+console.log("identical for every compared file");
 rmSync(root, { recursive: true, force: true });

@@ -100,7 +100,8 @@ const runFake = (args, env) => spawnSync(process.execPath, [script, ...args], { 
 test("identical reports compare equal", { skip: !posix }, () => {
     const r = runFake([fakeJar, sources, "--jobs", "1"]);
     assert.equal(r.status, 0, r.stderr);
-    assert.match(r.stdout, /identical for every file/);
+    assert.match(r.stdout, /1 compared, 0 skipped/);
+    assert.match(r.stdout, /identical for every compared file/);
 });
 
 test("the same diagnostics with a different exit status are a mismatch", { skip: !posix }, () => {
@@ -125,4 +126,23 @@ test("a compiler that cannot be started is a broken run", () => {
     const r = spawnSync(process.execPath, [script, fakeJar, sources], { encoding: "utf8", env: { ...process.env, FLIX_ORACLE_JAVA: join(work, "no-such-java") } });
     assert.equal(r.status, 2, r.stdout + r.stderr);
     assert.match(r.stderr, /harness failure/);
+});
+
+test("files the grammar cannot parse are skipped and counted", { skip: !posix }, () => {
+    const mixed = join(work, "mixed");
+    mkdirSync(mixed);
+    writeFileSync(join(mixed, "A.flix"), "def a(): Int32 = 1\n");
+    writeFileSync(join(mixed, "Bad.flix"), "def (\n");
+    const r = runFake([fakeJar, mixed, "--jobs", "1"]);
+    assert.equal(r.status, 0, r.stderr);
+    assert.match(r.stdout, /1 compared, 1 skipped \(do not parse\), 0 formatter failures/);
+});
+
+test("a run where every file is skipped is an error, not a success", { skip: !posix }, () => {
+    const onlyBad = join(work, "only-bad");
+    mkdirSync(onlyBad);
+    writeFileSync(join(onlyBad, "Bad.flix"), "def (\n");
+    const r = runFake([fakeJar, onlyBad]);
+    assert.equal(r.status, 2, r.stdout + r.stderr);
+    assert.match(r.stderr, /no file could be compared/);
 });
