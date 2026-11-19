@@ -21,17 +21,26 @@ public class FlixFormatReferences {
             .getField("MODULE$").get(null);
         for (String arg : List.of(args).subList(1, args.length)) {
             var file = Path.of(arg);
-            try (var flix = new Flix(List$.MODULE$.empty(), List$.MODULE$.empty(), Map$.MODULE$.empty())) {
-                flix.addFile(file, context);
-                var checked = flix.check();
-                if (checked._2().isEmpty()) {
-                    // Same formatter and type-check gate as the explicit-file `flix format` command.
-                    FormatterLsp.formatFiles(flix.getParsedAst(), CollectionConverters.asScala(List.of(file)).toList(), flix);
-                } else {
-                    var diagnostics = CompilationMessage.formatAll(checked._2(), flix.getFormatter(), checked._1());
-                    Files.writeString(file.resolveSibling("diagnostics.txt"), diagnostics);
-                }
+            if (check(file, context, "input-diagnostics.txt", true)) {
+                check(file, context, "output-diagnostics.txt", false);
             }
+        }
+    }
+
+    private static boolean check(Path file, SecurityContext context, String diagnosticsName, boolean format) throws Exception {
+        try (var flix = new Flix(List$.MODULE$.empty(), List$.MODULE$.empty(), Map$.MODULE$.empty())) {
+            flix.addFile(file, context);
+            var checked = flix.check();
+            if (!checked._2().isEmpty()) {
+                var diagnostics = CompilationMessage.formatAll(checked._2(), flix.getFormatter(), checked._1());
+                Files.writeString(file.resolveSibling(diagnosticsName), diagnostics);
+                return false;
+            }
+            if (format) {
+                // Same formatter and type-check gate as the explicit-file `flix format` command.
+                FormatterLsp.formatFiles(flix.getParsedAst(), CollectionConverters.asScala(List.of(file)).toList(), flix);
+            }
+            return true;
         }
     }
 }

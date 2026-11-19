@@ -2,6 +2,7 @@
 title: A field-access arrow followed by a line comment in a complete module
 flix: "0.80"
 flixFormat: "0.80.0"
+flixFormatInvalid: true
 ---
 
 ## Input
@@ -42,7 +43,7 @@ mod Reference {
 
 ## Flix Format
 
-Flix v0.80.0 inserts a space after the arrow, changing its lexer class.
+Flix v0.80.0 inserts a space after the arrow, changing its lexer class. Rechecking the formatted file reports a type error (E6925) and an undefined name (E2136).
 
 ```flix
 mod Reference {

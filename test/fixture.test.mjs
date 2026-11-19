@@ -136,3 +136,10 @@ test("requires one correctly tagged reference and an exact version", () => {
     assert.throws(() => parseFixture(versioned + validBlock + validBlock), /duplicate Flix Format section/);
     assert.throws(() => parseFixture(versioned + reference("flix printWidth=20", "")), /must be tagged/);
 });
+
+test("requires explicit acceptance of a compiler-invalid Flix reference", () => {
+    const source = versioned.replace('flixFormat: "0.80.0"', 'flixFormat: "0.80.0"\nflixFormatInvalid: true');
+    assert.equal(parseFixture(source + reference("flix", "invalid\n")).meta.flixFormatInvalid, true);
+    assert.throws(() => parseFixture(source + reference("text", "diagnostic\n")), /requires a Flix Format code block/);
+    assert.throws(() => parseFixture(source.replace(": true", ": false") + reference("flix", "invalid\n")), /must be true/);
+});

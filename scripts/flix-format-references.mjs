@@ -2,7 +2,7 @@ import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import { findFixtures, loadFixture, relativeTo, withFlixFormat } from "../test/fixture.mjs";
@@ -10,6 +10,20 @@ import { findFixtures, loadFixture, relativeTo, withFlixFormat } from "../test/f
 const run = promisify(execFile);
 const fixtures = fileURLToPath(new URL("../test/fixtures", import.meta.url));
 const normalize = (text) => text.replace(/\x1b\[[0-9;]*m/g, "").replace(/\r\n/g, "\n");
+
+async function readDiagnostics(path, fixture) {
+    let output;
+    try {
+        output = normalize(await readFile(path, "utf8"));
+    } catch (error) {
+        if (error.code === "ENOENT") return "";
+        throw error;
+    }
+    const diagnostics = [...output.matchAll(/^-- (.+? \[E\d+\]) -+[^\n]*\n+>> ([^\n]+)/gm)]
+        .map(([, header, message]) => `${header}: ${message.trimEnd()}\n`);
+    if (diagnostics.length === 0) throw new Error(`Unrecognized Flix diagnostics for ${fixture.file}:\n${output}`);
+    return diagnostics.join("");
+}
 
 async function capture(jar, version, selected) {
     const dir = await mkdtemp(join(tmpdir(), "flix-format-reference-"));
@@ -25,18 +39,15 @@ async function capture(jar, version, selected) {
         const driver = fileURLToPath(new URL("./FlixFormatReferences.java", import.meta.url));
         await run("java", ["--class-path", jar, driver, version, ...paths], { timeout: 300_000 });
         return await Promise.all(paths.map(async (path, index) => {
-            const diagnosticsPath = join(dir, String(index), "diagnostics.txt");
-            let output;
-            try {
-                output = normalize(await readFile(diagnosticsPath, "utf8"));
-            } catch (error) {
-                if (error.code !== "ENOENT") throw error;
-                return { language: "flix", code: normalize(await readFile(path, "utf8")) };
-            }
-            const diagnostics = [...output.matchAll(/^-- (.+? \[E\d+\]) -+[^\n]*\n+>> ([^\n]+)/gm)]
-                .map(([, header, message]) => `${header}: ${message.trimEnd()}\n`);
-            if (diagnostics.length === 0) throw new Error(`Unrecognized Flix diagnostics for ${selected[index][1].file}:\n${output}`);
-            return { language: "text", code: diagnostics.join("") };
+            const fixture = selected[index][1];
+            const folder = dirname(path);
+            const inputDiagnostics = await readDiagnostics(join(folder, "input-diagnostics.txt"), fixture);
+            if (inputDiagnostics) return { language: "text", code: inputDiagnostics, outputDiagnostics: "" };
+            return {
+                language: "flix",
+                code: normalize(await readFile(path, "utf8")),
+                outputDiagnostics: await readDiagnostics(join(folder, "output-diagnostics.txt"), fixture),
+            };
         }));
     } finally {
         await rm(dir, { recursive: true, force: true });
@@ -63,8 +74,15 @@ async function main() {
 
     const outputs = await capture(jar, version, selected);
     const changes = [];
+    let unexpectedValidity = false;
     for (const [index, [path, fixture]] of selected.entries()) {
         const actual = outputs[index];
+        const invalid = actual.outputDiagnostics !== "";
+        if (invalid !== (fixture.meta.flixFormatInvalid === true)) {
+            unexpectedValidity = true;
+            console.error(`${fixture.file}: Flix output validity changed`);
+        }
+        if (invalid) console.log(`${fixture.file}: Flix output fails to type-check:\n${actual.outputDiagnostics.trimEnd()}`);
         const saved = fixture.flixFormat;
         if (saved.language !== actual.language || saved.code !== actual.code) {
             changes.push({ path, fixture, actual });
@@ -72,6 +90,10 @@ async function main() {
         const comparison = actual.language === "text" ? "Flix declined to format" :
             fixture.outputs.some((block) => block.code === actual.code) ? "matches a Prettier snapshot" : "differs from Prettier snapshots";
         console.log(`${fixture.file}: ${comparison}`);
+    }
+    if (unexpectedValidity) {
+        process.exitCode = 1;
+        return;
     }
     for (const { path, fixture, actual } of changes) {
         if (mode === "--update") await writeFile(path, withFlixFormat(fixture, actual));

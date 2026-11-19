@@ -22,7 +22,7 @@ import { join, relative } from "node:path";
 import YAML from "yaml";
 
 export const STATUSES = ["pass", "todo", "error"];
-const META_KEYS = new Set(["title", "description", "flix", "options", "status", "issue", "message", "source", "tags", "flixFormat"]);
+const META_KEYS = new Set(["title", "description", "flix", "options", "status", "issue", "message", "source", "tags", "flixFormat", "flixFormatInvalid"]);
 const OPTION_TYPES = { printWidth: "number", tabWidth: "number", useTabs: "boolean" };
 
 const fail = (file, line, msg) => {
@@ -153,6 +153,9 @@ export function parseFixture(text, file = "<fixture>") {
         if (refs.length !== 1) fail(file, referenceHeading, "Flix Format requires exactly one block");
     } else if (meta.flixFormat) {
         fail(file, 2, 'a "flixFormat" version requires a Flix Format section');
+    }
+    if ("flixFormatInvalid" in meta && (meta.flixFormatInvalid !== true || refs[0]?.language !== "flix")) {
+        fail(file, 2, 'flixFormatInvalid must be true and requires a Flix Format code block');
     }
     return { file, meta, lines, eol, input: inputs[0], outputs, flixFormat: refs[0] };
 }
