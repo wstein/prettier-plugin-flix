@@ -96,6 +96,11 @@ chmodSync(fakeJava, 0o755);
 const posix = process.platform !== "win32";
 const withFake = (extraEnv = {}) => ({ ...process.env, FLIX_ORACLE_JAVA: fakeJava, ...extraEnv });
 const runFake = (args, env) => spawnSync(process.execPath, [script, ...args], { encoding: "utf8", env: withFake(env) });
+const fakePin = join(work, "fake-pin.json");
+writeFileSync(fakePin, JSON.stringify({
+    upstream: { tag: "v0.80.0" },
+    oracleArtifact: { sha256: createHash("sha256").update("not a jar").digest("hex") },
+}));
 
 test("identical reports compare equal", { skip: !posix }, () => {
     const r = runFake([fakeJar, sources, "--jobs", "1"]);
@@ -126,6 +131,21 @@ test("a compiler that cannot be started is a broken run", () => {
     const r = spawnSync(process.execPath, [script, fakeJar, sources], { encoding: "utf8", env: { ...process.env, FLIX_ORACLE_JAVA: join(work, "no-such-java") } });
     assert.equal(r.status, 2, r.stdout + r.stderr);
     assert.match(r.stderr, /harness failure/);
+});
+
+test("the jar's version must equal the pinned tag", { skip: !posix }, () => {
+    const r = runFake([fakeJar, sources, "--pin", fakePin], { FAKE_FLIX_VERSION: "0.81.0" });
+    assert.equal(r.status, 2, r.stdout + r.stderr);
+    assert.match(r.stderr, /the jar reports Flix 0\.81\.0 but the pin says 0\.80\.0/);
+});
+
+test("the project declares the version the jar reports", { skip: !posix }, () => {
+    const log = join(work, "toml.log");
+    writeFileSync(log, "");
+    const r = runFake([fakeJar, sources, "--jobs", "1"], { FAKE_FLIX_VERSION: "0.99.1", FAKE_LOG: log });
+    assert.equal(r.status, 0, r.stderr);
+    assert.match(readFileSync(log, "utf8"), /flix = "0\.99\.1"/);
+    assert.doesNotMatch(readFileSync(log, "utf8"), /0\.80\.0/);
 });
 
 test("files the grammar cannot parse are skipped and counted", { skip: !posix }, () => {
