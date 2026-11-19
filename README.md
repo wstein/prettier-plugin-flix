@@ -52,13 +52,12 @@ npx prettier --write src/Main.flix
 ```
 
 The first command previews the result in your terminal. `--check` reports
-formatting differences, and `--write` saves the result. The plugin uses four
-spaces for indentation and a line width of 100 columns by default. Set
-`tabWidth`, `printWidth`, or
-`endOfLine` in your Prettier configuration to match your project.
+formatting differences, and `--write` saves the result. The Flix style uses
+four spaces per indent and a target width of 100 columns. Set `printWidth`
+in your Prettier configuration to adjust the width.
 
 ## Learn more
 
-- [Formatting behavior and limits](docs/formatting.md)
+- [Flix formatting style and options](docs/formatting.md)
 - [Write and update Markdown fixtures](docs/fixtures.md)
 - [Build, run checked formatting, and verify coverage](docs/development.md)

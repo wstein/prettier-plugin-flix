@@ -1,81 +1,269 @@
-# Formatting behavior
+# Flix formatting style
 
 [Return to the README](../README.md)
 
-## What it formats
+This guide describes the layout produced by `prettier-plugin-flix`. The
+examples below come from Markdown fixtures in the test suite.
 
-- Declarations: `mod`, `def`, `val`, `enum`, `struct`, `trait`, `instance`, `eff`, `type alias`, annotations and modifiers.
-- Expressions: calls, method calls, operator chains (wrapped at the operator, with leading `::` for wrapped list constructors), lambdas, `if`/`else`, `match`/`choose`/`select`, `let` chains, `foreach`/`forM`/`forA`, `try`/`catch`, `run`/`with`, `region`, records, collections, Datalog constraint sets, string interpolation.
-- Types and patterns, including effect annotations (`\ IO`), kinds, record, schema and case-set types.
-- Comments (`//`, `///`, `/* */`) are kept next to the token they were written beside; blank lines between items are preserved (at most one).
+## Line width and indentation
 
-Layout decisions that depend on the source are deliberate, so that formatting is stable: a block, record, or member list that spans several lines in the source stays multi-line; one written on a single line is collapsed or wrapped only by width.
+Use **four spaces per indentation level**. Four spaces make each nesting
+level visible, and deeply nested blocks use more horizontal space. Changing
+the indentation width shifts every nested line, so a shared indent keeps the
+shape of the code consistent across files and projects.
 
-In a `run { … } with` chain, the first `with` follows the closing brace
-when its clause fits. Later clauses start on their own lines beneath the
-first `with`. If the first clause starts on a new line, the clauses align
-with `run`.
+`printWidth` sets the target line width and defaults to **100 columns**.
+Adjusting it mainly affects constructs near the target width. That makes it
+a way to fit code to the available editor space while keeping the indentation
+style consistent. Long string literals and other indivisible tokens can
+exceed the target.
 
-A pipeline using `|>` or `!>` stays on one line if it fits. On multiple
-lines, the input expression comes first and each step starts with its
-operator. All operators in the same pipeline share an indentation level.
+The plugin supplies one layout per construct for a given width and source.
+Operator placement, brace layout and alignment follow the same rules across
+projects. This keeps formatting predictable and avoids a project-by-project
+choice for each construct.
 
-## Whitespace-sensitive tokens
+Prettier also accepts its standard configuration options. The Flix style in
+this guide uses `tabWidth: 4`, `useTabs: false` and `endOfLine: "lf"`.
+The examples below use an 80-column width unless a different width is shown.
 
-Flix classifies some tokens by the whitespace around them (`->` in `s->field` versus a lambda arrow, `.` in `a.b`, `::` in `use A::B`). The printer never moves those tokens across a boundary that changes their class: field access and method dots never break, and `use Pkg::Name` stays tight.
+## Calls and function signatures
 
-## Column alignment
+Keep short calls and expressions compact. When an ordinary list of call
+arguments needs to wrap, put one argument on each line. Keep commas after
+their arguments and align the closing parenthesis with the start of the call.
 
-Prettier aligns the `=>` of multiline maps and the `=` of multiline record
-literals when all keys and values are simple names or literals. Map values
-also support flat `List#{…}` literals containing simple elements. A map laid
-out with one entry per line stays multiline when it qualifies for alignment.
-A map that fits inline uses ordinary spacing. Padding is capped at eight
-extra spaces. Rows that exceed `printWidth`, contain more complex expressions,
-or have comments between code tokens use ordinary spacing.
+**Before**
 
-The minimum gap before an ordinary trailing `//` comment is two spaces.
-Consecutive code lines in the same block share a comment column when each
-line fits in `printWidth` after alignment. A blank line,
-a line without a trailing comment, or a block boundary ends the group. This
-applies to declarations, statements and collection entries. A trailing comment
-after the `=` of a function definition can join the comments on the first
-consecutive lines of its indented body if the combined group fits. Aligned
-`=>` and `=` use a minimum gap of one space.
+```flix
+def f(): Int32 = g(aaaaaaaaaaaaaaaa, bbbbbbbbbbbbbbbbbbbb, cccccccccccccccccccc, dddddddddddddddddddd)
+```
 
-A standalone comment starting with `// ^` can mark a token on the line above.
-The formatter keeps the first caret under that token when the correspondence
-is clear, including when the annotated line wraps.
+**After**
 
-| Construct | Flix 0.80 | Prettier plugin |
-| --- | --- | --- |
-| Map entries | Aligns `=>` when keys and values fit on single lines | Aligns short, simple multiline entries |
-| Record values | Aligns the `=` of multiline fields | Aligns short, simple multiline fields |
-| Struct fields | Aligns the start of field types after `:` | Indents fields and uses one space after `:` |
-| Match arms | Aligns `=>` in groups of single-line arms | Indents arms and keeps one space around `=>` |
-| Handler rules | Aligns `=` in rule signatures | Indents rules and keeps one space around `=` |
+```flix
+def f(): Int32 =
+    g(
+        aaaaaaaaaaaaaaaa,
+        bbbbbbbbbbbbbbbbbbbb,
+        cccccccccccccccccccc,
+        dddddddddddddddddddd
+    )
+```
 
-For style choices, use the Flix language documentation and handwritten
-examples. The
-[built-in formatter implementation](https://github.com/flix/flix/blob/v0.80.0/main/src/ca/uwaterloo/flix/tools/fmt/PrettyPrinter.scala)
-provides a comparison.
+The line width also governs signatures. Prefer breaking at a boundary such
+as the effect annotation or a `with` constraint when that keeps a short type
+together. A short body can stay after the `=` on a continuation line. When
+that combination is too wide, the body can start on its own indented line.
 
-## Datalog layout
+**Before**
 
-Queries that fit stay on one line. A longer query breaks before the first
-clause, and the indented clauses share a line when they fit. At narrower
-widths they break at clause boundaries.
+```flix
+def wait(rx: Receiver[Int32], n: Int32, tx: Sender[List[Int32]]): Unit \ { Chan, NonDet } =
+    Channel.send(recvN(n, rx), tx)
+```
 
-A long rule breaks after `:-`. The rule body breaks between predicates when
-it is still too wide on the continuation line. Short predicates stay together.
+**After**
 
-For a multiline schema in a function's return type, the first predicate can
-follow `#{` on the signature line. The remaining predicates align beneath it
-when the rows and the closing part of the signature fit.
+```flix
+def wait(rx: Receiver[Int32], n: Int32, tx: Sender[List[Int32]]): Unit
+    \ { Chan, NonDet } = Channel.send(recvN(n, rx), tx)
+```
 
-## Limits
+[Call fixture](../test/fixtures/expressions/wrap-arguments.md) ·
+[Signature fixture](../test/fixtures/declarations/signature-boundaries.md)
 
-- The parser is the permissive Flix grammar: it accepts some programs the compiler later rejects. The plugin formats what parses; it does not validate.
-- Parse errors are reported with line and column and nothing is printed.
-- Very long method chains cannot wrap before a `.`, because a dot preceded by whitespace is a different token.
-- No `// prettier-ignore` support yet.
+## Pipelines
+
+A pipeline using `|>` or `!>` stays on one line when it fits. In a multiline
+pipeline, the input expression comes first and each step starts on its own line
+with its operator. Operators in the same chain align even when a step has
+multiline arguments.
+
+**Before**
+
+```flix
+def countSmallValues(values: List[Int32]): Int32 =
+    values |> List.map(x -> x * 2) |> List.filter(x -> x < 4) |> List.length
+```
+
+**After at 45 columns**
+
+```flix
+def countSmallValues(
+    values: List[Int32]
+): Int32 =
+    values
+        |> List.map(x -> x * 2)
+        |> List.filter(x -> x < 4)
+        |> List.length
+```
+
+A wrapped cons chain similarly begins continuation lines with `::`. String
+concatenation has its own rule. When it fits, `+ "\n" +` stays with the
+preceding text so the separator is easy to associate with that line.
+
+[Pipeline fixture](../test/fixtures/expressions/leading-pipeline-operators.md) ·
+[Cons chain](../test/fixtures/expressions/long-cons-chain.md) ·
+[String concatenation](../test/fixtures/expressions/concatenate-lines.md)
+
+## Blocks and handlers
+
+A block, record or member list written across multiple lines generally keeps
+its multiline structure. An inline group can stay compact when it fits.
+Sequential statements in a block get separate lines.
+
+In a `run { … } with` chain, the first `with` follows the closing brace when
+its clause fits. Later clauses start on their own lines beneath that first
+`with`. If the first clause needs a new line, or the run expression has no
+block to attach to, the clauses align with `run`.
+
+**At 80 columns**
+
+```flix
+def main(): Unit \ { Logger, Sleep, IO } =
+    run {
+        println("Sleeping for 2 seconds (capped to 500ms)...");
+        Sleep.sleep(seconds(2));
+        println("Done!")
+    } with Sleep.withMaxSleep(milliseconds(500))
+      with Sleep.withLogging
+```
+
+**At 39 columns**
+
+```flix
+def main(): Unit
+    \ { Logger, Sleep, IO } =
+    run {
+        println(
+            "Sleeping for 2 seconds (capped to 500ms)..."
+        );
+        Sleep.sleep(seconds(2));
+        println("Done!")
+    }
+    with Sleep.withMaxSleep(
+        milliseconds(500)
+    )
+    with Sleep.withLogging
+```
+
+[Middleware fixture](../test/fixtures/expressions/sleep-middleware-chain.md) ·
+[Handler chain at narrow width](../test/fixtures/declarations/run-with-chain.md)
+
+## Alignment
+
+Matching rows can share an operator column. Map arrows and record equals
+signs align in eligible multiline literals with short, simple keys and values.
+Flat `List#{…}` values can also qualify in maps. Map and record operator padding
+is capped at eight extra spaces. Complex rows or rows that would exceed
+`printWidth` use ordinary spacing.
+
+Match arms can share an arrow column when their heads fit on single lines and
+the padding fits the group. This includes groups with some multiline bodies.
+The minimum space before an aligned `=>` or `=` is one.
+
+**Before**
+
+```flix
+def next(xs: List[Int32]): Int32 = match xs {
+case Nil => 0
+case x :: _ => let result = x + 1; result
+}
+```
+
+**After**
+
+```flix
+def next(xs: List[Int32]): Int32 = match xs {
+    case Nil    => 0
+    case x :: _ =>
+        let result = x + 1;
+        result
+}
+```
+
+[Match fixture](../test/fixtures/expressions/mixed-match-bodies.md) ·
+[Map alignment](../test/fixtures/expressions/align-map-entries.md) ·
+[Record alignment](../test/fixtures/expressions/align-record-fields.md)
+
+## Comments
+
+Keep an ordinary trailing `//` comment at least two spaces from the code.
+Consecutive commented lines at the same level share a column when each line
+fits after alignment. A blank line, an uncommented line or a block boundary
+ends the group.
+
+**Before**
+
+```flix
+def firstElements(): List[Int32] = {
+    let l = (1, 1) :: (2, 2) :: Nil;  // has type List[(Int32, Int32)]
+    List.map(fst, l)                 // has type List[Int32], one per tuple
+}
+```
+
+**After**
+
+```flix
+def firstElements(): List[Int32] = {
+    let l = (1, 1) :: (2, 2) :: Nil;  // has type List[(Int32, Int32)]
+    List.map(fst, l)                  // has type List[Int32], one per tuple
+}
+```
+
+A comment after a function signature's `=` can share the column with the first
+commented lines of its indented body. If the combined group would exceed the
+width, the body comments can still align with each other. A standalone
+`// ^` comment keeps pointing at the same token when the correspondence is
+clear, including when the annotated line wraps.
+
+[Tuple comments](../test/fixtures/comments/align-tuple-type-comments.md) ·
+[Signature comments](../test/fixtures/comments/align-function-signature-comments.md) ·
+[Caret markers](../test/fixtures/comments/caret-markers.md)
+
+## Datalog
+
+Keep a short query together. A longer query breaks before `select`, with
+`from` on the same continuation line when it fits. At narrower widths,
+the clauses get their own lines.
+
+**Before**
+
+```flix
+def directPaths(): Vector[(String, String)] =
+    query getParents() select (parentStation, childStation) from ParentOf(parentStation, childStation)
+```
+
+**After**
+
+```flix
+def directPaths(): Vector[(String, String)] =
+    query getParents()
+        select (parentStation, childStation)
+        from ParentOf(parentStation, childStation)
+```
+
+For a long rule, keep `:-` at the end of the head and place the body on an
+indented line. If the body needs more room, break it between predicates.
+A multiline return schema can align its predicates beneath the first one
+when the remaining signature fits.
+
+[Query and schema fixture](../test/fixtures/datalog/query-clause-layout.md) ·
+[Rule fixture](../test/fixtures/datalog/lattice-rule-layout.md)
+
+## Sources and limits
+
+The reference uses the official Flix documentation and handwritten examples
+to guide style choices. The
+[Flix 0.80 formatter implementation](https://github.com/flix/flix/blob/v0.80.0/main/src/ca/uwaterloo/flix/tools/fmt/PrettyPrinter.scala)
+provides a comparison. The [documentation audit](official-examples.md) records
+reviewed differences against the official examples.
+
+- The plugin uses the Flix grammar to parse source. The Flix compiler remains
+  the authority for type checking and other language checks.
+- Syntax errors stop formatting and report a line and column.
+- Flix assigns meaning to whitespace around certain tokens. Field access
+  `s->field`, dots in `a.b` and package qualifiers in `use Pkg::Name` stay
+  together. Very long method chains may exceed the configured width.
+- The plugin currently has no `// prettier-ignore` support.
