@@ -225,7 +225,7 @@ export class Printer {
         const t = ttype(a);
         if (CALL_LIKE.has(t)) return true;
         const pk = a.parent ? kind(a.parent as Node) : "";
-        if (t === L.RPAREN) return pk === "ArgumentList";
+        if (t === L.RPAREN) return pk === "ArgumentList" || pk === "ParenPrimary";
         if (t === L.RBRACK) return pk === "IndexExpr" || pk === "TypeArgs";
         // Operator definitions: `def +(a, b)`, `use A.{+}`.
         const gp = a.parent?.parent ? kind(a.parent.parent as Node) : "";
