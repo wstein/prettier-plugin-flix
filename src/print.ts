@@ -842,26 +842,28 @@ export class Printer {
         const k = kind(n);
         if (this.flat > 0 || children.length === 2) return this.seq(children, k);
 
-        const [runKeyword, body] = children;
+        const [runKeyword, body, firstWith, firstHandler] = children;
         const head = this.seq([runKeyword, body], k);
-        if (children.length === 4 && this.isBlockExpr(body)) {
-            const [, , withKeyword, handler] = children;
-            const bodyEnd = lastTerm(body);
-            if (bodyEnd && !this.hasLineTrail(bodyEnd)) {
-                if (kind(handler) === "HandlerExpr") {
-                    return [head, " ", this.seq([withKeyword, handler], k)];
-                }
-                const clause = this.seq([this.ls(withKeyword), handler], k);
-                return [head, group([line, clause])];
-            }
-        }
-
-        const clauses: Doc[] = [];
-        for (let i = 2; i < children.length; i += 2) {
+        const bodyEnd = lastTerm(body);
+        const ownLineComment = isTerm(firstWith) && (this.info(firstWith)?.lead[0]?.nl ?? 0) > 0;
+        const canAttach = this.isBlockExpr(body) && bodyEnd !== null && !this.hasLineTrail(bodyEnd) && !ownLineComment;
+        const firstClause = this.seq([this.ls(firstWith), firstHandler], k);
+        const rest: Doc[] = [];
+        for (let i = 4; i < children.length; i += 2) {
             const [withKeyword, handler] = children.slice(i, i + 2);
-            clauses.push(hardline, this.seq([this.ls(withKeyword), handler], k));
+            rest.push(hardline, this.seq([this.ls(withKeyword), handler], k));
         }
-        return [head, clauses];
+        if (!canAttach) return [head, hardline, firstClause, rest];
+
+        // Start the continuation under the first `with` in `} with`.
+        const joinedRest = align(2, rest);
+        if (kind(firstHandler) === "HandlerExpr") return [head, " ", firstClause, joinedRest];
+        const attachment = Symbol("run with attachment");
+        return [
+            head,
+            group([line, firstClause], { id: attachment }),
+            ifBreak(rest, joinedRest, { groupId: attachment }),
+        ];
     }
 
     private alignMatchRules(rules: Node[], layoutId: symbol): Doc[] | undefined {

@@ -87,6 +87,25 @@ The audit exits with status 1 for an invariant failure, or for an unapproved
 or changed layout candidate in review mode. It still writes the report.
 Cases awaiting context remain visible in either mode.
 
+### Record reviewed transformations
+
+Each reviewed example in [the assessments](official-example-assessments.json)
+can include an ordered list of transformation types and the code they affect.
+The HTML and JSON reports include the list when the example and its hash
+match. Review a new diff before updating that hash.
+
+- `align-trailing-comments` adjusts the gaps before neighboring comments
+  within a group that fits the configured width.
+- `inline-short-function-body` and `inline-short-loop-body` join a single
+  expression to its header when the whole line fits.
+- `layout-with-chain` attaches the first `with` to the closing brace when it
+  fits and aligns subsequent clauses with that keyword.
+- `final-newline` records the addition of a terminating newline.
+
+The weekly drift check still compares the exact recorded examples. These
+lists explain case-specific decisions and provide no blanket approval for
+unreviewed diffs.
+
 ### Review a weekly failure
 
 The workflow compares with [the observed baseline](../test/official-docs-baseline.tsv).

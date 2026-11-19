@@ -7,7 +7,7 @@ import { parseArgs, promisify } from "node:util";
 import { defaultOptions } from "../dist/index.js";
 import { EXAMPLE_PRINT_WIDTH } from "../test/fixture.mjs";
 import { fingerprint, fmt, programProblems } from "../test/lib.mjs";
-import { renderFindings } from "./docs-example-findings.mjs";
+import { renderFindings, reviewedTransformations } from "./docs-example-findings.mjs";
 import { extractExamples } from "./extract-flix-examples.mjs";
 
 const exec = promisify(execFile);
@@ -170,8 +170,10 @@ async function audit(book, website, output, reviewsPath, baselinePath) {
         }
         const signature = hash([example.file, example.language, trimLineEnds(code), outcome.status, outcome.context,
             outcome.diagnostic, outcome.wrappedDiagnostic, formatted === undefined ? undefined : trimLineEnds(formatted)]);
+        const transformations = reviewedTransformations({ ...outcome, case_name: example.case_name, signature });
         cases.push({
             ...example, ...outcome, approval, hasDiff, signature,
+            ...(transformations && { reviewedTransformations: transformations }),
             changeKind: outcome.status === "invariant-failure" ? "unsafe" : outcome.changeKind,
         });
         baselineRows.push([example.case_name, outcome.status, outcome.changeKind ?? "-", signature].join("\t"));
