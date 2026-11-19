@@ -43,7 +43,7 @@ Assert.assertEq(expected=false,includesAirport)
 def timetable(): Vector[(String, Int32, String)] = Vector#{
     ("Museum", 8, "Central"),
     ("Central", 7, "Library"),
-    ("Central", 45, "Airport"), // This leg exceeds the short-trip limit.
+    ("Central", 45, "Airport"),  // This leg exceeds the short-trip limit.
     ("Library", 6, "Park"),
     ("Park", 9, "Museum")
 }

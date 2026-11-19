@@ -2,6 +2,7 @@ import { ParserRuleContext, TerminalNode } from "antlr4ng";
 import { doc, util, type Doc } from "prettier";
 import { FlixLexer as L } from "./generated/FlixLexer.js";
 import type { Comment, FlixRoot, TokenInfo } from "./parse.js";
+import { LINE_COMMENT_GAP } from "./comment-layout.js";
 
 const { group, indent, line, softline, hardline, join, ifBreak, lineSuffix, literalline } = doc.builders;
 const { willBreak } = doc.utils;
@@ -149,7 +150,8 @@ export class Printer {
     private trailDoc(info: TokenInfo, gap = " "): Doc[] {
         return info.trail.map((c) => {
             const comment = this.commentText(c);
-            return c.isLine || c.nlNext > 0 ? lineSuffix([gap, comment]) : [gap, comment];
+            const spacing = gap && c.isLine && !c.text.startsWith("///") ? LINE_COMMENT_GAP : gap;
+            return c.isLine || c.nlNext > 0 ? lineSuffix([spacing, comment]) : [spacing, comment];
         });
     }
 

@@ -18,9 +18,9 @@ x + 1
 ## Output
 
 ```flix
-def g(x: Int32): Int32 = // after the equals sign
+def g(x: Int32): Int32 =  // after the equals sign
     x + 1
 
-def h(x: Int32): Int32 = // note
+def h(x: Int32): Int32 =  // note
     x + 1
 ```

@@ -23,10 +23,10 @@ def f(): Int32 =
 ```flix
 def f(): Int32 =
     run {
-        Tell.tell(1); // c
+        Tell.tell(1);  // c
         Ask.ask()
-    } with handler Ask { def ask(k) = k(1) } // c
-        with handler Tell { // c
-            def tell(_x, k) = k() // t
+    } with handler Ask { def ask(k) = k(1) }  // c
+        with handler Tell {  // c
+            def tell(_x, k) = k()  // t
         }
 ```

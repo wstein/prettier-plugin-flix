@@ -21,8 +21,8 @@ def f(): Int32 = {
 
 ```flix
 def f(): Int32 = {
-    let a = x + y * 2; // note
-    let b = a;         // first
+    let a = x + y * 2;  // note
+    let b = a;          // first
     // second
     b
 }
