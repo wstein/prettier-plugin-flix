@@ -549,8 +549,12 @@ export class Printer {
             comments.length > 0 ||
             open.symbol.line !== close.symbol.line ||
             (stmt !== null && this.isMultiStatement(stmt));
-        if (vertical) return [this.tok(open), indent([hardline, body]), hardline, this.tok(close)];
-        return group([this.tok(open), indent([line, body]), line, this.tok(close)]);
+        // The closing brace's trailing comment follows the group: inside it, its forced line break
+        // would expand a block that otherwise fits on one line.
+        const closeCore = this.tokCore(close);
+        const closeTrail = this.tokTrail(close);
+        if (vertical) return [this.tok(open), indent([hardline, body]), hardline, closeCore, closeTrail];
+        return [group([this.tok(open), indent([line, body]), line, closeCore]), closeTrail];
     }
 
     // --------------------------------------------------------------- if / body
