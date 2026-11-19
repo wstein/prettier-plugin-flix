@@ -10,28 +10,29 @@ const destination = new URL("../docs/data/", import.meta.url);
 const chapters = {};
 const showcase = [];
 const playgroundFixtures = {};
+const passingFixtures = new Set();
 const playground = {
-    defaultFixture: "examples/transit.flix",
+    defaultFixture: "datalog/transit.md",
     groups: [
         {
             title: "Data and logic",
             examples: [
-                ["Transit routes", "examples/transit.flix"],
-                ["Room area and labels", "examples/shape-report.flix"],
+                ["Transit routes", "datalog/transit.md"],
+                ["Room area and labels", "expressions/shape-report.md"],
             ],
         },
         {
             title: "Everyday programs",
             examples: [
-                ["Departure board", "examples/itinerary.flix"],
-                ["Checkout and shipping", "examples/checkout.flix"],
+                ["Departure board", "strings/itinerary.md"],
+                ["Checkout and shipping", "declarations/checkout.md"],
             ],
         },
         {
             title: "Effects and parallelism",
             examples: [
-                ["Currency quote", "examples/rate-quote.flix"],
-                ["Parallel scoreboard", "examples/scoreboard.flix"],
+                ["Currency quote", "declarations/rate-quote.md"],
+                ["Parallel scoreboard", "expressions/scoreboard.md"],
             ],
         },
     ],
@@ -115,6 +116,7 @@ for (const path of findFixtures(root)) {
     };
     group.fixtures.push(example);
     if (meta.showcase) showcase.push({ order: meta.showcase, example });
+    if (meta.status === "pass") passingFixtures.add(relative);
     playgroundFixtures[relative] = {
         title: meta.title,
         input: input.code,
@@ -130,8 +132,11 @@ await writeFile(new URL("fixtures.json", destination), JSON.stringify(chapters, 
 const examples = {};
 for (const group of playground.groups) {
     for (const [title, path] of group.examples) {
-        const input = await readFile(new URL(`../docs/${path}`, import.meta.url), "utf8");
-        examples[path] = { title, input, options: [{}] };
+        if (!passingFixtures.has(path)) throw new Error(`Playground example must be a passing fixture: ${path}`);
+        const fixture = playgroundFixtures[path];
+        examples[path] = { ...fixture, title };
+        // Preserve deep links that used the old standalone example filenames.
+        playgroundFixtures[`examples/${basename(path, ".md")}.flix`] = fixture;
     }
 }
 if (!Object.hasOwn(examples, playground.defaultFixture)) throw new Error("The default playground fixture must be a menu example.");
