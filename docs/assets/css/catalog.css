@@ -69,10 +69,6 @@ h1 { font-size: clamp(2rem, 5vw, 3.25rem); margin-bottom: 0.5rem; }
 .chapters li { border-bottom: 1px solid var(--border); padding-block: 0.8rem; }
 .chapters p { margin: 0.25rem 0 0; }
 .chapters span, .fixture-links span { margin-inline: 0.6rem; }
-.toc { background: var(--surface); padding: 0.25rem 1.25rem; border-radius: 0.55rem; }
-.toc-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr)); gap: 1rem; }
-.toc ul { margin-top: 0.5rem; padding-left: 1.25rem; }
-.toc li { break-inside: avoid; margin-block: 0.25rem; }
 .fixture { border-top: 1px solid var(--border); margin-top: 2.3rem; padding-top: 0.65rem; scroll-margin-top: 1rem; }
 .fixture-group { margin-top: 2.4rem; scroll-margin-top: 1rem; }
 .fixture:target > :is(h2, h3) { text-decoration: underline; text-underline-offset: 0.25rem; }
