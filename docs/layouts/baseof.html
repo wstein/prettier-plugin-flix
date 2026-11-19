@@ -17,6 +17,7 @@
       {{ with site.GetPage "playground" }}
       <a class="site-playground" href="{{ .RelPermalink }}"{{ if $isPlayground }} aria-current="page"{{ end }}>Playground</a>
       {{ end }}
+      <button class="site-search-trigger" type="button" aria-haspopup="dialog" aria-controls="site-search" hidden>Search</button>
       <label class="site-theme">Theme
         <select id="site-theme">
           <option value="system">System</option>
@@ -39,5 +40,6 @@
     </nav>{{ end }}
     <main>{{ block "main" . }}{{ end }}</main>
   </div>
+  {{ partialCached "site-search.html" . "fixture-index" }}
 </body>
 </html>
