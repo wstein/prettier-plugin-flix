@@ -15,6 +15,14 @@
 //   ...
 //   ```
 //   ```flix printWidth=40   further blocks: same input, other options
+//   ## Flix Format              optional reference from the built-in `flix format`; needs
+//   ```flix | ```text          front matter flixFormat: "0.80.0" (same major.minor as flix).
+//   ...                         `flix`: its output; `text`: a summary (header and first message line
+//   ```                         per error) of why it declined the input
+//   ## Flix Format Diagnostics  exactly when front matter says flixFormatInvalid: true (the flix
+//   ```text                     output fails to type-check): the same kind of summary for that output
+//   ...
+//   ```
 //
 // See README.md ("Fixtures") for the rules.
 import { readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
@@ -99,16 +107,28 @@ export function parseFixture(text, file = "<fixture>") {
     const blocks = [];
     let section = null;
     let referenceHeading = null;
+    let diagnosticsHeading = null;
+    const seen = new Set();
     for (let i = close + 1; i < lines.length; i++) {
         const heading = /^## (.*)$/.exec(lines[i]);
         if (heading) {
             section = heading[1].trim();
-            if (section === "Flix Format") {
-                if (referenceHeading !== null) fail(file, i + 1, "duplicate Flix Format section");
-                referenceHeading = i + 1;
+            if (section === "Flix Format" || section === "Flix Format Diagnostics") {
+                if (!seen.has("Input") || (meta.status !== "error" && !seen.has("Output"))) {
+                    fail(file, i + 1, `## ${section} must come after ## Input and ## Output`);
+                }
+                if (section === "Flix Format") {
+                    if (referenceHeading !== null) fail(file, i + 1, "duplicate Flix Format section");
+                    referenceHeading = i + 1;
+                } else {
+                    if (diagnosticsHeading !== null) fail(file, i + 1, "duplicate Flix Format Diagnostics section");
+                    if (referenceHeading === null) fail(file, i + 1, "## Flix Format Diagnostics must follow ## Flix Format");
+                    diagnosticsHeading = i + 1;
+                }
             } else if (section !== "Input" && section !== "Output") {
-                fail(file, i + 1, `unknown section "## ${section}" (allowed: Input, Output, Flix Format)`);
+                fail(file, i + 1, `unknown section "## ${section}" (allowed: Input, Output, Flix Format, Flix Format Diagnostics)`);
             }
+            seen.add(section);
             continue;
         }
         const open = /^```(.*)$/.exec(lines[i]);
@@ -116,7 +136,9 @@ export function parseFixture(text, file = "<fixture>") {
         if (section === null) fail(file, i + 1, "code block before ## Input");
         const language = open[1].trim();
         let options = {};
-        if (section === "Flix Format") {
+        if (section === "Flix Format Diagnostics") {
+            if (language !== "text") fail(file, i + 1, 'Flix Format Diagnostics blocks must be tagged "text"');
+        } else if (section === "Flix Format") {
             if (language !== "flix" && language !== "text") {
                 fail(file, i + 1, 'Flix Format blocks must be tagged "flix" (output) or "text" (diagnostics)');
             }
@@ -147,17 +169,28 @@ export function parseFixture(text, file = "<fixture>") {
         fail(file, outputs[0].line, "the first Output block takes no options (use the front matter for those)");
     }
     const refs = blocks.filter((b) => b.section === "Flix Format");
+    const diagnostics = blocks.filter((b) => b.section === "Flix Format Diagnostics");
     if (referenceHeading !== null) {
         if (!meta.flixFormat) fail(file, referenceHeading, 'Flix Format requires a "flixFormat" version');
         if (meta.status === "error") fail(file, referenceHeading, "status: error fixtures cannot have a Flix Format reference");
         if (refs.length !== 1) fail(file, referenceHeading, "Flix Format requires exactly one block");
+        if (!meta.flixFormat.startsWith(meta.flix + ".")) {
+            fail(file, 2, `"flixFormat" ${meta.flixFormat} must belong to the same major.minor release as flix "${meta.flix}"`);
+        }
     } else if (meta.flixFormat) {
         fail(file, 2, 'a "flixFormat" version requires a Flix Format section');
     }
     if ("flixFormatInvalid" in meta && (meta.flixFormatInvalid !== true || refs[0]?.language !== "flix")) {
         fail(file, 2, 'flixFormatInvalid must be true and requires a Flix Format code block');
     }
-    return { file, meta, lines, eol, input: inputs[0], outputs, flixFormat: refs[0] };
+    if (meta.flixFormatInvalid === true && diagnosticsHeading === null) {
+        fail(file, 2, "flixFormatInvalid: true requires a Flix Format Diagnostics section");
+    }
+    if (diagnosticsHeading !== null) {
+        if (meta.flixFormatInvalid !== true) fail(file, diagnosticsHeading, "a Flix Format Diagnostics section requires flixFormatInvalid: true");
+        if (diagnostics.length !== 1) fail(file, diagnosticsHeading, "Flix Format Diagnostics requires exactly one block");
+    }
+    return { file, meta, lines, eol, input: inputs[0], outputs, flixFormat: refs[0], flixFormatDiagnostics: diagnostics[0] };
 }
 
 export function loadFixture(path, label = path) {
@@ -178,12 +211,19 @@ export function withOutputs(fixture, actual) {
     return lines.join(fixture.eol);
 }
 
-/** Updates only the Flix Format fence and content while preserving the fixture's line endings. */
-export function withFlixFormat(fixture, { language, code }) {
-    const { start, end } = fixture.flixFormat;
+/**
+ * Updates only the Flix Format fence and content (and, when the fixture has one, the Flix Format
+ * Diagnostics block from `outputDiagnostics`) while preserving the fixture's line endings.
+ */
+export function withFlixFormat(fixture, { language, code, outputDiagnostics }) {
     const lines = [...fixture.lines];
-    const body = code === "" ? [] : code.replace(/\n$/, "").split("\n");
-    lines.splice(start - 1, end - start + 1, "```" + language, ...body);
+    const replace = ({ start, end }, fenceLanguage, text) => {
+        const body = text === "" ? [] : text.replace(/\n$/, "").split("\n");
+        lines.splice(start - 1, end - start + 1, "```" + fenceLanguage, ...body);
+    };
+    // The diagnostics block comes last, so replacing it first keeps the other line numbers valid.
+    if (fixture.flixFormatDiagnostics && outputDiagnostics !== undefined) replace(fixture.flixFormatDiagnostics, "text", outputDiagnostics);
+    replace(fixture.flixFormat, language, code);
     return lines.join(fixture.eol);
 }
 
