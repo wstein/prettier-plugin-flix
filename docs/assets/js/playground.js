@@ -242,7 +242,7 @@ function startEmbedded(embedded) {
     });
     embedded.hidden = false;
     embedded.previousElementSibling.hidden = true;
-    embedded.closest(".fixture").querySelector("[data-static-handoff]").hidden = true;
+    embedded.closest(".fixture").querySelector("[data-static-links]").hidden = true;
 }
 
 // Keep long chapters light by starting an editor when its fixture approaches the viewport.

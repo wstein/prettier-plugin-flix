@@ -5,6 +5,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ if not .IsHome }}{{ .Title }} · {{ end }}{{ site.Title }}</title>
+  {{ $themeScript := resources.Get "js/site-theme.js" | fingerprint }}
+  <script src="{{ $themeScript.RelPermalink }}" integrity="{{ $themeScript.Data.Integrity }}"></script>
   {{ $stylesheet := resources.Get "css/catalog.css" | minify | fingerprint }}
   <link rel="stylesheet" href="{{ $stylesheet.RelPermalink }}" integrity="{{ $stylesheet.Data.Integrity }}">
 </head>
@@ -15,6 +17,13 @@
       {{ with site.GetPage "playground" }}
       <a class="site-playground" href="{{ .RelPermalink }}"{{ if $isPlayground }} aria-current="page"{{ end }}>Playground</a>
       {{ end }}
+      <label class="site-theme">Theme
+        <select id="site-theme">
+          <option value="system">System</option>
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+        </select>
+      </label>
       <a class="site-github" href="https://github.com/wstein/prettier-plugin-flix">GitHub</a>
     </nav>
   </header>

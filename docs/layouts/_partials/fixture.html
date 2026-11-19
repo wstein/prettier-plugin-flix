@@ -1,15 +1,20 @@
 {{ with .fixture }}
 {{ $playground := (site.GetPage "playground").RelPermalink }}
+{{ $source := printf "https://github.com/wstein/prettier-plugin-flix/blob/main/test/fixtures/%s" .path }}
 {{ $handoff := printf "%s?%s" $playground (querify "fixture" .path) }}
 <article id="{{ .id }}" class="fixture">
   {{ if $.group }}<h3><a href="#{{ .id }}">{{ .title }}</a></h3>{{ else }}<h2><a href="#{{ .id }}">{{ .title }}</a></h2>{{ end }}
+  {{ if or (ne .status "pass") $.showcase }}
   <p class="fixture-links">
     {{ if eq .status "todo" }}<span>Known formatter gap</span>{{ end }}
     {{ if eq .status "error" }}<span>Expected syntax error</span>{{ end }}
-    <a class="fixture-playground" href="{{ $handoff }}" data-static-handoff>Open in Playground <span aria-hidden="true">↗</span></a>
-    <a href="https://github.com/wstein/prettier-plugin-flix/blob/main/test/fixtures/{{ .path }}">Source on GitHub</a>
-    {{ with .upstreamUrl }}<a href="{{ . }}">Upstream example</a>{{ end }}
     {{ if $.showcase }}<a href="{{ .chapter | relURL }}/#{{ .id }}">See in chapter</a>{{ end }}
+  </p>
+  {{ end }}
+  <p class="fixture-links" data-static-links>
+    <a class="fixture-playground" href="{{ $handoff }}">Open in Playground <span aria-hidden="true">↗</span></a>
+    <a href="{{ $source }}">Source on GitHub</a>
+    {{ with .upstreamUrl }}<a href="{{ . }}">Upstream example</a>{{ end }}
   </p>
   {{ with .description }}<p>{{ . | markdownify }}</p>{{ end }}
   <div class="comparison">
@@ -30,7 +35,7 @@
     {{ end }}
     {{ end }}
   </div>
-  {{ partial "playground-workbench.html" (dict "id" .id "initial" .initial "handoff" $handoff "assets" $.assets) }}
+  {{ partial "playground-workbench.html" (dict "id" .id "initial" .initial "handoff" $handoff "sourceUrl" $source "upstreamUrl" .upstreamUrl "assets" $.assets) }}
   {{ if eq .status "todo" }}
   {{ with index .outputs 0 }}
   <details>
