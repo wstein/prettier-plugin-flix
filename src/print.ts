@@ -411,8 +411,19 @@ export class Printer {
         // from how a doc happens to break, so that a second formatting pass changes nothing.
         const lastItem = items[items.length - 1];
         const lastTok = lastItem.length > 0 ? lastTerm(lastItem[lastItem.length - 1]) : null;
+        // A comment at any boundary (opener, separator, first or last token of an argument) needs the
+        // line break or space the group layout provides; hugging would move it past the call.
+        const boundaryTokens = [
+            open,
+            ...split.seps,
+            ...items.flatMap((it) => (it.length > 0 ? [firstTerm(it[0]), lastTerm(it[it.length - 1])] : [])),
+        ];
+        const commentAtBoundary = boundaryTokens.some((t) => {
+            const info = t && this.info(t);
+            return !!info && (info.lead.length > 0 || info.trail.length > 0);
+        });
         const huggable =
-            !pad && comments.length === 0 && sepType === L.COMMA && lastTok !== null && ttype(lastTok) === L.RBRACE &&
+            !pad && comments.length === 0 && !commentAtBoundary && sepType === L.COMMA && lastTok !== null && ttype(lastTok) === L.RBRACE &&
             !items.slice(0, -1).some((it) => it.length > 0 && lastTerm(it[it.length - 1]) !== null && ttype(lastTerm(it[it.length - 1])!) === L.RBRACE) &&
             !docs.slice(0, -1).some(willBreak);
         if (huggable) return [openDoc, this.joinWithSeps(docs, sepDocs, " "), closeDoc, closeTrail];
