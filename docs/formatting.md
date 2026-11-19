@@ -49,6 +49,19 @@ examples. The
 [built-in formatter implementation](https://github.com/flix/flix/blob/v0.80.0/main/src/ca/uwaterloo/flix/tools/fmt/PrettyPrinter.scala)
 provides a comparison.
 
+## Datalog layout
+
+Queries that fit stay on one line. A longer query breaks before the first
+clause, and the indented clauses share a line when they fit. At narrower
+widths they break at clause boundaries.
+
+A long rule breaks after `:-`. The rule body breaks between predicates when
+it is still too wide on the continuation line. Short predicates stay together.
+
+For a multiline schema in a function's return type, the first predicate can
+follow `#{` on the signature line. The remaining predicates align beneath it
+when the rows and the closing part of the signature fit.
+
 ## Limits
 
 - The parser is the permissive Flix grammar: it accepts some programs the compiler later rejects. The plugin formats what parses; it does not validate.
