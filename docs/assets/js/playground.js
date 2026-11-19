@@ -1,4 +1,4 @@
-import { Transaction } from "@codemirror/state";
+import { countColumn, Transaction } from "@codemirror/state";
 import { renderDiff } from "./playground-diff.js";
 import { createEditor, createFlixHighlighter } from "./playground-editor.js";
 import { readHandoff, writeHandoff } from "./playground-link.js";
@@ -22,7 +22,9 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
     const select = playground.querySelector("#playground-example");
     const printWidth = playground.querySelector("[data-print-width]");
     const tabWidth = playground.querySelector("[data-tab-width]");
+    const defaultWidth = Number(printWidth.defaultValue);
     const status = playground.querySelector(".playground-status");
+    const cursorPosition = playground.querySelector("[data-cursor-position]");
     const copy = playground.querySelector(".playground-copy");
     const diff = playground.querySelector("[data-diff]");
     const formatted = playground.querySelector("[data-output]");
@@ -37,7 +39,7 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
     let formatterFailed = false;
     let highlightingFailed = false;
 
-    const input = createEditor(playground.querySelector("[data-input]"), queuePreview, initial?.source);
+    const input = createEditor(playground.querySelector("[data-input]"), queuePreview, initial?.source, showCursor);
     const output = createEditor(formatted, undefined, preview?.output);
     formatter ??= new Worker(playground.dataset.worker, { type: "module" });
 
@@ -53,6 +55,14 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
     function showStatus(message, isError = false) {
         status.toggleAttribute("data-error", isError);
         status.textContent = message;
+    }
+
+    function showCursor(state) {
+        const { from, to, head, empty } = state.selection.main;
+        const line = state.doc.lineAt(head);
+        const column = countColumn(line.text, state.tabSize, head - line.from) + 1;
+        const count = empty ? "" : ` · ${Array.from(state.sliceDoc(from, to)).length} selected`;
+        cursorPosition.textContent = `Ln ${line.number}, Col ${column}${count}`;
     }
 
     function queuePreview() {
@@ -129,7 +139,7 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
         loadDraft({ source: fixture?.input ?? "", ...options });
     }
 
-    function loadDraft({ source, printWidth: width = 80, tabWidth: indent = 4, useTabs: tabs = false }) {
+    function loadDraft({ source, printWidth: width = defaultWidth, tabWidth: indent = 4, useTabs: tabs = false }) {
         printWidth.value = width;
         tabWidth.value = indent;
         useTabs = tabs;
@@ -140,7 +150,7 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
     function snapshot() {
         return {
             source: input.view.state.doc.toString(),
-            printWidth: printWidth.validity.valid ? printWidth.valueAsNumber : 80,
+            printWidth: printWidth.validity.valid ? printWidth.valueAsNumber : defaultWidth,
             tabWidth: tabWidth.validity.valid ? tabWidth.valueAsNumber : 4,
             useTabs,
         };
@@ -208,7 +218,7 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
     }
 
     if (initial) {
-        printWidth.value = initial.printWidth ?? 80;
+        printWidth.value = initial.printWidth ?? defaultWidth;
         tabWidth.value = initial.tabWidth ?? 4;
         setEditorIndent(tabWidth.valueAsNumber);
         if (preview) copy.disabled = preview.output.length === 0;

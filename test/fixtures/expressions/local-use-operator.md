@@ -19,5 +19,6 @@ def testMod16(): Bool =
 ```flix
 @CompileTest
 def testMod16(): Bool =
-    use Op.{<><}; "one" <>< "two" == "one fish two"
+    use Op.{<><};
+    "one" <>< "two" == "one fish two"
 ```

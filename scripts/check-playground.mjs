@@ -30,6 +30,25 @@ test("the published browser bundle reports syntax error locations", async () => 
     );
 });
 
+test("Playground examples start at 80 columns and the formatter defaults to 100", async () => {
+    assert.match(page, /data-print-width[^>]*\bvalue=(?:"80"|80)(?:\s|>)/);
+    assert.match(page, /data-cursor-position[^>]*>Ln 1, Col 1/);
+    const input = 'def sample(): Bool = verifyExample("a moderately long argument", "a second moderately long argument")';
+    const defaultOutput = await formatFlix(input, {});
+    assert.equal(defaultOutput, await fmt(input, { printWidth: 100 }));
+    assert.notEqual(defaultOutput, await formatFlix(input, { printWidth: 80 }));
+});
+
+test("embedded examples open with their 60-column preview", async () => {
+    const catalog = JSON.parse(await readFile(new URL("../docs/data/fixtures.json", import.meta.url), "utf8"));
+    const fixture = catalog.datalog.groups.flatMap((group) => group.fixtures).find((item) => item.path === "datalog/transit.md");
+    const { source, output, ...options } = fixture.initial;
+    assert.equal(options.printWidth, 60);
+    assert.equal(output, await formatFlix(source, options));
+    const chapter = await readFile(new URL("datalog/index.html", site), "utf8");
+    assert.match(chapter, /data-print-width[^>]*\bvalue=(?:"60"|60)(?:\s|>)/);
+});
+
 test("all curated examples match their fixtures in the published browser bundle", async () => {
     const data = await readFile(new URL("../docs/data/playground.json", import.meta.url), "utf8");
     const { fixtures } = JSON.parse(data);

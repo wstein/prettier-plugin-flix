@@ -20,6 +20,10 @@ review and choose a new report directory for each run. To reproduce the first
 audit below, check out the listed commits before running the command.
 
 - `examples.json` is the raw inventory with extracted code and source links.
+- The comparison and baseline ignore spaces and tabs at the end of lines.
+  Program-preservation checks still use the full extracted input.
+- The audit and standalone Playground examples use 80 columns. Embedded
+  editors start at 60 columns. The plugin defaults to 100 columns.
 - Open `findings.html` after extracting the artifact for a searchable overview
   with inline diffs and separate recommendations for the formatter and the
   documentation. `findings.md` contains the same findings in Markdown.

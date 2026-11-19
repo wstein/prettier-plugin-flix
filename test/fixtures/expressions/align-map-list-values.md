@@ -27,10 +27,8 @@ pub def defaultHeaders(): Map[String, List[String]] =
 ```
 
 ```flix printWidth=44
-pub def defaultHeaders(): Map[
-    String,
-    List[String]
-] =
+pub def defaultHeaders():
+    Map[String, List[String]] =
     let headers = Map#{
         "Accept" => List#{
             "application/json"

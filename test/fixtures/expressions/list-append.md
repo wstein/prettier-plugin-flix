@@ -18,9 +18,8 @@ pub def concatenate(): List[Int32] = (1 :: 2 :: Nil) ::: (3 :: 4 :: Nil) ::: Nil
 ```
 
 ```flix printWidth=28
-pub def concatenate(): List[
-    Int32
-] =
+pub def concatenate():
+    List[Int32] =
     (1 :: 2 :: Nil) :::
         (3 :: 4 :: Nil) :::
         Nil
