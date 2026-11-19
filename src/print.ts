@@ -272,8 +272,11 @@ export class Printer {
                 last = lastTerm(ch);
             }
             if (prevTerm && first && !(prevChild && SELF_SPACED.has(kind(prevChild)))) {
-                const g = this.gap(prevTerm, first, parentKind);
-                if (g) out.push(g);
+                if (this.hasLineTrail(prevTerm)) out.push(hardline);
+                else {
+                    const g = this.gap(prevTerm, first, parentKind);
+                    if (g) out.push(g);
+                }
             }
             out.push(piece);
             if (last) prevTerm = last;
@@ -638,7 +641,8 @@ export class Printer {
         anns.forEach((a, i) => {
             out.push(this.print(a));
             const next = i + 1 < anns.length ? firstTerm(anns[i + 1]) : nextTerm(n);
-            out.push(this.onNewLine(next) ? hardline : " ");
+            const lastTok = lastTerm(a);
+            out.push(this.onNewLine(next) || (lastTok !== null && this.hasLineTrail(lastTok)) ? hardline : " ");
         });
         return out;
     }
