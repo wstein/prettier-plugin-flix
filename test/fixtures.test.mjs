@@ -16,6 +16,8 @@ function assertSameProgram(before, after, label) {
     assert.deepEqual(dropTrailingCommas(after.tokens), dropTrailingCommas(before.tokens), `${label}: tokens`);
     assert.deepEqual(after.comments, before.comments, `${label}: comments`);
     assert.equal(after.shape, before.shape, `${label}: parse-tree shape`);
+    assert.deepEqual(after.arrows, before.arrows, `${label}: arrow token classes`);
+    assert.ok(after.constraintEnds.every((t) => t === "DOT_WS"), `${label}: Datalog constraints must end in a dot followed by whitespace, found ${after.constraintEnds}`);
 }
 
 for (const path of findFixtures(root)) {
