@@ -19,10 +19,25 @@ const highlighting = StateField.define({
     provide: (field) => EditorView.decorations.from(field),
 });
 
-export function createEditor(parent, onEdit) {
+const setErrorMarks = StateEffect.define();
+const errorMarks = StateField.define({
+    create: () => Decoration.none,
+    update(marks, transaction) {
+        for (const effect of transaction.effects) {
+            if (effect.is(setErrorMarks)) return effect.value;
+        }
+        return transaction.docChanged ? Decoration.none : marks;
+    },
+    provide: (field) => EditorView.decorations.from(field),
+});
+const errorLine = Decoration.line({ class: "flix-error-line" });
+const errorCharacter = Decoration.mark({ class: "flix-error-character" });
+
+export function createEditor(parent, onEdit, doc = "") {
     const indentation = new Compartment();
     const view = new EditorView({
         parent,
+        doc,
         extensions: [
             lineNumbers(),
             drawSelection(),
@@ -35,6 +50,10 @@ export function createEditor(parent, onEdit) {
                 ...(onEdit ? {} : { tabindex: "0", "aria-readonly": "true" }),
             }),
             ...(onEdit ? [
+                errorMarks,
+                EditorView.contentAttributes.compute([errorMarks], (state) =>
+                    state.field(errorMarks).size ? { "aria-invalid": "true" } : {},
+                ),
                 history(),
                 keymap.of([...defaultKeymap, ...historyKeymap]),
                 EditorView.updateListener.of((update) => {
@@ -46,6 +65,22 @@ export function createEditor(parent, onEdit) {
 
     return {
         view,
+        markError(location) {
+            const { doc } = view.state;
+            const marks = [];
+            if (location && location.line > 0 && location.line <= doc.lines) {
+                const line = doc.line(location.line);
+                const characters = Array.from(line.text);
+                const column = location.column - 1;
+                marks.push(errorLine.range(line.from));
+                if (column >= 0 && column < characters.length) {
+                    // The parser counts code points; CodeMirror positions are UTF-16 offsets.
+                    const from = line.from + characters.slice(0, column).join("").length;
+                    marks.push(errorCharacter.range(from, from + characters[column].length));
+                }
+            }
+            view.dispatch({ effects: setErrorMarks.of(Decoration.set(marks, true)) });
+        },
         setTabWidth(width) {
             if (view.state.tabSize === width) return;
             // CodeMirror's indent unit is for interactive editing; the formatter takes the full width above.

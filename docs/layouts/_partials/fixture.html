@@ -1,11 +1,13 @@
 {{ with .fixture }}
 {{ $playground := (site.GetPage "playground").RelPermalink }}
+{{ $live := and $.showcase .initial }}
+{{ $handoff := printf "%s?%s" $playground (querify "fixture" .path) }}
 <article id="{{ .id }}" class="fixture">
   {{ if $.group }}<h3><a href="#{{ .id }}">{{ .title }}</a></h3>{{ else }}<h2><a href="#{{ .id }}">{{ .title }}</a></h2>{{ end }}
   <p class="fixture-links">
     {{ if eq .status "todo" }}<span>Known formatter gap</span>{{ end }}
     {{ if eq .status "error" }}<span>Expected syntax error</span>{{ end }}
-    <a class="fixture-playground" href="{{ $playground }}?{{ querify "fixture" .path | safeURL }}">Open in Playground <span aria-hidden="true">↗</span></a>
+    <a class="fixture-playground" href="{{ $handoff }}"{{ if $live }} data-static-handoff{{ end }}>Open in Playground <span aria-hidden="true">↗</span></a>
     <a href="https://github.com/wstein/prettier-plugin-flix/blob/main/test/fixtures/{{ .path }}">Source on GitHub</a>
     {{ with .upstreamUrl }}<a href="{{ . }}">Upstream example</a>{{ end }}
     {{ if $.showcase }}<a href="{{ .chapter | relURL }}/#{{ .id }}">See in chapter</a>{{ end }}
@@ -27,6 +29,9 @@
     </section>
     {{ end }}
   </div>
+  {{ if $live }}
+  {{ partial "playground-workbench.html" (dict "id" .id "initial" .initial "handoff" $handoff "assets" $.assets) }}
+  {{ end }}
   {{ range $index, $variant := after 1 .outputs }}
   <details>
     <summary>Alternate Prettier output{{ if gt (len $.fixture.outputs) 2 }} {{ add $index 2 }}{{ end }}</summary>

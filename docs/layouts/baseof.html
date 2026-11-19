@@ -22,9 +22,6 @@
         {{ with site.GetPage "playground" }}
         <li class="playground-nav"><a href="{{ .RelPermalink }}"{{ if eq .RelPermalink $current.RelPermalink }} aria-current="page"{{ end }}>{{ .Title }}</a></li>
         {{ end }}
-        {{ with site.GetPage "formatting-by-example" }}
-        <li><a href="{{ .RelPermalink }}"{{ if eq .RelPermalink $current.RelPermalink }} aria-current="page"{{ end }}>Formatting by Example</a></li>
-        {{ end }}
         {{ range site.Sections }}
         <li><a href="{{ .RelPermalink }}"{{ if eq .RelPermalink $current.RelPermalink }} aria-current="page"{{ end }}>{{ .Title }}</a></li>
         {{ end }}

@@ -1,29 +1,33 @@
-<div class="playground" {{ if .full }}data-full-playground data-examples="{{ .examples.RelPermalink }}" data-linked-fixtures="{{ .linked.RelPermalink }}"{{ end }} data-formatter="{{ .assets.formatter.RelPermalink }}" data-worker="{{ .assets.worker.RelPermalink }}">
+{{ $prefix := "" }}
+{{ with .id }}{{ $prefix = printf "%s-" . }}{{ end }}
+<div class="playground" {{ if .full }}data-full-playground data-examples="{{ .examples.RelPermalink }}" data-linked-fixtures="{{ .linked.RelPermalink }}"{{ else }}data-embedded-playground data-initial="{{ .initial | jsonify }}" hidden{{ end }} data-formatter="{{ .assets.formatter.RelPermalink }}" data-worker="{{ .assets.worker.RelPermalink }}">
   <div class="playground-toolbar">
+    <span class="playground-live" title="Updates 250 ms after editing">Live</span>
     {{ if .full }}<label class="playground-example">Example
       <select id="playground-example" disabled><option value="" disabled hidden>Choose an example</option></select>
     </label>{{ end }}
-    <label>Line width <input id="print-width" type="number" min="1" step="1" required value="80"></label>
-    <label>Indent <input id="tab-width" type="number" min="1" step="1" required value="4"></label>
-    {{ if .full }}<button type="button" class="playground-clear">Clear input</button>{{ end }}
+    <label>Line width <input id="{{ $prefix }}print-width" data-print-width type="number" min="1" step="1" required value="80"></label>
+    <label>Indent <input id="{{ $prefix }}tab-width" data-tab-width type="number" min="1" step="1" required value="4"></label>
+    <button type="button" class="playground-clear">Clear input</button>
     <button type="button" class="playground-copy" disabled>Copy output</button>
+    {{ with .handoff }}<a class="playground-handoff" href="{{ . }}">Open in Playground <span aria-hidden="true">↗</span></a>{{ end }}
   </div>
   <div class="playground-panes">
     <section class="playground-pane">
-      <h2 id="flix-input-label">Flix input</h2>
-      <div id="flix-input" class="playground-editor"></div>
+      <h2 id="{{ $prefix }}flix-input-label">Flix input</h2>
+      <div id="{{ $prefix }}flix-input" class="playground-editor" data-input></div>
     </section>
     <section class="playground-pane">
       <div class="playground-preview-header">
-        <h2 id="flix-output-label">Preview</h2>
+        <h2 id="{{ $prefix }}flix-output-label">Preview</h2>
         <div class="playground-preview-modes" role="group" aria-label="Preview mode">
-          <button type="button" data-preview-mode="formatted" aria-controls="flix-output" aria-pressed="true">Formatted</button>
-          <button type="button" data-preview-mode="diff" aria-controls="flix-diff" aria-pressed="false">Diff</button>
+          <button type="button" data-preview-mode="formatted" aria-controls="{{ $prefix }}flix-output" aria-pressed="true">Formatted</button>
+          <button type="button" data-preview-mode="diff" aria-controls="{{ $prefix }}flix-diff" aria-pressed="false">Diff</button>
         </div>
       </div>
-      <div id="flix-output" class="playground-editor"></div>
-      <div id="flix-diff" class="playground-diff" role="region" aria-label="Formatting differences" tabindex="0" hidden></div>
+      <div id="{{ $prefix }}flix-output" class="playground-editor" data-output></div>
+      <div id="{{ $prefix }}flix-diff" class="playground-diff" role="region" aria-label="Formatting differences" tabindex="0" hidden data-diff></div>
     </section>
   </div>
-  <p class="playground-status" role="status">Loading the editor…</p>
+  <p class="playground-status" role="status">{{ if .full }}Loading the editor…{{ end }}</p>
 </div>
