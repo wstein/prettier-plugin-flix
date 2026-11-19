@@ -107,6 +107,28 @@ def f(x: Option[Int32]): Int32 = {
 
 After changing the printer, `npm run test:update` rewrites the Output blocks of `status: pass` fixtures from the formatter's actual output. Review the diff: it is the review of the formatting change. The loader rejects unknown keys, options and sections, so typos fail loudly.
 
+## Test sources
+
+| Source | How | Needs expected output? |
+| --- | --- | --- |
+| Markdown fixtures (`test/fixtures`) | Written by hand, one case per file; see Fixtures. | yes, reviewed |
+| Re-spaced sources (`test/perturb.test.mjs`) | Every test source and fixture input is re-spaced at random with five fixed seeds. | no |
+| Real Flix code (`scripts/check-corpus.mjs <dir>...`) | Formats every file and checks the invariants. | no |
+| Scala tests of flix/flix (`scripts/harvest-scala.mjs`) | Extracts the Flix snippets embedded in `main/test/**/*.scala` into a directory for the corpus check. | no |
+| Issues of a repository (`scripts/harvest-issues.mjs`) | Collects the Flix code blocks from issue bodies and comments through the GitHub REST API (default: open issues of `flix/flix` by `wstein`). | no |
+| Flix compiler (`scripts/oracle.mjs`) | Compiles (and tests) each source before and after formatting with the pinned `flix.jar` and requires the same diagnostics and test results. | no |
+
+```sh
+node scripts/harvest-scala.mjs <flix-checkout> scala-snippets
+node scripts/harvest-issues.mjs issue-snippets          # optional GITHUB_TOKEN
+node scripts/check-corpus.mjs <flix-checkout>/main/test/flix scala-snippets issue-snippets
+node scripts/oracle.mjs flix.jar <flix-checkout>/main/test/flix --every 8 --pin <flix-spec>/pin.json
+```
+
+The compiler oracle compiles each file in its own throwaway project, as flix/flix does in its own suite: compiling the whole directory at once fails because the files redeclare modules, and the compiler resolves those conflicts in an order that is not stable even for unformatted input. `--control` runs the unformatted original twice to show the report is stable; it must be identical before a mismatch means anything. A report with no recognizable compiler output counts as a failed run, never as "identical". It needs Java 21 and the jar from the `flix-spec` pin; `--pin` checks the jar's SHA-256.
+
+`.github/workflows/flix-corpora.yml` runs the corpus checks and a sample of the oracle weekly and on demand.
+
 ## Flix versions
 
 Flix changes quickly, so the plugin follows one rule: **the plugin's `major.minor` is the Flix release it was checked against** (plugin `0.80.x` for Flix 0.80), the same scheme `wstein/flix-spec` uses.
