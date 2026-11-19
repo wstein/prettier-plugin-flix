@@ -1,10 +1,115 @@
 [
   {
+    "case": "book.data-types.tuples.tuples-04",
+    "digest": "06f174155b016eb28de88aea3436be274d338ad991398c99c2791510378b2c3d",
+    "area": "formatter",
+    "title": "Keep the tuple type comments in one column",
+    "recommendation": "The gaps before both comments grow by one space, from 1 to 2 and from 17 to 18. The minimum gap is two spaces.",
+    "transformations": [
+      {
+        "type": "align-trailing-comments",
+        "scope": "Type comments on the list binding and List.map"
+      }
+    ]
+  },
+  {
+    "case": "book.introduction-to-flix.introduction.an-algebraic-data-type-for-shapes",
+    "digest": "ad0eaa412d7214ca16fbf0ce8d09e4a38e32f9c6854f47d7d7b9fc731a5f4e84",
+    "area": "formatter",
+    "title": "Align shape comments and keep the short main body inline",
+    "recommendation": "The three enum comments stay aligned. The short pipeline in main fits on the definition line.",
+    "transformations": [
+      {
+        "type": "align-trailing-comments",
+        "scope": "The three Shape cases"
+      },
+      {
+        "type": "inline-short-function-body",
+        "scope": "The pipeline in main"
+      }
+    ]
+  },
+  {
+    "case": "book.modules.using-modules.uses-of-a-package",
+    "digest": "3a73c73b83c7d2eaddf237b4b7273a43982594d54417a2bb08163f087735c983",
+    "area": "formatter",
+    "title": "Keep the package import comments aligned",
+    "recommendation": "The five import comments share a column and the formatter now reproduces the source.",
+    "transformations": [
+      {
+        "type": "align-trailing-comments",
+        "scope": "The five consecutive package imports"
+      }
+    ]
+  },
+  {
+    "case": "book.quick-reference.quick-reference.modules",
+    "digest": "8b63013ddd53704be498d532f1b11637ec27f859d0c0301ee7abc8683b63adf5",
+    "area": "formatter",
+    "title": "Align comments on the import variants",
+    "recommendation": "The longest use line sets the shared comment column for the three variants.",
+    "transformations": [
+      {
+        "type": "align-trailing-comments",
+        "scope": "The three consecutive use lines"
+      }
+    ]
+  },
+  {
     "case": "website.front-page.purity.a-pure-function-is-annotated-with",
     "digest": "8a8dd73a36093693c53ed0dc26eebabacef90527057fbc956c4cf4fbc4f607ea",
     "area": "formatter",
     "title": "Align the Purity signature and body comments",
-    "recommendation": "The signature comment and the three comments in the body share a column. Accept the one-column shift from the source because the longest code line has the standard two-space gap."
+    "recommendation": "The signature comment and the three body comments share a column. The longest code line uses the standard two-space gap.",
+    "transformations": [
+      {
+        "type": "align-trailing-comments",
+        "scope": "The signature of f and the first three lines of its body"
+      },
+      {
+        "type": "final-newline",
+        "scope": "End of the website snippet"
+      }
+    ]
+  },
+  {
+    "case": "book.quick-reference.quick-reference.loops",
+    "digest": "b0445d3560c4b6ea9039cb491a1079e8907500a4d9884cce79a19b9a5b8ba23c",
+    "area": "formatter",
+    "title": "Keep the short foreach body inline",
+    "recommendation": "The loop head and the single println call fit on one line.",
+    "transformations": [
+      {
+        "type": "inline-short-loop-body",
+        "scope": "The foreach body in main"
+      }
+    ]
+  },
+  {
+    "case": "book.library-effects.sleep.middleware",
+    "digest": "6a9506a0fb8d714a5eeabe71a1a6cf6feb2f32e82ceae092b7625eb6ec2a8c1e",
+    "area": "formatter",
+    "title": "Keep Sleep middleware beside the closing brace",
+    "recommendation": "The first with follows the closing brace and the logging clause begins under it. This reproduces the source.",
+    "transformations": [
+      {
+        "type": "layout-with-chain",
+        "scope": "The withMaxSleep and withLogging chain"
+      }
+    ]
+  },
+  {
+    "case": "book.library-effects.sleep.composing-middleware",
+    "digest": "0ca5831d1e0b7421f860e16e1d654386612fa0d4a499a056851d6f5e1ebf2d48",
+    "area": "formatter",
+    "title": "Keep composed Sleep middleware aligned",
+    "recommendation": "The first with follows the closing brace and the logging clause begins under it. This reproduces the source.",
+    "transformations": [
+      {
+        "type": "layout-with-chain",
+        "scope": "The withJitter and withLogging chain"
+      }
+    ]
   },
   {
     "case": "website.front-page.monadic-for.monadic-for-example",
@@ -22,10 +127,10 @@
   },
   {
     "case": "website.front-page.http.demonstrates-composing-multiple-http-mid",
-    "digest": "d7b2a46c534a59ffedbde0f5b571d81c1f2924e34c4073a99963da185fd0a431",
+    "digest": "2b7aced602ddd35a69550808efd2386abf0cb6635abc0963c28ff5e32480471a",
     "area": "formatter",
     "title": "Keep the HTTP middleware layout",
-    "recommendation": "Each with starts on a separate line and the match arrows share a column. Retain this layout. Flix 0.80.0 reported unresolved names in both standalone versions."
+    "recommendation": "The first with follows the closing brace, the later clauses align underneath, and the match arrows share a column. Flix 0.80.0 reported unresolved names in both standalone versions."
   },
   {
     "case": "website.front-page.purity-reflection.we-can-inspect-the-purity-of-a-function",

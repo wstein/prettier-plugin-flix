@@ -30,6 +30,10 @@ const sectionNames = {
 const assessmentMatches = (item, note) =>
     item.case_name === note.case && (item.digest === note.digest || item.signature === note.digest);
 
+export function reviewedTransformations(item) {
+    return assessments.find((note) => note.transformations?.length && assessmentMatches(item, note))?.transformations;
+}
+
 function markdownCode(text, language) {
     const width = (text.match(/`+/g) ?? []).reduce((max, run) => Math.max(max, run.length + 1), 3);
     const fence = "`".repeat(width);
@@ -63,12 +67,18 @@ export function renderFindings(cases, diff) {
         navigation.push([area, heading]);
         markdown.push(`## ${heading}`, "");
         html.push(`<section id="${area}"><h2>${heading}</h2>`);
-        for (const [index, { title, recommendation, snippet, item }] of notes.entries()) {
+        for (const [index, { title, recommendation, snippet, item, transformations }] of notes.entries()) {
             const code = snippet ?? diffs.get(item.case_name);
-            markdown.push(`### ${title}`, "", recommendation, "", `[Source](${item.url})`, "");
+            markdown.push(`### ${title}`, "", recommendation, "");
+            if (transformations) {
+                markdown.push(...transformations.map(({ type, scope }) => `- \`${type}\` — ${scope}`), "");
+            }
+            markdown.push(`[Source](${item.url})`, "");
             if (code) markdown.push(markdownCode(code, snippet ? "flix" : "diff"), "");
             html.push(`<details${index === 0 ? " open" : ""}><summary>${escape(title)}</summary>
 <p>${escape(recommendation)}</p>
+${transformations ? `<ul>${transformations.map(({ type, scope }) =>
+    `<li><code>${escape(type)}</code> — ${escape(scope)}</li>`).join("")}</ul>` : ""}
 ${code ? `<pre><code>${snippet ? escape(code) : colorDiff(code)}</code></pre>` : ""}
 <p><a href="${escape(item.url)}">Source</a></p></details>`);
         }

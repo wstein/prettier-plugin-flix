@@ -11,6 +11,11 @@
 
 Layout decisions that depend on the source are deliberate, so that formatting is stable: a block, record, or member list that spans several lines in the source stays multi-line; one written on a single line is collapsed or wrapped only by width.
 
+In a `run { … } with` chain, the first `with` follows the closing brace
+when its clause fits. Later clauses start on their own lines beneath the
+first `with`. If the first clause starts on a new line, the clauses align
+with `run`.
+
 ## Whitespace-sensitive tokens
 
 Flix classifies some tokens by the whitespace around them (`->` in `s->field` versus a lambda arrow, `.` in `a.b`, `::` in `use A::B`). The printer never moves those tokens across a boundary that changes their class: field access and method dots never break, and `use Pkg::Name` stays tight.

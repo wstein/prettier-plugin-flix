@@ -6,7 +6,7 @@ import { dirname, join } from "node:path";
 import test from "node:test";
 import { promisify } from "node:util";
 import { approvalFor, auditExample, changeKind, compareBaseline } from "../scripts/audit-flix-examples.mjs";
-import { renderFindings } from "../scripts/docs-example-findings.mjs";
+import { renderFindings, reviewedTransformations } from "../scripts/docs-example-findings.mjs";
 import { extractExamples, markdownBlocks } from "../scripts/extract-flix-examples.mjs";
 
 const exec = promisify(execFile);
@@ -73,6 +73,25 @@ test("audits programs and fragments, with approvals tied to the exact change", a
     assert.equal((await auditExample({ ...input, code: "def f(): Int32 = 1" })).changeKind, "line-endings");
     assert.equal((await auditExample({ ...input, code: "def missing(): Int32 = ..." })).status, "needs-context");
     assert.equal((await auditExample({ ...input, language: "java" })).status, "other-language");
+});
+
+test("shows reviewed transformations only for the recorded case and diff", async () => {
+    const caseName = "book.data-types.tuples.tuples-04";
+    const source = [
+        "let l = (1, 1) :: (2, 2) :: Nil; // has type List[(Int32, Int32)]",
+        "List.map(fst, l)                 // has type List[Int32]",
+        "",
+    ].join("\n");
+    const result = await auditExample({ code: source, language: "flix" });
+    const item = { ...result, case_name: caseName, url: "https://example.invalid" };
+    assert.deepEqual(reviewedTransformations(item), [
+        { type: "align-trailing-comments", scope: "Type comments on the list binding and List.map" },
+    ]);
+    const revised = await auditExample({ code: source.replace("has type", "yields"), language: "flix" });
+    assert.equal(reviewedTransformations({ ...revised, case_name: caseName }), undefined);
+    const { html, markdown } = renderFindings([item], "");
+    assert.match(html, /<code>align-trailing-comments<[/]code>/);
+    assert.match(markdown, /- `align-trailing-comments`/);
 });
 
 test("groups byte differences by their main change", () => {
