@@ -36,17 +36,28 @@ function checkOptions(file, line, options) {
     }
 }
 
+/** Parses one inline option value; only literal `true`/`false` and positive integers are accepted. */
+function parseOptionValue(file, line, key, raw) {
+    if (OPTION_TYPES[key] === "number") {
+        if (!/^[1-9]\d{0,8}$/.test(raw)) fail(file, line, `option "${key}" must be a positive integer, found "${raw}"`);
+        return Number(raw);
+    }
+    if (raw !== "true" && raw !== "false") fail(file, line, `option "${key}" must be true or false, found "${raw}"`);
+    return raw === "true";
+}
+
 function parseInfo(file, line, info) {
     const [lang, ...rest] = info.trim().split(/\s+/).filter(Boolean);
     if (lang !== "flix") fail(file, line, `code blocks must be tagged "flix", found "${lang ?? ""}"`);
     const options = {};
     for (const token of rest) {
-        const m = /^(\w+)=(.+)$/.exec(token);
+        const m = /^(\w+)=(.*)$/.exec(token);
         if (!m) fail(file, line, `bad option "${token}" (expected key=value)`);
-        const type = OPTION_TYPES[m[1]];
-        options[m[1]] = type === "number" ? Number(m[2]) : type === "boolean" ? m[2] === "true" : m[2];
+        const [, key, raw] = m;
+        if (!(key in OPTION_TYPES)) fail(file, line, `unknown option "${key}" (allowed: ${Object.keys(OPTION_TYPES).join(", ")})`);
+        if (key in options) fail(file, line, `duplicate option "${key}"`);
+        options[key] = parseOptionValue(file, line, key, raw);
     }
-    checkOptions(file, line, options);
     return options;
 }
 
