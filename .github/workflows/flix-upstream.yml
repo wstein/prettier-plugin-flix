@@ -1,0 +1,32 @@
+name: Flix upstream check
+# Detects Flix language changes: runs the formatter's invariants (re-parse, same tokens and tree
+# shape, idempotent) over the wstein/flix-spec corpus using the newest grammar, and checks that
+# the plugin's major.minor still matches the Flix release flix-spec pins.
+on:
+  schedule:
+    - cron: "17 5 * * 1"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  corpus:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: wstein/flix-spec
+          path: flix-spec
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: git config --global url."https://github.com/".insteadOf ssh://git@github.com/
+      - run: npm ci
+      - name: Use the newest grammar
+        run: npm install --no-save "@wstein/flix-antlr-grammar@git+https://github.com/wstein/flix-antlr-grammar.git#main"
+      - run: npm run build
+      - name: Flix version policy
+        run: node scripts/check-flix-version.mjs flix-spec/pin.json
+      - name: Corpus gate
+        run: node scripts/check-corpus.mjs flix-spec/fixtures/positive flix-spec/profiles/sources

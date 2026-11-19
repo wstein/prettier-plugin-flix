@@ -1,13 +1,15 @@
 {
   "name": "prettier-plugin-flix",
-  "version": "0.1.0",
+  "version": "0.80.0",
   "private": true,
   "description": "Prettier plugin for the Flix programming language (ANTLR4 parser, Prettier doc-IR printer)",
   "type": "module",
   "license": "Apache-2.0",
   "main": "dist/index.js",
   "exports": "./dist/index.js",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "generate": "node scripts/generate.mjs",
     "build": "npm run generate && tsc",
@@ -21,6 +23,7 @@
   },
   "devDependencies": {
     "@types/node": "24.10.1",
+    "@wstein/flix-antlr-grammar": "github:wstein/flix-antlr-grammar#9fd1347a22098899e5095756e57e2d1b9302c8ec",
     "antlr-ng": "1.0.10",
     "prettier": "3.10.1",
     "typescript": "5.9.3"

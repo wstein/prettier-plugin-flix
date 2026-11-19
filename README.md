@@ -6,7 +6,7 @@ It follows the standard plugin shape: a **parser** (source → AST) and a **prin
 
 | Piece | Where | Notes |
 | --- | --- | --- |
-| Grammar | `grammar/FlixLexer.g4`, `grammar/FlixParser.g4` | Vendored from [`wstein/flix-antlr-grammar`](https://github.com/wstein/flix-antlr-grammar), see [PROVENANCE.md](PROVENANCE.md). |
+| Grammar | `@wstein/flix-antlr-grammar` (dev dependency, pinned to an exact commit) | [`wstein/flix-antlr-grammar`](https://github.com/wstein/flix-antlr-grammar). `npm run generate` reads its `.g4` files from `node_modules`; nothing is copied into this repo. |
 | Parser | `src/parse.ts` | The `antlr4ng` runtime over the generated lexer and parser. Returns one root node that carries the ANTLR parse tree, the code-point source, and the comment/line-break facts read from the hidden token channels. |
 | Printer | `src/print.ts` | Walks the parse tree and builds the doc with `group`, `indent`, `line`, `softline`, `hardline`, `join`, `ifBreak`, `lineSuffix`, `breakParent`. |
 | Plugin | `src/index.ts` | `languages`, `parsers.flix` (`astFormat: "flix-ast"`), `printers["flix-ast"]`, `defaultOptions`. |
@@ -15,7 +15,7 @@ It follows the standard plugin shape: a **parser** (source → AST) and a **prin
 
 ```sh
 npm install
-npm run build            # generates the parser from grammar/*.g4, then compiles with tsc
+npm run build            # generates the parser from the grammar dependency, then compiles with tsc
 npx prettier --plugin=./dist/index.js --write 'path/to/**/*.flix'
 ```
 
@@ -54,6 +54,21 @@ To run the same checks over any directory:
 ```sh
 node scripts/check-corpus.mjs <dir-or-file>...
 ```
+
+The version policy check:
+
+```sh
+node scripts/check-flix-version.mjs <path-to>/flix-spec/pin.json
+```
+
+## Flix versions
+
+Flix changes quickly, so the plugin follows one rule: **the plugin's `major.minor` is the Flix release it was checked against** (plugin `0.80.x` for Flix 0.80), the same scheme `wstein/flix-spec` uses.
+
+- There is one grammar, the newest, which is a permissive superset of the language. Older programs still parse; newer syntax needs a grammar update.
+- The grammar dependency is pinned to an exact commit. Updating it is a normal PR, gated by `npm test` and the corpus check.
+- A weekly workflow (`flix-upstream.yml`) runs the corpus check over the `flix-spec` fixtures with the newest grammar, and fails when the Flix release pinned by `flix-spec` no longer matches the plugin's `major.minor`. A red run means "Flix moved: update the grammar, re-run, and bump the version".
+- Fixes for an older Flix minor go on a `0.<minor>` maintenance branch only when someone needs one.
 
 ## Limits
 
