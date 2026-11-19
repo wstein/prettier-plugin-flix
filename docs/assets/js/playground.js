@@ -38,6 +38,11 @@ export function mountWorkbench(playground, { initial, onChange } = {}) {
         }
     }
 
+    function showStatus(message, isError = false) {
+        status.toggleAttribute("data-error", isError);
+        status.textContent = message;
+    }
+
     function queuePreview() {
         const id = ++revision;
         clearTimeout(timer);
@@ -50,7 +55,7 @@ export function mountWorkbench(playground, { initial, onChange } = {}) {
         highlighter?.apply(input.view);
         if (formatterFailed) return;
         if (!printWidth.validity.valid || !tabWidth.validity.valid) {
-            status.textContent = "Enter a whole number greater than zero for line width and indent.";
+            showStatus("Enter a whole number greater than zero for line width and indent.", true);
             return;
         }
         const width = tabWidth.valueAsNumber;
@@ -71,7 +76,7 @@ export function mountWorkbench(playground, { initial, onChange } = {}) {
             const { location, message } = data.error;
             const where = location ? `Line ${location.line}, column ${location.column}. ` : "";
             const stale = preview ? "Preview is out of date. " : "";
-            status.textContent = stale + where + message;
+            showStatus(stale + where + message, true);
             return;
         }
         preview = { source: input.view.state.doc.toString(), output: data.output };
@@ -79,12 +84,12 @@ export function mountWorkbench(playground, { initial, onChange } = {}) {
         highlighter?.apply(output.view);
         refreshDiff();
         copy.disabled = data.output.length === 0;
-        status.textContent = highlightingFailed ? "Syntax highlighting could not load." : "";
+        showStatus(highlightingFailed ? "Syntax highlighting could not load." : "");
     });
 
     formatter.addEventListener("error", () => {
         formatterFailed = true;
-        status.textContent = "The formatter could not load. Reload the page to try again.";
+        showStatus("The formatter could not load. Reload the page to try again.", true);
     });
 
     function refreshDiff() {
@@ -135,12 +140,12 @@ export function mountWorkbench(playground, { initial, onChange } = {}) {
     copy.addEventListener("click", async () => {
         try {
             await navigator.clipboard.writeText(output.view.state.doc.toString());
-            status.textContent = "Copied to clipboard.";
+            showStatus("Copied to clipboard.");
         } catch {
             const { view } = output;
             view.focus();
             view.dispatch({ selection: { anchor: 0, head: view.state.doc.length } });
-            status.textContent = "Output selected. Use your copy shortcut.";
+            showStatus("Output selected. Use your copy shortcut.");
         }
     });
 
@@ -178,7 +183,7 @@ export function mountWorkbench(playground, { initial, onChange } = {}) {
             select.value = curated ? requested : data.defaultFixture;
             useExample(select.value, curated ? Number(params.get("variant")) : 0);
         } catch {
-            if (revision === 0) status.textContent = "Examples could not load. Paste Flix code to get started.";
+            if (revision === 0) showStatus("Examples could not load. Paste Flix code to get started.", true);
         }
     }
 
@@ -194,7 +199,7 @@ export function mountWorkbench(playground, { initial, onChange } = {}) {
     }).catch(() => {
         if (destroyed) return;
         highlightingFailed = true;
-        if (preview && !status.textContent) status.textContent = "Syntax highlighting could not load.";
+        if (preview && !status.textContent) showStatus("Syntax highlighting could not load.");
     });
 
     return {

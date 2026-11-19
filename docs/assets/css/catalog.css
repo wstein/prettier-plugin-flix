@@ -4,6 +4,7 @@
   --surface: #f3f6fa;
   --border: #cbd3df;
   --foreground: #182338;
+  --error: #a61d24;
   --link: #1953a2;
   --code-background: light-dark(#fff, #1e1e1e);
   --code-foreground: light-dark(#000, #d4d4d4);
@@ -77,6 +78,7 @@ pre.shiki { background-color: var(--shiki-light-bg, var(--surface)); }
     --surface: #1f2630;
     --border: #465367;
     --foreground: #edf2f7;
+    --error: #fca5a5;
     --link: #9cc7ff;
   }
   .shiki, .shiki span { color: var(--shiki-dark, var(--foreground)); }
@@ -151,6 +153,12 @@ pre.shiki { background-color: var(--shiki-light-bg, var(--surface)); }
 .playground-editor .cm-lineNumbers .cm-gutterElement { min-width: 2.4em; }
 .playground-editor .flix-token { color: var(--flix-light, currentColor); }
 .playground-status { min-height: 1.55em; margin-block: 0.4rem; font-size: 0.9rem; }
+.playground-status[data-error] {
+  color: var(--error);
+  overflow-x: auto;
+  white-space: pre;
+  font-family: ui-monospace, monospace;
+}
 @media (prefers-color-scheme: dark) {
   .playground-editor .flix-token { color: var(--flix-dark, currentColor); }
   .playground-editor .cm-cursor { border-color: var(--foreground); }
