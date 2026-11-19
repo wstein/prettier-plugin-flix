@@ -101,3 +101,41 @@ export function perturbWhitespace(text, seed) {
     }
     return out;
 }
+
+/**
+ * The positions (token indexes) after which a line comment can be inserted without leaving the
+ * default lexer mode: every default-channel token except those of string literals, where a
+ * newline would end the string.
+ */
+export function commentSites(text) {
+    const lexer = new FlixLexer(CharStream.fromString(text));
+    lexer.removeErrorListeners();
+    const stream = new CommonTokenStream(lexer);
+    stream.fill();
+    const stringTypes = new Set([FlixLexer.STRING_START, FlixLexer.STRING_END, FlixLexer.STRING_CONTENT, FlixLexer.INTERPOLATION_START, FlixLexer.INTERPOLATION_END, FlixLexer.DEBUG_INTERPOLATOR]);
+    const sites = [];
+    let depth = 0;
+    for (const t of stream.getTokens()) {
+        if (t.channel !== 0 || t.type === FlixLexer.EOF) continue;
+        if (t.type === FlixLexer.STRING_START) depth++;
+        const inString = depth > 0 || stringTypes.has(t.type);
+        if (!inString) sites.push(t.tokenIndex);
+        if (t.type === FlixLexer.STRING_END) depth--;
+    }
+    return sites;
+}
+
+/** `text` with ` // note` and a line break inserted right after the default-channel token `tokenIndex`. */
+export function withLineCommentAfter(text, tokenIndex) {
+    const lexer = new FlixLexer(CharStream.fromString(text));
+    lexer.removeErrorListeners();
+    const stream = new CommonTokenStream(lexer);
+    stream.fill();
+    let out = "";
+    for (const t of stream.getTokens()) {
+        if (t.type === FlixLexer.EOF) break;
+        out += t.text;
+        if (t.tokenIndex === tokenIndex) out += " // note\n";
+    }
+    return out;
+}
