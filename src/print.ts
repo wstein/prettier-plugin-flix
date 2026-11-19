@@ -4,7 +4,7 @@ import { FlixLexer as L } from "./generated/FlixLexer.js";
 import type { Comment, FlixRoot, TokenInfo } from "./parse.js";
 import { LINE_COMMENT_GAP } from "./comment-layout.js";
 
-const { group, indent, line, softline, hardline, join, ifBreak, lineSuffix, literalline } = doc.builders;
+const { align, group, indent, line, softline, hardline, join, ifBreak, lineSuffix, literalline } = doc.builders;
 const { willBreak } = doc.utils;
 
 type Node = ParserRuleContext | TerminalNode;
@@ -583,6 +583,8 @@ export class Printer {
             case "Block": return this.printBlock(n);
             case "IfExpr": return this.printIf(n);
             case "ForYieldExpr": return this.printForYield(n);
+            case "FixpointExpr": return this.printFixpoint(n);
+            case "DatalogConstraint": return this.printConstraint(n);
             case "RunWithExpr": return this.printRunWith(n);
             case "DeclPrefix": return this.seq(kids(n), k);
             case "AnnotationList": return this.printAnnotations(n);
@@ -746,6 +748,46 @@ export class Printer {
         ]);
     }
 
+    private printFixpoint(n: ParserRuleContext): Doc {
+        const children = kids(n);
+        const [keyword, sources, ...clauses] = children;
+        if (this.flat > 0 || !isTerm(keyword) || (ttype(keyword) !== L.QUERY && ttype(keyword) !== L.PQUERY) ||
+            clauses.length === 0) return this.seq(children, kind(n));
+
+        const head = this.seq([keyword, sources], kind(n));
+        const body = clauses.map((clause, index) => [
+            index === 0 ? "" : this.after(lastTerm(clauses[index - 1]), line),
+            group(this.print(this.ls(clause))),
+        ]);
+        // Break at the whole query's boundary first. The clauses can still
+        // share a line after moving to an indented continuation.
+        return group([head, indent([this.after(lastTerm(sources), line), group(body)])]);
+    }
+
+    private printConstraint(n: ParserRuleContext): Doc {
+        const children = kids(n);
+        const [head, implication] = children;
+        if (this.flat > 0 || !isTerm(implication) || ttype(implication) !== L.COLON_MINUS) {
+            return this.seq(children, kind(n));
+        }
+        const dot = children[children.length - 1] as TerminalNode;
+        const { items, seps } = this.splitOn(children.slice(2, -1), L.COMMA);
+        const predicates = items.map((item, i) => {
+            const predicate = item[0];
+            const end = lastTerm(predicate);
+            const comma = seps[i];
+            return [
+                this.print(this.ls(predicate)),
+                comma ? this.separatorTok(end, comma) : "",
+                this.after(end, comma ? this.after(comma, line) : ""),
+            ];
+        });
+        return group([
+            this.seq([head, implication], kind(n)),
+            indent([this.after(implication, line), group([predicates, this.tok(dot)])]),
+        ]);
+    }
+
     private printRunWith(n: ParserRuleContext): Doc {
         const children = kids(n);
         const k = kind(n);
@@ -818,9 +860,62 @@ export class Printer {
         const ai = cs.findIndex((c) => isTerm(c) && BODY_ARROWS.has(ttype(c)));
         const arrow = cs[ai] as TerminalNode;
         const headLast = ai > 0 ? lastTerm(cs[ai - 1]) : null;
-        const head = this.seq(cs.slice(0, ai), k);
+        const head = k === "DefDeclaration" ? this.printDefinitionHead(n, cs, ai) : this.seq(cs.slice(0, ai), k);
         const gap = this.after(headLast, " ", true);
         return { head, gap, tail: [this.tok(arrow), this.printEqBodyTail(cs, ai, k, arrow)] };
+    }
+
+    private printDefinitionHead(n: ParserRuleContext, children: Node[], arrowIndex: number): Doc {
+        const head = children.slice(0, arrowIndex);
+        const typeIndex = head.findIndex((child) => kind(child) === "TypeAndEffect");
+        const type = typeIndex < 0 ? undefined : kids(head[typeIndex])[0];
+        const schema = type && kind(type) === "SimpleType" ? kids(type)[0] : undefined;
+        if (!schema || kind(schema) !== "SchemaType") return this.seq(head, kind(n));
+        const parts = kids(schema);
+        const { items, seps } = this.splitOn(parts.slice(1, -1), L.COMMA);
+        const first = firstTerm(n)!;
+        const last = lastTerm(schema)!;
+        if (items.length < 2) return this.seq(head, kind(n));
+        for (let index = first.symbol.tokenIndex; index <= last.symbol.tokenIndex; index++) {
+            const info = this.root.info.get(index);
+            if (info && (info.lead.length || info.trail.length)) return this.seq(head, kind(n));
+        }
+
+        const prefix = this.seq(head.slice(0, typeIndex), kind(n));
+        const fallback = this.print(schema);
+        const suffix = this.seq(head.slice(typeIndex + 1), kind(n));
+        const withSuffix: Doc[] = typeIndex === head.length - 1 ? [] : [" ", suffix];
+        const ordinary = [prefix, " ", fallback, ...withSuffix];
+        const open = this.tok(parts[0] as TerminalNode);
+        const close = this.tok(parts[parts.length - 1] as TerminalNode);
+        const rows = items.map((item, i) => [this.seq(item, "SchemaType"), seps[i] ? this.tok(seps[i]) : ""]);
+        const render = (value: Doc): string => doc.printer.printDocToString(
+            value, { printWidth: this.printWidth, tabWidth: this.tabWidth },
+        ).formatted;
+        const prefixText = render([prefix, " ", open, " "]);
+        const rowTexts = rows.map(render);
+        const lastRowSuffix = render([" ", close, ...withSuffix]);
+        if ([prefixText, ...rowTexts, lastRowSuffix].some((text) => text.includes("\n"))) return ordinary;
+
+        let indentation = 0;
+        for (let parent = n.parent; parent; parent = parent.parent) {
+            if (kind(parent as Node) === "ModDeclaration") indentation += this.tabWidth;
+        }
+        const body = firstTerm(children[arrowIndex + 1]);
+        const bodyOpener = body && ttype(body) === L.HASH_LBRACE ? " #{" : "";
+        const column = util.getStringWidth(prefixText);
+        const available = this.printWidth - indentation - column;
+        const endWidth = util.getStringWidth(lastRowSuffix + " =" + bodyOpener);
+        const widths = rowTexts.map(util.getStringWidth);
+        const compactWidth = widths.reduce((sum, width) => sum + width, rows.length - 1) + endWidth;
+        if (compactWidth <= available || widths.some((width, i) =>
+            width + (i === rows.length - 1 ? endWidth : 0) > available)) return ordinary;
+
+        return [
+            prefix, " ", open, " ", rows[0],
+            align(column, [hardline, join(hardline, rows.slice(1))]),
+            " ", close, ...withSuffix,
+        ];
     }
 
     private printEqBodyTail(cs: Node[], ai: number, k: string, arrow: TerminalNode): Doc {
@@ -887,6 +982,11 @@ export class Printer {
             };
         });
         const first = this.print(operands[0]);
+        const firstToken = firstTerm(operands[0]);
+        if (k === "UserOpExpr" && firstToken && (ttype(firstToken) === L.QUERY || ttype(firstToken) === L.PQUERY) &&
+            ops.every((op) => isTerm(op) && this.src(op) === "|>")) {
+            return group([first, indent(links.map(({ operator, after, operand }) => group([operator, after, operand])))]);
+        }
         if (k !== "AddExpr" || !ops.every((op) => isTerm(op) && ttype(op) === L.PLUS)) {
             return group([first, indent(links.map(({ operator, after, operand }) => [operator, after, operand]))]);
         }
