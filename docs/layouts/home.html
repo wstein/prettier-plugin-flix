@@ -1,0 +1,12 @@
+{{ define "main" }}
+<h1>Formatter test catalog</h1>
+<p>Compare Flix inputs with their expected Prettier output and, where available, the built-in Flix formatter.</p>
+<h2>Chapters</h2>
+<ul class="chapters">
+  {{ range .Sections }}
+  <li><a href="{{ .RelPermalink }}">{{ .Title }}</a>
+    <span>{{ len (index site.Data.fixtures .Section) }} test cases</span>
+  </li>
+  {{ end }}
+</ul>
+{{ end }}

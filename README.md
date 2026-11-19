@@ -120,6 +120,12 @@ npm run test:flix-format -- path/to/flix.jar path/to/flix-spec/pin.json --update
 
 The comparison needs a Java 21 JDK and launches one JVM for all selected fixtures. It checks the pinned compiler version and JAR digest and uses isolated Flix instances to type-check both input and output. Mark a known compiler-invalid output with `flixFormatInvalid: true`. The scheduled Flix corpora workflow runs this comparison. A change in validity fails the command, even in update mode, until the fixture is reviewed. When changing the pin, update the fixtures' `flixFormat` versions and regenerate the references. Review the diff for changes in Flix output or diagnostics.
 
+## Fixture documentation
+
+The [fixture catalog](https://wstein.github.io/prettier-plugin-flix/) groups related Markdown fixtures on a chapter page. The Comments chapter includes links to each case, expected Prettier output, and the available Flix formatter references.
+
+Install Hugo 0.154.5 and run `npm ci` and `npm run docs:build` to generate the site in `docs/public/`. Build inputs come from the same Markdown files as the formatter tests. GitHub Actions builds the catalog on pull requests and deploys it to GitHub Pages from `main`.
+
 ## Test sources
 
 | Source | How | Needs expected output? |
