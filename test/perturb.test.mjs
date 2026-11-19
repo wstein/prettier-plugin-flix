@@ -26,7 +26,12 @@ for (const [name, source] of inputs) {
             const label = `${name} seed ${seed}`;
             const before = fingerprint(respaced);
             assert.deepEqual(before.errors, [], `${label}: the re-spaced input must parse`);
-            assert.deepEqual(before.tokens, fingerprint(source).tokens, `${label}: re-spacing must not change the tokens`);
+            // The re-spaced text is the reference for the formatter, so it must first be the same
+            // program as the original: tokens, comments, tree shape and every token whose class
+            // (a->b versus a -> b, dot versus dot-then-whitespace) depends on adjacent characters.
+            const original = fingerprint(source);
+            assert.deepEqual(programProblems(original, before, { terminators: false }), [], `${label}: re-spacing must not change the program`);
+            assert.deepEqual(before.classes, original.classes, `${label}: re-spacing must not change token classes`);
             const out = await fmt(respaced);
             assert.deepEqual(programProblems(before, fingerprint(out)), [], `${label}: the formatter must not change the program`);
             assert.equal(await fmt(out), out, `${label}: formatting the output again must change nothing`);
