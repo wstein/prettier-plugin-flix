@@ -8,6 +8,7 @@ const root = fileURLToPath(new URL("../test/fixtures", import.meta.url));
 const destination = new URL("../docs/data/", import.meta.url);
 const chapters = {};
 const showcase = [];
+const playground = { defaultFixture: "expressions/align-map-comment.md", fixtures: {} };
 const grammar = JSON.parse(await readFile(new URL("../docs/syntax/flix.tmLanguage.json", import.meta.url), "utf8"));
 const themes = { light: "github-light", dark: "github-dark" };
 const highlighter = await createHighlighter({
@@ -82,6 +83,11 @@ for (const path of findFixtures(root)) {
     };
     group.fixtures.push(example);
     if (meta.showcase) showcase.push({ order: meta.showcase, example });
+    playground.fixtures[relative] = {
+        title: meta.title,
+        input: input.code,
+        options: outputs.length > 0 ? outputs.map((block) => optionsFor(fixture, block)) : [meta.options],
+    };
 }
 
 highlighter.dispose();
@@ -89,3 +95,7 @@ showcase.sort((a, b) => a.order - b.order);
 chapters.examples = { count: showcase.length, groups: [{ title: "", fixtures: showcase.map(({ example }) => example) }] };
 await mkdir(destination, { recursive: true });
 await writeFile(new URL("fixtures.json", destination), JSON.stringify(chapters, null, 2) + "\n");
+if (!Object.hasOwn(playground.fixtures, playground.defaultFixture)) {
+    throw new Error(`Missing default playground fixture ${playground.defaultFixture}`);
+}
+await writeFile(new URL("playground.json", destination), JSON.stringify(playground) + "\n");
