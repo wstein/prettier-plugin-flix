@@ -590,7 +590,7 @@ website.front-page.optimizer.sums-f-applied-to-every-element-of-arr	layout-chang
 website.front-page.parallelism.a-parallel-implementation-of-the-list-ma	layout-change	wrapping	8d662766038634345869b2afe91a342a5af04558a9e22d10466f67953a04763a
 website.front-page.poly-effects.the-purity-of-map-depends-on-the-purity	layout-change	line-endings	d9173b01bb7c7a22ca11172b664b5715625121e73930ddde7aae5040c463b4dd
 website.front-page.purity-reflection.we-can-inspect-the-purity-of-a-function	needs-context	-	080b455f46daa58486af7395287b07f84bd8366741d21a2029996af81eb3a3bc
-website.front-page.purity.a-pure-function-is-annotated-with	layout-change	spacing	e7a2141f08cd847fbb96bbe60d45ade080c4204ad000866ede4132223a4d9490
+website.front-page.purity.a-pure-function-is-annotated-with	layout-change	spacing	f5a25b5c9387c1ec428d9bc7676cd3eeefc745309a6f2dc2ff26b9f962005d99
 website.front-page.record.record-example	layout-change	wrapping	71d300921ed0c3ef60b518b87c1e197b37de37eb96c456397c951f205a36ebf4
 website.front-page.region.we-can-implement-a-pure-sort-function-wh	needs-context	-	63f1e3c910be34dca6e3d27b1e42a20f4f4aa6e3a2f546853cb1d04a03aa7f8c
 website.front-page.structs.structs-example	layout-change	wrapping	0f0d8dd67cc44c50ee4cda7e92d0b6567e41381ed16ad56abcb1850da87609fe
