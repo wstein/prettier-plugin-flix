@@ -1,4 +1,5 @@
 import { Transaction } from "@codemirror/state";
+import { renderDiff } from "./playground-diff.js";
 import { createEditor, createFlixHighlighter } from "./playground-editor.js";
 
 const playground = document.querySelector(".playground");
@@ -7,18 +8,21 @@ const printWidth = playground.querySelector("#print-width");
 const tabWidth = playground.querySelector("#tab-width");
 const status = playground.querySelector(".playground-status");
 const copy = playground.querySelector(".playground-copy");
+const diff = playground.querySelector("#flix-diff");
+const formatted = playground.querySelector("#flix-output");
+const previewModes = playground.querySelectorAll("[data-preview-mode]");
 
 let timer;
 let revision = 0;
 let useTabs = false;
-let hasPreview = false;
-let highlight;
+let preview;
+let highlighter;
 let fixtures;
 let formatterFailed = false;
 let highlightingFailed = false;
 
 const input = createEditor(playground.querySelector("#flix-input"), queuePreview);
-const output = createEditor(playground.querySelector("#flix-output"));
+const output = createEditor(formatted);
 const formatter = new Worker(playground.dataset.worker, { type: "module" });
 
 function replaceCode(view, code) {
@@ -38,7 +42,7 @@ function queuePreview() {
 }
 
 function updatePreview(id) {
-    highlight?.(input.view);
+    highlighter?.apply(input.view);
     if (formatterFailed) return;
     if (!printWidth.validity.valid || !tabWidth.validity.valid) {
         status.textContent = "Enter a whole number greater than zero for line width and indent.";
@@ -47,6 +51,7 @@ function updatePreview(id) {
     const width = tabWidth.valueAsNumber;
     input.setTabWidth(width);
     output.setTabWidth(width);
+    diff.style.tabSize = width;
     formatter.postMessage({
         id,
         asset: playground.dataset.formatter,
@@ -60,13 +65,14 @@ formatter.addEventListener("message", ({ data }) => {
     if (data.error) {
         const { location, message } = data.error;
         const where = location ? `Line ${location.line}, column ${location.column}. ` : "";
-        const stale = hasPreview ? "Preview is out of date. " : "";
+        const stale = preview ? "Preview is out of date. " : "";
         status.textContent = stale + where + message;
         return;
     }
-    replaceCode(output.view, data.output);
-    highlight?.(output.view);
-    hasPreview = true;
+    preview = { source: input.view.state.doc.toString(), output: data.output };
+    replaceCode(output.view, preview.output);
+    highlighter?.apply(output.view);
+    refreshDiff();
     copy.disabled = data.output.length === 0;
     status.textContent = highlightingFailed ? "Syntax highlighting could not load." : "";
 });
@@ -75,6 +81,20 @@ formatter.addEventListener("error", () => {
     formatterFailed = true;
     status.textContent = "The formatter could not load. Reload the page to try again.";
 });
+
+function refreshDiff() {
+    if (!diff.hidden && preview) renderDiff(diff, preview, highlighter?.tokenize);
+}
+
+for (const button of previewModes) {
+    button.addEventListener("click", () => {
+        const showDiff = button.dataset.previewMode === "diff";
+        for (const mode of previewModes) mode.setAttribute("aria-pressed", String(mode === button));
+        diff.hidden = !showDiff;
+        formatted.hidden = showDiff;
+        refreshDiff();
+    });
+}
 
 function useExample(key, variant = 0) {
     const fixture = Object.hasOwn(fixtures, key) ? fixtures[key] : undefined;
@@ -101,34 +121,51 @@ copy.addEventListener("click", async () => {
     }
 });
 
+async function fetchFixtures(url) {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("The fixture data is unavailable.");
+    return response.json();
+}
+
 async function loadExamples() {
     try {
-        const response = await fetch(playground.dataset.examples);
-        if (!response.ok) throw new Error("The fixture data is unavailable.");
-        const data = await response.json();
+        const data = await fetchFixtures(playground.dataset.examples);
         fixtures = data.fixtures;
-        const examples = Object.entries(fixtures).sort(([, a], [, b]) => a.title.localeCompare(b.title));
-        for (const [key, fixture] of examples) select.add(new Option(fixture.title, key));
-
         const params = new URLSearchParams(location.search);
         const requested = params.get("fixture");
-        const linked = Object.hasOwn(fixtures, requested);
-        select.value = linked ? requested : data.defaultFixture;
+        for (const { title, examples } of data.groups) {
+            const group = document.createElement("optgroup");
+            group.label = title;
+            for (const [label, path] of examples) group.append(new Option(label, path));
+            select.append(group);
+        }
         select.disabled = false;
-        // If someone started typing while the examples loaded, keep their input.
-        if (revision === 0) useExample(select.value, linked ? Number(params.get("variant")) : 0);
-        else select.value = "";
+        // Keep any edits made while the examples or linked fixture loaded.
+        if (revision !== 0) return;
+        const curated = Object.hasOwn(fixtures, requested);
+        if (requested && !curated) {
+            const linked = await fetchFixtures(playground.dataset.linkedFixtures);
+            if (revision !== 0) return;
+            if (Object.hasOwn(linked, requested)) {
+                fixtures[requested] = linked[requested];
+                useExample(requested, Number(params.get("variant")));
+                return;
+            }
+        }
+        select.value = curated ? requested : data.defaultFixture;
+        useExample(select.value, curated ? Number(params.get("variant")) : 0);
     } catch {
         if (revision === 0) status.textContent = "Examples could not load. Paste Flix code to get started.";
     }
 }
 
 void loadExamples();
-void createFlixHighlighter().then((apply) => {
-    highlight = apply;
-    highlight(input.view);
-    highlight(output.view);
+void createFlixHighlighter().then((flix) => {
+    highlighter = flix;
+    highlighter.apply(input.view);
+    highlighter.apply(output.view);
+    refreshDiff();
 }).catch(() => {
     highlightingFailed = true;
-    if (hasPreview && !status.textContent) status.textContent = "Syntax highlighting could not load.";
+    if (preview && !status.textContent) status.textContent = "Syntax highlighting could not load.";
 });

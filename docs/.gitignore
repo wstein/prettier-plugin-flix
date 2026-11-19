@@ -1,4 +1,5 @@
 /.hugo_build.lock
 /data/fixtures.json
 /data/playground.json
+/data/playgroundFixtures.json
 /public/

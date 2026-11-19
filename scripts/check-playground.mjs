@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadFixture, optionsFor } from "../test/fixture.mjs";
-import { fmt } from "../test/lib.mjs";
+import { fingerprint, fmt, programProblems } from "../test/lib.mjs";
 
 const site = new URL("../docs/public/", import.meta.url);
 const page = await readFile(new URL("playground/index.html", site), "utf8");
@@ -27,4 +27,18 @@ test("the published browser bundle reports syntax error locations", async () => 
     await assert.rejects(() => formatFlix("def", {}), (error) =>
         error instanceof SyntaxError && error.loc?.start.line === 1 && error.loc.start.column > 0,
     );
+});
+
+test("all curated examples format safely in the published browser bundle", async () => {
+    const data = await readFile(new URL("../docs/data/playground.json", import.meta.url), "utf8");
+    const { fixtures } = JSON.parse(data);
+    for (const [path, { input, options }] of Object.entries(fixtures)) {
+        const original = fingerprint(input);
+        assert.deepEqual(original.errors, [], path);
+        for (const settings of options) {
+            const output = await formatFlix(input, settings);
+            assert.deepEqual(programProblems(original, fingerprint(output)), [], path);
+            assert.equal(await formatFlix(output, settings), output, path);
+        }
+    }
 });

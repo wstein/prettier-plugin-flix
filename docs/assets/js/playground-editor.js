@@ -4,8 +4,7 @@ import { Compartment, EditorState, StateEffect, StateField } from "@codemirror/s
 import { Decoration, EditorView, drawSelection, keymap, lineNumbers } from "@codemirror/view";
 import { createHighlighterCore } from "shiki/core";
 import { createOnigurumaEngine } from "shiki/engine/oniguruma";
-import githubDark from "@shikijs/themes/github-dark";
-import githubLight from "@shikijs/themes/github-light";
+import { flixThemes } from "./flix-themes.js";
 import grammar from "../syntax/flix.tmLanguage.json";
 
 const setHighlighting = StateEffect.define();
@@ -56,23 +55,28 @@ export function createEditor(parent, onEdit) {
     };
 }
 
+export function flixTokenStyle({ light, dark }) {
+    return `--flix-light:${light.color};--flix-dark:${dark.color}`;
+}
+
 export async function createFlixHighlighter() {
     const highlighter = await createHighlighterCore({
         langs: [{ ...grammar, name: "flix" }],
-        themes: [githubLight, githubDark],
+        themes: Object.values(flixThemes),
         engine: createOnigurumaEngine(import("shiki/wasm")),
     });
-    return (view) => {
-        const tokens = highlighter.codeToTokensWithThemes(view.state.doc.toString(), {
-            lang: "flix",
-            themes: { light: "github-light", dark: "github-dark" },
-        });
+    const tokenize = (code) => highlighter.codeToTokensWithThemes(code, {
+        lang: "flix",
+        themes: { light: flixThemes.light.name, dark: flixThemes.dark.name },
+    });
+    const apply = (view) => {
+        const tokens = tokenize(view.state.doc.toString());
         const marks = tokens.flatMap((line) => line.flatMap(({ content, offset, variants }) => {
             if (!content.trim()) return [];
-            const { light, dark } = variants;
-            const style = `--flix-light:${light.color};--flix-dark:${dark.color}`;
+            const style = flixTokenStyle(variants);
             return [Decoration.mark({ class: "flix-token", attributes: { style } }).range(offset, offset + content.length)];
         }));
         view.dispatch({ effects: setHighlighting.of(Decoration.set(marks)) });
     };
+    return { apply, tokenize };
 }
