@@ -1,5 +1,4 @@
 {{ define "main" }}
-<h1 class="playground-title">{{ .Title }}</h1>
 {{ $examples := resources.FromString "data/playground.json" (site.Data.playground | jsonify) | fingerprint }}
 {{ $linked := resources.FromString "data/playground-fixtures.json" (site.Data.playgroundFixtures | jsonify) | fingerprint }}
 {{ $assets := partial "playground-assets.html" . }}
