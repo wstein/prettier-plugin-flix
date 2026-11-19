@@ -10,7 +10,11 @@
     <label>Indent <input id="{{ $prefix }}tab-width" data-tab-width type="number" min="1" step="1" required value="4"></label>
     <button type="button" class="playground-clear">Clear input</button>
     <button type="button" class="playground-copy" disabled>Copy output</button>
-    {{ with .handoff }}<a class="playground-handoff" href="{{ . }}">Open in Playground <span aria-hidden="true">↗</span></a>{{ end }}
+    {{ with .handoff }}<div class="playground-links">
+      <a href="{{ $.sourceUrl }}">Source on GitHub</a>
+      {{ with $.upstreamUrl }}<a href="{{ . }}">Upstream example</a>{{ end }}
+      <a class="playground-handoff" href="{{ . }}">Open in Playground <span aria-hidden="true">↗</span></a>
+    </div>{{ end }}
   </div>
   <div class="playground-panes">
     <section class="playground-pane">

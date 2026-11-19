@@ -1,14 +1,16 @@
 :root {
   color-scheme: light dark;
   font-family: system-ui, sans-serif;
-  --surface: #f3f6fa;
-  --border: #cbd3df;
-  --foreground: #182338;
-  --error: #a61d24;
-  --link: #1953a2;
+  --surface: light-dark(#f3f6fa, #1f2630);
+  --border: light-dark(#cbd3df, #465367);
+  --foreground: light-dark(#182338, #edf2f7);
+  --error: light-dark(#a61d24, #fca5a5);
+  --link: light-dark(#1953a2, #9cc7ff);
   --code-background: light-dark(#fff, #1e1e1e);
   --code-foreground: light-dark(#000, #d4d4d4);
 }
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }
 body { margin: 0; color: var(--foreground); line-height: 1.55; }
 .site-header { background: var(--surface); border-bottom: 1px solid var(--border); }
 .site-toolbar {
@@ -22,7 +24,15 @@ body { margin: 0; color: var(--foreground); line-height: 1.55; }
 .site-toolbar a:first-child { font-weight: 700; }
 .site-playground { padding-inline-start: 0.8rem; border-inline-start: 1px solid var(--border); }
 .site-playground[aria-current="page"] { color: var(--foreground); font-weight: 600; }
-.site-github { margin-inline-start: auto; }
+.site-theme { display: flex; align-items: center; gap: 0.35rem; margin-inline-start: auto; }
+.site-theme select {
+  padding: 0.15rem 0.35rem;
+  border: 1px solid var(--border);
+  border-radius: 0.3rem;
+  background: var(--code-background);
+  color: inherit;
+  font: inherit;
+}
 main { min-width: 0; padding-block: 1rem 4rem; }
 .site-shell {
   display: grid;
@@ -79,19 +89,11 @@ pre { tab-size: 4; overflow-x: auto; padding: 0.85rem; background: var(--surface
 code { font-family: ui-monospace, monospace; font-size: 0.875rem; }
 details { border: 1px solid var(--border); border-radius: 0.45rem; padding: 0.6rem 0.85rem; margin-top: 0.65rem; }
 summary { cursor: pointer; font-weight: 600; }
-.shiki, .shiki span { color: var(--shiki-light, var(--foreground)); }
-pre.shiki { background-color: var(--shiki-light-bg, var(--surface)); }
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --surface: #1f2630;
-    --border: #465367;
-    --foreground: #edf2f7;
-    --error: #fca5a5;
-    --link: #9cc7ff;
-  }
-  .shiki, .shiki span { color: var(--shiki-dark, var(--foreground)); }
-  pre.shiki { background-color: var(--shiki-dark-bg, var(--surface)); }
+.shiki, .shiki span {
+  color: light-dark(var(--shiki-light, var(--foreground)), var(--shiki-dark, var(--foreground)));
+}
+pre.shiki {
+  background-color: light-dark(var(--shiki-light-bg, var(--surface)), var(--shiki-dark-bg, var(--surface)));
 }
 
 .fixture-links { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.8rem; }
@@ -153,7 +155,8 @@ pre.shiki { background-color: var(--shiki-light-bg, var(--surface)); }
 .playground-toolbar select { min-width: 0; max-width: min(16rem, 55vw); }
 .playground-toolbar button { cursor: pointer; color: var(--link); }
 .playground-toolbar button:disabled { cursor: default; opacity: 0.65; }
-.playground-handoff { margin-inline-start: auto; font-weight: 650; }
+.playground-links { display: flex; flex-wrap: wrap; gap: 0.25rem 0.65rem; margin-inline-start: auto; }
+.playground-handoff { font-weight: 650; }
 .playground-panes {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -161,7 +164,7 @@ pre.shiki { background-color: var(--shiki-light-bg, var(--surface)); }
 .playground-pane { min-width: 0; overflow: hidden; }
 .playground-pane + .playground-pane { border-inline-start: 1px solid var(--border); }
 .playground-pane:focus-within { box-shadow: inset 0 0 0 1px var(--link); }
-.fixture :is(.comparison, .fixture-playground)[hidden] { display: none; }
+.fixture :is(.comparison, [data-static-links])[hidden] { display: none; }
 .playground-pane h2 {
   margin: 0;
   padding: 0.45rem 0.7rem;
@@ -176,7 +179,9 @@ pre.shiki { background-color: var(--shiki-light-bg, var(--surface)); }
 .playground-editor .cm-content { padding-block: 0.55rem; }
 .playground-editor .cm-gutters { background: var(--surface); color: var(--foreground); border-color: var(--border); }
 .playground-editor .cm-lineNumbers .cm-gutterElement { min-width: 2.4em; }
-.playground-editor .flix-token { color: var(--flix-light, currentColor); }
+.playground-editor .flix-token, .playground-diff .flix-token {
+  color: light-dark(var(--flix-light, currentColor), var(--flix-dark, currentColor));
+}
 .playground-editor .flix-error-line {
   background: color-mix(in srgb, var(--error) 11%, transparent);
   box-shadow: inset 2px 0 var(--error);
@@ -193,15 +198,12 @@ pre.shiki { background-color: var(--shiki-light-bg, var(--surface)); }
   white-space: pre;
   font-family: ui-monospace, monospace;
 }
-@media (prefers-color-scheme: dark) {
-  .playground-editor .flix-token { color: var(--flix-dark, currentColor); }
-  .playground-editor .cm-cursor { border-color: var(--foreground); }
-  .playground-editor .cm-selectionBackground { background: #384b64 !important; }
-}
+.playground-editor .cm-cursor { border-color: var(--foreground); }
+.playground-editor .cm-selectionBackground { background: light-dark(#d7e7fc, #384b64) !important; }
 @media (max-width: 48rem) {
   .playground-panes { grid-template-columns: minmax(0, 1fr); }
   .playground-pane + .playground-pane { border-inline-start: 0; border-block-start: 1px solid var(--border); }
-  .playground-handoff { margin-inline-start: 0; }
+  .playground-links { margin-inline-start: 0; }
   :is(.playground-editor .cm-editor, .playground-diff) { height: 20rem; }
 }
 
@@ -248,10 +250,6 @@ pre.playground-diff-code {
 .diff-removed { background: light-dark(#ffebe9, #442520); }
 .diff-added { background: light-dark(#dafbe1, #1c382a); }
 .diff-ending { margin-inline-start: 0.75rem; font: italic 0.75rem system-ui, sans-serif; user-select: none; }
-.playground-diff .flix-token { color: var(--flix-light, currentColor); }
-@media (prefers-color-scheme: dark) {
-  .playground-diff .flix-token { color: var(--flix-dark, currentColor); }
-}
 
 [data-embedded-playground] :is(.playground-editor .cm-editor, .playground-diff) {
   height: clamp(13rem, calc(var(--source-lines) * 1.36rem + 1.2rem), 27rem);
