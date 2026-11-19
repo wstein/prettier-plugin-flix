@@ -1,11 +1,12 @@
-import { CharStream, CommonTokenStream, type Token } from "antlr4ng";
+import { CharStream, CommonTokenStream, TerminalNode, type ParseTree, type Token } from "antlr4ng";
 import { doc, util, type Doc } from "prettier";
 import { FlixLexer as L } from "./generated/FlixLexer.js";
+import { DefDeclarationContext } from "./generated/FlixParser.js";
 import type { FlixRoot } from "./parse.js";
 
 type LayoutOptions = { printWidth: number; tabWidth: number; useTabs: boolean };
 type Scope = { parent: Scope | undefined };
-type Row = { line: number; scope: Scope | undefined; indent: number; code: string; width: number; comment: string };
+type Row = { line: number; scope: Scope | undefined; indent: number; startsBody: boolean; code: string; width: number; comment: string };
 const OPEN = new Set([L.LPAREN, L.LBRACK, L.LBRACE, L.HASH_LBRACE, L.HASH_LPAREN, L.HASH_BAR, L.INTERPOLATION_START]);
 const CLOSE = new Set([L.RPAREN, L.RBRACK, L.RBRACE, L.BAR_HASH, L.INTERPOLATION_END]);
 const CARET = /^\/\/[ \t]*\^+/;
@@ -33,7 +34,31 @@ function before(lines: string[], token: Token): string {
     return Array.from(lines[token.line - 1]).slice(0, token.column).join("");
 }
 
-function lineCommentGroups(tokens: Token[], lines: string[], tabWidth: number): Row[][] {
+/** Locate printed definition separators using the source parse tree and code-token order. */
+function printedDefinitionEquals(root: FlixRoot, tokens: Token[]): Set<Token> {
+    const input: Token[] = [];
+    const equals = new Set<Token>();
+    function visit(node: ParseTree): void {
+        if (node instanceof TerminalNode) {
+            if (node.symbol.type !== L.EOF) input.push(node.symbol);
+            return;
+        }
+        if (node instanceof DefDeclarationContext) {
+            const separator = node.EQUAL();
+            if (separator && root.info.get(separator.symbol.tokenIndex)?.trail.some((comment) => comment.isLine)) {
+                equals.add(separator.symbol);
+            }
+        }
+        for (let i = 0; i < node.getChildCount(); i++) visit(node.getChild(i)!);
+    }
+    visit(root.tree);
+    const output = tokens.filter(isCode);
+    return equals.size && sameTokens(input, output, false)
+        ? new Set(output.filter((_, i) => equals.has(input[i])))
+        : new Set();
+}
+
+function lineCommentGroups(tokens: Token[], lines: string[], tabWidth: number, definitionEquals: Set<Token>): Row[][] {
     const groups: Row[][] = [];
     let scope: Scope | undefined;
     let lineScope: Scope | undefined;
@@ -54,21 +79,34 @@ function lineCommentGroups(tokens: Token[], lines: string[], tabWidth: number): 
         const code = before(lines, token).trimEnd();
         const indent = width(/^[ \t]*/.exec(code)![0], tabWidth);
         const prev = group.at(-1);
-        if (!prev || token.line !== prev.line + 1 || scope !== prev.scope || indent !== prev.indent) {
+        const startsBody = definitionEquals.has(lastCode);
+        const continuesDefinition = prev?.startsBody && indent === prev.indent + tabWidth;
+        if (!prev || token.line !== prev.line + 1 || scope !== prev.scope ||
+            startsBody || (indent !== prev.indent && !continuesDefinition)) {
             group = [];
             groups.push(group);
         }
-        group.push({ line: token.line, scope, indent, code, width: width(code, tabWidth), comment: token.text });
+        group.push({ line: token.line, scope, indent, startsBody, code, width: width(code, tabWidth), comment: token.text });
     }
     return groups;
 }
 
-function alignTrailingComments(tokens: Token[], lines: string[], options: LayoutOptions): void {
-    for (const group of lineCommentGroups(tokens, lines, options.tabWidth)) {
-        if (group.length < 2) continue;
-        const column = group.reduce((longest, row) => Math.max(longest, row.width), 0) + LINE_COMMENT_GAP.length;
-        if (group.some((row) => column + util.getStringWidth(row.comment) > options.printWidth)) continue;
-        for (const row of group) lines[row.line - 1] = row.code + " ".repeat(column - row.width) + row.comment;
+function alignGroup(group: Row[], lines: string[], printWidth: number): boolean {
+    if (group.length < 2) return true;
+    const column = group.reduce((longest, row) => Math.max(longest, row.width), 0) + LINE_COMMENT_GAP.length;
+    if (group.some((row) => column + util.getStringWidth(row.comment) > printWidth)) return false;
+    for (const row of group) lines[row.line - 1] = row.code + " ".repeat(column - row.width) + row.comment;
+    return true;
+}
+
+function alignTrailingComments(root: FlixRoot, tokens: Token[], lines: string[], options: LayoutOptions): void {
+    const hasCommentedEquals = tokens.some((token, i) => token.type === L.EQUAL &&
+        tokens[i + 1]?.type === L.LINE_COMMENT && tokens[i + 1].line === token.line);
+    const definitionEquals = hasCommentedEquals ? printedDefinitionEquals(root, tokens) : new Set<Token>();
+    for (const group of lineCommentGroups(tokens, lines, options.tabWidth, definitionEquals)) {
+        if (!alignGroup(group, lines, options.printWidth) && group[0].startsBody) {
+            alignGroup(group.slice(1), lines, options.printWidth);
+        }
     }
 }
 
@@ -149,7 +187,7 @@ export function layoutComments(root: FlixRoot, value: Doc, options: LayoutOption
     const { formatted } = doc.printer.printDocToString(value, options);
     const tokens = lex(formatted);
     let lines = formatted.split("\n");
-    if (trailing > 1) alignTrailingComments(tokens, lines, options);
+    if (trailing > 1) alignTrailingComments(root, tokens, lines, options);
     if (hasCaret) lines = placeCaretComments(root.text, tokens, lines, options.tabWidth);
     return lines.join("\n") === formatted ? value : doc.builders.join(doc.builders.literalline, lines);
 }

@@ -1,5 +1,12 @@
 [
   {
+    "case": "website.front-page.purity.a-pure-function-is-annotated-with",
+    "digest": "8a8dd73a36093693c53ed0dc26eebabacef90527057fbc956c4cf4fbc4f607ea",
+    "area": "formatter",
+    "title": "Align the Purity signature and body comments",
+    "recommendation": "The signature comment and the three comments in the body share a column. Accept the one-column shift from the source because the longest code line has the standard two-space gap."
+  },
+  {
     "case": "website.front-page.monadic-for.monadic-for-example",
     "digest": "0b66b3802c4e14b0a8838ef644d0b198c420c86d9e658fba6d12bb2363a39eeb",
     "area": "formatter",

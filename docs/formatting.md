@@ -29,8 +29,10 @@ The minimum gap before an ordinary trailing `//` comment is two spaces.
 Consecutive code lines in the same block share a comment column when each
 line fits in `printWidth` after alignment. A blank line,
 a line without a trailing comment, or a block boundary ends the group. This
-applies to declarations, statements and collection entries. Aligned `=>`
-and `=` use a minimum gap of one space.
+applies to declarations, statements and collection entries. A trailing comment
+after the `=` of a function definition can join the comments on the first
+consecutive lines of its indented body if the combined group fits. Aligned
+`=>` and `=` use a minimum gap of one space.
 
 A standalone comment starting with `// ^` can mark a token on the line above.
 The formatter keeps the first caret under that token when the correspondence
