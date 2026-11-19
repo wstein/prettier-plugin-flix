@@ -1,10 +1,10 @@
 :root {
   color-scheme: light dark;
   font-family: system-ui, sans-serif;
-  --surface: light-dark(#f3f6fa, #1f2630);
-  --border: light-dark(#cbd3df, #465367);
-  --foreground: light-dark(#182338, #edf2f7);
-  --link: light-dark(#1953a2, #9cc7ff);
+  --surface: #f3f6fa;
+  --border: #cbd3df;
+  --foreground: #182338;
+  --link: #1953a2;
 }
 body { margin: 0; color: var(--foreground); line-height: 1.55; }
 .container { width: min(76rem, calc(100% - 2rem)); margin-inline: auto; }
@@ -39,7 +39,16 @@ summary { cursor: pointer; font-weight: 600; }
   .comparison { grid-template-columns: minmax(0, 1fr); gap: 0; }
 }
 
-.shiki, .shiki span {
-  color: light-dark(var(--shiki-light, var(--foreground)), var(--shiki-dark, var(--foreground)));
-  background-color: light-dark(var(--shiki-light-bg, transparent), var(--shiki-dark-bg, transparent));
+.shiki, .shiki span { color: var(--shiki-light, var(--foreground)); }
+pre.shiki { background-color: var(--shiki-light-bg, var(--surface)); }
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --surface: #1f2630;
+    --border: #465367;
+    --foreground: #edf2f7;
+    --link: #9cc7ff;
+  }
+  .shiki, .shiki span { color: var(--shiki-dark, var(--foreground)); }
+  pre.shiki { background-color: var(--shiki-dark-bg, var(--surface)); }
 }
