@@ -7,6 +7,7 @@ import { findFixtures, loadFixture, optionsFor, relativeTo } from "../test/fixtu
 const root = fileURLToPath(new URL("../test/fixtures", import.meta.url));
 const destination = new URL("../docs/data/", import.meta.url);
 const chapters = {};
+const showcase = [];
 const grammar = JSON.parse(await readFile(new URL("../docs/syntax/flix.tmLanguage.json", import.meta.url), "utf8"));
 const themes = { light: "github-light", dark: "github-dark" };
 const highlighter = await createHighlighter({
@@ -19,6 +20,28 @@ const highlight = (code) => highlighter.codeToHtml(code, {
     defaultColor: false,
 });
 
+
+function describeOptions(fixture, block) {
+    const defaults = { printWidth: 80, tabWidth: 4, useTabs: false };
+    const base = { ...defaults, ...fixture.meta.options };
+    const configured = optionsFor(fixture, block);
+    const effective = { ...defaults, ...configured };
+    const notes = [];
+    if (effective.printWidth !== base.printWidth) {
+        notes.push(`Changes the preferred line width from ${base.printWidth} to ${effective.printWidth} columns.`);
+    }
+    if (effective.tabWidth !== base.tabWidth) {
+        notes.push(`Changes each indentation level from ${base.tabWidth} to ${effective.tabWidth} columns.`);
+    }
+    if (effective.useTabs !== base.useTabs) {
+        notes.push(effective.useTabs ? "Uses tabs for indentation." : "Uses spaces for indentation.");
+    }
+    return {
+        options: Object.entries({ printWidth: defaults.printWidth, ...configured })
+            .map(([key, value]) => `${key}: ${value}`).join(", "),
+        note: notes.join(" "),
+    };
+}
 
 for (const path of findFixtures(root)) {
     const relative = relativeTo(root, path);
@@ -42,21 +65,26 @@ for (const path of findFixtures(root)) {
         entry.groups.push(group);
     }
     entry.count++;
-    group.fixtures.push({
+    const example = {
         id: basename(relative, ".md"),
         path: relative,
+        chapter,
         title: meta.title,
         description: meta.description,
         status: meta.status,
         inputHtml: highlight(input.code),
         outputs: outputs.map((block) => ({
             html: highlight(block.code),
-            options: Object.entries(optionsFor(fixture, block)).map(([key, value]) => `${key}: ${value}`).join(", "),
+            ...describeOptions(fixture, block),
         })),
         reference,
-    });
+    };
+    group.fixtures.push(example);
+    if (meta.showcase) showcase.push({ order: meta.showcase, example });
 }
 
 highlighter.dispose();
+showcase.sort((a, b) => a.order - b.order);
+chapters.examples = { count: showcase.length, groups: [{ title: "", fixtures: showcase.map(({ example }) => example) }] };
 await mkdir(destination, { recursive: true });
 await writeFile(new URL("fixtures.json", destination), JSON.stringify(chapters, null, 2) + "\n");

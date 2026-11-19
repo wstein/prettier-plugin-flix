@@ -1,5 +1,6 @@
 {{ define "main" }}
 {{ $chapter := index site.Data.fixtures .Section }}
+{{ $isShowcase := eq .Section "examples" }}
 <h1>{{ .Title }}</h1>
 <p>{{ .Description }}</p>
 <nav aria-label="Test cases" class="toc">
@@ -20,6 +21,6 @@
 {{ range $chapter.groups }}
   {{ with .title }}<h2 class="fixture-group" id="group-{{ . | anchorize }}">{{ . }}</h2>{{ end }}
   {{ $group := .title }}
-  {{ range .fixtures }}{{ partial "fixture.html" (dict "fixture" . "group" $group) }}{{ end }}
+  {{ range .fixtures }}{{ partial "fixture.html" (dict "fixture" . "group" $group "showcase" $isShowcase) }}{{ end }}
 {{ end }}
 {{ end }}

@@ -60,7 +60,7 @@ To run the same checks over any directory:
 node scripts/check-corpus.mjs <dir-or-file>...
 ```
 
-After building, `npm run coverage:syntax` reports named lexer token types, parser rules, and labeled alternatives seen in parseable fixture inputs and local Flix files. Pass corpus paths after `--` for a separate report. The denominators come from the generated grammar and include named token types that may be internal or used only for error handling. The fixture mutation tests change known-good outputs and verify that the shared program-preservation checks reject the changes.
+After building, `npm run coverage:syntax` reports named lexer token types, parser rules (including a Datalog breakdown), and labeled alternatives seen in parseable fixture inputs and local Flix files. Pass corpus paths after `--` for a separate report. The denominators come from the generated grammar and include named token types that may be internal or used only for error handling. The fixture mutation tests change known-good outputs and verify that the shared program-preservation checks reject the changes.
 
 The version policy check:
 
@@ -152,7 +152,7 @@ The comparison needs a Java 21 JDK and launches one JVM for all selected fixture
 
 ## Fixture documentation
 
-The fixture catalog groups related Markdown fixtures on a chapter page. Each chapter has links to its cases, short descriptions, expected Prettier output, and available Flix formatter references. The Comments chapter groups related cases using the optional `group` field in the fixture front matter. Shiki highlights Flix at build time using the vendored [Flix 0.80 grammar from flix-textmate](https://github.com/wstein/flix-textmate/blob/23d12e36d33f1d20c0fa779188cc4a2121da8c4e/syntaxes/flix.tmLanguage.json).
+The fixture catalog groups related Markdown fixtures on a chapter page. Each chapter has links to its cases, short descriptions, expected Prettier output, and available Flix formatter references. The Comments chapter groups related cases using the optional `group` field in the fixture front matter. A positive `showcase` order includes the same case on the Before and after page. Shiki highlights Flix at build time using the vendored [Flix 0.80 grammar from flix-textmate](https://github.com/wstein/flix-textmate/blob/23d12e36d33f1d20c0fa779188cc4a2121da8c4e/syntaxes/flix.tmLanguage.json).
 
 Install Hugo 0.154.5 and run `npm ci` and `npm run docs:build` to generate the site in `docs/public/`. Build inputs come from the same Markdown files as the formatter tests. GitHub Actions builds the catalog on pull requests and deploys it to GitHub Pages from `main`.
 

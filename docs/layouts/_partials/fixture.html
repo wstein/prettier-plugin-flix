@@ -5,6 +5,7 @@
     {{ if eq .status "todo" }}<span>Known formatter gap</span>{{ end }}
     {{ if eq .status "error" }}<span>Expected syntax error</span>{{ end }}
     <a href="https://github.com/wstein/prettier-plugin-flix/blob/main/test/fixtures/{{ .path }}">Fixture source</a>
+    {{ if $.showcase }}<a href="{{ .chapter | relURL }}/#{{ .id }}">See in chapter</a>{{ end }}
   </p>
   {{ with .description }}<p>{{ . | markdownify }}</p>{{ end }}
   <div class="comparison">
@@ -16,14 +17,15 @@
     {{ $first := index . 0 }}
     <section>
       <p class="code-label">{{ if eq $.fixture.status "todo" }}Desired Prettier output{{ else }}Expected Prettier output{{ end }}</p>
-      {{ with $first.options }}<p class="options">{{ . }}</p>{{ end }}
+      {{ with $first.options }}<p class="options">Base settings · {{ . }}</p>{{ end }}
       {{ $first.html | safeHTML }}
     </section>
     {{ end }}
   </div>
   {{ range after 1 .outputs }}
   <details>
-    <summary>Prettier output{{ with .options }} ({{ . }}){{ end }}</summary>
+    <summary>Alternate Prettier output{{ with .options }} ({{ . }}){{ end }}</summary>
+    {{ with .note }}<p class="options">{{ . }}</p>{{ end }}
     {{ .html | safeHTML }}
   </details>
   {{ end }}
