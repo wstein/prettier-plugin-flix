@@ -16,6 +16,10 @@ when its clause fits. Later clauses start on their own lines beneath the
 first `with`. If the first clause starts on a new line, the clauses align
 with `run`.
 
+A pipeline using `|>` or `!>` stays on one line if it fits. On multiple
+lines, the input expression comes first and each step starts with its
+operator. All operators in the same pipeline share an indentation level.
+
 ## Whitespace-sensitive tokens
 
 Flix classifies some tokens by the whitespace around them (`->` in `s->field` versus a lambda arrow, `.` in `a.b`, `::` in `use A::B`). The printer never moves those tokens across a boundary that changes their class: field access and method dots never break, and `use Pkg::Name` stays tight.
