@@ -10,6 +10,7 @@ const OPEN = new Set([L.LPAREN, L.LBRACK, L.LBRACE, L.HASH_LBRACE, L.HASH_LPAREN
 const CLOSE = new Set([L.RPAREN, L.RBRACK, L.RBRACE, L.BAR_HASH, L.INTERPOLATION_END]);
 const CARET = /^\/\/[ \t]*\^+/;
 const MAX_PADDING = 8;
+export const LINE_COMMENT_GAP = "  ";
 
 function lex(text: string): Token[] {
     const lexer = new L(CharStream.fromString(text));
@@ -49,7 +50,7 @@ function lineCommentGroups(tokens: Token[], lines: string[], tabWidth: number): 
         }
         if (token.type !== L.LINE_COMMENT || lastCode?.line !== token.line ||
             lastCode.type === L.ARROW_TIGHT || scope !== lineScope || !token.text ||
-            token.text.includes("\t") || CARET.test(token.text)) continue;
+            token.text.startsWith("///") || token.text.includes("\t") || CARET.test(token.text)) continue;
 
         const code = before(lines, token).trimEnd();
         const indent = width(/^[ \t]*/.exec(code)![0], tabWidth);
@@ -66,8 +67,8 @@ function lineCommentGroups(tokens: Token[], lines: string[], tabWidth: number): 
 function alignTrailingComments(tokens: Token[], lines: string[], options: LayoutOptions): void {
     for (const group of lineCommentGroups(tokens, lines, options.tabWidth)) {
         if (group.length < 2) continue;
-        const column = group.reduce((longest, row) => Math.max(longest, row.width), 0) + 1;
-        if (group.some((row) => column - row.width - 1 > MAX_PADDING ||
+        const column = group.reduce((longest, row) => Math.max(longest, row.width), 0) + LINE_COMMENT_GAP.length;
+        if (group.some((row) => column - row.width - LINE_COMMENT_GAP.length > MAX_PADDING ||
             column + util.getStringWidth(row.comment) > options.printWidth)) continue;
         for (const row of group) lines[row.line - 1] = row.code + " ".repeat(column - row.width) + row.comment;
     }

@@ -25,10 +25,12 @@ A map that fits inline uses ordinary spacing. Padding is capped at eight
 extra spaces. Rows that exceed `printWidth`, contain more complex expressions,
 or have comments between code tokens use ordinary spacing.
 
-Consecutive code lines in the same block share a `//` comment column when
-each line fits in `printWidth` after adding at most eight spaces. A blank
-line, a line without a trailing comment, or a block boundary ends the group.
-This applies to declarations, statements and collection entries.
+The minimum gap before an ordinary trailing `//` comment is two spaces.
+Consecutive code lines in the same block share a comment column when each
+line fits in `printWidth` with up to eight additional spaces. A blank line,
+a line without a trailing comment, or a block boundary ends the group. This
+applies to declarations, statements and collection entries. Aligned `=>`
+and `=` use a minimum gap of one space.
 
 A standalone comment starting with `// ^` can mark a token on the line above.
 The formatter keeps the first caret under that token when the correspondence

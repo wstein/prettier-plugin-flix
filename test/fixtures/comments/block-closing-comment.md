@@ -16,7 +16,7 @@ def b(): Unit = if (true) { println(1) } /* c */ else { println(2) }
 ## Output
 
 ```flix
-def a(): Unit = { println(1) } // c
+def a(): Unit = { println(1) }  // c
 
 def b(): Unit = if (true) { println(1) } /* c */ else { println(2) }
 ```

@@ -15,6 +15,6 @@ def h(): Int32 = k(a, b) /* inline */
 ## Output
 
 ```flix
-def f(): Int32 = g(1) // trailing
+def f(): Int32 = g(1)  // trailing
 def h(): Int32 = k(a, b) /* inline */
 ```

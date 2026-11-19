@@ -15,14 +15,14 @@ bar}
 
 ```flix
 use VeryLongPackageName::VeryLongModuleName.{
-    foo, // keep
+    foo,  // keep
     bar
 }
 ```
 
 ```flix printWidth=20
 use VeryLongPackageName::VeryLongModuleName.{
-    foo, // keep
+    foo,  // keep
     bar
 }
 ```

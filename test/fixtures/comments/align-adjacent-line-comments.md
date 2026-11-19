@@ -34,44 +34,44 @@ def sample(): Int32 = {
 
 ```flix
 trait Animal[a] {
-    pub def isMammal(x: a): Bool      // OK, mentions a.
-    pub def numberOfGiraffes(): Int32 // NOT OK.
+    pub def isMammal(x: a): Bool       // OK, mentions a.
+    pub def numberOfGiraffes(): Int32  // NOT OK.
 }
 
 def sample(): Int32 = {
-    let a = 1;      // First
-    let longer = 2; // Second
+    let a = 1;       // First
+    let longer = 2;  // Second
 
-    let b = 3;     // Separate group
-    let other = 4; // Same group
+    let b = 3;      // Separate group
+    let other = 4;  // Same group
     let n = {
-        let t = 5;    // Next block
-        let temp = 6; // Same block
+        let t = 5;     // Next block
+        let temp = 6;  // Same block
         t + temp
     };
-    let result = a + longer + b + other + n; // A single comment
+    let result = a + longer + b + other + n;  // A single comment
     result
 }
 ```
 
 ```flix printWidth=48
 trait Animal[a] {
-    pub def isMammal(x: a): Bool // OK, mentions a.
-    pub def numberOfGiraffes(): Int32 // NOT OK.
+    pub def isMammal(x: a): Bool  // OK, mentions a.
+    pub def numberOfGiraffes(): Int32  // NOT OK.
 }
 
 def sample(): Int32 = {
-    let a = 1;      // First
-    let longer = 2; // Second
+    let a = 1;       // First
+    let longer = 2;  // Second
 
-    let b = 3;     // Separate group
-    let other = 4; // Same group
+    let b = 3;      // Separate group
+    let other = 4;  // Same group
     let n = {
-        let t = 5;    // Next block
-        let temp = 6; // Same block
+        let t = 5;     // Next block
+        let temp = 6;  // Same block
         t + temp
     };
-    let result = a + longer + b + other + n; // A single comment
+    let result = a + longer + b + other + n;  // A single comment
     result
 }
 ```

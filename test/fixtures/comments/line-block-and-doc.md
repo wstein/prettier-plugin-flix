@@ -27,7 +27,7 @@ def c(x /* name */ : Int32): Int32 = x
 ```flix
 // header
 
-def a(): Int32 = 1 // trailing
+def a(): Int32 = 1  // trailing
 
 /// doc
 def b(): Int32 = {

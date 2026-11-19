@@ -24,16 +24,16 @@ def noBlocks(): Int32 = if // note
 ## Output
 
 ```flix
-def afterCondition(): Int32 = if (true) // note
+def afterCondition(): Int32 = if (true)  // note
     { 1 } else { 2 }
 
-def beforeElse(): Int32 = if (true) { 1 } // note
+def beforeElse(): Int32 = if (true) { 1 }  // note
 else { 2 }
 
-def afterElse(): Int32 = if (true) { 1 } else // note
+def afterElse(): Int32 = if (true) { 1 } else  // note
     { 2 }
 
-def noBlocks(): Int32 = if // note
+def noBlocks(): Int32 = if  // note
     (true)
     1
 /* c */ else

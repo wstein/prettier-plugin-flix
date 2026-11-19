@@ -28,9 +28,9 @@ description="Ready to use"
 
 ```flix
 pub def profile(): { id = Int32, name = String, active = Bool } = {
-    id     = 7, // Assigned by the server.
+    id     = 7,  // Assigned by the server.
     name   = "Flix",
-    active = true // Active accounts can sign in.
+    active = true  // Active accounts can sign in.
 }
 
 pub def palette(): { x = String, color = String } = {

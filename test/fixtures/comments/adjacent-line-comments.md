@@ -20,11 +20,11 @@ def b(): Int32 = x + // after the operator
 
 ```flix
 def a(): Unit = g(
-    1, // before the comma
+    1,  // before the comma
     // after the comma
     x -> { println(x) }
 )
 
-def b(): Int32 = x + // after the operator
+def b(): Int32 = x +  // after the operator
     y
 ```
