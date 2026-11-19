@@ -136,7 +136,8 @@ export class Printer {
         );
     }
 
-    tok(t: TerminalNode): Doc {
+    /** The token with its leading comments, without trailing comments. */
+    private tokCore(t: TerminalNode): Doc {
         const info = this.info(t);
         const idx = t.symbol.tokenIndex;
         const parts: Doc[] = [];
@@ -146,8 +147,21 @@ export class Printer {
             parts.push(...this.leadDoc(info, false));
         }
         parts.push(this.src(t));
-        if (info) parts.push(...this.trailDoc(info));
         return parts;
+    }
+
+    private tokTrail(t: TerminalNode): Doc {
+        const info = this.info(t);
+        return info ? this.trailDoc(info) : "";
+    }
+
+    /** A `//` comment ends the line: whatever follows the token must start a new line. */
+    private hasLineTrail(t: TerminalNode): boolean {
+        return !!this.info(t)?.trail.some((c) => c.isLine);
+    }
+
+    tok(t: TerminalNode): Doc {
+        return [this.tokCore(t), this.tokTrail(t)];
     }
 
     /** Own-line comments in front of a closing token, to be printed inside the block. */
@@ -313,9 +327,14 @@ export class Printer {
         const pad = braces && !NO_PAD.has(parentKind);
         const comments = this.takeClosingComments(close);
         const openDoc = this.tok(open);
-        const closeDoc = this.tok(close);
+        const closeCore = this.tokCore(close);
+        const closeTrail = this.tokTrail(close);
+        const closeDoc = closeCore;
 
-        if (inner.length === 0 && comments.length === 0) return [openDoc, closeDoc];
+        if (inner.length === 0 && comments.length === 0) {
+            if (this.hasLineTrail(open)) return [openDoc, hardline, closeCore, closeTrail];
+            return [openDoc, closeCore, closeTrail];
+        }
 
         const sline = pad ? line : softline;
         const flatSline: Doc = this.flat > 0 ? (pad ? " " : "") : sline;
@@ -346,8 +365,8 @@ export class Printer {
                 if (structSplit && (k < entries.length - 1 || trailingComma)) docs.push(this.tok(structSplit.seps[k]));
             });
             const body: Doc = [flatSline, docs, tail];
-            if (sourceMultiline || comments.length > 0) return [openDoc, indent([hardline, docs, tail]), hardline, closeDoc];
-            return group([openDoc, indent(body), flatSline, closeDoc]);
+            if (sourceMultiline || comments.length > 0) return [openDoc, indent([hardline, docs, tail]), hardline, closeDoc, closeTrail];
+            return [group([openDoc, indent(body), flatSline, closeDoc]), closeTrail];
         }
 
         const sepType = SEMI_LISTS.has(parentKind) ? L.SEMI : L.COMMA;
@@ -369,7 +388,7 @@ export class Printer {
             !pad && comments.length === 0 && sepType === L.COMMA && lastTok !== null && ttype(lastTok) === L.RBRACE &&
             !items.slice(0, -1).some((it) => it.length > 0 && lastTerm(it[it.length - 1]) !== null && ttype(lastTerm(it[it.length - 1])!) === L.RBRACE) &&
             !docs.slice(0, -1).some(willBreak);
-        if (huggable) return [openDoc, this.joinWithSeps(docs, sepDocs, " "), closeDoc];
+        if (huggable) return [openDoc, this.joinWithSeps(docs, sepDocs, " "), closeDoc, closeTrail];
 
         const list: Doc[] = this.joinWithSeps(docs, sepDocs, this.flat > 0 ? " " : line);
         if (trailingTok) {
@@ -381,7 +400,7 @@ export class Printer {
         const forceBreak =
             pad && openType === L.LBRACE && this.flat === 0 && inner.length > 0 && !!firstTerm(inner[0]) &&
             firstTerm(inner[0])!.symbol.line > open.symbol.line;
-        return group([openDoc, indent([flatSline, list]), flatSline, closeDoc], { shouldBreak: forceBreak || comments.length > 0 });
+        return [group([openDoc, indent([flatSline, list]), flatSline, closeDoc], { shouldBreak: forceBreak || comments.length > 0 }), closeTrail];
     }
 
     // ------------------------------------------------------------- dispatch
