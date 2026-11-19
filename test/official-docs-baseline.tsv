@@ -124,7 +124,7 @@ book.data-types.primitive-types.set-literals	unchanged	-	d5157b5fa3dd063ed2de82a
 book.data-types.primitive-types.set-literals-02	unchanged	-	6aaf314ba12e05a5df3209b16b34c91dbe70e47708553115f8b9c6eafc20e7eb
 book.data-types.tuples.tuples	unchanged	-	68d5e7dc887cd8256f93b6479d0518b34008a139c2ee100e05dd5d442a593134
 book.data-types.tuples.tuples-02	unchanged	-	365e84c5a98bf1d7542251e87dc0c4dfbb921e3d5300cae4de318a13c57a88a8
-book.data-types.tuples.tuples-03	layout-change	spacing	d8db5377fae0b007b62a6380441458ba0b29129136cee5956c175efa53a2ce44
+book.data-types.tuples.tuples-03	unchanged	-	ca54ab93d4f8db6084491fd5be09e95e61135d6791f463c7d322b1a91877daec
 book.data-types.tuples.tuples-04	layout-change	spacing	fd4796975dcea704c9bb7b339c5a8b83fd9c79cfc16dd30b0d990b391aed95df
 book.data-types.tuples.tuples-05	unchanged	-	5066114e00fc4a5808abf799151af0a8b1af219e732715d3963daa8f59f6fad5
 book.data-types.type-aliases.a-type-alias-for-a-map-from-keys-of-type	unchanged	-	9ca37da2ba35f96696966d9508a91b4e1fa40df07102ec6cbd27917ff3883367
@@ -139,12 +139,12 @@ book.effect-system.effect-oriented-programming.a-guessing-game-mdash-the-right-w
 book.effect-system.effect-oriented-programming.a-guessing-game-mdash-the-wrong-way	layout-change	wrapping	9f9e2760c2865fc7ef71d8b93eb3f93b82e448a6ec19633a6f24040991786bb7
 book.effect-system.effect-polymorphism.effect-exclusion	needs-context	-	9ea1680de6921f466250b1e81c87fad62943ba64e345d656985fbeea9f02e107
 book.effect-system.effect-polymorphism.effect-exclusion-02	needs-context	-	e810952d0e0db834b7512130e0e5b86a5a3baeb4f98595090257c88f8b5cb0d0
-book.effect-system.effect-polymorphism.effect-polymorphism	layout-change	indentation	238bfbac6a28f7c649835f7259961c068a81708f731e1396b039e662265aa2d4
+book.effect-system.effect-polymorphism.effect-polymorphism	unchanged	-	8127b7e3ad70220cade8bf59eeace5b0b960905a3739cec0b4810918c9969146
 book.effect-system.effect-polymorphism.effect-polymorphism-02	unchanged	-	1a92a0b3334bdff956d0e60f61dc47cd6db1a442cfe1f8e4134b89f91a37198b
 book.effect-system.effect-polymorphism.effect-polymorphism-03	layout-change	spacing	71908a7d72f6d7d86e9d5c6b3c73afdf3cb65add58de840ff0071618434d09ca
 book.effect-system.effect-polymorphism.effect-polymorphism-04	needs-context	-	8c409b65e6ea9fbcf00877b8ce02ffa9930a845819a2dc211cda87bd85bc9b43
 book.effect-system.effect-polymorphism.effect-polymorphism-05	needs-context	-	49dfe98b7f1b29687cc45f04d7a2f81e790bc0f5cca910e9a51a094650533bfb
-book.effect-system.effect-polymorphism.effect-polymorphism-06	layout-change	indentation	b8a9bb82c3f5f715ce13e8c1fa603e53e9b0c5772e572f1983200a90983e9f22
+book.effect-system.effect-polymorphism.effect-polymorphism-06	unchanged	-	f6a13d57c1b38cf018d50df6410e10fd6240b20912e02a8277e41afca98f3c79
 book.effect-system.effect-polymorphism.higher-order-functions	needs-context	-	895d1889630fe1b39b19c9f4098ba016cd08c7333a0b18b45ca4615865e98fbf
 book.effect-system.effect-polymorphism.higher-order-functions-02	needs-context	-	02c8437bfe4ebd0fd83403f7d1f02631befc0316c4253b82d4f9e3da4d034500
 book.effect-system.effect-polymorphism.higher-order-functions-03	needs-context	-	8b6994914a12fac09837a13ddfbf0ddc82a45d68c1df0b67754ddd297ecc09ef
@@ -546,7 +546,7 @@ book.traits.associated-types.example-a-for-each-trait-04	layout-change	spacing	1
 book.traits.automatic-derivation.derivation-of-coerce	unchanged	-	3d48c17f413754496daeb7c9a66e36e16419e550d711ffbd8add5d59905639ca
 book.traits.automatic-derivation.derivation-of-coerce-02	unchanged	-	21356cd88b658062346587ac8b9190e0d25df88f5457383d6f3988a7cbaab40e
 book.traits.automatic-derivation.derivation-of-eq-and-order	unchanged	-	4e56107102ea2991acdd3902e728ee98addbccd34472887ccdb5f89baf067205
-book.traits.automatic-derivation.derivation-of-eq-and-order-02	layout-change	spacing	29098c0b188595f4147b81e2f6095838922b7858bb4cfc705f947778fa463131
+book.traits.automatic-derivation.derivation-of-eq-and-order-02	layout-change	spacing	9ce29cf159e14cab28e24e2021e81395abcee927c4d3a4677c1d9bed1cc6a71a
 book.traits.automatic-derivation.derivation-of-to-string	unchanged	-	d92e97582d07316d23a7b76dd39d5a0ab8aac0b976073210c794b18eea06056b
 book.traits.automatic-derivation.derivation-of-to-string-02	layout-change	spacing	59bcdf2976e6e9a0365ed59d9e98dce7abb699d65c110aec8e31be66cbd67025
 book.traits.essential-traits.the-eq-trait	layout-change	blank-lines	e4665c77ada15c42f0748e9c4f00b178a589768ebeb36e0d4ae2e2126ae1e0bc
@@ -564,7 +564,7 @@ book.traits.higher-kinded-types.higher-kinded-types-vs-associated-types-03	layou
 book.traits.higher-kinded-types.the-flix-kinds	layout-change	spacing	a105d7ec698fe7838b879ec05086de697381ed58c63313b6a214d01b241f81d6
 book.traits.higher-kinded-types.the-flix-kinds-02	layout-change	wrapping	e64173f6fd9fe16f79924f9267752902f30b43549523c28fa5b9e5dfd5f37673
 book.traits.traits.complex-instances	unchanged	-	ed9b2b980b118af1cd86d23f7d00d6263590519b5ee2fe995dc8fbb99a4b6d8e
-book.traits.traits.malformed-traits	layout-change	spacing	2b93c2c8d4a81efae00e9b8f2b8662b5fe66247ac28fa9649972af451fd469f7
+book.traits.traits.malformed-traits	unchanged	-	9e85a8a8d7082b3c955c621fe64d04dddd16250f77912d4b3ae28308e5af1e97
 book.traits.traits.overlapping-instances	unchanged	-	76004b12804044c6f3139d6dca154c34d239dc5fed44d71838843fad726bb15b
 book.traits.traits.sealed-traits	unchanged	-	be8fb818caab7c17f09ae1a3af34ca6ecb0b9f34da073779a96d4793995dc903
 book.traits.traits.sealed-traits-02	unchanged	-	7d69544ac7f0def1d9ae816f1af661f80b5a28f83bc310532f3ac3fad832c169

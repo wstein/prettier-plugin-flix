@@ -104,7 +104,6 @@ const CALL_LIKE = new Set([
 export class Printer {
     private flat = 0;
     private consumed = new Set<number>();
-    private commentGaps = new Map<number, number>();
     /** Tokens that start a line in the output, so own-line comments need no extra line break. */
     private lineStart = new Set<number>();
 
@@ -147,13 +146,9 @@ export class Printer {
         return parts;
     }
 
-    private trailDoc(info: TokenInfo, gap = " ", alignedGap?: number): Doc[] {
+    private trailDoc(info: TokenInfo, gap = " "): Doc[] {
         return info.trail.map((c) => {
             const comment = this.commentText(c);
-            if (alignedGap && alignedGap > 1 && c.isLine) {
-                // Check the full comment at its actual column, including the enclosing indentation.
-                return lineSuffix(group([ifBreak(gap, " ".repeat(alignedGap)), comment]));
-            }
             return c.isLine || c.nlNext > 0 ? lineSuffix([gap, comment]) : [gap, comment];
         });
     }
@@ -198,7 +193,7 @@ export class Printer {
         const info = this.info(t);
         // `s->// c\nfield`: whitespace after the arrow would turn the field access into a lambda arrow.
         const gap = ttype(t) === L.ARROW_TIGHT ? "" : " ";
-        return info ? this.trailDoc(info, gap, this.commentGaps.get(t.symbol.tokenIndex)) : "";
+        return info ? this.trailDoc(info, gap) : "";
     }
 
     /** A `//` comment (or a block comment that ends its line) ends the line: whatever follows the token must start a new line. */
@@ -412,24 +407,6 @@ export class Printer {
         return width + 2 * seps.length;
     }
 
-    private alignEntryComments(rows: { end: TerminalNode | null; width: number }[], seps: TerminalNode[]): void {
-        const entries = rows.flatMap(({ end, width }, i) => {
-            const comma = seps[i];
-            const tokens = [end, comma];
-            const trail = tokens.flatMap((t) => t ? (this.info(t)?.trail ?? []).map((comment) => ({ t, comment })) : []);
-            if (trail.length !== 1) return [];
-            const [{ t, comment }] = trail;
-            if (!comment.isLine || comment.text.includes("\t")) return [];
-            return [{ t, width }];
-        });
-        if (entries.length < 2) return;
-        const column = entries.reduce((max, entry) => Math.max(max, entry.width), 0);
-        for (const { t, width } of entries) {
-            const padding = column - width;
-            if (padding > 0 && padding <= 8) this.commentGaps.set(t.symbol.tokenIndex, padding + 1);
-        }
-    }
-
     private alignEntries(items: Node[][], seps: TerminalNode[], layoutId: symbol): Doc[] | undefined {
         if (this.flat > 0 || items.length < 2) return;
         const rows = [];
@@ -458,7 +435,6 @@ export class Printer {
         }));
         // Each row needs room for the code plus two levels of indentation.
         if (measured.some(({ width }) => width + 2 * this.tabWidth > this.printWidth)) return;
-        this.alignEntryComments(measured, seps);
         if (padding === 0) return;
 
         return rows.map(({ left, delimiter, right, leftWidth }) => [

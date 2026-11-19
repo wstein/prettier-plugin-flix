@@ -1,4 +1,5 @@
 import type { AstPath, Doc, Options, Parser, Plugin, Printer, SupportLanguage } from "prettier";
+import { layoutComments } from "./comment-layout.js";
 import { parseFlix, type FlixRoot } from "./parse.js";
 import { Printer as FlixPrinter } from "./print.js";
 
@@ -25,7 +26,9 @@ const flixAstPrinter: Printer<FlixRoot> = {
     // The whole tree is printed from the root: comments and blank lines are read from the
     // token stream, so Prettier's own comment attachment is not used.
     print(path: AstPath<FlixRoot>, options: Options): Doc {
-        return new FlixPrinter(path.node, options.printWidth, options.tabWidth).printRoot();
+        const { printWidth = 80, tabWidth = 4, useTabs = false } = options;
+        const value = new FlixPrinter(path.node, printWidth, tabWidth).printRoot();
+        return layoutComments(path.node, value, { printWidth, tabWidth, useTabs });
     },
 };
 
