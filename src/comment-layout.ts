@@ -9,7 +9,6 @@ type Row = { line: number; scope: Scope | undefined; indent: number; code: strin
 const OPEN = new Set([L.LPAREN, L.LBRACK, L.LBRACE, L.HASH_LBRACE, L.HASH_LPAREN, L.HASH_BAR, L.INTERPOLATION_START]);
 const CLOSE = new Set([L.RPAREN, L.RBRACK, L.RBRACE, L.BAR_HASH, L.INTERPOLATION_END]);
 const CARET = /^\/\/[ \t]*\^+/;
-const MAX_PADDING = 8;
 export const LINE_COMMENT_GAP = "  ";
 
 function lex(text: string): Token[] {
@@ -68,8 +67,7 @@ function alignTrailingComments(tokens: Token[], lines: string[], options: Layout
     for (const group of lineCommentGroups(tokens, lines, options.tabWidth)) {
         if (group.length < 2) continue;
         const column = group.reduce((longest, row) => Math.max(longest, row.width), 0) + LINE_COMMENT_GAP.length;
-        if (group.some((row) => column - row.width - LINE_COMMENT_GAP.length > MAX_PADDING ||
-            column + util.getStringWidth(row.comment) > options.printWidth)) continue;
+        if (group.some((row) => column + util.getStringWidth(row.comment) > options.printWidth)) continue;
         for (const row of group) lines[row.line - 1] = row.code + " ".repeat(column - row.width) + row.comment;
     }
 }

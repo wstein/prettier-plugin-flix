@@ -125,7 +125,7 @@ book.data-types.primitive-types.set-literals-02	unchanged	-	6aaf314ba12e05a5df32
 book.data-types.tuples.tuples	unchanged	-	68d5e7dc887cd8256f93b6479d0518b34008a139c2ee100e05dd5d442a593134
 book.data-types.tuples.tuples-02	layout-change	spacing	1aeafdd4a7b0b6a42e08c5c8693bb950cb09b0a01fffeb502166a1f4553cd5b1
 book.data-types.tuples.tuples-03	layout-change	spacing	80097651ed0092f2fef688390d67b71b951e3dccdfbd607e75af7d0ed599fe2e
-book.data-types.tuples.tuples-04	layout-change	spacing	b10ff78f1ee3c2979434c430cb58c1fde873e579184cdece65ee5c3665bfa688
+book.data-types.tuples.tuples-04	layout-change	spacing	09b4f9833025a362c64baea60a694e67a99e9699623a62f480dfc08889bf618c
 book.data-types.tuples.tuples-05	unchanged	-	5066114e00fc4a5808abf799151af0a8b1af219e732715d3963daa8f59f6fad5
 book.data-types.type-aliases.a-type-alias-for-a-map-from-keys-of-type	unchanged	-	9ca37da2ba35f96696966d9508a91b4e1fa40df07102ec6cbd27917ff3883367
 book.effect-system.default-handlers.default-handlers	layout-change	line-endings	b357e86a17d772e15bfe367e1c829602eaceca71cadb30a143816b150a8be7ff
@@ -323,7 +323,7 @@ book.interoperability-with-java.nested-and-inner-classes.nested-and-inner-classe
 book.interoperability-with-java.reading-and-writing-fields.reading-object-fields	unchanged	-	477b7a2284d99328cedc8550ede7f93346071a5204fead9f20df10e7dac51be4
 book.interoperability-with-java.reading-and-writing-fields.reading-static-fields	needs-context	-	59b02c80e182dcc5220bc704d84c01ace690ffbb7e474e5b3726be78515aa28a
 book.introduction-to-flix.introduction.a-function-that-sends-every-element-of-a	layout-change	wrapping	537f7e4f4dedf1569527e282e342ce8d126fdcc429d6c7379de51b50c6694aff
-book.introduction-to-flix.introduction.an-algebraic-data-type-for-shapes	layout-change	wrapping	3189ef7be3ffb7f7df22d7e929529c6d4654c2558149e3ca19f7258844f6de7c
+book.introduction-to-flix.introduction.an-algebraic-data-type-for-shapes	layout-change	wrapping	397508e106c8c71ee3e6a0b8018c588907a29bfdb5e0bce29cc4be2909ee6116
 book.introduction-to-flix.introduction.look-and-feel	layout-change	wrapping	82bbfb02aa7db0acc6fe6889f61bf847b348d94de17f8916c13a70a6b3fa36ee
 book.introduction-to-flix.introduction.look-and-feel-02	layout-change	wrapping	6933dfcd6462ff43c0f9e17de15753d0f73d9c5897be475744d2a1db44ed2371
 book.introduction-to-flix.introduction.look-and-feel-03	unchanged	-	61e73ae0ce17791989f273550736c0f5814935a60233d9b5798258896c9fb56d
@@ -438,7 +438,7 @@ book.modules.modules.modules-and-trait-03	unchanged	-	9ef3ce2efb50f13a2aeaec48a8
 book.modules.modules.using-multiple-declarations-from-a-modul	unchanged	-	265f652eabe9a3915717378ecb4aaa36f4008ada94b00e9f966232f13d7e330f
 book.modules.modules.using-multiple-declarations-from-a-modul-02	layout-change	wrapping	b8a8df58e2abc104410534e095dd06770353ff4697e610bdb3583dcab2e8f4a8
 book.modules.modules.using-multiple-declarations-from-a-modul-03	layout-change	wrapping	44e4fa27382ac17f0e5e6257f740095af28f8c31cd5730e601dd6dddc348c360
-book.modules.using-modules.uses-of-a-package	layout-change	spacing	763511424a2efd18ebf2e2981b53127480c7d54882b619064f5e56e9a72f3ad4
+book.modules.using-modules.uses-of-a-package	unchanged	-	3a73c73b83c7d2eaddf237b4b7273a43982594d54417a2bb08163f087735c983
 book.modules.using-modules.using-modules	layout-change	spacing	b20e818a7f6c94a73b34bb59babb43d31adfd528ce276159521f99a06157a184
 book.modules.using-modules.using-modules-02	unchanged	-	9c77893b37a5813a5c6021c0d2ede1386ccaa69613bb971dd51a5b996cef5e73
 book.modules.using-modules.where-can-uses-occur	unchanged	-	63b01419bb8fc20c00b7387cab047e8fc4bfb601ec21955c582d1d17b0788065
@@ -500,7 +500,7 @@ book.quick-reference.quick-reference.enums-and-pattern-matching	unchanged	-	91c7
 book.quick-reference.quick-reference.enums-and-pattern-matching-02	unchanged	-	64f07a6fd4af0f7ef091b6e92a1f1e7a174fe2dff0b28e248db35530fb3b85f2
 book.quick-reference.quick-reference.lists	unchanged	-	ac96a816b79369e47ba9a769d4f51eb64aea59acde373d1316b8f52920e7e9c2
 book.quick-reference.quick-reference.loops	layout-change	wrapping	4dc60b4436fe222b184a56ffd15a7525d9842ab314b42d5ce43719c687472aa9
-book.quick-reference.quick-reference.modules	layout-change	spacing	a6a103e4015bd57a9dffa5554be4a97b2cb3baa9eb3387928c0e0fab4eeef65a
+book.quick-reference.quick-reference.modules	layout-change	spacing	03e904f667da6f5b0b976b853d5accbde039d48578627b45f3d06e919de21908
 book.quick-reference.quick-reference.option-and-result	needs-context	-	4ec637bdb5a429b52a9611463fc9743ab49765e76f817460459c483d0404b043
 book.quick-reference.quick-reference.program-structure	unchanged	-	4040d12a89685daaebe852c9107e304a3c1c61be4e0f6c615ea855695841b14b
 book.quick-reference.quick-reference.records	needs-context	-	235c7a1469d3b808cccd412144ced2b4445df7e3af9e03928b66f76efdae3fae
@@ -590,7 +590,7 @@ website.front-page.optimizer.sums-f-applied-to-every-element-of-arr	layout-chang
 website.front-page.parallelism.a-parallel-implementation-of-the-list-ma	layout-change	wrapping	8d662766038634345869b2afe91a342a5af04558a9e22d10466f67953a04763a
 website.front-page.poly-effects.the-purity-of-map-depends-on-the-purity	layout-change	line-endings	d9173b01bb7c7a22ca11172b664b5715625121e73930ddde7aae5040c463b4dd
 website.front-page.purity-reflection.we-can-inspect-the-purity-of-a-function	needs-context	-	080b455f46daa58486af7395287b07f84bd8366741d21a2029996af81eb3a3bc
-website.front-page.purity.a-pure-function-is-annotated-with	layout-change	spacing	6afd8b3e8171bdb2047105bd573f538026988db116d8391bd1cab99df9a4282d
+website.front-page.purity.a-pure-function-is-annotated-with	layout-change	spacing	e7a2141f08cd847fbb96bbe60d45ade080c4204ad000866ede4132223a4d9490
 website.front-page.record.record-example	layout-change	wrapping	71d300921ed0c3ef60b518b87c1e197b37de37eb96c456397c951f205a36ebf4
 website.front-page.region.we-can-implement-a-pure-sort-function-wh	needs-context	-	63f1e3c910be34dca6e3d27b1e42a20f4f4aa6e3a2f546853cb1d04a03aa7f8c
 website.front-page.structs.structs-example	layout-change	wrapping	0f0d8dd67cc44c50ee4cda7e92d0b6567e41381ed16ad56abcb1850da87609fe
