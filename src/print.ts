@@ -156,23 +156,23 @@ export class Printer {
         });
     }
 
-    /** The token with its leading comments, without trailing comments. */
-    private tokCore(t: TerminalNode): Doc {
+    private tokenLeadingDoc(t: TerminalNode): Doc[] {
         const info = this.info(t);
         const idx = t.symbol.tokenIndex;
-        const parts: Doc[] = [];
-        if (info && !this.consumed.has(idx) && info.lead.length > 0 && this.touchesTightArrow(t)) {
+        if (!info?.lead.length || this.consumed.has(idx)) return [];
+        if (this.touchesTightArrow(t)) {
             // `s/* c */->/* c */f`: whitespace around `->` would turn the field access into an
             // arrow, so block comments there stay glued to it.
-            parts.push(...info.lead.map((c) => this.commentText(c)));
-        } else if (info && !this.consumed.has(idx) && info.lead.length > 0) {
-            // An own-line comment must start its own line even when a space was planned here; an
-            // inline one (`} /* c */ else`) stays on the line it was written on.
-            if (!this.lineStart.has(idx) && info.lead[0].nl > 0) parts.push(hardline);
-            parts.push(...this.leadDoc(info, false));
+            return info.lead.map((c) => this.commentText(c));
         }
-        parts.push(this.src(t));
-        return parts;
+        // An own-line comment must start its own line even when a space was planned here.
+        const before = !this.lineStart.has(idx) && info.lead[0].nl > 0 ? [hardline] : [];
+        return [...before, ...this.leadDoc(info, false)];
+    }
+
+    /** The token with its leading comments, without trailing comments. */
+    private tokCore(t: TerminalNode): Doc {
+        return [...this.tokenLeadingDoc(t), this.src(t)];
     }
 
     /**
@@ -1074,6 +1074,14 @@ export class Printer {
             }
         };
         collect(n);
+        const firstToken = firstTerm(operands[0]);
+        const isPipeline = k === "UserOpExpr" && ops.every((op) => isTerm(op) && this.src(op) === "|>");
+        let leading: Doc[] = [];
+        if (isPipeline && firstToken && (this.info(firstToken)?.lead[0]?.nl ?? 0) > 0) {
+            // Comments above the pipeline must not force the pipeline itself to wrap.
+            leading = this.tokenLeadingDoc(firstToken);
+            this.consumed.add(firstToken.symbol.tokenIndex);
+        }
         const links = ops.map((op, i) => {
             // Multiline list constructors follow the leading :: style in the Flix examples.
             const leadingCons = rightAssoc && isTerm(op) && ttype(op) !== L.COLON_COLON_COLON;
@@ -1085,14 +1093,11 @@ export class Printer {
             };
         });
         const first = this.print(operands[0]);
-        const firstToken = firstTerm(operands[0]);
-        if (k === "UserOpExpr" && firstToken &&
-            [L.QUERY, L.PQUERY, L.SELECT].includes(ttype(firstToken)) &&
-            ops.every((op) => isTerm(op) && this.src(op) === "|>")) {
-            return group([first, indent(links.map(({ operator, after, operand }) => group([operator, after, operand])))]);
+        if (isPipeline && firstToken && [L.QUERY, L.PQUERY, L.SELECT].includes(ttype(firstToken))) {
+            return [leading, group([first, indent(links.map(({ operator, after, operand }) => group([operator, after, operand])))])];
         }
         if (k !== "AddExpr" || !ops.every((op) => isTerm(op) && ttype(op) === L.PLUS)) {
-            return group([first, indent(links.map(({ operator, after, operand }) => [operator, after, operand]))]);
+            return [leading, group([first, indent(links.map(({ operator, after, operand }) => [operator, after, operand]))])];
         }
 
         // A newline literal acts as a separator. Keep it with the preceding text when that
