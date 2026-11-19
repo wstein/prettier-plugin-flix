@@ -22,28 +22,28 @@
   <div class="comparison">
     <section>
       <h3>Input</h3>
-      <pre><code class="language-flix">{{ .input }}</code></pre>
+      {{ .inputHtml | safeHTML }}
     </section>
     {{ with .outputs }}
     {{ $first := index . 0 }}
     <section>
       <h3>Expected Prettier output</h3>
       {{ with $first.options }}<p class="options">{{ . }}</p>{{ end }}
-      <pre><code class="language-flix">{{ $first.code }}</code></pre>
+      {{ $first.html | safeHTML }}
     </section>
     {{ end }}
   </div>
   {{ range after 1 .outputs }}
   <details>
     <summary>Prettier output{{ with .options }} ({{ . }}){{ end }}</summary>
-    <pre><code class="language-flix">{{ .code }}</code></pre>
+    {{ .html | safeHTML }}
   </details>
   {{ end }}
   {{ with .reference }}
   <details>
     <summary>Flix {{ .version }} reference{{ if .invalid }} (output fails to compile){{ else if eq .language "text" }} (compiler diagnostics){{ end }}</summary>
     {{ with .note }}{{ . | markdownify }}{{ end }}
-    <pre><code class="language-{{ .language }}">{{ .code }}</code></pre>
+    {{ if eq .language "flix" }}{{ .html | safeHTML }}{{ else }}<pre><code>{{ .code }}</code></pre>{{ end }}
   </details>
   {{ end }}
 </article>

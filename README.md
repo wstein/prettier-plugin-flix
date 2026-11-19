@@ -122,7 +122,7 @@ The comparison needs a Java 21 JDK and launches one JVM for all selected fixture
 
 ## Fixture documentation
 
-The [fixture catalog](https://wstein.github.io/prettier-plugin-flix/) groups related Markdown fixtures on a chapter page. The Comments chapter includes links to each case, expected Prettier output, and the available Flix formatter references.
+The [fixture catalog](https://wstein.github.io/prettier-plugin-flix/) groups related Markdown fixtures on a chapter page. The Comments chapter includes links to each case, expected Prettier output, and the available Flix formatter references. Shiki highlights Flix at build time using the vendored [Flix 0.80 grammar from flix-textmate](https://github.com/wstein/flix-textmate/blob/23d12e36d33f1d20c0fa779188cc4a2121da8c4e/syntaxes/flix.tmLanguage.json).
 
 Install Hugo 0.154.5 and run `npm ci` and `npm run docs:build` to generate the site in `docs/public/`. Build inputs come from the same Markdown files as the formatter tests. GitHub Actions builds the catalog on pull requests and deploys it to GitHub Pages from `main`.
 
