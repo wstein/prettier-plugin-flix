@@ -54,7 +54,7 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
 
     function showStatus(message, isError = false) {
         status.toggleAttribute("data-error", isError);
-        status.textContent = message;
+        if (status.textContent !== message) status.textContent = message;
     }
 
     function showCursor(state) {
@@ -69,6 +69,7 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
         const id = revision = ++nextRequest;
         clearTimeout(timer);
         copy.disabled = true;
+        if (!formatterFailed) showStatus("Formatting…");
         onChange?.(snapshot());
         timer = setTimeout(() => updatePreview(id), 250);
     }
@@ -137,6 +138,7 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
         const fixture = Object.hasOwn(fixtures, key) ? fixtures[key] : undefined;
         const options = fixture?.options[variant] ?? fixture?.options[0] ?? {};
         loadDraft({ source: fixture?.input ?? "", ...options });
+        if (fixture && !formatterFailed) showStatus("Loading example…");
     }
 
     function loadDraft({ source, printWidth: width = defaultWidth, tabWidth: indent = 4, useTabs: tabs = false }) {
@@ -183,6 +185,7 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
     }
 
     async function loadExamples() {
+        if (revision === 0 && !formatterFailed) showStatus("Loading examples…");
         try {
             const data = await fetchFixtures(playground.dataset.examples);
             fixtures = data.fixtures;
