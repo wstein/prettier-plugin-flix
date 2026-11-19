@@ -1,9 +1,7 @@
 ---
 title: tabWidth sets the indentation
-description: "Comparing both output blocks shows how tabWidth changes indentation without changing the program."
+description: "The default output indents by four spaces. The alternate output uses two."
 flix: "0.80"
-options:
-  tabWidth: 2
 ---
 
 ## Input
@@ -17,6 +15,12 @@ def f(): Int32 = {
 ## Output
 
 ```flix
+def f(): Int32 = {
+    1
+}
+```
+
+```flix tabWidth=2
 def f(): Int32 = {
   1
 }
