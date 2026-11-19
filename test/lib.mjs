@@ -3,6 +3,7 @@ import { CharStream, CommonTokenStream } from "antlr4ng";
 import { FlixLexer } from "../dist/generated/FlixLexer.js";
 import { FlixParser } from "../dist/generated/FlixParser.js";
 import plugin from "../dist/index.js";
+import { findStringContinuationError } from "../dist/parse.js";
 
 export const fmt = (text, opts = {}) =>
     format(text, { parser: "flix", plugins: [plugin], ...opts });
@@ -18,6 +19,11 @@ export function fingerprint(text) {
     parser.removeErrorListeners(); parser.addErrorListener(l);
     const tree = parser.compilationUnit();
     stream.fill();
+    const continuation = findStringContinuationError(stream.getTokens());
+    if (continuation) {
+        const { line, column } = continuation.loc.start;
+        errors.unshift(`${line}:${column - 1} ${continuation.message}`);
+    }
     const tokens = stream.getTokens().filter((t) => t.channel === 0 && t.type !== FlixLexer.EOF).map((t) => t.text);
     const comments = stream.getTokens().filter((t) => t.channel >= 2).map((t) => t.text.trim());
     const shape = (n) => (n.children ? `${n.constructor.name}(${n.children.map(shape).join(",")})` : "t");
