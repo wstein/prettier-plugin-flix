@@ -55,15 +55,20 @@ jobs:
       - run: npm run build
       - name: Download the pinned compiler
         run: curl -fsSL -o flix.jar "${{ steps.pin.outputs.jar }}"
-      - name: Check built-in Flix formatter references
-        run: npm run test:flix-format -- flix.jar flix-spec/pin.json
       - name: Collect the snippets
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           node scripts/harvest-scala.mjs flix-src scala-snippets
           node scripts/harvest-issues.mjs issue-snippets
+      # The checks below are independent: each runs even when an earlier one failed (but not when the
+      # run was cancelled), and the job still fails if any of them failed.
       - name: Formatter invariants over the corpora
+        if: ${{ !cancelled() }}
         run: node scripts/check-corpus.mjs flix-src/main/test/flix scala-snippets issue-snippets
       - name: Compiler oracle
+        if: ${{ !cancelled() }}
         run: node scripts/oracle.mjs flix.jar flix-src/main/test/flix --every "${{ inputs.every || 8 }}" --jobs 2 --pin flix-spec/pin.json
+      - name: Check built-in Flix formatter references
+        if: ${{ !cancelled() }}
+        run: npm run test:flix-format -- flix.jar flix-spec/pin.json
