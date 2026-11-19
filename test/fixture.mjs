@@ -22,7 +22,7 @@ import { join, relative } from "node:path";
 import YAML from "yaml";
 
 export const STATUSES = ["pass", "todo", "error"];
-const META_KEYS = new Set(["title", "description", "flix", "options", "status", "issue", "message", "source", "tags"]);
+const META_KEYS = new Set(["title", "description", "flix", "options", "status", "issue", "message", "source", "tags", "flixFormat"]);
 const OPTION_TYPES = { printWidth: "number", tabWidth: "number", useTabs: "boolean" };
 
 const fail = (file, line, msg) => {
@@ -88,6 +88,9 @@ export function parseFixture(text, file = "<fixture>") {
     for (const k of Object.keys(meta)) if (!META_KEYS.has(k)) fail(file, 2, `unknown front matter key "${k}"`);
     if (typeof meta.title !== "string" || meta.title.trim() === "") fail(file, 2, "front matter needs a non-empty title");
     if (typeof meta.flix !== "string" || !/^\d+\.\d+$/.test(meta.flix)) fail(file, 2, 'front matter "flix" must be a quoted major.minor string such as "0.80"');
+    if ("flixFormat" in meta && (typeof meta.flixFormat !== "string" || !/^\d+\.\d+\.\d+$/.test(meta.flixFormat))) {
+        fail(file, 2, 'front matter "flixFormat" must be a quoted major.minor.patch version');
+    }
     meta.status ??= "pass";
     if (!STATUSES.includes(meta.status)) fail(file, 2, `status must be one of ${STATUSES.join(", ")}`);
     if ("options" in meta) checkOptions(file, 2, meta.options);
@@ -95,22 +98,36 @@ export function parseFixture(text, file = "<fixture>") {
 
     const blocks = [];
     let section = null;
+    let referenceHeading = null;
     for (let i = close + 1; i < lines.length; i++) {
         const heading = /^## (.*)$/.exec(lines[i]);
         if (heading) {
             section = heading[1].trim();
-            if (section !== "Input" && section !== "Output") fail(file, i + 1, `unknown section "## ${section}" (allowed: Input, Output)`);
+            if (section === "Flix Format") {
+                if (referenceHeading !== null) fail(file, i + 1, "duplicate Flix Format section");
+                referenceHeading = i + 1;
+            } else if (section !== "Input" && section !== "Output") {
+                fail(file, i + 1, `unknown section "## ${section}" (allowed: Input, Output, Flix Format)`);
+            }
             continue;
         }
         const open = /^```(.*)$/.exec(lines[i]);
         if (!open) continue;
         if (section === null) fail(file, i + 1, "code block before ## Input");
-        const options = parseInfo(file, i + 1, open[1]);
+        const language = open[1].trim();
+        let options = {};
+        if (section === "Flix Format") {
+            if (language !== "flix" && language !== "text") {
+                fail(file, i + 1, 'Flix Format blocks must be tagged "flix" (output) or "text" (diagnostics)');
+            }
+        } else {
+            options = parseInfo(file, i + 1, open[1]);
+        }
         const start = i + 1;
         let end = start;
         while (end < lines.length && lines[end] !== "```") end++;
         if (end >= lines.length) fail(file, i + 1, "code block is not closed");
-        blocks.push({ section, options, start, end, line: i + 1, code: lines.slice(start, end).map((l) => l + "\n").join("") });
+        blocks.push({ section, language, options, start, end, line: i + 1, code: lines.slice(start, end).map((l) => l + "\n").join("") });
         i = end;
     }
 
@@ -129,7 +146,15 @@ export function parseFixture(text, file = "<fixture>") {
     } else if (Object.keys(outputs[0].options).length > 0) {
         fail(file, outputs[0].line, "the first Output block takes no options (use the front matter for those)");
     }
-    return { file, meta, lines, eol, input: inputs[0], outputs };
+    const refs = blocks.filter((b) => b.section === "Flix Format");
+    if (referenceHeading !== null) {
+        if (!meta.flixFormat) fail(file, referenceHeading, 'Flix Format requires a "flixFormat" version');
+        if (meta.status === "error") fail(file, referenceHeading, "status: error fixtures cannot have a Flix Format reference");
+        if (refs.length !== 1) fail(file, referenceHeading, "Flix Format requires exactly one block");
+    } else if (meta.flixFormat) {
+        fail(file, 2, 'a "flixFormat" version requires a Flix Format section');
+    }
+    return { file, meta, lines, eol, input: inputs[0], outputs, flixFormat: refs[0] };
 }
 
 export function loadFixture(path, label = path) {
@@ -147,6 +172,15 @@ export function withOutputs(fixture, actual) {
         const body = actual[i] === "" ? [] : actual[i].replace(/\n$/, "").split("\n");
         lines.splice(start, end - start, ...body);
     }
+    return lines.join(fixture.eol);
+}
+
+/** Updates only the Flix Format fence and content while preserving the fixture's line endings. */
+export function withFlixFormat(fixture, { language, code }) {
+    const { start, end } = fixture.flixFormat;
+    const lines = [...fixture.lines];
+    const body = code === "" ? [] : code.replace(/\n$/, "").split("\n");
+    lines.splice(start - 1, end - start + 1, "```" + language, ...body);
     return lines.join(fixture.eol);
 }
 
