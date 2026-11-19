@@ -81,36 +81,79 @@ pre.shiki { background-color: var(--shiki-light-bg, var(--surface)); }
   pre.shiki { background-color: var(--shiki-dark-bg, var(--surface)); }
 }
 
+.fixture-links { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.8rem; }
+.fixture-links span { margin-inline: 0; }
+.fixture-playground {
+  display: inline-block;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid var(--link);
+  border-radius: 0.4rem;
+  background: var(--surface);
+  font-weight: 650;
+  text-decoration: none;
+}
+.fixture-playground:hover { text-decoration: underline; }
+.fixture-variant-link { display: inline-block; margin-top: 0.4rem; }
+
 .playground-nav { margin-bottom: 0.5rem; }
-.playground fieldset { min-width: 0; border: 0; margin: 0; padding: 0; }
-.playground legend { padding: 0; font-weight: 650; }
-.playground-options, .playground-actions {
+.playground-title { margin: 0.6rem 0 0.85rem; font-size: clamp(1.75rem, 4vw, 2.3rem); }
+.playground-toolbar {
   display: flex;
   flex-wrap: wrap;
   align-items: end;
-  gap: 0.75rem 1rem;
-  margin-block: 0.5rem 1rem;
+  gap: 0.5rem 0.8rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
 }
-.playground-options label:has(input[type=number]) { display: grid; gap: 0.25rem; }
-.playground input[type=number] { width: 6rem; }
-.playground :is(input[type=number], button, textarea) {
+.playground-toolbar label { display: grid; gap: 0.2rem; }
+.playground-example { flex: 1 1 13rem; min-width: 0; }
+.playground-toolbar :is(input, select, button) {
   box-sizing: border-box;
-  color: inherit;
-  background: var(--surface);
+  padding: 0.35rem 0.55rem;
   border: 1px solid var(--border);
-  border-radius: 0.4rem;
+  border-radius: 0.35rem;
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
 }
-.playground :is(input[type=number], button) { padding: 0.4rem 0.65rem; font: inherit; }
-.playground button { cursor: pointer; }
-.playground button:disabled { cursor: default; opacity: 0.65; }
-.playground button[type=submit] { color: Canvas; background: var(--link); border-color: var(--link); }
-.playground .code-label { display: block; }
-.playground textarea {
-  display: block;
-  width: 100%;
-  padding: 0.85rem;
-  resize: vertical;
-  font: 0.875rem/1.55 ui-monospace, monospace;
-  tab-size: 4;
+.playground-toolbar input { width: 5rem; }
+.playground-toolbar select { width: 100%; }
+.playground-toolbar button { cursor: pointer; color: var(--link); }
+.playground-toolbar button:disabled { cursor: default; opacity: 0.65; }
+.playground-panes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
 }
-.playground-status { min-height: 1.55em; margin-block: 0.5rem; }
+.playground-pane {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 0.45rem;
+  background: Canvas;
+}
+.playground-pane:focus-within { border-color: var(--link); }
+.playground-pane h2 {
+  margin: 0;
+  padding: 0.45rem 0.7rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+.playground-editor .cm-editor { height: clamp(24rem, 61vh, 52rem); }
+.playground-editor .cm-scroller { font: 0.875rem/1.55 ui-monospace, monospace; }
+.playground-editor .cm-content { padding-block: 0.55rem; }
+.playground-editor .cm-gutters { background: var(--surface); color: var(--foreground); border-color: var(--border); }
+.playground-editor .cm-lineNumbers .cm-gutterElement { min-width: 2.4em; }
+.playground-editor .flix-token { color: var(--flix-light, currentColor); }
+.playground-status { min-height: 1.55em; margin-block: 0.4rem; font-size: 0.9rem; }
+@media (prefers-color-scheme: dark) {
+  .playground-editor .flix-token { color: var(--flix-dark, currentColor); }
+  .playground-editor .cm-cursor { border-color: var(--foreground); }
+  .playground-editor .cm-selectionBackground { background: #384b64 !important; }
+}
+@media (max-width: 48rem) {
+  .playground-panes { grid-template-columns: minmax(0, 1fr); }
+  .playground-editor .cm-editor { height: 20rem; }
+}
