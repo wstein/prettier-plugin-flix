@@ -102,6 +102,11 @@ for (const path of findFixtures(root)) {
         description: meta.description,
         status: meta.status,
         inputHtml: highlight(input.code),
+        initial: {
+            source: input.code,
+            output: meta.status === "pass" ? outputs[0]?.code : undefined,
+            ...(outputs[0] ? optionsFor(fixture, outputs[0]) : meta.options),
+        },
         outputs: outputs.map((block) => ({
             html: highlight(block.code),
             ...describeOptions(fixture, block),
@@ -109,16 +114,7 @@ for (const path of findFixtures(root)) {
         reference,
     };
     group.fixtures.push(example);
-    if (meta.showcase) {
-        if (meta.status === "pass" && outputs[0]) {
-            example.initial = {
-                source: input.code,
-                output: outputs[0].code,
-                ...optionsFor(fixture, outputs[0]),
-            };
-        }
-        showcase.push({ order: meta.showcase, example });
-    }
+    if (meta.showcase) showcase.push({ order: meta.showcase, example });
     playgroundFixtures[relative] = {
         title: meta.title,
         input: input.code,
