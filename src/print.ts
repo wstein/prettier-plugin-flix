@@ -323,7 +323,7 @@ export class Printer {
 
         const ruleKids = inner.filter((n) => !isTerm(n));
         const isMembers =
-            openType === L.LBRACE &&
+            (openType === L.LBRACE || openType === L.HASH_LBRACE) &&
             ruleKids.length > 0 &&
             ruleKids.every((n) => MEMBERS.has(kind(n))) &&
             inner.every((n) => !isTerm(n) || ttype(n) === L.COMMA);
