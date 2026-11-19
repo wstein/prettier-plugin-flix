@@ -160,8 +160,9 @@ export class Printer {
             // arrow, so block comments there stay glued to it.
             parts.push(...info.lead.map((c) => this.commentText(c)));
         } else if (info && !this.consumed.has(idx) && info.lead.length > 0) {
-            // An own-line comment must start its own line even when a space was planned here.
-            if (!this.lineStart.has(idx)) parts.push(hardline);
+            // An own-line comment must start its own line even when a space was planned here; an
+            // inline one (`} /* c */ else`) stays on the line it was written on.
+            if (!this.lineStart.has(idx) && info.lead[0].nl > 0) parts.push(hardline);
             parts.push(...this.leadDoc(info, false));
         }
         parts.push(this.src(t));
