@@ -46,8 +46,9 @@ Flix classifies some tokens by the whitespace around them (`->` in `s->field` ve
 
 1. parses without errors,
 2. has the same significant token texts (optional trailing commas aside) and the same comments,
-3. has the same parse-tree shape, and
-4. formats to itself (idempotence).
+3. has the same parse-tree shape,
+4. keeps `->` arrows in the same class (field access versus arrow) and ends every Datalog constraint with a dot followed by whitespace, and
+5. formats to itself (idempotence).
 
 To run the same checks over any directory:
 
@@ -60,6 +61,51 @@ The version policy check:
 ```sh
 node scripts/check-flix-version.mjs <path-to>/flix-spec/pin.json
 ```
+
+## Fixtures
+
+Formatter behavior is specified by Markdown fixtures in `test/fixtures/<area>/<case>.md`, one case per file, each with the unformatted input and the expected output:
+
+````markdown
+---
+title: Let chain and match arms
+flix: "0.80"               # Flix release the case was written for (quoted major.minor)
+options: { printWidth: 80 } # optional Prettier options: printWidth, tabWidth, useTabs
+status: pass               # pass (default) | todo | error
+---
+
+## Input
+
+```flix
+def f(x: Option[Int32]): Int32 = {let y = 1;
+match x {case Some(v) => v+y
+case None => y}}
+```
+
+## Output
+
+```flix
+def f(x: Option[Int32]): Int32 = {
+    let y = 1;
+    match x {
+        case Some(v) => v + y
+        case None => y
+    }
+}
+```
+
+```flix printWidth=30
+...the same input formatted with other options...
+```
+````
+
+- Exactly one `## Input` block. `## Output` has one block per option set; the first uses the front matter options, later ones add `key=value` options to the info string.
+- Every fixture is also checked with the invariants above: the output must keep the program (tokens, comments, tree shape, token classes) and formatting it again must change nothing.
+- `status: todo` records a known gap. The Output block holds the *desired* result, the test passes while the formatter still differs, and fails as soon as it matches, so the status cannot go stale. Optional `issue` explains or links it.
+- `status: error` has no Output block; the input must fail with a `SyntaxError`. Optional `message` is a regular expression for the error text.
+- Optional front matter: `description`, `source` (where an input came from), `tags`.
+
+After changing the printer, `npm run test:update` rewrites the Output blocks of `status: pass` fixtures from the formatter's actual output. Review the diff: it is the review of the formatting change. The loader rejects unknown keys, options and sections, so typos fail loudly.
 
 ## Flix versions
 
