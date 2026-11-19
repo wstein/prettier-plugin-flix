@@ -1,5 +1,6 @@
 ---
 title: tabWidth sets the indentation
+description: "Comparing both output blocks shows how tabWidth changes indentation without changing the program."
 flix: "0.80"
 options:
   tabWidth: 2

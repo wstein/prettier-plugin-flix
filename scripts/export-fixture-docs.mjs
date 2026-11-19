@@ -34,7 +34,15 @@ for (const path of findFixtures(root)) {
         html: flixFormat.language === "flix" ? highlight(flixFormat.code) : undefined,
         note: fixture.lines.slice(referenceHeading + 1, flixFormat.start - 1).join("\n").trim(),
     };
-    (chapters[chapter] ??= []).push({
+    const entry = chapters[chapter] ??= { count: 0, groups: [] };
+    const title = meta.group?.trim() ?? "";
+    let group = entry.groups.find((item) => item.title === title);
+    if (!group) {
+        group = { title, fixtures: [] };
+        entry.groups.push(group);
+    }
+    entry.count++;
+    group.fixtures.push({
         id: basename(relative, ".md"),
         path: relative,
         title: meta.title,

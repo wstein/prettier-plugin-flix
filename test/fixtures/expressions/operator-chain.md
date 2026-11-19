@@ -1,5 +1,6 @@
 ---
 title: Operator chains wrap after the operator
+description: "A long addition chain wraps after operators without changing the operand order."
 flix: "0.80"
 ---
 

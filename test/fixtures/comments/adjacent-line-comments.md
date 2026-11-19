@@ -1,5 +1,7 @@
 ---
 title: Line comments on neighboring tokens stay separate comments
+description: "A separator between two commented tokens must keep the comments on separate lines."
+group: "Line endings and comment placement"
 flix: "0.80"
 ---
 

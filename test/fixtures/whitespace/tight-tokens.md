@@ -1,5 +1,6 @@
 ---
 title: Tokens whose meaning depends on surrounding whitespace
+description: "One example checks the tight qualifier and field-access arrow alongside a spaced lambda arrow."
 flix: "0.80"
 ---
 

@@ -1,5 +1,7 @@
 ---
 title: A field-access arrow followed by a line comment in a complete module
+description: "A space after the arrow makes Flix read a field access as a lambda. The Flix 0.80 reference records that failure."
+group: "Whitespace-sensitive operators"
 flix: "0.80"
 flixFormat: "0.80.0"
 flixFormatInvalid: true

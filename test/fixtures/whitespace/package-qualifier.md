@@ -1,5 +1,6 @@
 ---
 title: Package qualification stays tight when an import list wraps
+description: "The import list can wrap at a narrow width while the package qualifier stays together. The isolated Flix reference lacks a mounted package."
 flix: "0.80"
 flixFormat: "0.80.0"
 ---

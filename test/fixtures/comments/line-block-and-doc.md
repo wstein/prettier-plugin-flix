@@ -1,5 +1,7 @@
 ---
 title: Line, doc and block comments stay beside their code
+description: "The example combines three comment forms so changes to their placement are easy to spot."
+group: "Line endings and comment placement"
 flix: "0.80"
 ---
 

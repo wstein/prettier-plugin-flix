@@ -1,5 +1,7 @@
 ---
 title: A line comment right after a field-access arrow keeps the arrow tight
+description: "The line comment needs a following newline, while the arrow must stay immediately adjacent to the comment."
+group: "Whitespace-sensitive operators"
 flix: "0.80"
 ---
 

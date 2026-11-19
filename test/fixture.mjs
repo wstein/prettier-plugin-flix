@@ -30,7 +30,7 @@ import { join, relative } from "node:path";
 import YAML from "yaml";
 
 export const STATUSES = ["pass", "todo", "error"];
-const META_KEYS = new Set(["title", "description", "flix", "options", "status", "issue", "message", "source", "tags", "flixFormat", "flixFormatInvalid"]);
+const META_KEYS = new Set(["title", "description", "group", "flix", "options", "status", "issue", "message", "source", "tags", "flixFormat", "flixFormatInvalid"]);
 const OPTION_TYPES = { printWidth: "number", tabWidth: "number", useTabs: "boolean" };
 
 const fail = (file, line, msg) => {
@@ -95,6 +95,9 @@ export function parseFixture(text, file = "<fixture>") {
     if (meta === null || typeof meta !== "object" || Array.isArray(meta)) fail(file, 2, "front matter must be a mapping");
     for (const k of Object.keys(meta)) if (!META_KEYS.has(k)) fail(file, 2, `unknown front matter key "${k}"`);
     if (typeof meta.title !== "string" || meta.title.trim() === "") fail(file, 2, "front matter needs a non-empty title");
+    if ("group" in meta && (typeof meta.group !== "string" || meta.group.trim() === "")) {
+        fail(file, 2, 'front matter "group" must be a non-empty string');
+    }
     if (typeof meta.flix !== "string" || !/^\d+\.\d+$/.test(meta.flix)) fail(file, 2, 'front matter "flix" must be a quoted major.minor string such as "0.80"');
     if ("flixFormat" in meta && (typeof meta.flixFormat !== "string" || !/^\d+\.\d+\.\d+$/.test(meta.flixFormat))) {
         fail(file, 2, 'front matter "flixFormat" must be a quoted major.minor.patch version');
