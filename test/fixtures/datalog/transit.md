@@ -54,9 +54,10 @@ pub def reachableStops(origin: String, maxLegMinutes: Int32): Vector[String] = {
         // The starting stop is reachable before taking a train.
         CanRide(origin).
         // Each transfer extends a route by one short leg.
-        CanRide(dst) :- CanRide(src), Segment(src, minutes, dst), if (
-            minutes <= maxLegMinutes
-        ).
+        CanRide(dst) :-
+            CanRide(src),
+            Segment(src, minutes, dst),
+            if (minutes <= maxLegMinutes).
     };
     query facts, rules select stop from CanRide(stop) where stop != origin
 }
