@@ -1,0 +1,35 @@
+{{ $entries := slice }}
+{{ range site.Sections }}
+  {{ if ne .Section "examples" }}
+    {{ $chapter := . }}
+    {{ with index site.Data.fixtures .Section }}
+      {{ range .groups }}
+        {{ $group := .title }}
+        {{ range .fixtures }}
+          {{ $entries = $entries | append (dict
+            "title" .title
+            "chapter" $chapter.Title
+            "group" $group
+            "description" (.description | default "" | plainify)
+            "path" .path
+            "source" .initial.source
+            "href" (printf "%s#%s" $chapter.RelPermalink .id)) }}
+        {{ end }}
+      {{ end }}
+    {{ end }}
+  {{ end }}
+{{ end }}
+{{ $index := resources.FromString "data/search.json" ($entries | jsonify) | fingerprint }}
+{{ $script := resources.Get "js/site-search.js" | fingerprint }}
+<dialog class="site-search" id="site-search" aria-labelledby="site-search-title" data-index="{{ $index.RelPermalink }}">
+  <div class="site-search-heading">
+    <h2 id="site-search-title">Search fixtures</h2>
+    <form method="dialog"><button type="submit">Close</button></form>
+  </div>
+  <form class="site-search-form" role="search">
+    <input id="site-search-query" type="search" aria-label="Search fixtures" placeholder="Title, chapter, or Flix code" autocomplete="off" autofocus>
+  </form>
+  <p class="site-search-status" role="status"></p>
+  <ul class="site-search-results"></ul>
+</dialog>
+<script defer src="{{ $script.RelPermalink }}" integrity="{{ $script.Data.Integrity }}"></script>
