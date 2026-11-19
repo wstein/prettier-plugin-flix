@@ -24,9 +24,15 @@ out with one entry per line stays multiline when it qualifies for alignment.
 A map that fits inline uses ordinary spacing. Padding is capped at eight
 extra spaces. Rows that exceed `printWidth`, contain more complex expressions,
 or have comments between code tokens use ordinary spacing.
-Trailing line comments stay with their entries. When two or more share a
-column, each receives up to eight extra spaces if the padded comment fits in
-the preferred line width. See the [map example](https://wstein.github.io/prettier-plugin-flix/expressions/#align-map-entries).
+
+Consecutive code lines in the same block share a `//` comment column when
+each line fits in `printWidth` after adding at most eight spaces. A blank
+line, a line without a trailing comment, or a block boundary ends the group.
+This applies to declarations, statements and collection entries.
+
+A standalone comment starting with `// ^` can mark a token on the line above.
+The formatter keeps the first caret under that token when the correspondence
+is clear, including when the annotated line wraps.
 
 | Construct | Flix 0.80 | Prettier plugin |
 | --- | --- | --- |
