@@ -14,6 +14,17 @@
       <a href="https://github.com/wstein/prettier-plugin-flix">GitHub</a>
     </div>
   </header>
-  <main class="container">{{ block "main" . }}{{ end }}</main>
+  <div class="site-shell">
+    <nav class="chapter-nav" aria-label="Chapters">
+      <p class="chapter-nav-title">Chapters</p>
+      <ul>
+        {{ $current := . }}
+        {{ range site.Sections }}
+        <li><a href="{{ .RelPermalink }}"{{ if eq .RelPermalink $current.RelPermalink }} aria-current="page"{{ end }}>{{ .Title }}</a></li>
+        {{ end }}
+      </ul>
+    </nav>
+    <main>{{ block "main" . }}{{ end }}</main>
+  </div>
 </body>
 </html>
