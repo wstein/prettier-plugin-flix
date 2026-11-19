@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import test from "node:test";
 import { promisify } from "node:util";
-import { approvalFor, auditExample } from "../scripts/audit-flix-examples.mjs";
+import { approvalFor, auditExample, changeKind } from "../scripts/audit-flix-examples.mjs";
 import { extractExamples, markdownBlocks } from "../scripts/extract-flix-examples.mjs";
 
 const exec = promisify(execFile);
@@ -17,8 +17,8 @@ test("extracts actual Flix and Java fences with their heading, indentation and l
         "## Interop", "```java", "class Example {}", "```",
     ].join("\n");
     assert.deepEqual(markdownBlocks(text, "Fallback"), [
-        { heading: "First", language: "flix", line: 9, code: "def f(): Int32 =\n    1" },
-        { heading: "Interop", language: "java", line: 14, code: "class Example {}" },
+        { heading: "First", language: "flix", line: 9, code: "def f(): Int32 =\n    1\n" },
+        { heading: "Interop", language: "java", line: 14, code: "class Example {}\n" },
     ]);
 });
 
@@ -67,6 +67,18 @@ test("audits programs and fragments, with approvals tied to the exact change", a
     const fragment = await auditExample({ ...input, code: "1+2" });
     assert.equal(fragment.context, "expression-or-statements");
     assert.equal(fragment.status, "layout-change");
+    assert.equal(fragment.input, "1+2");
+    assert.equal(fragment.formatted, "1 + 2\n");
+    assert.equal((await auditExample({ ...input, code: "def f(): Int32 = 1" })).changeKind, "line-endings");
     assert.equal((await auditExample({ ...input, code: "def missing(): Int32 = ..." })).status, "needs-context");
     assert.equal((await auditExample({ ...input, language: "java" })).status, "other-language");
+});
+
+test("groups byte differences by their main change", () => {
+    assert.equal(changeKind("a\n\nb\n", "a\nb\n"), "blank-lines");
+    assert.equal(changeKind("a\n  b\n", "a\n    b\n"), "indentation");
+    assert.equal(changeKind("a = 1\r\n", "a = 1\n"), "line-endings");
+    assert.equal(changeKind("a   = 1\n", "a = 1\n"), "spacing");
+    assert.equal(changeKind("a = 1\n", "a =\n  1\n"), "wrapping");
+    assert.equal(changeKind("a = 1\n", "a = 2\n"), "other");
 });

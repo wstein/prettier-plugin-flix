@@ -56,7 +56,7 @@ export function markdownBlocks(text, fallbackHeading) {
         }
         if (language === "flix" || language === "java") {
             if (i === lines.length) throw new Error(`Unclosed ${language} fence at line ${firstLine}`);
-            blocks.push({ code: code.join("\n"), heading, language, line: firstLine + 1 });
+            blocks.push({ code: code.length ? code.join("\n") + "\n" : "", heading, language, line: firstLine + 1 });
         }
     }
     return blocks;

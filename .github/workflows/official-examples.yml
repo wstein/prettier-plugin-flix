@@ -1,0 +1,56 @@
+name: Official Flix examples
+
+on:
+  workflow_dispatch:
+    inputs:
+      book_ref:
+        description: flix/book commit, tag, or branch
+        default: "64d81bd6984ede06442ef7b63235092b9fe3c29c"
+      website_ref:
+        description: flix/flix.dev commit, tag, or branch
+        default: "655c94385f09855e88b333e98577194cedf91ce7"
+  pull_request:
+    paths:
+      - ".github/workflows/official-examples.yml"
+      - "scripts/audit-flix-examples.mjs"
+      - "scripts/extract-flix-examples.mjs"
+      - "test/lib.mjs"
+      - "src/**"
+      - "package.json"
+      - "package-lock.json"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: git config --global url."https://github.com/".insteadOf ssh://git@github.com/
+      - run: npm ci
+      - uses: actions/checkout@v4
+        with:
+          repository: flix/book
+          ref: ${{ inputs.book_ref || '64d81bd6984ede06442ef7b63235092b9fe3c29c' }}
+          path: upstream-book
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: flix/flix.dev
+          ref: ${{ inputs.website_ref || '655c94385f09855e88b333e98577194cedf91ce7' }}
+          path: upstream-website
+          persist-credentials: false
+      - run: npm run test:docs-examples -- upstream-book upstream-website official-examples-audit
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: official-flix-examples
+          path: official-examples-audit/
+          if-no-files-found: error
