@@ -4,7 +4,7 @@
   <div class="playground-toolbar">
     <span class="playground-live" title="Updates 250 ms after editing">Live</span>
     {{ if .full }}<label class="playground-example">Example
-      <select id="playground-example" disabled><option value="" disabled hidden>Choose an example</option></select>
+      <select id="playground-example" disabled><option value="" selected disabled hidden>Choose an example</option></select>
     </label>{{ end }}
     <label>Line width <input id="{{ $prefix }}print-width" data-print-width type="number" min="1" step="1" required value="80"></label>
     <label>Indent <input id="{{ $prefix }}tab-width" data-tab-width type="number" min="1" step="1" required value="4"></label>
