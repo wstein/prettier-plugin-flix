@@ -27,10 +27,9 @@ eff Ask {
 }
 @Test
 def testAsk(): Unit \ Assert = {
-    let value = run { Ask.ask() }
-        with handler Ask {
-            def ask(k) = k(42)
-        };
+    let value = run { Ask.ask() } with handler Ask {
+        def ask(k) = k(42)
+    };
     Assert.assertEq(expected = 42, value)
 }
 ```
