@@ -81,3 +81,22 @@ test("accepts literal booleans and integers inline", () => {
     assert.deepEqual(f.outputs[1].options, { useTabs: true, tabWidth: 8, printWidth: 100 });
     assert.deepEqual(parseFixture(withInfo("useTabs=false")).outputs[1].options, { useTabs: false });
 });
+
+test("parses CRLF fixtures like LF fixtures", () => {
+    const lf = parseFixture(good);
+    const crlf = parseFixture(good.replace(/\n/g, "\r\n"));
+    assert.equal(crlf.eol, "\r\n");
+    assert.equal(lf.eol, "\n");
+    assert.deepEqual(crlf.meta, lf.meta);
+    assert.equal(crlf.input.code, lf.input.code);
+    assert.deepEqual(crlf.outputs.map((o) => [o.options, o.code]), lf.outputs.map((o) => [o.options, o.code]));
+});
+
+test("keeps the newline convention when rewriting outputs", () => {
+    const crlf = parseFixture(good.replace(/\n/g, "\r\n"));
+    const updated = withOutputs(crlf, ["NEW1\n", "NEW2\n"]);
+    assert.ok(!/[^\r]\n/.test(updated), "no bare LF may remain in a CRLF file");
+    assert.equal(parseFixture(updated).outputs[0].code, "NEW1\n");
+    assert.equal(withOutputs(crlf, crlf.outputs.map((o) => o.code)), good.replace(/\n/g, "\r\n"));
+    assert.ok(!updated.includes("\r\r"));
+});
