@@ -14,6 +14,10 @@ on:
         default: "8"
 permissions:
   contents: read
+env:
+  # The flix-spec revision this workflow trusts. Update it deliberately (and the plugin's major.minor
+  # with it): a moving branch would let the corpus, the compiler and the grammar drift apart unnoticed.
+  FLIX_SPEC_REF: 34630fe87450c0c2d52c4543b68de97c99a46920
 jobs:
   corpora:
     runs-on: ubuntu-latest
@@ -23,21 +27,24 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: wstein/flix-spec
+          ref: ${{ env.FLIX_SPEC_REF }}
           path: flix-spec
-      - name: Read the Flix release pinned by flix-spec
-        id: pin
-        run: |
-          echo "tag=$(node -p "require('./flix-spec/pin.json').upstream.tag")" >> "$GITHUB_OUTPUT"
-          echo "jar=$(node -p "require('./flix-spec/pin.json').oracleArtifact.url")" >> "$GITHUB_OUTPUT"
-      - uses: actions/checkout@v4
-        with:
-          repository: flix/flix
-          ref: ${{ steps.pin.outputs.tag }}
-          path: flix-src
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
+      - name: The plugin must track the pinned Flix release
+        run: node scripts/check-flix-version.mjs flix-spec/pin.json
+      - name: Read the Flix release pinned by flix-spec
+        id: pin
+        run: |
+          echo "commit=$(node -p "require('./flix-spec/pin.json').upstream.commit")" >> "$GITHUB_OUTPUT"
+          echo "jar=$(node -p "require('./flix-spec/pin.json').oracleArtifact.url")" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          repository: flix/flix
+          ref: ${{ steps.pin.outputs.commit }}
+          path: flix-src
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
