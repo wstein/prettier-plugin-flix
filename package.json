@@ -14,7 +14,7 @@
     "generate": "node scripts/generate.mjs",
     "build": "npm run generate && tsc",
     "test": "npm run build && node --test test/*.test.mjs",
-    "docs:build": "npm run build && node scripts/export-fixture-docs.mjs && hugo --source docs --minify",
+    "docs:build": "npm run build && node scripts/export-fixture-docs.mjs && hugo --source docs --minify && node --test scripts/check-playground.mjs",
     "coverage:syntax": "node scripts/syntax-coverage.mjs",
     "format:checked": "node scripts/format-checked.mjs",
     "test:flix-format": "node scripts/flix-format-references.mjs",

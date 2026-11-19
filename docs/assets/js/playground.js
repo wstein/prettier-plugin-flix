@@ -1,5 +1,3 @@
-import { formatFlix } from "./format-flix.js";
-
 const form = document.querySelector(".playground");
 const controls = form.querySelector("fieldset");
 const input = form.querySelector("#flix-input");
@@ -17,6 +15,7 @@ async function formatInput() {
     copy.disabled = true;
     controls.disabled = true;
     try {
+        const { formatFlix } = await import(form.dataset.formatter);
         output.value = await formatFlix(input.value, {
             printWidth: printWidth.valueAsNumber,
             tabWidth: tabWidth.valueAsNumber,
