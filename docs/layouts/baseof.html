@@ -1,3 +1,4 @@
+{{ $isPlayground := eq .Type "playground" }}
 <!doctype html>
 <html lang="en">
 <head>
@@ -7,15 +8,16 @@
   {{ $stylesheet := resources.Get "css/catalog.css" | minify | fingerprint }}
   <link rel="stylesheet" href="{{ $stylesheet.RelPermalink }}" integrity="{{ $stylesheet.Data.Integrity }}">
 </head>
-<body>
+<body{{ if $isPlayground }} class="playground-page"{{ end }}>
   <header class="site-header">
     <div class="container">
       <a href="{{ site.Home.RelPermalink }}">{{ site.Title }}</a>
-      <a href="https://github.com/wstein/prettier-plugin-flix">GitHub</a>
+      {{ if $isPlayground }}<h1 class="playground-title">{{ .Title }}</h1>{{ end }}
+      <a class="site-github" href="https://github.com/wstein/prettier-plugin-flix">GitHub</a>
     </div>
   </header>
-  <div class="site-shell">
-    <nav class="chapter-nav" aria-label="Documentation">
+  <div class="{{ if $isPlayground }}playground-shell{{ else }}site-shell{{ end }}">
+    {{ if not $isPlayground }}<nav class="chapter-nav" aria-label="Documentation">
       <p class="chapter-nav-title">Chapters</p>
       <ul>
         {{ $current := . }}
@@ -26,7 +28,7 @@
         <li><a href="{{ .RelPermalink }}"{{ if eq .RelPermalink $current.RelPermalink }} aria-current="page"{{ end }}>{{ .Title }}</a></li>
         {{ end }}
       </ul>
-    </nav>
+    </nav>{{ end }}
     <main>{{ block "main" . }}{{ end }}</main>
   </div>
 </body>
