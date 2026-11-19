@@ -230,11 +230,11 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
 const page = document.querySelector("[data-full-playground]");
 if (page) mountWorkbench(page, { initial: readHandoff(location.hash) });
 
-for (const embedded of document.querySelectorAll("[data-embedded-playground]")) {
+function startEmbedded(embedded) {
     const link = embedded.querySelector(".playground-handoff");
     const originalLink = link.href;
     const initial = JSON.parse(embedded.dataset.initial);
-    const lines = Math.max(initial.source.split("\n").length, initial.output.split("\n").length);
+    const lines = Math.max(initial.source.split("\n").length, (initial.output ?? "").split("\n").length);
     embedded.style.setProperty("--source-lines", lines);
     mountWorkbench(embedded, {
         initial,
@@ -243,4 +243,18 @@ for (const embedded of document.querySelectorAll("[data-embedded-playground]")) 
     embedded.hidden = false;
     embedded.previousElementSibling.hidden = true;
     embedded.closest(".fixture").querySelector("[data-static-handoff]").hidden = true;
+}
+
+// Keep long chapters light by starting an editor when its fixture approaches the viewport.
+const embeddedEditors = document.querySelectorAll("[data-embedded-playground]");
+if (embeddedEditors.length > 0) {
+    const observer = new IntersectionObserver((entries) => {
+        for (const { target, isIntersecting } of entries) {
+            if (!isIntersecting) continue;
+            observer.unobserve(target);
+            startEmbedded(target.querySelector("[data-embedded-playground]"));
+        }
+    }, { rootMargin: "600px 0px" });
+
+    for (const embedded of embeddedEditors) observer.observe(embedded.closest(".fixture"));
 }

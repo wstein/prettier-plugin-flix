@@ -1,8 +1,7 @@
 {{ define "main" }}
 {{ $chapter := index site.Data.fixtures .Section }}
 {{ $isShowcase := eq .Section "examples" }}
-{{ $assets := dict }}
-{{ if $isShowcase }}{{ $assets = partial "playground-assets.html" . }}{{ end }}
+{{ $assets := partial "playground-assets.html" . }}
 <h1>{{ .Title }}</h1>
 <p>{{ .Description }}</p>
 {{ .Content }}
@@ -26,7 +25,5 @@
   {{ $group := .title }}
   {{ range .fixtures }}{{ partial "fixture.html" (dict "fixture" . "group" $group "showcase" $isShowcase "assets" $assets) }}{{ end }}
 {{ end }}
-{{ if $isShowcase }}
 <script type="module" src="{{ $assets.script.RelPermalink }}" integrity="{{ $assets.script.Data.Integrity }}"></script>
-{{ end }}
 {{ end }}

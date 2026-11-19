@@ -1,13 +1,12 @@
 {{ with .fixture }}
 {{ $playground := (site.GetPage "playground").RelPermalink }}
-{{ $live := and $.showcase .initial }}
 {{ $handoff := printf "%s?%s" $playground (querify "fixture" .path) }}
 <article id="{{ .id }}" class="fixture">
   {{ if $.group }}<h3><a href="#{{ .id }}">{{ .title }}</a></h3>{{ else }}<h2><a href="#{{ .id }}">{{ .title }}</a></h2>{{ end }}
   <p class="fixture-links">
     {{ if eq .status "todo" }}<span>Known formatter gap</span>{{ end }}
     {{ if eq .status "error" }}<span>Expected syntax error</span>{{ end }}
-    <a class="fixture-playground" href="{{ $handoff }}"{{ if $live }} data-static-handoff{{ end }}>Open in Playground <span aria-hidden="true">↗</span></a>
+    <a class="fixture-playground" href="{{ $handoff }}" data-static-handoff>Open in Playground <span aria-hidden="true">↗</span></a>
     <a href="https://github.com/wstein/prettier-plugin-flix/blob/main/test/fixtures/{{ .path }}">Source on GitHub</a>
     {{ with .upstreamUrl }}<a href="{{ . }}">Upstream example</a>{{ end }}
     {{ if $.showcase }}<a href="{{ .chapter | relURL }}/#{{ .id }}">See in chapter</a>{{ end }}
@@ -18,19 +17,27 @@
       <p class="code-label">Input</p>
       <figure class="code-sample">{{ .inputHtml | safeHTML }}</figure>
     </section>
+    {{ if eq .status "pass" }}
     {{ with .outputs }}
     {{ $first := index . 0 }}
     <section>
-      <p class="code-label">{{ if eq $.fixture.status "todo" }}Desired Prettier output{{ else }}Expected Prettier output{{ end }}</p>
+      <p class="code-label">Expected Prettier output</p>
       <figure class="code-sample">
         {{ $first.html | safeHTML }}
         {{ with $first.options }}<figcaption>Base settings · {{ . }}</figcaption>{{ end }}
       </figure>
     </section>
     {{ end }}
+    {{ end }}
   </div>
-  {{ if $live }}
   {{ partial "playground-workbench.html" (dict "id" .id "initial" .initial "handoff" $handoff "assets" $.assets) }}
+  {{ if eq .status "todo" }}
+  {{ with index .outputs 0 }}
+  <details>
+    <summary>Desired Prettier output</summary>
+    <figure class="code-sample">{{ .html | safeHTML }}</figure>
+  </details>
+  {{ end }}
   {{ end }}
   {{ range $index, $variant := after 1 .outputs }}
   <details>
