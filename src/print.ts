@@ -32,6 +32,20 @@ function lastTerm(n: Node): TerminalNode | null {
     return null;
 }
 
+/** Last terminal that precedes `n` in document order. */
+function prevTerm(n: Node): TerminalNode | null {
+    let cur: Node = n;
+    while (cur.parent) {
+        const sibs = kids(cur.parent as Node);
+        for (let i = sibs.indexOf(cur) - 1; i >= 0; i--) {
+            const t = lastTerm(sibs[i]);
+            if (t) return t;
+        }
+        cur = cur.parent as Node;
+    }
+    return null;
+}
+
 /** First terminal that follows `n` in document order. */
 function nextTerm(n: Node): TerminalNode | null {
     let cur: Node = n;
@@ -141,13 +155,23 @@ export class Printer {
         const info = this.info(t);
         const idx = t.symbol.tokenIndex;
         const parts: Doc[] = [];
-        if (info && !this.consumed.has(idx) && info.lead.length > 0) {
+        if (info && !this.consumed.has(idx) && info.lead.length > 0 && this.touchesTightArrow(t)) {
+            // `s/* c */->/* c */f`: whitespace around `->` would turn the field access into an
+            // arrow, so block comments there stay glued to it.
+            parts.push(...info.lead.map((c) => this.commentText(c)));
+        } else if (info && !this.consumed.has(idx) && info.lead.length > 0) {
             // An own-line comment must start its own line even when a space was planned here.
             if (!this.lineStart.has(idx)) parts.push(hardline);
             parts.push(...this.leadDoc(info, false));
         }
         parts.push(this.src(t));
         return parts;
+    }
+
+    private touchesTightArrow(t: TerminalNode): boolean {
+        if (ttype(t) === L.ARROW_TIGHT) return true;
+        const p = prevTerm(t);
+        return p !== null && ttype(p) === L.ARROW_TIGHT;
     }
 
     private tokTrail(t: TerminalNode): Doc {
