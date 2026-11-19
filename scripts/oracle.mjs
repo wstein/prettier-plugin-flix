@@ -8,7 +8,8 @@
 //     --jobs <n>         compilations in parallel (default: CPU count / 2)
 //     --control          compare the original with a second unformatted run instead, to show
 //                        the compiler is deterministic on this input
-//     --pin <pin.json>   require the jar's SHA-256 to equal flix-spec's oracleArtifact digest
+//     --pin <pin.json>   require the jar's SHA-256 to equal flix-spec's oracleArtifact digest and
+//                        the Flix version it reports to equal the pinned upstream tag
 //     --timeout <s>      per compiler invocation (default 600)
 //
 // Each file gets its own throwaway Flix project, as flix/flix does in its own test suite
@@ -87,6 +88,18 @@ const flix = async (cwd, ...cmd) => {
     }
 };
 
+/** The Flix version the jar reports; with --pin it must equal the pinned upstream tag. */
+async function jarVersion() {
+    const r = await flix(root, "--version");
+    const version = /\b(\d+\.\d+\.\d+)\b/.exec(strip(r.out))?.[1];
+    if (!version) fail(`cannot read a Flix version from \`${jar} --version\`: ${strip(r.out).slice(0, 200)}`);
+    if (pinFile) {
+        const tag = JSON.parse(readFileSync(pinFile, "utf8")).upstream.tag.replace(/^v/, "");
+        if (version !== tag) fail(`the jar reports Flix ${version} but the pin says ${tag}`);
+    }
+    return version;
+}
+
 /** Positions and snippets differ after formatting; categories, codes, messages and test results must not. */
 function normalize(proj, out) {
     return strip(out)
@@ -97,11 +110,13 @@ function normalize(proj, out) {
         .join("\n");
 }
 
+let flixVersion = null; // set from the jar before the first build
+
 async function build(name, variant, text) {
     const dir = join(root, `${variant}-${name}`);
     mkdirSync(join(dir, "test"), { recursive: true });
     mkdirSync(join(dir, "src"), { recursive: true });
-    writeFileSync(join(dir, "flix.toml"), '[package]\nversion = "0.1.0"\nflix = "0.80.0"\n');
+    writeFileSync(join(dir, "flix.toml"), `[package]\nversion = "0.1.0"\nflix = "${flixVersion}"\n`);
     if (prelude !== null) writeFileSync(join(dir, "src", "Prelude.flix"), prelude);
     writeFileSync(join(dir, "test", name), text);
     let r = await flix(dir, "build");
@@ -144,12 +159,13 @@ async function worker() {
 }
 
 try {
+    flixVersion = await jarVersion();
     await Promise.all(Array.from({ length: jobs }, worker));
 } catch (e) {
     console.error(e.message);
     process.exit(2);
 }
-console.log(`${files.length} files (every ${every}), ${jobs} jobs: ${compared} compared, ${syntaxSkipped} skipped (do not parse), ${formatterFailures.length} formatter failures`);
+console.log(`${files.length} files (every ${every}), ${jobs} jobs, Flix ${flixVersion}: ${compared} compared, ${syntaxSkipped} skipped (do not parse), ${formatterFailures.length} formatter failures`);
 let failed = false;
 for (const f of formatterFailures) {
     console.error(`FORMATTER FAILURE ${f.name}: ${f.message}`);
