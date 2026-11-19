@@ -24,8 +24,8 @@ export const parsers: Record<string, Parser<FlixRoot>> = { flix: flixParser };
 const flixAstPrinter: Printer<FlixRoot> = {
     // The whole tree is printed from the root: comments and blank lines are read from the
     // token stream, so Prettier's own comment attachment is not used.
-    print(path: AstPath<FlixRoot>, _options: Options): Doc {
-        return new FlixPrinter(path.node).printRoot();
+    print(path: AstPath<FlixRoot>, options: Options): Doc {
+        return new FlixPrinter(path.node, options.printWidth, options.tabWidth).printRoot();
     },
 };
 
