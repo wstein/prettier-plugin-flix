@@ -22,20 +22,20 @@ const flixParser: Parser<FlixRoot> = {
 
 export const parsers: Record<string, Parser<FlixRoot>> = { flix: flixParser };
 
+// Flix uses four-space indentation and a 100-column line width by default.
+export const defaultOptions = { tabWidth: 4, printWidth: 100 };
+
 const flixAstPrinter: Printer<FlixRoot> = {
     // The whole tree is printed from the root: comments and blank lines are read from the
     // token stream, so Prettier's own comment attachment is not used.
     print(path: AstPath<FlixRoot>, options: Options): Doc {
-        const { printWidth = 80, tabWidth = 4, useTabs = false } = options;
+        const { printWidth = defaultOptions.printWidth, tabWidth = defaultOptions.tabWidth, useTabs = false } = options;
         const value = new FlixPrinter(path.node, printWidth, tabWidth).printRoot();
         return layoutComments(path.node, value, { printWidth, tabWidth, useTabs });
     },
 };
 
 export const printers: Record<string, Printer<FlixRoot>> = { "flix-ast": flixAstPrinter };
-
-// Flix's standard library and compiler use four-space indentation.
-export const defaultOptions = { tabWidth: 4 };
 
 const plugin: Plugin<FlixRoot> = { languages, parsers, printers, defaultOptions };
 export default plugin;

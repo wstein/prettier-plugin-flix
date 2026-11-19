@@ -33,7 +33,7 @@ const errorMarks = StateField.define({
 const errorLine = Decoration.line({ class: "flix-error-line" });
 const errorCharacter = Decoration.mark({ class: "flix-error-character" });
 
-export function createEditor(parent, onEdit, doc = "") {
+export function createEditor(parent, onEdit, doc = "", onCursor) {
     const indentation = new Compartment();
     const view = new EditorView({
         parent,
@@ -57,6 +57,9 @@ export function createEditor(parent, onEdit, doc = "") {
                 history(),
                 keymap.of([...defaultKeymap, ...historyKeymap]),
                 EditorView.updateListener.of((update) => {
+                    if (update.docChanged || update.selectionSet || update.startState.tabSize !== update.state.tabSize) {
+                        onCursor?.(update.state);
+                    }
                     if (update.docChanged) onEdit();
                 }),
             ] : [EditorState.readOnly.of(true), EditorView.editable.of(false)]),

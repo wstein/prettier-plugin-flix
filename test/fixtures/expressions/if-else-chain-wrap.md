@@ -1,11 +1,9 @@
 ---
 title: A long else-if chain breaks every branch, not only the first
-description: "The desired output wraps each branch of a long condition. Full chain wrapping is a known gap."
+description: "The desired output wraps each branch of a long condition. All branches use the same layout when the chain breaks."
 flix: "0.80"
 options:
   printWidth: 30
-status: todo
-issue: nested else-if groups break independently
 ---
 
 ## Input

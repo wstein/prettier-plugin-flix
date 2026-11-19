@@ -26,9 +26,8 @@ use List.{
     filter => keepMatching
 }
 
-pub def positiveSizes(
-    xs: List[String]
-): List[Int32] =
+pub def positiveSizes(xs: List[String]):
+    List[Int32] =
     mapValues(
         String.length,
         keepMatching(

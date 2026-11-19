@@ -51,8 +51,8 @@ export function renderFindings(cases, diff) {
     });
     const markdown = [
         "# Flix documentation formatter findings", "",
-        `${cases.filter((item) => item.hasDiff).length} byte differences. Open a case to review its inline diff.`, "",
-        "The comparison uses the extracted code, including a book fence's final newline and the cooked JavaScript website string.",
+        `${cases.filter((item) => item.hasDiff).length} layout differences. Open a case to review its inline diff.`, "",
+        "The comparison ignores spaces and tabs at the end of lines. It includes a book fence's final newline and uses the cooked JavaScript website string.",
         "[Open the searchable HTML overview](findings.html)", "",
     ];
     const html = [];
@@ -75,7 +75,7 @@ ${code ? `<pre><code>${snippet ? escape(code) : colorDiff(code)}</code></pre>` :
         html.push("</section>");
     }
 
-    markdown.push("## All byte differences", "");
+    markdown.push("## All layout differences", "");
     for (const [group, [title, recommendation]] of Object.entries(groups)) {
         const entries = cases.filter((item) => item.changeKind === group);
         if (!entries.length) continue;
@@ -125,7 +125,7 @@ pre span { display: inline-block; min-width: 100%; }
 </style>
 <main>
 <h1>Official Flix examples</h1>
-<p>${changes} byte differences · ${identical} identical · ${context} need context</p>
+<p>${changes} layout differences · ${identical} matching layouts · ${context} need context</p>
 <label>Find a case <input type="search" placeholder="Search case names or code"></label>
 <nav aria-label="Report sections">${navigation.map(([id, name]) => `<a href="#${id}">${name}</a>`).join("\n")}</nav>
 ${content}

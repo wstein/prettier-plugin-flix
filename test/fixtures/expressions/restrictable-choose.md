@@ -17,9 +17,8 @@ def helper05(e: Expr[s rvand <Expr.Not, Expr.Cst>]): Expr[(s rvand <Expr.Not>) r
 ## Output
 
 ```flix
-def helper05(e: Expr[s rvand <Expr.Not, Expr.Cst>]): Expr[
-    (s rvand <Expr.Not>) rvadd <Expr.Var>
-] = choose* e {
+def helper05(e: Expr[s rvand <Expr.Not, Expr.Cst>]):
+    Expr[(s rvand <Expr.Not>) rvadd <Expr.Var>] = choose* e {
     case Expr.Not => Expr.Not
     case Expr.Cst => Expr.Var
 }
