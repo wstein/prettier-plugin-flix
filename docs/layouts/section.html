@@ -3,6 +3,7 @@
 {{ $isShowcase := eq .Section "examples" }}
 <h1>{{ .Title }}</h1>
 <p>{{ .Description }}</p>
+{{ .Content }}
 <nav aria-label="Test cases" class="toc">
   <h2>On this page</h2>
   <div class="toc-groups">
