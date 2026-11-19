@@ -19,6 +19,8 @@ npm run build            # generates the parser from the grammar dependency, the
 npx prettier --plugin=./dist/index.js --write 'path/to/**/*.flix'
 ```
 
+To format and write specific files with verification, run `npm run format:checked -- file.flix other.flix` after building. The command uses the files' Prettier and EditorConfig settings. It validates the entire batch before writing, rejects changes to the program or unstable formatting, and writes only files whose contents differ.
+
 From another project, install this directory next to Prettier (`npm i -D prettier github:wstein/prettier-plugin-flix`) and list it in `.prettierrc`:
 
 ```json
@@ -55,6 +57,8 @@ To run the same checks over any directory:
 ```sh
 node scripts/check-corpus.mjs <dir-or-file>...
 ```
+
+After building, `npm run coverage:syntax` reports named lexer token types, parser rules, and labeled alternatives seen in parseable fixture inputs and local Flix files. Pass corpus paths after `--` for a separate report. The denominators come from the generated grammar and include named token types that may be internal or used only for error handling. The fixture mutation tests change known-good outputs and verify that the shared program-preservation checks reject the changes.
 
 The version policy check:
 
