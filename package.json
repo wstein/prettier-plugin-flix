@@ -16,6 +16,7 @@
     "test": "npm run build && node --test test/*.test.mjs",
     "coverage:syntax": "node scripts/syntax-coverage.mjs",
     "format:checked": "node scripts/format-checked.mjs",
+    "test:flix-format": "node scripts/flix-format-references.mjs",
     "test:update": "npm run build && UPDATE_FIXTURES=1 node --test test/fixtures.test.mjs"
   },
   "peerDependencies": {

@@ -111,6 +111,15 @@ def f(x: Option[Int32]): Int32 = {
 
 After changing the printer, `npm run test:update` rewrites the Output blocks of `status: pass` fixtures from the formatter's actual output. Review the diff: it is the review of the formatting change. The loader rejects unknown keys, options and sections, so typos fail loudly.
 
+A fixture can also record the built-in Flix formatter as an independent reference. Set `flixFormat: "0.80.0"` in front matter and add one `## Flix Format` block. Use a `flix` fence for the actual output or a `text` fence for the compiler diagnostics when `flix format` declines the input. The CLI type-checks the input first, so isolated examples that depend on a mounted package may have a diagnostic reference. The existing `## Output` blocks and the program-preservation checks still define the Prettier expectations.
+
+```sh
+npm run test:flix-format -- path/to/flix.jar path/to/flix-spec/pin.json
+npm run test:flix-format -- path/to/flix.jar path/to/flix-spec/pin.json --update
+```
+
+The comparison needs a Java 21 JDK and launches one JVM for all selected fixtures. It checks the pinned compiler version and JAR digest and uses isolated Flix instances to type-check both input and output. Mark a known compiler-invalid output with `flixFormatInvalid: true`. The scheduled Flix corpora workflow runs this comparison. A change in validity fails the command, even in update mode, until the fixture is reviewed. When changing the pin, update the fixtures' `flixFormat` versions and regenerate the references. Review the diff for changes in Flix output or diagnostics.
+
 ## Test sources
 
 | Source | How | Needs expected output? |

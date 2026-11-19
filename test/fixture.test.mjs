@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { optionsFor, parseFixture, withOutputs } from "./fixture.mjs";
+import { optionsFor, parseFixture, withFlixFormat, withOutputs } from "./fixture.mjs";
 
 const fence = "```";
 const sample = (front, body) => `---\n${front}\n---\n\n${body}`;
@@ -107,4 +107,39 @@ test("a todo fixture takes exactly one output block", () => {
     const two = one + `\n${fence}flix printWidth=20\nz\n${fence}\n`;
     assert.throws(() => parseFixture(two, "x.md"), /status: todo fixtures take exactly one Output block/);
     assert.equal(parseFixture(two.replace("status: todo", "status: pass")).outputs.length, 2);
+});
+
+const reference = (language, code) => `\n## Flix Format\n\n${fence}${language}\n${code}${fence}\n`;
+const versioned = good.replace('flix: "0.80"', 'flix: "0.80"\nflixFormat: "0.80.0"');
+
+test("keeps a versioned Flix Format reference independent of Prettier output", () => {
+    const source = (versioned + reference("flix", "intentionally invalid Flix\n")).replaceAll("\n", "\r\n");
+    const fixture = parseFixture(source);
+    assert.equal(fixture.meta.flixFormat, "0.80.0");
+    assert.equal(fixture.flixFormat.language, "flix");
+    assert.equal(fixture.flixFormat.code, "intentionally invalid Flix\n");
+    assert.equal(fixture.outputs.length, 2);
+
+    const changed = withFlixFormat(fixture, { language: "text", code: "Parse Error [E1234]: example\n" });
+    assert.equal(changed, source.replace(fence + "flix\r\nintentionally invalid Flix", fence + "text\r\nParse Error [E1234]: example"));
+    const updated = parseFixture(withOutputs(parseFixture(changed), ["a\n", "b\n"]));
+    assert.equal(updated.flixFormat.code, "Parse Error [E1234]: example\n");
+    assert.deepEqual(updated.outputs.map((block) => block.code), ["a\n", "b\n"]);
+});
+
+test("requires one correctly tagged reference and an exact version", () => {
+    const validBlock = reference("flix", "def f(): Int32 = 1\n");
+    assert.throws(() => parseFixture(good + validBlock), /requires a "flixFormat" version/);
+    assert.throws(() => parseFixture(versioned), /requires a Flix Format section/);
+    assert.throws(() => parseFixture(versioned.replace("0.80.0", "0.80") + validBlock), /major.minor.patch/);
+    assert.throws(() => parseFixture(versioned + "\n## Flix Format\n"), /exactly one block/);
+    assert.throws(() => parseFixture(versioned + validBlock + validBlock), /duplicate Flix Format section/);
+    assert.throws(() => parseFixture(versioned + reference("flix printWidth=20", "")), /must be tagged/);
+});
+
+test("requires explicit acceptance of a compiler-invalid Flix reference", () => {
+    const source = versioned.replace('flixFormat: "0.80.0"', 'flixFormat: "0.80.0"\nflixFormatInvalid: true');
+    assert.equal(parseFixture(source + reference("flix", "invalid\n")).meta.flixFormatInvalid, true);
+    assert.throws(() => parseFixture(source + reference("text", "diagnostic\n")), /requires a Flix Format code block/);
+    assert.throws(() => parseFixture(source.replace(": true", ": false") + reference("flix", "invalid\n")), /must be true/);
 });

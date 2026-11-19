@@ -3,7 +3,8 @@ name: Flix corpora
 #   1. the formatter invariants over the test sources of flix/flix at the release flix-spec pins,
 #      the Flix snippets embedded in its Scala tests, and the open issues of the maintainer;
 #   2. the compiler oracle: the pinned flix.jar must report the same diagnostics and test results
-#      for a sample of those sources before and after formatting.
+#      for a sample of those sources before and after formatting;
+#   3. the versioned references from the built-in Flix formatter, including output validity.
 on:
   schedule:
     - cron: "47 4 * * 2"
@@ -52,6 +53,10 @@ jobs:
       - run: git config --global url."https://github.com/".insteadOf ssh://git@github.com/
       - run: npm ci
       - run: npm run build
+      - name: Download the pinned compiler
+        run: curl -fsSL -o flix.jar "${{ steps.pin.outputs.jar }}"
+      - name: Check built-in Flix formatter references
+        run: npm run test:flix-format -- flix.jar flix-spec/pin.json
       - name: Collect the snippets
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -60,7 +65,5 @@ jobs:
           node scripts/harvest-issues.mjs issue-snippets
       - name: Formatter invariants over the corpora
         run: node scripts/check-corpus.mjs flix-src/main/test/flix scala-snippets issue-snippets
-      - name: Download the pinned compiler
-        run: curl -fsSL -o flix.jar "${{ steps.pin.outputs.jar }}"
       - name: Compiler oracle
         run: node scripts/oracle.mjs flix.jar flix-src/main/test/flix --every "${{ inputs.every || 8 }}" --jobs 2 --pin flix-spec/pin.json
