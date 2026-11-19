@@ -26,6 +26,7 @@
     "@wstein/flix-antlr-grammar": "github:wstein/flix-antlr-grammar#f8f711d32370bf2089b79e28d08d68f616a266b3",
     "antlr-ng": "1.0.10",
     "prettier": "3.10.1",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "yaml": "2.9.1"
   }
 }
