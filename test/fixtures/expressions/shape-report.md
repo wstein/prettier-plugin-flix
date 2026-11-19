@@ -43,7 +43,7 @@ enum FloorPlan {
 }
 
 def area(plan: FloorPlan): Int32 = match plan {
-    case FloorPlan.Square(side) => side * side
+    case FloorPlan.Square(side)             => side * side
     case FloorPlan.Rectangle(width, height) => width * height
 }
 

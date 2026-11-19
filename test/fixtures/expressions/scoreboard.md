@@ -47,7 +47,7 @@ def score(points: List[Int32]): Int32 =
 def winner(totals: (Int32, Int32)): String = match totals {
     case (a, b) if a > b => "Home wins ${a}–${b}"
     case (a, b) if a < b => "Away wins ${b}–${a}"
-    case (a, _) => "Draw at ${a}"
+    case (a, _)          => "Draw at ${a}"
 }
 
 pub def scoreboard(home: List[Int32], away: List[Int32]): String = {

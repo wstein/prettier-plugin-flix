@@ -18,7 +18,7 @@ pub def f(x: List[a]): Option[a] = match x {
 
 ```flix
 pub def f(x: List[a]): Option[a] = match x {
-    case Nil => None
+    case Nil     => None
     case hd :: _ => Some(hd)
 }
 ```

@@ -61,10 +61,11 @@ def quote(units: Int32): String \ ExchangeRate = {
 }
 
 pub def fixedQuote(units: Int32): String =
-    run { quote(units) } with handler ExchangeRate {
-        // A fixed rate makes the receipt reproducible in tests.
-        def rate(k) = k(125)
-    }
+    run { quote(units) }
+        with handler ExchangeRate {
+            // A fixed rate makes the receipt reproducible in tests.
+            def rate(k) = k(125)
+        }
 
 @Test
 def testFixedQuote(): Unit \ Assert =
