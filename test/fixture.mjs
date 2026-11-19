@@ -4,7 +4,7 @@
 //   title: Short description
 //   flix: "0.80"                Flix release the case was written for
 //   options: { printWidth: 80 } optional Prettier options for every block
-//   status: pass                pass | todo | error
+//   status: pass                pass | todo (one Output block) | error
 //   ---
 //   ## Input
 //   ```flix            exactly one block
@@ -122,6 +122,10 @@ export function parseFixture(text, file = "<fixture>") {
         if (outputs.length > 0) fail(file, outputs[0].line, "status: error fixtures have no Output block");
     } else if (outputs.length === 0) {
         fail(file, close + 1, "expected at least one Output block");
+    } else if (meta.status === "todo" && outputs.length > 1) {
+        // The status applies to the whole file: with two option sets one may already be right and
+        // the other still wrong, and then neither todo nor pass could ever hold.
+        fail(file, outputs[1].line, "status: todo fixtures take exactly one Output block (one gap per fixture)");
     } else if (Object.keys(outputs[0].options).length > 0) {
         fail(file, outputs[0].line, "the first Output block takes no options (use the front matter for those)");
     }
