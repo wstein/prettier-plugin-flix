@@ -12,9 +12,45 @@ const formatOptions = { printWidth: 80, tabWidth: 4, useTabs: false, endOfLine: 
 const wrapper = "def auditSnippet(): Unit = {\n";
 const declaration = /^(?:@|(?:def|eff|enum|instance|mod|pub|redef|restrictable|sealed|struct|trait|type|val)\b)/;
 
+const changeGroups = {
+    "line-endings": ["Line endings and final newline", "Treat as a mechanical change when the destination convention requires it."],
+    "blank-lines": ["Blank lines", "Check paragraph boundaries in the example and keep any that clarify the explanation."],
+    indentation: ["Indentation", "Check that nesting reads clearly and follows the configured indent width."],
+    spacing: ["Spacing and alignment", "Prefer consistent spacing and preserve alignment when it makes code easier to scan."],
+    wrapping: ["Line wrapping and layout", "Review syntax units together. Keep generator, handler or rule boundaries visible."],
+    other: ["Other source edits", "Inspect the exact diff and verify the syntax change with the Flix compiler."],
+    unsafe: ["Formatter invariant failures", "Reduce to a regression fixture and fix the formatter before approval."],
+};
+
+export function changeKind(input, output) {
+    const withoutEndings = (value) => value.replace(/\r\n?/g, "\n").replace(/\n+$/, "");
+    if (withoutEndings(input) === withoutEndings(output)) return "line-endings";
+    const compact = (value) => value.replace(/\s+/gu, "");
+    if (compact(input) !== compact(output)) return "other";
+    const lines = (value) => withoutEndings(value).split("\n");
+    const before = lines(input);
+    const after = lines(output);
+    const same = (a, b) => a.length === b.length && a.every((line, i) => line === b[i]);
+    if (same(before.map((line) => line.trimStart()), after.map((line) => line.trimStart()))) return "indentation";
+    if (same(before.map(compact), after.map(compact))) return "spacing";
+    if (same(before.map(compact).filter(Boolean), after.map(compact).filter(Boolean))) return "blank-lines";
+    return "wrapping";
+}
+
+function unwrapSnippet(formatted) {
+    const match = /^def auditSnippet\(\): Unit = \{([\s\S]*)\}\n$/.exec(formatted);
+    if (!match) return undefined;
+    const body = match[1];
+    if (body.startsWith("\n")) {
+        const indent = " ".repeat(formatOptions.tabWidth);
+        return body.slice(1).split("\n").map((line) => line.startsWith(indent) ? line.slice(indent.length) : line).join("\n");
+    }
+    return body.trim() + "\n";
+}
+
 export async function auditExample(example) {
     if (example.language !== "flix") return { status: "other-language", reason: "Java interop example" };
-    const original = example.code.endsWith("\n") ? example.code : example.code + "\n";
+    const original = example.code;
     let context = "file";
     let input = original;
     let before = fingerprint(input);
@@ -23,12 +59,13 @@ export async function auditExample(example) {
         const firstCode = input.replace(/^\s*(?:(?:\/\/[^\n]*\n|\/\*[\s\S]*?\*\/)\s*)*/, "");
         if (!declaration.test(firstCode)) {
             context = "expression-or-statements";
-            input = wrapper + original + "}\n";
+            const snippet = original.endsWith("\n") ? original : original + "\n";
+            input = wrapper + snippet + "}\n";
             before = fingerprint(input);
             if (!before.errors.length) {
                 // Show the snippet's original relative indentation within the function,
                 // but use it only when the added spaces preserve the program.
-                const lines = original.slice(0, -1).split("\n");
+                const lines = snippet.slice(0, -1).split("\n");
                 const indented = lines.map((line) => line ? " ".repeat(formatOptions.tabWidth) + line : "").join("\n");
                 const candidate = wrapper + indented + "\n}\n";
                 const candidateFingerprint = fingerprint(candidate);
@@ -58,12 +95,43 @@ export async function auditExample(example) {
         return { context, status: "invariant-failure", reason: error.message, input, formatted };
     }
 
-    if (input === formatted) return { context, status: "unchanged" };
+    if (context !== "file") {
+        const snippet = unwrapSnippet(formatted);
+        if (snippet === undefined || programProblems(before, fingerprint(wrapper + snippet + "}\n")).length) {
+            return { context, status: "needs-context", reason: "Could not safely recover the formatted fragment from its function wrapper." };
+        }
+        formatted = snippet;
+    }
+    if (original === formatted) return { context, status: "unchanged" };
     const digest = createHash("sha256").update(JSON.stringify([context, formatOptions, original, formatted])).digest("hex");
     return {
-        context, status: "layout-change", input, formatted, digest,
+        context, status: "layout-change", input: original, formatted, digest,
+        changeKind: changeKind(original, formatted),
         reason: "The parser, program fingerprint and second formatting pass agree. Review the diff for readability.",
     };
+}
+
+function groupedReport(cases) {
+    const lines = [
+        "# Flix documentation formatter findings", "",
+        "Each entry compares the extracted snippet with the formatter output byte for byte.",
+        "Book code includes the last line break in the fence. Website code is the cooked JavaScript string.",
+        "For fragments, the displayed result excludes the synthetic function. See report.json for locations and diagnostics.",
+        "Groups use the most significant change. For example, wrapping can also change spaces.", "",
+    ];
+    for (const [group, [title, recommendation]] of Object.entries(changeGroups)) {
+        const entries = cases.filter((item) => item.changeKind === group);
+        if (!entries.length) continue;
+        lines.push(`## ${title} (${entries.length})`, "", recommendation, "");
+        for (const item of entries) {
+            const name = item.case_name;
+            const files = item.hasDiff ? ` · [before](before/${name}.flix) · [after](after/${name}.flix)` : "";
+            const context = item.context === "expression-or-statements" ? " · formatted as a fragment" : "";
+            lines.push(`- [${name}](${item.url})${files}${context}`);
+        }
+        lines.push("");
+    }
+    return lines.join("\n");
 }
 
 export function approvalFor(result, approval) {
@@ -75,7 +143,8 @@ export function approvalFor(result, approval) {
 async function audit(book, website, output, reviewsPath) {
     const reviews = reviewsPath ? JSON.parse(await readFile(reviewsPath, "utf8")) : {};
     if (!reviews || typeof reviews !== "object" || Array.isArray(reviews)) throw new Error("Expected an object keyed by case name in the review file");
-    const { examples, revisions } = await extractExamples(book, website);
+    const inventory = await extractExamples(book, website);
+    const { examples, revisions } = inventory;
     await mkdir(output);
     const beforeDir = join(output, "before");
     const afterDir = join(output, "after");
@@ -90,14 +159,18 @@ async function audit(book, website, output, reviewsPath) {
         const approval = approvalFor(result, Object.hasOwn(reviews, example.case_name) ? reviews[example.case_name] : undefined);
         totals[outcome.status] = (totals[outcome.status] ?? 0) + 1;
         if (outcome.status === "invariant-failure" || (reviewsPath && outcome.status === "layout-change" && !approval)) failed = true;
-        if (input !== undefined && formatted !== undefined) {
+        const hasDiff = input !== undefined && formatted !== undefined && input !== formatted;
+        if (hasDiff) {
             const filename = example.case_name + ".flix";
             await Promise.all([
                 writeFile(join(beforeDir, filename), input),
                 writeFile(join(afterDir, filename), formatted),
             ]);
         }
-        cases.push({ ...example, ...outcome, approval });
+        cases.push({
+            ...example, ...outcome, approval, hasDiff,
+            changeKind: outcome.status === "invariant-failure" ? "unsafe" : outcome.changeKind,
+        });
     }
     const { stdout: diff } = await exec("git", ["diff", "--no-index", "--no-ext-diff", "--no-color", "--no-renames", "--", "before", "after"], {
         cwd: output, maxBuffer: 16 * 1024 * 1024,
@@ -106,8 +179,10 @@ async function audit(book, website, output, reviewsPath) {
         return error;
     });
     await Promise.all([
+        writeFile(join(output, "examples.json"), JSON.stringify(inventory, null, 2) + "\n"),
         writeFile(join(output, "report.json"), JSON.stringify({ revisions, formatOptions, totals, cases }, null, 2) + "\n"),
         writeFile(join(output, "changes.diff"), diff),
+        writeFile(join(output, "findings.md"), groupedReport(cases)),
     ]);
     console.log(JSON.stringify(totals, null, 2));
     if (reviewsPath) {
