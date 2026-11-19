@@ -1,5 +1,5 @@
 import { ParserRuleContext, TerminalNode } from "antlr4ng";
-import { doc, type Doc } from "prettier";
+import { doc, util, type Doc } from "prettier";
 import { FlixLexer as L } from "./generated/FlixLexer.js";
 import type { Comment, FlixRoot, TokenInfo } from "./parse.js";
 
@@ -107,7 +107,11 @@ export class Printer {
     /** Tokens that start a line in the output, so own-line comments need no extra line break. */
     private lineStart = new Set<number>();
 
-    constructor(private root: FlixRoot) {}
+    constructor(
+        private root: FlixRoot,
+        private printWidth = 80,
+        private tabWidth = 4,
+    ) {}
 
     // ------------------------------------------------------------------ tokens
 
@@ -370,6 +374,56 @@ export class Printer {
         return docs.flatMap((d, i) => (i < docs.length - 1 ? [d, seps[i], afters[i]] : [d]));
     }
 
+    private hasComment(t: TerminalNode, ignoreTrailing = false): boolean {
+        const info = this.info(t);
+        return !!info && (info.lead.length > 0 || (!ignoreTrailing && info.trail.length > 0));
+    }
+
+    /** Measure only atoms whose printed spelling is the same as their source spelling. */
+    private atomWidth(n: Node, rowEnd: TerminalNode | null = null): number | undefined {
+        if (isTerm(n)) return this.hasComment(n, n === rowEnd) ? undefined : util.getStringWidth(this.src(n));
+        const cs = kids(n);
+        if (cs.length === 1) return this.atomWidth(cs[0], rowEnd);
+        if (kind(n) !== "PlainString" || !cs.every((t) => isTerm(t) && !this.hasComment(t, t === rowEnd))) return;
+        const spelling = (cs as TerminalNode[]).map((t) => this.src(t)).join("");
+        if (!/[\t\r\n]/.test(spelling)) return util.getStringWidth(spelling);
+    }
+
+    private alignEntries(items: Node[][], layoutId: symbol): Doc[] | undefined {
+        if (this.flat > 0 || items.length < 2) return;
+        const rows = [];
+        for (const item of items) {
+            if (item.length !== 1) return;
+            const entryKind = kind(item[0]);
+            if (entryKind !== "MapEntry" && entryKind !== "RecordOpField") return;
+            const [left, delimiter, right, ...rest] = kids(item[0]);
+            const expected = entryKind === "MapEntry" ? L.ARROW_THICK_R : L.EQUAL;
+            if (rest.length || !right || !isTerm(delimiter) || ttype(delimiter) !== expected || this.hasComment(delimiter)) return;
+            const leftWidth = this.atomWidth(left);
+            // Suffix comments stay with their entry and take no space in the code columns.
+            const rightWidth = this.atomWidth(right, lastTerm(right));
+            if (leftWidth === undefined || rightWidth === undefined) return;
+            rows.push({ left, delimiter, right, leftWidth, rightWidth });
+        }
+
+        const column = rows.reduce((max, row) => Math.max(max, row.leftWidth), 0);
+        const shortest = rows.reduce((min, row) => Math.min(min, row.leftWidth), column);
+        const padding = column - shortest;
+        if (padding === 0 || padding > 8) return;
+        // Budget for two indent levels, the separator spaces, and an optional comma.
+        if (rows.some((row) =>
+            column + this.src(row.delimiter).length + 3 + row.rightWidth + 2 * this.tabWidth > this.printWidth
+        )) return;
+
+        return rows.map(({ left, delimiter, right, leftWidth }) => [
+            this.print(this.ls(left)),
+            ifBreak(" ".repeat(column - leftWidth + 1), " ", { groupId: layoutId }),
+            this.tok(delimiter),
+            " ",
+            this.print(right),
+        ]);
+    }
+
     /** Prints `open inner close` with its items laid out as a list or as vertical members. */
     private delimited(children: Node[], i: number, j: number, parentKind: string): Doc {
         const open = children[i] as TerminalNode;
@@ -436,7 +490,15 @@ export class Printer {
             items = items.slice(0, -1);
             trailingTok = split.seps[split.seps.length - 1];
         }
-        const docs = items.map((it) => this.seq(it.length > 0 ? [this.ls(it[0]), ...it.slice(1)] : it, parentKind));
+        const collection = children[i - 1];
+        const isMap = parentKind === "CollectionLiteral" && isTerm(collection) && ttype(collection) === L.MAP_HASH;
+        const layoutId = Symbol();
+        const aligned = (isMap || parentKind === "RecordOperation") &&
+            !this.hasComment(open) && !this.hasComment(close) &&
+            !split.seps.some((t) => this.hasComment(t, true))
+            ? this.alignEntries(items, layoutId)
+            : undefined;
+        const docs = aligned ?? items.map((it) => this.seq(it.length > 0 ? [this.ls(it[0]), ...it.slice(1)] : it, parentKind));
         const itemLast = (it: Node[]): TerminalNode | null => (it.length > 0 ? lastTerm(it[it.length - 1]) : null);
         const sepDocs = split.seps.slice(0, docs.length - 1).map((t, k) => this.separatorTok(itemLast(items[k]), t));
         // After a separator the next item starts on a new line if a comment ends the line there.
@@ -454,10 +516,7 @@ export class Printer {
             ...split.seps,
             ...items.flatMap((it) => (it.length > 0 ? [firstTerm(it[0]), lastTerm(it[it.length - 1])] : [])),
         ];
-        const commentAtBoundary = boundaryTokens.some((t) => {
-            const info = t && this.info(t);
-            return !!info && (info.lead.length > 0 || info.trail.length > 0);
-        });
+        const commentAtBoundary = boundaryTokens.some((t) => t !== null && this.hasComment(t));
         const huggable =
             !pad && comments.length === 0 && !commentAtBoundary && sepType === L.COMMA && lastTok !== null && ttype(lastTok) === L.RBRACE &&
             !items.slice(0, -1).some((it) => it.length > 0 && lastTerm(it[it.length - 1]) !== null && ttype(lastTerm(it[it.length - 1])!) === L.RBRACE) &&
@@ -471,10 +530,14 @@ export class Printer {
             list.push(quiet ? ifBreak(this.src(trailingTok), "") : this.tok(trailingTok));
         }
         list.push(...tail);
-        const forceBreak =
-            pad && openType === L.LBRACE && this.flat === 0 && inner.length > 0 && !!firstTerm(inner[0]) &&
-            firstTerm(inner[0])!.symbol.line > open.symbol.line;
-        return [group([openDoc, indent([firstSline, list]), trailingTok && this.hasLineTrail(trailingTok) ? hardline : lastSline, closeDoc], { shouldBreak: forceBreak || comments.length > 0 }), closeTrail];
+        const preserveMultiline = (pad && openType === L.LBRACE) || (isMap && aligned !== undefined);
+        const innerFirst = inner.length > 0 ? firstTerm(inner[0]) : null;
+        const forceBreak = preserveMultiline && this.flat === 0 &&
+            innerFirst !== null && innerFirst.symbol.line > open.symbol.line;
+        return [group(
+            [openDoc, indent([firstSline, list]), trailingTok && this.hasLineTrail(trailingTok) ? hardline : lastSline, closeDoc],
+            { id: layoutId, shouldBreak: forceBreak || comments.length > 0 },
+        ), closeTrail];
     }
 
     // ------------------------------------------------------------- dispatch

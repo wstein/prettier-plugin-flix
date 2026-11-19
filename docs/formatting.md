@@ -17,22 +17,24 @@ Flix classifies some tokens by the whitespace around them (`->` in `s->field` ve
 
 ## Column alignment
 
-Prettier indents multiline entries and uses a single space around `=>` and
-`=`. In the examples below it also keeps the usual single space after a field
-colon. Flix 0.80's built-in formatter pads some layouts to line up columns.
+Prettier aligns the `=>` of multiline maps and the `=` of multiline record
+literals when all entries are simple names or literals. A map laid out with one
+entry per line stays multiline when it qualifies for alignment. A map that
+fits inline uses ordinary spacing. Padding is limited to eight extra spaces
+and is skipped when the code leaves too little room within `printWidth`, or a
+row contains a compound expression or a comment between its code tokens.
+Trailing comments stay with their entries and use ordinary spacing. See the [map example](https://wstein.github.io/prettier-plugin-flix/expressions/#align-map-entries).
 
 | Construct | Flix 0.80 | Prettier plugin |
 | --- | --- | --- |
-| Map entries | Aligns `=>` when keys and values fit on single lines | Wraps by width and keeps one space around `=>` |
-| Record values | Aligns the `=` of multiline fields | Indents fields and keeps one space around `=` |
+| Map entries | Aligns `=>` when keys and values fit on single lines | Aligns short, simple multiline entries |
+| Record values | Aligns the `=` of multiline fields | Aligns short, simple multiline fields |
 | Struct fields | Aligns the start of field types after `:` | Indents fields and uses one space after `:` |
 | Match arms | Aligns `=>` in groups of single-line arms | Indents arms and keeps one space around `=>` |
 | Handler rules | Aligns `=` in rule signatures | Indents rules and keeps one space around `=` |
 
-Maps and records with short, uniform entries are good candidates for optional
-column alignment. Padding long or nested entries can make code harder to scan
-and cause changes on several lines when one field is renamed. For style choices,
-use the Flix language documentation and handwritten examples. The
+For style choices, use the Flix language documentation and handwritten
+examples. The
 [built-in formatter implementation](https://github.com/flix/flix/blob/v0.80.0/main/src/ca/uwaterloo/flix/tools/fmt/PrettyPrinter.scala)
 provides a comparison.
 
