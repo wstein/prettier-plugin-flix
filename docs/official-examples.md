@@ -20,8 +20,9 @@ review and choose a new report directory for each run. To reproduce the first
 audit below, check out the listed commits before running the command.
 
 - `examples.json` is the raw inventory with extracted code and source links.
-- `findings.md` lists every byte difference by its main change and suggests
-  how to review that group.
+- Open `findings.html` after extracting the artifact for a searchable overview
+  with inline diffs and separate recommendations for the formatter and the
+  documentation. `findings.md` contains the same findings in Markdown.
 - `report.json` lists each case with its source commit and line link, language,
   outcome, and any parse diagnostics. Layout candidates include a review hash.
 - `changes.diff` shows the before/after differences. Both versions of each

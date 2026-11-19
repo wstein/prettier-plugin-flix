@@ -6,6 +6,7 @@ import { dirname, join } from "node:path";
 import test from "node:test";
 import { promisify } from "node:util";
 import { approvalFor, auditExample, changeKind, compareBaseline } from "../scripts/audit-flix-examples.mjs";
+import { renderFindings } from "../scripts/docs-example-findings.mjs";
 import { extractExamples, markdownBlocks } from "../scripts/extract-flix-examples.mjs";
 
 const exec = promisify(execFile);
@@ -93,4 +94,14 @@ test("detects additions, deletions and changes beyond the recorded baseline", ()
         added: ["website.new"], removed: ["book.removed"], changed: ["book.changed"],
     });
     assert.throws(() => compareBaseline(previous, current + row("book.same", "a")), /Invalid official example baseline row/);
+});
+
+test("shows inline diffs and escapes source code in the HTML overview", () => {
+    const name = "book.general.example.test";
+    const diff = `diff --git a/before/${name}.flix b/after/${name}.flix\n@@ -1 +1 @@\n-<script>\n+    <script>\n`;
+    const item = { case_name: name, hasDiff: true, changeKind: "indentation", url: "https://example.invalid" };
+    const { html, markdown } = renderFindings([item], diff);
+    assert.match(html, /<span class="removed">-&lt;script&gt;<\/span>/);
+    assert.match(html, /<summary>book\.general\.example\.test<\/summary>/);
+    assert.match(markdown, /@@ -1 \+1 @@\n-<script>\n\+    <script>/);
 });
