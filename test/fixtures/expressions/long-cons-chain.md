@@ -20,10 +20,10 @@ def chain(
     veryLongSecondElement: Int32,
     veryLongThirdElement: Int32
 ): List[Int32] =
-    veryLongFirstElement ::
-        veryLongSecondElement ::
-        veryLongThirdElement ::
-        Nil
+    veryLongFirstElement
+        :: veryLongSecondElement
+        :: veryLongThirdElement
+        :: Nil
 ```
 
 ## Flix Format

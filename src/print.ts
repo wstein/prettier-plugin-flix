@@ -709,11 +709,16 @@ export class Printer {
             }
         };
         collect(n);
-        const links = ops.map((op, i) => ({
-            operator: [this.after(lastTerm(operands[i]), " "), this.print(op)],
-            after: this.after(lastTerm(op), this.flat > 0 ? " " : line),
-            operand: this.print(this.ls(operands[i + 1])),
-        }));
+        const links = ops.map((op, i) => {
+            // Multiline list constructors follow the leading :: style in the Flix examples.
+            const leadingCons = rightAssoc && isTerm(op) && ttype(op) !== L.COLON_COLON_COLON;
+            const breakPoint = this.flat > 0 ? " " : line;
+            return {
+                operator: [this.after(lastTerm(operands[i]), leadingCons ? breakPoint : " "), this.print(op)],
+                after: this.after(lastTerm(op), leadingCons ? " " : breakPoint),
+                operand: this.print(this.ls(operands[i + 1])),
+            };
+        });
         const first = this.print(operands[0]);
         if (k !== "AddExpr" || !ops.every((op) => isTerm(op) && ttype(op) === L.PLUS)) {
             return group([first, indent(links.map(({ operator, after, operand }) => [operator, after, operand]))]);

@@ -81,9 +81,28 @@ function report(label, { tokens, rules, contexts, parsed, skipped }) {
     }
 }
 
-report("Markdown fixture inputs", measure(fixtureInputs));
+const markdown = measure(fixtureInputs);
+report("Markdown fixture inputs", markdown);
+
+const args = process.argv.slice(2);
+const check = args[0] === "--check";
+if (check) args.shift();
+if (check) {
+    const minimum = 95;
+    for (const [label, universe, seen] of [
+        ["Markdown parser rules", FlixParser.ruleNames, markdown.rules],
+        ["Markdown labeled alternatives", alternatives, markdown.contexts],
+    ]) {
+        if (universe.length === 0) throw new Error(`No syntax entries found for ${label}`);
+        const covered = universe.filter((item) => seen.has(item)).length;
+        if (covered * 100 < minimum * universe.length) {
+            console.error(`${label}: ${covered}/${universe.length} is below ${minimum}%`);
+            process.exitCode = 1;
+        }
+    }
+}
 report("Local fixtures and .flix tests", measure([...fixtureInputs, ...localFiles.map((path) => readFileSync(path, "utf8"))]));
-const externalFiles = [...new Set(process.argv.slice(2).flatMap((path) => [...flixFiles(path)]))];
+const externalFiles = [...new Set(args.flatMap((path) => [...flixFiles(path)]))];
 if (externalFiles.length) {
     report("External corpus", measure(externalFiles.map((path) => readFileSync(path, "utf8"))));
 }
