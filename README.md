@@ -101,7 +101,7 @@ def f(x: Option[Int32]): Int32 = {
 
 - Exactly one `## Input` block. `## Output` has one block per option set; the first uses the front matter options, later ones add `key=value` options to the info string.
 - Every fixture is also checked with the invariants above: the output must keep the program (tokens, comments, tree shape, token classes) and formatting it again must change nothing.
-- `status: todo` records a known gap. The Output block holds the *desired* result, the test passes while the formatter still differs, and fails as soon as it matches, so the status cannot go stale. Optional `issue` explains or links it.
+- `status: todo` records one known gap, so it takes exactly one Output block (split a case with several gaps, or with one option set already right, into separate fixtures). The Output block holds the *desired* result, the test passes while the formatter still differs, and fails as soon as it matches, so the status cannot go stale. Optional `issue` explains or links it.
 - `status: error` has no Output block; the input must fail with a `SyntaxError`. Optional `message` is a regular expression for the error text.
 - Optional front matter: `description`, `source` (where an input came from), `tags`.
 

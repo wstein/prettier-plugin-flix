@@ -100,3 +100,11 @@ test("keeps the newline convention when rewriting outputs", () => {
     assert.equal(withOutputs(crlf, crlf.outputs.map((o) => o.code)), good.replace(/\n/g, "\r\n"));
     assert.ok(!updated.includes("\r\r"));
 });
+
+test("a todo fixture takes exactly one output block", () => {
+    const one = sample('title: a\nflix: "0.80"\nstatus: todo', `## Input\n\n${fence}flix\nx\n${fence}\n\n## Output\n\n${fence}flix\ny\n${fence}\n`);
+    assert.equal(parseFixture(one).meta.status, "todo");
+    const two = one + `\n${fence}flix printWidth=20\nz\n${fence}\n`;
+    assert.throws(() => parseFixture(two, "x.md"), /status: todo fixtures take exactly one Output block/);
+    assert.equal(parseFixture(two.replace("status: todo", "status: pass")).outputs.length, 2);
+});
