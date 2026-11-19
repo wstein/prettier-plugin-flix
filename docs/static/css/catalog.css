@@ -36,3 +36,8 @@ summary { cursor: pointer; font-weight: 600; }
   .comparison { grid-template-columns: minmax(0, 1fr); gap: 0; }
   .toc ul { columns: 1; }
 }
+
+.shiki, .shiki span {
+  color: light-dark(var(--shiki-light, var(--foreground)), var(--shiki-dark, var(--foreground)));
+  background-color: light-dark(var(--shiki-light-bg, transparent), var(--shiki-dark-bg, transparent));
+}

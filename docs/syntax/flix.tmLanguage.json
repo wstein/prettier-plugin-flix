@@ -1,0 +1,648 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "copyright_notice": "Copyright 2020 Stephen Tetley, Magnus Madsen; Copyright 2026 Werner Stein",
+  "license": "Apache License, Version 2.0",
+  "name": "Flix",
+  "scopeName": "source.flix",
+  "fileTypes": [
+    "flix"
+  ],
+  "patterns": [
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#literals"
+    },
+    {
+      "include": "#annotations"
+    },
+    {
+      "include": "#declarations"
+    },
+    {
+      "include": "#keywords"
+    },
+    {
+      "include": "#names"
+    },
+    {
+      "include": "#operators"
+    }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "include": "#block-comment"
+        },
+        {
+          "include": "#doc-comment"
+        },
+        {
+          "include": "#line-comment"
+        }
+      ]
+    },
+    "block-comment": {
+      "comment": "Nests, per Lexer.acceptBlockComment, via the self-include below.",
+      "name": "comment.block.flix",
+      "begin": "/\\*",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.comment.begin.flix"
+        }
+      },
+      "end": "\\*/",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.comment.end.flix"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#block-comment"
+        }
+      ]
+    },
+    "doc-comment": {
+      "comment": "Exactly three slashes. Lexer.acceptLineOrDocComment, slashCount == 1.",
+      "match": "(///)(?!/).*$",
+      "name": "comment.line.documentation.flix",
+      "captures": {
+        "1": {
+          "name": "punctuation.definition.comment.flix"
+        }
+      }
+    },
+    "line-comment": {
+      "patterns": [
+        {
+          "comment": "Two slashes not followed by a third.",
+          "match": "(//)(?!/).*$",
+          "name": "comment.line.double-slash.flix",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.comment.flix"
+            }
+          }
+        },
+        {
+          "comment": "Four or more slashes: not documentation, per the slash count above.",
+          "match": "(/{4,}).*$",
+          "name": "comment.line.double-slash.flix",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.comment.flix"
+            }
+          }
+        }
+      ]
+    },
+    "literals": {
+      "patterns": [
+        {
+          "include": "#regex-literal"
+        },
+        {
+          "include": "#debug-string"
+        },
+        {
+          "include": "#string"
+        },
+        {
+          "include": "#char"
+        },
+        {
+          "include": "#builtin"
+        },
+        {
+          "include": "#number-hex"
+        },
+        {
+          "include": "#number"
+        },
+        {
+          "include": "#holes"
+        }
+      ]
+    },
+    "string-escape": {
+      "comment": "`Lexer.consumeSingleEscapes` accepts a backslash followed by any character; `\\uXXXX` is kept whole because that is the unit the weeder decodes.",
+      "match": "\\\\(?:u[0-9a-fA-F]{4}|.)",
+      "name": "constant.character.escape.flix"
+    },
+    "string": {
+      "comment": "Single-line: `Lexer.acceptString` returns UnterminatedString on `\\n`, so the end pattern is line-anchored rather than running to the next quote in the file.",
+      "name": "string.quoted.double.flix",
+      "begin": "\"",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.string.begin.flix"
+        }
+      },
+      "end": "\"|$",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.string.end.flix"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#string-escape"
+        },
+        {
+          "include": "#string-interpolation"
+        }
+      ]
+    },
+    "debug-string": {
+      "comment": "`d\"...\"` is TokenKind.DebugInterpolator; see the dispatch in Lexer.scanToken.",
+      "name": "string.quoted.double.flix",
+      "begin": "(?<![A-Za-z0-9_!$])(d)(\")",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.debug.flix"
+        },
+        "2": {
+          "name": "punctuation.definition.string.begin.flix"
+        }
+      },
+      "end": "\"|$",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.string.end.flix"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#string-escape"
+        },
+        {
+          "include": "#string-interpolation"
+        }
+      ]
+    },
+    "string-interpolation": {
+      "comment": "The escape rule is listed before this one in #string, so `\\${` stays a literal — matching Lexer.acceptString, which requires the `$` to be unescaped.",
+      "begin": "(\\$)(\\{)",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.definition.template-expression.begin.flix"
+        },
+        "2": {
+          "name": "punctuation.definition.template-expression.begin.flix"
+        }
+      },
+      "end": "\\}|$",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.template-expression.end.flix"
+        }
+      },
+      "contentName": "meta.embedded.line.flix",
+      "patterns": [
+        {
+          "include": "#interpolation-block"
+        },
+        {
+          "include": "$self"
+        }
+      ]
+    },
+    "interpolation-block": {
+      "comment": "A braced block inside an interpolation, so the interpolation is not closed by the inner brace of `\"${ {40 + 2} }\"`. Mirrors the blockNestingLevel counter in Lexer.acceptStringInterpolation.",
+      "begin": "\\{",
+      "end": "\\}|$",
+      "patterns": [
+        {
+          "include": "#interpolation-block"
+        },
+        {
+          "include": "$self"
+        }
+      ]
+    },
+    "regex-literal": {
+      "comment": "`regex\"...\"` is TokenKind.LiteralRegex. No interpolation: Lexer.acceptRegex only consumes escapes and looks for the closing quote.",
+      "name": "string.regexp.flix",
+      "begin": "(?<![A-Za-z0-9_!$])(regex)(\")",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.regexp.flix"
+        },
+        "2": {
+          "name": "punctuation.definition.string.begin.flix"
+        }
+      },
+      "end": "\"|$",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.string.end.flix"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#string-escape"
+        }
+      ]
+    },
+    "char": {
+      "comment": "Line-anchored by choice, not by the lexer: Lexer.acceptChar has no newline check, so a char literal may technically span lines. Honouring that would let one stray apostrophe paint the rest of the file — the incumbent grammar's defect #10 — for a construct that does not occur in practice.",
+      "name": "string.quoted.single.flix",
+      "begin": "'",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.string.begin.flix"
+        }
+      },
+      "end": "'|$",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.string.end.flix"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#string-escape"
+        }
+      ]
+    },
+    "builtin": {
+      "comment": "`%%ARRAY_LOAD%%` is TokenKind.BuiltIn. Lexer.isBuiltInChar is an uppercase letter, a digit, or an underscore.",
+      "match": "(%%)([A-Z0-9_]+)(%%)",
+      "name": "support.function.builtin.flix",
+      "captures": {
+        "1": {
+          "name": "punctuation.definition.builtin.begin.flix"
+        },
+        "3": {
+          "name": "punctuation.definition.builtin.end.flix"
+        }
+      }
+    },
+    "number-hex": {
+      "comment": "Must precede #number: both match at offset 0 of `0x1F`. See defect #1.",
+      "match": "(?<![0-9A-Za-z_$!.])0x[0-9a-fA-F]+(?:_[0-9a-fA-F]+)*(?:i8|i16|i32|i64|ii)?(?![0-9A-Za-z_.])",
+      "name": "constant.numeric.hex.flix"
+    },
+    "number": {
+      "comment": "The grammar documented on Lexer.acceptNumber: \\D([.]\\D)?(e([+]|[-])?\\D([.]\\D)?)?(i8|i16|i32|i64|ii|f32|f64|ff)?",
+      "match": "(?<![0-9A-Za-z_$!.])[0-9]+(?:_[0-9]+)*(?:\\.[0-9]+(?:_[0-9]+)*)?(?:e[+-]?[0-9]+(?:_[0-9]+)*(?:\\.[0-9]+(?:_[0-9]+)*)?)?(?:i8|i16|i32|i64|ii|f32|f64|ff)?(?![0-9A-Za-z_.])",
+      "name": "constant.numeric.flix"
+    },
+    "holes": {
+      "patterns": [
+        {
+          "comment": "`???` is TokenKind.HoleAnonymous, one of Lexer.SimpleTokens.",
+          "match": "\\?\\?\\?",
+          "name": "constant.language.hole.flix"
+        },
+        {
+          "comment": "`?name` is TokenKind.HoleNamed; see Lexer.acceptNamedHole.",
+          "match": "\\?[A-Za-z][A-Za-z0-9_!$]*",
+          "name": "constant.language.hole.flix"
+        },
+        {
+          "comment": "`name?` is TokenKind.HoleVariable; Lexer.acceptName returns it when a name is followed by `?`. The leading guard matters as much as it does for #wildcard: without it `9x?` scopes only the `x?`, painting half of what the lexer treats as one erroneous token. A leading `_` is included because Lexer.scanToken routes `_` followed by a name character into acceptName.",
+          "match": "(?<![A-Za-z0-9_!$])[A-Za-z_][A-Za-z0-9_!$]*\\?",
+          "name": "constant.language.hole.flix"
+        }
+      ]
+    },
+    "annotations": {
+      "match": "(@)([A-Za-z]+)",
+      "name": "storage.type.annotation.flix",
+      "captures": {
+        "1": {
+          "name": "punctuation.definition.annotation.flix"
+        }
+      }
+    },
+    "declarations": {
+      "patterns": [
+        {
+          "include": "#declaration-type-alias"
+        },
+        {
+          "include": "#declaration-module"
+        },
+        {
+          "include": "#declaration-function"
+        },
+        {
+          "include": "#declaration-type"
+        }
+      ]
+    },
+    "declaration-function": {
+      "comment": "A definition may be named by a user-defined operator, e.g. `def >>`.",
+      "match": "(?<![A-Za-z0-9_!$])(def|redef)(?![A-Za-z0-9_!$])\\s+((?:\\$[A-Za-z][A-Za-z0-9_!$]*|_?[\\x{2200}-\\x{22FF}]+|_?[+\\-*<>=!&|^$]+|[a-z_][A-Za-z0-9_!$]*|[A-Z][A-Za-z0-9_!$]*))",
+      "captures": {
+        "1": {
+          "name": "storage.type.flix"
+        },
+        "2": {
+          "name": "entity.name.function.flix"
+        }
+      }
+    },
+    "declaration-type": {
+      "match": "(?<![A-Za-z0-9_!$])(enum|struct|trait|eff|instance|restrictable)(?![A-Za-z0-9_!$])\\s+([A-Z][A-Za-z0-9_!$]*)",
+      "captures": {
+        "1": {
+          "name": "storage.type.flix"
+        },
+        "2": {
+          "name": "entity.name.type.flix"
+        }
+      }
+    },
+    "declaration-type-alias": {
+      "comment": "Listed before #declaration-type so `type alias Foo` is not read as `type`.",
+      "match": "(?<![A-Za-z0-9_!$])(type)\\s+(alias)(?![A-Za-z0-9_!$])\\s+([A-Z][A-Za-z0-9_!$]*)",
+      "captures": {
+        "1": {
+          "name": "storage.type.flix"
+        },
+        "2": {
+          "name": "storage.type.flix"
+        },
+        "3": {
+          "name": "entity.name.type.flix"
+        }
+      }
+    },
+    "declaration-module": {
+      "match": "(?<![A-Za-z0-9_!$])(mod)(?![A-Za-z0-9_!$])\\s+([A-Z][A-Za-z0-9_!$]*(?:\\.[A-Z][A-Za-z0-9_!$]*)*)",
+      "captures": {
+        "1": {
+          "name": "storage.type.flix"
+        },
+        "2": {
+          "name": "entity.name.namespace.flix"
+        }
+      }
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "match": "(?<![A-Za-z0-9_!$])(?:false|true)(?![A-Za-z0-9_!$])",
+          "name": "constant.language.boolean.flix"
+        },
+        {
+          "match": "(?<![A-Za-z0-9_!$])(?:null)(?![A-Za-z0-9_!$])",
+          "name": "constant.language.null.flix"
+        },
+        {
+          "match": "(?<![A-Za-z0-9_!$])(?:else|if)(?![A-Za-z0-9_!$])",
+          "name": "keyword.control.conditional.flix"
+        },
+        {
+          "match": "(?<![A-Za-z0-9_!$])(?:project|inject|pquery|psolve|query|solve|fix)(?![A-Za-z0-9_!$])",
+          "name": "keyword.control.datalog.flix"
+        },
+        {
+          "match": "(?<![A-Za-z0-9_!$])(?:choose\\*|foreach|handler|choose|ematch|region|select|catch|match|spawn|throw|yield|case|forA|forM|par|run|try)(?![A-Za-z0-9_!$])",
+          "name": "keyword.control.flix"
+        },
+        {
+          "match": "(?<![A-Za-z0-9_!$])(?:import|use)(?![A-Za-z0-9_!$])",
+          "name": "keyword.control.import.flix"
+        },
+        {
+          "match": "(?<![A-Za-z0-9_!$])(?:unchecked_cast|checked_ecast|checked_cast|unsafe)(?![A-Za-z0-9_!$])",
+          "name": "keyword.operator.cast.flix"
+        },
+        {
+          "match": "(?<![A-Za-z0-9_!$])(?:and|not|xor|or)(?![A-Za-z0-9_!$])",
+          "name": "keyword.operator.logical.flix"
+        },
+        {
+          "match": "(?<![A-Za-z0-9_!$])(?:Vector#|Array#|List#|Map#|Set#|new)(?![A-Za-z0-9_!$])",
+          "name": "keyword.operator.new.flix"
+        },
+        {
+          "match": "(?<![A-Za-z0-9_!$])(?:open_variant_as|open_variant|instanceof|rvadd|rvand|rvnot|rvsub|as)(?![A-Za-z0-9_!$])",
+          "name": "keyword.operator.word.flix"
+        },
+        {
+          "match": "(?<![A-Za-z0-9_!$])(?:discard|forall|static|force|super|where|from|into|lazy|with|xvar)(?![A-Za-z0-9_!$])",
+          "name": "keyword.other.flix"
+        },
+        {
+          "match": "(?<![A-Za-z0-9_!$])(?:sealed|mut|pub)(?![A-Za-z0-9_!$])",
+          "name": "storage.modifier.flix"
+        },
+        {
+          "match": "(?<![A-Za-z0-9_!$])(?:restrictable|instance|struct|alias|redef|trait|enum|type|def|eff|let|mod|val)(?![A-Za-z0-9_!$])",
+          "name": "storage.type.flix"
+        },
+        {
+          "match": "(?<![A-Za-z0-9_!$])(?:Static|Univ)(?![A-Za-z0-9_!$])",
+          "name": "support.type.builtin.flix"
+        }
+      ]
+    },
+    "names": {
+      "patterns": [
+        {
+          "include": "#primitive-type"
+        },
+        {
+          "include": "#math-name"
+        },
+        {
+          "include": "#escaped-name"
+        },
+        {
+          "include": "#wildcard"
+        }
+      ]
+    },
+    "primitive-type": {
+      "comment": "The `// Basic Types` table in Resolver.visitType: resolved structurally, before any name lookup, so unlike `Some` or `Nil` these cannot be shadowed by a user declaration. Scoping library constructors as language constants is defect #11e.",
+      "match": "(?<![A-Za-z0-9_!$])(?:BigDecimal|Receiver|Float32|Float64|BigInt|Region|Sender|String|Vector|Array|Int16|Int32|Int64|Regex|Bool|Char|Int8|Lazy|Null|Unit|Void)(?![A-Za-z0-9_!$])",
+      "name": "support.type.primitive.flix"
+    },
+    "math-name": {
+      "comment": "A leading `_` belongs to the token: Lexer.scanToken routes `_` followed by a math character into acceptMathName. The lookbehind keeps the `_` of `x_` out of it.",
+      "match": "(?<![A-Za-z0-9_!$])_?[\\x{2200}-\\x{22FF}]+",
+      "name": "variable.other.math.flix"
+    },
+    "escaped-name": {
+      "comment": "`$name` escapes a name that would otherwise be a keyword (Lexer.acceptEscapedName). The leading guard is essential: `$` is also a name character, and Lexer.acceptName names Java inner-class spellings such as `Map$Entry` as the reason. Without it, `Map$Entry` is split at the `$` into two differently scoped tokens.",
+      "match": "(?<![A-Za-z0-9_!$])(\\$)([a-z_][A-Za-z0-9_!$]*|[A-Z][A-Za-z0-9_!$]*)",
+      "name": "variable.other.escaped.flix",
+      "captures": {
+        "1": {
+          "name": "punctuation.definition.variable.flix"
+        }
+      }
+    },
+    "wildcard": {
+      "comment": "TokenKind.Underscore. The leading guard matters as much as the trailing one: `_` is a name character, so the underscore in `case_` continues that name rather than starting a wildcard.",
+      "match": "(?<![A-Za-z0-9_!$])_(?![A-Za-z0-9_!$+\\-*<>=&|^\\x{2200}-\\x{22FF}])",
+      "name": "variable.language.wildcard.flix"
+    },
+    "operators": {
+      "patterns": [
+        {
+          "include": "#datalog"
+        },
+        {
+          "include": "#extensible-type"
+        },
+        {
+          "include": "#record-lookup"
+        },
+        {
+          "include": "#struct-access"
+        },
+        {
+          "include": "#arrow-function"
+        },
+        {
+          "include": "#arrow-struct"
+        },
+        {
+          "include": "#effect-separator"
+        },
+        {
+          "include": "#operator"
+        },
+        {
+          "include": "#operator-slash"
+        },
+        {
+          "include": "#operator-misc"
+        },
+        {
+          "include": "#punctuation"
+        }
+      ]
+    },
+    "datalog": {
+      "patterns": [
+        {
+          "match": "#\\{|#\\(",
+          "name": "punctuation.section.datalog.begin.flix"
+        },
+        {
+          "comment": "Rule implication, TokenKind.ColonMinus.",
+          "match": ":-(?![+\\-*<>=!&|^$])",
+          "name": "keyword.operator.datalog.flix"
+        },
+        {
+          "comment": "Fixpoint merge, TokenKind.AngledPlus.",
+          "match": "<\\+>(?![+\\-*<>=!&|^$])",
+          "name": "keyword.operator.datalog.flix"
+        }
+      ]
+    },
+    "extensible-type": {
+      "comment": "`#| ... |#`, Parser2.extensibleType. Not Datalog despite the leading `#`.",
+      "patterns": [
+        {
+          "match": "#\\|",
+          "name": "punctuation.section.extensible.begin.flix"
+        },
+        {
+          "match": "\\|#",
+          "name": "punctuation.section.extensible.end.flix"
+        }
+      ]
+    },
+    "record-lookup": {
+      "comment": "A bare `#` followed by a lowercase name is a record select (Parser2, `case TokenKind.Hash if nth(1) == TokenKind.NameLowercase`), not a Datalog form.",
+      "match": "(#)([a-z_][A-Za-z0-9_!$]*)",
+      "captures": {
+        "1": {
+          "name": "punctuation.accessor.flix"
+        },
+        "2": {
+          "name": "variable.other.member.flix"
+        }
+      }
+    },
+    "struct-access": {
+      "comment": "Tight `->` followed by a lowercase name is a struct get or put, per Parser2 `case TokenKind.ArrowThinRTight if nth(1) == TokenKind.NameLowercase`.",
+      "match": "(?<=[A-Za-z0-9_!$])(->)([a-z_][A-Za-z0-9_!$]*)",
+      "captures": {
+        "1": {
+          "name": "keyword.operator.accessor.flix"
+        },
+        "2": {
+          "name": "variable.other.member.flix"
+        }
+      }
+    },
+    "effect-separator": {
+      "comment": "`\\` separates a type from its effect set, per Type.typeAndEffect — `def f(): t \\ ef`. It is not a lambda: Flix lambdas are written `x -> e`.",
+      "match": "\\\\",
+      "name": "keyword.operator.effect.flix"
+    },
+    "arrow-function": {
+      "comment": "Whitespace on either side makes this the function arrow, per Lexer.scanToken.",
+      "match": "(?:(?<=\\s)->|->(?=\\s))(?![+\\-*<>=!&|^$])",
+      "name": "keyword.operator.arrow.flix"
+    },
+    "arrow-struct": {
+      "comment": "No surrounding whitespace: struct field access, TokenKind.ArrowThinRTight. #struct-access above needs no such guard: it already requires a lowercase name after the arrow, which is never an operator character.",
+      "match": "->(?![+\\-*<>=!&|^$])",
+      "name": "keyword.operator.accessor.flix"
+    },
+    "operator": {
+      "comment": "Flix admits user-defined operators, so this is a character class rather than an enumeration of Lexer.Operators. The named entries are a subset of what this matches.",
+      "match": "(?:(?<![A-Za-z0-9_!$])_?[+\\-*<>=!&|^$]|[+\\-*<>=&|^])[+\\-*<>=!&|^$]*",
+      "name": "keyword.operator.flix"
+    },
+    "operator-misc": {
+      "comment": "Operator tokens outside Lexer.isUserOp. `~` is TokenKind.Tilde. A bare `@` is TokenKind.At, the region operator in `new Struct @ rc {...}` (Parser2.regionName) -- not annotation punctuation, which is why the lookahead defers to #annotations.",
+      "match": "~|@(?![A-Za-z])",
+      "name": "keyword.operator.flix"
+    },
+    "operator-slash": {
+      "comment": "`/` is TokenKind.Slash, a real operator. Lexer.isUserOp excludes it only so that `//` can begin a comment, so it is absent from #operator and needs its own rule. The lookahead is belt-and-braces: #comments is matched before #operators, so a comment already wins the tie at the same offset.",
+      "match": "/(?![/*])",
+      "name": "keyword.operator.flix"
+    },
+    "punctuation": {
+      "patterns": [
+        {
+          "match": "[{}]",
+          "name": "punctuation.section.braces.flix"
+        },
+        {
+          "match": "[()]",
+          "name": "punctuation.section.parens.flix"
+        },
+        {
+          "match": "\\[|\\]",
+          "name": "punctuation.section.brackets.flix"
+        },
+        {
+          "comment": "Defect #11c: the incumbent scopes `;` as keyword.control.",
+          "match": ";",
+          "name": "punctuation.terminator.flix"
+        },
+        {
+          "match": ",",
+          "name": "punctuation.separator.comma.flix"
+        },
+        {
+          "match": ":::|::|:",
+          "name": "punctuation.separator.colon.flix"
+        },
+        {
+          "match": "\\.",
+          "name": "punctuation.accessor.flix"
+        },
+        {
+          "match": "`",
+          "name": "punctuation.definition.infix.flix"
+        }
+      ]
+    }
+  }
+}
