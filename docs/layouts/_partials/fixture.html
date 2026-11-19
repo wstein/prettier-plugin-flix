@@ -11,22 +11,29 @@
   <div class="comparison">
     <section>
       <p class="code-label">Input</p>
-      {{ .inputHtml | safeHTML }}
+      <figure class="code-sample">{{ .inputHtml | safeHTML }}</figure>
     </section>
     {{ with .outputs }}
     {{ $first := index . 0 }}
     <section>
       <p class="code-label">{{ if eq $.fixture.status "todo" }}Desired Prettier output{{ else }}Expected Prettier output{{ end }}</p>
-      {{ with $first.options }}<p class="options">Base settings · {{ . }}</p>{{ end }}
-      {{ $first.html | safeHTML }}
+      <figure class="code-sample">
+        {{ $first.html | safeHTML }}
+        {{ with $first.options }}<figcaption>Base settings · {{ . }}</figcaption>{{ end }}
+      </figure>
     </section>
     {{ end }}
   </div>
-  {{ range after 1 .outputs }}
+  {{ range $index, $variant := after 1 .outputs }}
   <details>
-    <summary>Alternate Prettier output{{ with .options }} ({{ . }}){{ end }}</summary>
-    {{ with .note }}<p class="options">{{ . }}</p>{{ end }}
-    {{ .html | safeHTML }}
+    <summary>Alternate Prettier output{{ if gt (len $.fixture.outputs) 2 }} {{ add $index 2 }}{{ end }}</summary>
+    <figure class="code-sample">
+      {{ $variant.html | safeHTML }}
+      <figcaption>
+        {{ $variant.options }}
+        {{ with $variant.note }}<span>{{ . }}</span>{{ end }}
+      </figcaption>
+    </figure>
   </details>
   {{ end }}
   {{ with .reference }}
