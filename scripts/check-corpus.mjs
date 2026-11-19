@@ -1,7 +1,7 @@
 // Usage: node scripts/check-corpus.mjs <dir-or-file>...  — formats each .flix file and verifies it.
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { fingerprint, fmt, dropTrailingCommas } from "../test/lib.mjs";
+import { fingerprint, fmt, programProblems } from "../test/lib.mjs";
 
 const files = [];
 const walk = (p) => {
@@ -20,12 +20,8 @@ for (const f of files) {
     let out;
     try { out = await fmt(src); } catch (e) { problems.push("format threw: " + String(e.message).split("\n")[0]); }
     if (out !== undefined) {
-        const b = fingerprint(out);
-        if (b.errors.length) problems.push("output does not parse: " + b.errors[0]);
-        else {
-            if (JSON.stringify(dropTrailingCommas(a.tokens)) !== JSON.stringify(dropTrailingCommas(b.tokens))) problems.push("tokens differ");
-            if (JSON.stringify(a.comments) !== JSON.stringify(b.comments)) problems.push("comments differ");
-            if (a.shape.replace(/Context/g, "") !== b.shape.replace(/Context/g, "") && !problems.length) problems.push("tree shape differs");
+        problems.push(...programProblems(a, fingerprint(out)));
+        if (!problems.length) {
             const again = await fmt(out);
             if (again !== out) problems.push("not idempotent");
         }

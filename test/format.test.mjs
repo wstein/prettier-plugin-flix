@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { dropTrailingCommas, fingerprint, fmt } from "./lib.mjs";
+import { fingerprint, fmt, programProblems } from "./lib.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -32,12 +32,7 @@ for (const f of files) {
         assert.deepEqual(before.errors, [], "fixture must parse");
         const out = await fmt(src);
         const after = fingerprint(out);
-        assert.deepEqual(after.errors, [], "output must parse");
-        assert.deepEqual(dropTrailingCommas(after.tokens), dropTrailingCommas(before.tokens), "tokens");
-        assert.deepEqual(after.comments, before.comments, "comments");
-        assert.equal(after.shape, before.shape, "parse-tree shape");
-        assert.deepEqual(after.arrows, before.arrows, "arrow token classes");
-        assert.ok(after.constraintEnds.every((t) => t === "DOT_WS"), "Datalog constraints end in a dot followed by whitespace");
+        assert.deepEqual(programProblems(before, after), [], "the formatter must not change the program");
         assert.equal(await fmt(out), out, "idempotent");
     });
 }
