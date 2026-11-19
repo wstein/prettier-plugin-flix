@@ -14,10 +14,6 @@ def inc4(_: I4[a, b, c, d]): I4[a xor (b and c and d), b xor (c and d), c xor d,
 ## Output
 
 ```flix
-def inc4(_: I4[a, b, c, d]): I4[
-    a xor (b and c and d),
-    b xor (c and d),
-    c xor d,
-    not d
-] = I4.I4
+def inc4(_: I4[a, b, c, d]):
+    I4[a xor (b and c and d), b xor (c and d), c xor d, not d] = I4.I4
 ```

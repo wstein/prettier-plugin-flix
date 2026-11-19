@@ -53,7 +53,8 @@ npx prettier --write src/Main.flix
 
 The first command previews the result in your terminal. `--check` reports
 formatting differences, and `--write` saves the result. The plugin uses four
-spaces for indentation by default. Set `tabWidth`, `printWidth`, or
+spaces for indentation and a line width of 100 columns by default. Set
+`tabWidth`, `printWidth`, or
 `endOfLine` in your Prettier configuration to match your project.
 
 ## Learn more

@@ -4,16 +4,19 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { parseArgs, promisify } from "node:util";
+import { defaultOptions } from "../dist/index.js";
+import { EXAMPLE_PRINT_WIDTH } from "../test/fixture.mjs";
 import { fingerprint, fmt, programProblems } from "../test/lib.mjs";
 import { renderFindings } from "./docs-example-findings.mjs";
 import { extractExamples } from "./extract-flix-examples.mjs";
 
 const exec = promisify(execFile);
-const formatOptions = { printWidth: 80, tabWidth: 4, useTabs: false, endOfLine: "lf" };
+const formatOptions = { ...defaultOptions, printWidth: EXAMPLE_PRINT_WIDTH, useTabs: false, endOfLine: "lf" };
 const hash = (value) => createHash("sha256").update(JSON.stringify(value)).digest("hex");
 const baselineHeader = "case\tstatus\tchange\tsha256";
 const wrapper = "def auditSnippet(): Unit = {\n";
 const declaration = /^(?:@|(?:def|eff|enum|instance|mod|pub|redef|restrictable|sealed|struct|trait|type|val)\b)/;
+const trimLineEnds = (value) => value.replace(/[ \t]+(?=\r?$)/gm, "");
 
 export function changeKind(input, output) {
     const withoutEndings = (value) => value.replace(/\r\n?/g, "\n").replace(/\n+$/, "");
@@ -48,7 +51,7 @@ export async function auditExample(example) {
     let input = original;
     let before = fingerprint(input);
     if (before.errors.length) {
-        const firstError = before.errors[0];
+        const firstError = fingerprint(trimLineEnds(original)).errors[0] ?? before.errors[0];
         const firstCode = input.replace(/^\s*(?:(?:\/\/[^\n]*\n|\/\*[\s\S]*?\*\/)\s*)*/, "");
         if (!declaration.test(firstCode)) {
             context = "expression-or-statements";
@@ -71,7 +74,8 @@ export async function auditExample(example) {
         if (before.errors.length) {
             return {
                 status: "needs-context", reason: "Input rejected by the plugin. Check the surrounding prose, the Flix version and the compiler.",
-                diagnostic: firstError, wrappedDiagnostic: context === "file" ? undefined : before.errors[0],
+                diagnostic: firstError,
+                wrappedDiagnostic: context === "file" ? undefined : fingerprint(trimLineEnds(input)).errors[0] ?? before.errors[0],
             };
         }
     }
@@ -95,11 +99,13 @@ export async function auditExample(example) {
         }
         formatted = snippet;
     }
-    if (original === formatted) return { context, status: "unchanged" };
-    const digest = hash([context, formatOptions, original, formatted]);
+    const beforeLayout = trimLineEnds(original);
+    const afterLayout = trimLineEnds(formatted);
+    if (beforeLayout === afterLayout) return { context, status: "unchanged" };
+    const digest = hash([context, formatOptions, beforeLayout, afterLayout]);
     return {
-        context, status: "layout-change", input: original, formatted, digest,
-        changeKind: changeKind(original, formatted),
+        context, status: "layout-change", input: beforeLayout, formatted: afterLayout, digest,
+        changeKind: changeKind(beforeLayout, afterLayout),
         reason: "The parser, program fingerprint and second formatting pass agree. Review the diff for readability.",
     };
 }
@@ -162,8 +168,8 @@ async function audit(book, website, output, reviewsPath, baselinePath) {
                 writeFile(join(afterDir, filename), formatted),
             ]);
         }
-        const signature = hash([example.file, example.language, code, outcome.status, outcome.context,
-            outcome.diagnostic, outcome.wrappedDiagnostic, formatted]);
+        const signature = hash([example.file, example.language, trimLineEnds(code), outcome.status, outcome.context,
+            outcome.diagnostic, outcome.wrappedDiagnostic, formatted === undefined ? undefined : trimLineEnds(formatted)]);
         cases.push({
             ...example, ...outcome, approval, hasDiff, signature,
             changeKind: outcome.status === "invariant-failure" ? "unsafe" : outcome.changeKind,

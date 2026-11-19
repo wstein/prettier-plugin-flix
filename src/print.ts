@@ -96,6 +96,7 @@ const BINARY = new Set([
 ]);
 /** Own-separator nodes: they emit their trailing space or newline themselves. */
 const SELF_SPACED = new Set(["DeclPrefix", "AnnotationList", "ModifierList"]);
+const DECLARATION_BLOCKS = new Set(["ModDeclaration", "TraitDeclaration", "InstanceDeclaration", "EffectDeclaration"]);
 
 const CALL_LIKE = new Set([
     L.NAME_LOWERCASE, L.NAME_UPPERCASE, L.NAME_MATH, L.STATIC_UPPER, L.ANNOTATION, L.HOLE_NAMED,
@@ -110,8 +111,8 @@ export class Printer {
 
     constructor(
         private root: FlixRoot,
-        private printWidth = 80,
-        private tabWidth = 4,
+        private printWidth: number,
+        private tabWidth: number,
     ) {}
 
     // ------------------------------------------------------------------ tokens
@@ -484,11 +485,30 @@ export class Printer {
 
         if (isMembers || (parentKind === "StructDeclaration" && openType === L.LBRACE)) {
             const structSplit = parentKind === "StructDeclaration" ? this.splitOn(inner, L.COMMA) : null;
-            const entries = structSplit ? structSplit.items.filter((x) => x.length > 0) : ruleKids.map((n) => [n]);
+            const entries = structSplit ? structSplit.items.filter((x) => x.length > 0) : [];
+            if (!structSplit) {
+                for (const rule of ruleKids) {
+                    const previous = entries.at(-1);
+                    const first = firstTerm(rule);
+                    const last = previous && lastTerm(previous[previous.length - 1]);
+                    if (kind(rule) === "EnumCase" && previous && last && ttype(last) === L.COMMA &&
+                        first && ttype(first) === L.NAME_UPPERCASE) previous.push(rule);
+                    else entries.push([rule]);
+                }
+            }
             const trailingComma = parentKind === "StructDeclaration" && isTerm(inner[inner.length - 1]);
             const layoutId = Symbol();
-            const entryDocs = this.alignMatchRules(ruleKids, layoutId) ??
-                entries.map((entry) => this.seq([this.ls(entry[0]), ...entry.slice(1)], kind(entry[0])));
+            const entryDocs = this.alignMatchRules(ruleKids, layoutId) ?? entries.map((entry) => {
+                if (entry.length > 1 && kind(entry[0]) === "EnumCase") {
+                    return group([
+                        this.print(this.ls(entry[0])),
+                        indent(entry.slice(1).map((item, i) => [
+                            this.after(lastTerm(entry[i]), line), this.print(this.ls(item)),
+                        ])),
+                    ]);
+                }
+                return this.seq([this.ls(entry[0]), ...entry.slice(1)], kind(entry[0]));
+            });
             const docs: Doc[] = [];
             entries.forEach((entry, k) => {
                 const node = entry[0];
@@ -536,6 +556,9 @@ export class Printer {
         // from how a doc happens to break, so that a second formatting pass changes nothing.
         const lastItem = items[items.length - 1];
         const lastTok = lastItem.length > 0 ? lastTerm(lastItem[lastItem.length - 1]) : null;
+        const finalArgument = lastItem[0] && kind(lastItem[0]) === "Argument" ? kids(lastItem[0])[0] : undefined;
+        const matchCallback = finalArgument && kind(finalArgument) === "LambdaExpr" &&
+            kind(kids(finalArgument).at(-1)!) === "MatchExpr" && willBreak(docs[docs.length - 1]);
         // A comment at any boundary (opener, separator, first or last token of an argument) needs the
         // line break or space the group layout provides; hugging would move it past the call.
         const boundaryTokens = [
@@ -546,6 +569,7 @@ export class Printer {
         const commentAtBoundary = boundaryTokens.some((t) => t !== null && this.hasComment(t));
         const huggable =
             !pad && comments.length === 0 && !commentAtBoundary && sepType === L.COMMA && lastTok !== null && ttype(lastTok) === L.RBRACE &&
+            !(items.length > 1 && matchCallback) &&
             !items.slice(0, -1).some((it) => it.length > 0 && lastTerm(it[it.length - 1]) !== null && ttype(lastTerm(it[it.length - 1])!) === L.RBRACE) &&
             !docs.slice(0, -1).some(willBreak);
         if (huggable) return [openDoc, this.joinWithSeps(docs, sepDocs, sepDocs.map(() => " ")), closeDoc, closeTrail];
@@ -580,12 +604,16 @@ export class Printer {
         switch (k) {
             case "CompilationUnit": return this.printUnit(n);
             case "Statement": return this.printStatement(n);
+            case "UseExpr": return this.printUseExpr(n);
             case "Block": return this.printBlock(n);
             case "IfExpr": return this.printIf(n);
+            case "ForeachExpr": return this.printForeach(n);
             case "ForYieldExpr": return this.printForYield(n);
             case "FixpointExpr": return this.printFixpoint(n);
             case "DatalogConstraint": return this.printConstraint(n);
             case "RunWithExpr": return this.printRunWith(n);
+            case "DefDeclaration":
+            case "OpDeclaration": return this.printSignature(n, kids(n));
             case "DeclPrefix": return this.seq(kids(n), k);
             case "AnnotationList": return this.printAnnotations(n);
             case "ModifierList": return kids(n).map((m) => [this.print(m), this.after(lastTerm(m), " ")]);
@@ -662,6 +690,16 @@ export class Printer {
         return this.printParts(this.statementParts(n), 0);
     }
 
+    private printUseExpr(n: ParserRuleContext): Doc {
+        const children = kids(n);
+        if (this.flat > 0) return this.seq(children, kind(n));
+        const [clause, semi, expr] = children;
+        return [
+            this.print(clause), this.separatorTok(lastTerm(clause), semi as TerminalNode),
+            hardline, ...this.restSeparator(expr), this.print(this.ls(expr)),
+        ];
+    }
+
     private isMultiStatement(n: ParserRuleContext): boolean {
         const parts = this.statementParts(n);
         return parts.length > 1 || (parts.length === 1 && ["LetExpr", "LocalDefExpr", "UseExpr"].includes(kind(parts[0].expr)));
@@ -699,7 +737,7 @@ export class Printer {
         return false;
     }
 
-    private printIf(n: ParserRuleContext): Doc {
+    private printIf(n: ParserRuleContext, groupChain = true): Doc {
         const cs = kids(n);
         // IF LPAREN expr RPAREN expr (ELSE expr)?
         const ifTok = cs[0] as TerminalNode;
@@ -724,10 +762,21 @@ export class Printer {
         const parts: Doc[] = [head, indent([this.after(closeParen, line), thenDoc])];
         if (elseTok) {
             this.lineStart.add(elseTok.symbol.tokenIndex); // a line break precedes `else` here
-            const elseDoc = this.print(hugs(elseNode) ? elseNode : this.ls(elseNode));
+            const elseDoc = kind(elseNode) === "IfExpr" ? this.printIf(elseNode as ParserRuleContext, false) :
+                this.print(hugs(elseNode) ? elseNode : this.ls(elseNode));
             parts.push(this.after(thenLast, line), this.tok(elseTok), hugs(elseNode) ? [this.after(elseTok, " ", true), elseDoc] : indent([line, elseDoc]));
         }
-        return group(parts);
+        return groupChain ? group(parts) : parts;
+    }
+
+    private printForeach(n: ParserRuleContext): Doc {
+        const children = kids(n);
+        const [keyword, fragments, body] = children;
+        if (this.flat > 0 || this.isBlockExpr(body)) return this.seq(children, kind(n));
+        return group([
+            this.seq([keyword, fragments], kind(n)),
+            indent([this.after(lastTerm(fragments), line), this.print(this.ls(body))]),
+        ]);
     }
 
     private hasBodyArrow(n: ParserRuleContext): boolean {
@@ -827,8 +876,14 @@ export class Printer {
         if (!Number.isFinite(column) || widths.every((width) => width === column)) {
             return rows.map(({ head, gap, tail }) => [head, gap, tail]);
         }
-        const fits = rows.every(({ head, gap, tail }, i) =>
-            gap === " " && measure([head, gap, tail]) + column - widths[i] + 2 * this.tabWidth <= this.printWidth);
+        // A multiline body can start below its arrow. If every arm would
+        // otherwise fit, don't introduce a wrap just to align the arrows.
+        const armWidths = rows.map(({ head, gap, tail }) => measure([head, gap, tail]) + 2 * this.tabWidth);
+        const allStayCompact = armWidths.every((width, i) => width + column - widths[i] <= this.printWidth);
+        const hasWrappedArm = armWidths.some((width) => width > this.printWidth);
+        const modestPadding = widths.every((width) => column - width <= 16);
+        const fits = column + " =>".length + 2 * this.tabWidth <= this.printWidth &&
+            rows.every(({ gap }) => gap === " ") && (allStayCompact || (hasWrappedArm && modestPadding));
         return rows.map(({ head, gap, tail }, i) => [
             head,
             fits ? ifBreak(" ".repeat(column - widths[i] + 1), gap, { groupId: layoutId }) : gap,
@@ -870,7 +925,7 @@ export class Printer {
         const typeIndex = head.findIndex((child) => kind(child) === "TypeAndEffect");
         const type = typeIndex < 0 ? undefined : kids(head[typeIndex])[0];
         const schema = type && kind(type) === "SimpleType" ? kids(type)[0] : undefined;
-        if (!schema || kind(schema) !== "SchemaType") return this.seq(head, kind(n));
+        if (!schema || kind(schema) !== "SchemaType") return this.printSignature(n, head, " =");
         const parts = kids(schema);
         const { items, seps } = this.splitOn(parts.slice(1, -1), L.COMMA);
         const first = firstTerm(n)!;
@@ -897,14 +952,10 @@ export class Printer {
         const lastRowSuffix = render([" ", close, ...withSuffix]);
         if ([prefixText, ...rowTexts, lastRowSuffix].some((text) => text.includes("\n"))) return ordinary;
 
-        let indentation = 0;
-        for (let parent = n.parent; parent; parent = parent.parent) {
-            if (kind(parent as Node) === "ModDeclaration") indentation += this.tabWidth;
-        }
         const body = firstTerm(children[arrowIndex + 1]);
         const bodyOpener = body && ttype(body) === L.HASH_LBRACE ? " #{" : "";
         const column = util.getStringWidth(prefixText);
-        const available = this.printWidth - indentation - column;
+        const available = this.printWidth - this.declarationIndent(n) - column;
         const endWidth = util.getStringWidth(lastRowSuffix + " =" + bodyOpener);
         const widths = rowTexts.map(util.getStringWidth);
         const compactWidth = widths.reduce((sum, width) => sum + width, rows.length - 1) + endWidth;
@@ -916,6 +967,58 @@ export class Printer {
             align(column, [hardline, join(hardline, rows.slice(1))]),
             " ", close, ...withSuffix,
         ];
+    }
+
+    private declarationIndent(n: ParserRuleContext): number {
+        let indentation = 0;
+        for (let parent = n.parent; parent; parent = parent.parent) {
+            if (DECLARATION_BLOCKS.has(kind(parent as Node))) indentation += this.tabWidth;
+        }
+        return indentation;
+    }
+
+    private printSignature(n: ParserRuleContext, children: Node[], suffix = ""): Doc {
+        const parentKind = kind(n);
+        const typeIndex = children.findIndex((child) => kind(child) === "TypeAndEffect");
+        if (this.flat > 0 || typeIndex < 0) return this.seq(children, parentKind);
+        const type = kids(children[typeIndex])[0];
+        const clauses = children.slice(typeIndex + 1);
+        const hasEffect = kind(type) === "EffectAnnotatedType";
+        if (!hasEffect && clauses.length === 0 && kind(type) !== "ApplyType") return this.seq(children, parentKind);
+        const first = firstTerm(n)!;
+        const last = lastTerm(children[children.length - 1])!;
+        for (let index = first.symbol.tokenIndex; index <= last.symbol.tokenIndex; index++) {
+            const info = this.root.info.get(index);
+            if (info && (info.trail.length || (index !== first.symbol.tokenIndex && info.lead.length))) {
+                return this.seq(children, parentKind);
+            }
+        }
+
+        const [result, slash, effect] = hasEffect ? kids(type) : [type];
+        const prefix = this.seq(children.slice(0, typeIndex), parentKind);
+        const parts: Doc[] = [this.print(result)];
+        if (hasEffect) parts.push(this.seq([slash, effect], "EffectAnnotatedType"));
+        parts.push(...clauses.map((clause) => this.print(clause)));
+        const ordinary: Doc = [prefix, " ", join(" ", parts)];
+
+        const width = this.printWidth - this.declarationIndent(n);
+        const options = { printWidth: Math.max(1, width), tabWidth: this.tabWidth };
+        const render = (value: Doc): string => doc.printer.printDocToString(value, options).formatted;
+        const rows = parts.map(render);
+        if (rows.some((row) => row.includes("\n"))) return ordinary;
+        const prefixWidth = util.getStringWidth(render(prefix).split("\n").at(-1)!);
+        if (prefixWidth + 1 + util.getStringWidth(rows.join(" ") + suffix) <= width) return ordinary;
+
+        // Prefer breaking at the outer clause, then the effect, then the result
+        // type. Keep individual parts compact if they fit on the continuation.
+        for (let i = parts.length - 1; i >= 0; i--) {
+            const left = i === 0 ? "" : " " + rows.slice(0, i).join(" ");
+            const right = rows.slice(i).join(" ") + suffix;
+            if (prefixWidth + util.getStringWidth(left) > width ||
+                this.tabWidth + util.getStringWidth(right) > width) continue;
+            return [prefix, i === 0 ? "" : [" ", join(" ", parts.slice(0, i))], indent([hardline, join(" ", parts.slice(i))])];
+        }
+        return ordinary;
     }
 
     private printEqBodyTail(cs: Node[], ai: number, k: string, arrow: TerminalNode): Doc {
@@ -983,7 +1086,8 @@ export class Printer {
         });
         const first = this.print(operands[0]);
         const firstToken = firstTerm(operands[0]);
-        if (k === "UserOpExpr" && firstToken && (ttype(firstToken) === L.QUERY || ttype(firstToken) === L.PQUERY) &&
+        if (k === "UserOpExpr" && firstToken &&
+            [L.QUERY, L.PQUERY, L.SELECT].includes(ttype(firstToken)) &&
             ops.every((op) => isTerm(op) && this.src(op) === "|>")) {
             return group([first, indent(links.map(({ operator, after, operand }) => group([operator, after, operand])))]);
         }

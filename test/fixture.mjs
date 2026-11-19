@@ -204,7 +204,10 @@ export function loadFixture(path, label = path) {
 }
 
 /** Prettier options for one Output block: front matter first, block options on top. */
-export const optionsFor = (fixture, block) => ({ ...fixture.meta.options, ...block.options });
+export const EXAMPLE_PRINT_WIDTH = 80;
+export const optionsFor = (fixture, block) => ({
+    printWidth: EXAMPLE_PRINT_WIDTH, ...fixture.meta.options, ...block.options,
+});
 
 /** Replaces the code of the Output blocks with `actual[i]` and returns the new file text. */
 export function withOutputs(fixture, actual) {

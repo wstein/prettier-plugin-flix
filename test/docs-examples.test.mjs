@@ -84,6 +84,17 @@ test("groups byte differences by their main change", () => {
     assert.equal(changeKind("a = 1\n", "a = 2\n"), "other");
 });
 
+test("ignores trailing whitespace without dropping a substantive layout change", async () => {
+    const audit = (code) => auditExample({ language: "flix", code });
+    const trailing = await audit("def f(): Int32 = 1  \t\n");
+    assert.equal(trailing.status, "unchanged");
+    const mixed = await audit("def f():Int32=1  \t\n");
+    const clean = await audit("def f():Int32=1\n");
+    assert.equal(mixed.input, clean.input);
+    assert.equal(mixed.digest, clean.digest);
+    assert.equal(mixed.changeKind, "spacing");
+});
+
 test("detects additions, deletions and changes beyond the recorded baseline", () => {
     const header = "case\tstatus\tchange\tsha256\n";
     const row = (name, byte) => `${name}\tunchanged\t-\t${byte.repeat(64)}\n`;

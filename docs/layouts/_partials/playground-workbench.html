@@ -1,12 +1,14 @@
 {{ $prefix := "" }}
 {{ with .id }}{{ $prefix = printf "%s-" . }}{{ end }}
+{{ $width := site.Data.playground.embeddedPrintWidth }}
+{{ if .full }}{{ $width = site.Data.playground.defaultOptions.printWidth }}{{ end }}
 <div class="playground" {{ if .full }}data-full-playground data-examples="{{ .examples.RelPermalink }}" data-linked-fixtures="{{ .linked.RelPermalink }}"{{ else }}data-embedded-playground data-initial="{{ .initial | jsonify }}" hidden{{ end }} data-formatter="{{ .assets.formatter.RelPermalink }}" data-worker="{{ .assets.worker.RelPermalink }}">
   <div class="playground-toolbar">
     {{ if not .full }}<span class="playground-live" title="Updates 250 ms after editing">Live</span>{{ end }}
     {{ if .full }}<label class="playground-example">Example
       <select id="playground-example" disabled><option value="" selected disabled hidden>Choose an example</option></select>
     </label>{{ end }}
-    <label>Line width <input id="{{ $prefix }}print-width" data-print-width type="number" min="1" step="1" required value="80"></label>
+    <label>Line width <input id="{{ $prefix }}print-width" data-print-width type="number" min="1" step="1" required value="{{ $width }}"></label>
     <label>Indent <input id="{{ $prefix }}tab-width" data-tab-width type="number" min="1" step="1" required value="4"></label>
     <button type="button" class="playground-clear">Clear input</button>
     <button type="button" class="playground-copy" disabled>Copy output</button>
@@ -33,5 +35,8 @@
       <div id="{{ $prefix }}flix-diff" class="playground-diff" role="region" aria-label="Formatting differences" tabindex="0" hidden data-diff></div>
     </section>
   </div>
-  <p class="playground-status" role="status">{{ if .full }}Loading the editor…{{ end }}</p>
+  <div class="playground-statusbar">
+    <p class="playground-status" role="status">{{ if .full }}Loading the editor…{{ end }}</p>
+    <span class="playground-cursor" data-cursor-position>Ln 1, Col 1</span>
+  </div>
 </div>
