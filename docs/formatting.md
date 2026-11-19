@@ -23,7 +23,9 @@ entry per line stays multiline when it qualifies for alignment. A map that
 fits inline uses ordinary spacing. Padding is limited to eight extra spaces
 and is skipped when the code leaves too little room within `printWidth`, or a
 row contains a compound expression or a comment between its code tokens.
-Trailing comments stay with their entries and use ordinary spacing. See the [map example](https://wstein.github.io/prettier-plugin-flix/expressions/#align-map-entries).
+Trailing line comments stay with their entries. When two or more share a
+column, each receives up to eight extra spaces if the padded comment fits in
+the preferred line width. See the [map example](https://wstein.github.io/prettier-plugin-flix/expressions/#align-map-entries).
 
 | Construct | Flix 0.80 | Prettier plugin |
 | --- | --- | --- |

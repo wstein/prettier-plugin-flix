@@ -1,6 +1,6 @@
 ---
 title: "Align equals signs in multiline record literals"
-description: "Simple fields align their equals signs, including fields with trailing comments. A compound field value or a large gap between field names keeps ordinary spacing."
+description: "Simple fields align their equals signs. Short trailing comments share a column when they fit. A compound field value or a large gap between field names keeps ordinary spacing."
 flix: "0.80"
 ---
 
@@ -10,7 +10,7 @@ flix: "0.80"
 pub def profile(): {id = Int32, name = String, active = Bool} = {
 id=7, // Assigned by the server.
 name="Flix",
-active=true
+active=true // Active accounts can sign in.
 }
 
 pub def palette(): {x = String, color = String} = {
@@ -28,9 +28,9 @@ description="Ready to use"
 
 ```flix
 pub def profile(): { id = Int32, name = String, active = Bool } = {
-    id     = 7, // Assigned by the server.
+    id     = 7,   // Assigned by the server.
     name   = "Flix",
-    active = true
+    active = true // Active accounts can sign in.
 }
 
 pub def palette(): { x = String, color = String } = {
