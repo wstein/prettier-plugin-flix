@@ -29,10 +29,18 @@ const fail = (file, line, msg) => {
     throw new Error(`${file}${line ? `:${line}` : ""}: ${msg}`);
 };
 
+/** Validates the `options` mapping of the front matter with the same rules as inline options. */
 function checkOptions(file, line, options) {
+    if (options === null || typeof options !== "object" || Array.isArray(options)) {
+        fail(file, line, 'front matter "options" must be a mapping such as { printWidth: 80 }');
+    }
     for (const [k, v] of Object.entries(options)) {
         if (!(k in OPTION_TYPES)) fail(file, line, `unknown option "${k}" (allowed: ${Object.keys(OPTION_TYPES).join(", ")})`);
-        if (typeof v !== OPTION_TYPES[k]) fail(file, line, `option "${k}" must be a ${OPTION_TYPES[k]}`);
+        if (OPTION_TYPES[k] === "number") {
+            if (!Number.isInteger(v) || v < 1) fail(file, line, `option "${k}" must be a positive integer, found ${JSON.stringify(v)}`);
+        } else if (typeof v !== "boolean") {
+            fail(file, line, `option "${k}" must be true or false, found ${JSON.stringify(v)}`);
+        }
     }
 }
 
@@ -79,8 +87,8 @@ export function parseFixture(text, file = "<fixture>") {
     if (typeof meta.flix !== "string" || !/^\d+\.\d+$/.test(meta.flix)) fail(file, 2, 'front matter "flix" must be a quoted major.minor string such as "0.80"');
     meta.status ??= "pass";
     if (!STATUSES.includes(meta.status)) fail(file, 2, `status must be one of ${STATUSES.join(", ")}`);
-    meta.options ??= {};
-    checkOptions(file, 2, meta.options);
+    if ("options" in meta) checkOptions(file, 2, meta.options);
+    else meta.options = {};
 
     const blocks = [];
     let section = null;
