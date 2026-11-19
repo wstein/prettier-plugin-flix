@@ -19,12 +19,19 @@ Existing checkouts work too. Use clean checkouts at the revisions you want to
 review and choose a new report directory for each run. To reproduce the first
 audit below, check out the listed commits before running the command.
 
+- `examples.json` is the raw inventory with extracted code and source links.
+- `findings.md` lists every byte difference by its main change and suggests
+  how to review that group.
 - `report.json` lists each case with its source commit and line link, language,
   outcome, and any parse diagnostics. Layout candidates include a review hash.
 - `changes.diff` shows the before/after differences. Both versions of each
   candidate are also saved under `before/` and `after/`.
 - `node scripts/extract-flix-examples.mjs /tmp/flix-book /tmp/flix-website /tmp/flix-examples.json`
   exports the inventory without formatting.
+
+GitHub Actions uploads these files in the `official-flix-examples` artifact.
+The workflow runs on relevant pull requests and can also run manually with
+different source revisions. Pull request runs use the fixed revisions below.
 
 The extractor reads fenced `flix` and `java` blocks from the book and Flix
 templates referenced by `Feature` and `CodeSnippet` on the website, including
@@ -60,7 +67,7 @@ The file maps each case name to its current hash and a written reason:
 ```json
 {
   "website.front-page.http.demonstrates-composing-multiple-http-mid": {
-    "digest": "c44e29ac4a553cb2e2d3165d8eb05b529ed6b5f38cecda1465f2614d88b85dc3",
+    "digest": "d7b2a46c534a59ffedbde0f5b571d81c1f2924e34c4073a99963da185fd0a431",
     "reason": "Each middleware stage starts on its own line and match arrows share a column."
   }
 }
@@ -79,9 +86,16 @@ The formatting options were `printWidth: 80`, `tabWidth: 4` and `useTabs: false`
 
 | Source | Unchanged | Layout change | Needs context | Java |
 | --- | ---: | ---: | ---: | ---: |
-| Book | 294 | 239 | 41 | 1 |
-| Website | 7 | 12 | 5 | 0 |
-| Total | 301 | 251 | 46 | 1 |
+| Book | 293 | 240 | 41 | 1 |
+| Website | 0 | 19 | 5 | 0 |
+| Total | 293 | 259 | 46 | 1 |
+
+The 259 differences include 158 line wrapping changes, 71 spacing or
+alignment changes, 14 blank-line changes, eight indentation changes, and
+eight line-ending changes. The byte comparison uses the extracted snippets.
+A book fence includes its last line break. A website template carries its
+cooked string exactly as rendered. The report strips the synthetic function
+from fragment diffs.
 
 All 552 parseable inputs passed the program-preservation and idempotence
 checks. Of those, 121 used the synthetic wrapper. Selected cases were also
