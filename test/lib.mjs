@@ -33,7 +33,10 @@ export function fingerprint(text) {
         (n.children ?? []).forEach(walk);
     };
     walk(tree);
-    return { errors, tokens, comments, arrows, constraintEnds, shape: shape(tree) };
+    // Every token whose class depends on the characters around it.
+    const classified = new Set([FlixLexer.ARROW_TIGHT, FlixLexer.ARROW_WS, FlixLexer.DOT, FlixLexer.DOT_WS, FlixLexer.FREE_DOT, FlixLexer.COLON_COLON, FlixLexer.COLON_COLON_TIGHT]);
+    const classes = stream.getTokens().filter((t) => classified.has(t.type)).map((t) => FlixLexer.symbolicNames[t.type]);
+    return { errors, tokens, comments, arrows, classes, constraintEnds, shape: shape(tree) };
 }
 
 /** Optional trailing commas may legitimately vanish when a list fits on one line. */
@@ -43,9 +46,10 @@ export const dropTrailingCommas = (tokens) =>
 /**
  * Everything a formatter must preserve, as a list of problems (empty when the program is intact):
  * the output parses, has the same tokens (optional trailing commas aside), comments, parse-tree
- * shape and arrow token classes, and every Datalog constraint ends in a dot followed by whitespace.
+ * shape and arrow token classes, and (unless `terminators: false`) every Datalog constraint ends in
+ * a dot followed by whitespace.
  */
-export function programProblems(before, after) {
+export function programProblems(before, after, { terminators = true } = {}) {
     if (after.errors.length > 0) return [`output does not parse: ${after.errors[0]}`];
     const problems = [];
     const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
@@ -53,7 +57,8 @@ export function programProblems(before, after) {
     if (!same(before.comments, after.comments)) problems.push("comments differ");
     if (before.shape !== after.shape) problems.push("parse-tree shape differs");
     if (!same(before.arrows, after.arrows)) problems.push("arrow token classes differ");
-    if (!after.constraintEnds.every((t) => t === "DOT_WS")) problems.push(`Datalog constraint not ended by a dot followed by whitespace (${after.constraintEnds})`);
+    // Only formatter output must satisfy this: an input may legitimately end a constraint with a bare dot.
+    if (terminators && !after.constraintEnds.every((t) => t === "DOT_WS")) problems.push(`Datalog constraint not ended by a dot followed by whitespace (${after.constraintEnds})`);
     return problems;
 }
 
