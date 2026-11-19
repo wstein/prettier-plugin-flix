@@ -68,6 +68,7 @@ node scripts/check-flix-version.mjs <path-to>/flix-spec/pin.json
 | Real Flix code (`scripts/check-corpus.mjs <dir>...`) | Formats every file and checks the invariants. | no |
 | Scala tests of flix/flix (`scripts/harvest-scala.mjs`) | Extracts the Flix snippets embedded in `main/test/**/*.scala` into a directory for the corpus check. | no |
 | Issues of a repository (`scripts/harvest-issues.mjs`) | Collects the Flix code blocks from issue bodies and comments through the GitHub REST API (default: open issues of `flix/flix` by `wstein`). | no |
+| Official documentation (`npm run test:docs-examples`) | Audits code in the Flix book and website against the plugin. See [the test and review plan](official-examples.md). | reviewed layout changes only |
 | Flix compiler (`scripts/oracle.mjs`) | Compiles (and tests) each source before and after formatting with the pinned `flix.jar` and requires the same diagnostics and test results. | no |
 
 ```sh
