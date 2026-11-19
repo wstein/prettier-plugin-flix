@@ -187,8 +187,11 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
             select.disabled = false;
             // Keep any edits made while the examples or linked fixture loaded.
             if (revision !== 0) return;
-            const curated = Object.hasOwn(fixtures, requested);
-            if (requested && !curated) {
+            if (Object.hasOwn(fixtures, requested)) {
+                useExample(requested, Number(params.get("variant")));
+                return;
+            }
+            if (requested) {
                 const linked = await fetchFixtures(playground.dataset.linkedFixtures);
                 if (revision !== 0) return;
                 if (Object.hasOwn(linked, requested)) {
@@ -197,8 +200,8 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
                     return;
                 }
             }
-            select.value = curated ? requested : data.defaultFixture;
-            useExample(select.value, curated ? Number(params.get("variant")) : 0);
+            select.value = data.defaultFixture;
+            useExample(data.defaultFixture);
         } catch {
             if (revision === 0) showStatus("Examples could not load. Paste Flix code to get started.", true);
         }
