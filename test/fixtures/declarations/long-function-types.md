@@ -23,10 +23,20 @@ type alias CommentedPlanner =
     DepartureStation -> // transfer station follows
     IntermediateTransferStation -> EstimatedTravelDuration -> FinalDestination
 
+type alias HuggedPlanner = DepartureStation -> // transfer
+    IntermediateTransferStation -> EstimatedTravelDuration -> FinalDestination
+
+type alias ShortCommented =
+    String -> // result follows
+    Int32
+
 type alias Compact = String -> Int32
 
 def makePlanner(): DepartureStation -> IntermediateTransferStation -> EstimatedTravelDuration -> FinalDestination =
     _departure -> _transfer -> _duration -> "Destination"
+
+def retryPolicy(maximumRetries: Int32): (Int32, String, Bool) -> Bool =
+    (_attempt, _request, _outcome) -> maximumRetries > 0
 ```
 
 ## Output
@@ -59,6 +69,15 @@ type alias CommentedPlanner =
     EstimatedTravelDuration ->
         FinalDestination
 
+type alias HuggedPlanner = DepartureStation ->  // transfer
+    IntermediateTransferStation ->
+    EstimatedTravelDuration ->
+        FinalDestination
+
+type alias ShortCommented =
+    String ->  // result follows
+        Int32
+
 type alias Compact = String -> Int32
 
 def makePlanner(): DepartureStation ->
@@ -66,6 +85,13 @@ def makePlanner(): DepartureStation ->
     EstimatedTravelDuration ->
         FinalDestination =
     _departure -> _transfer -> _duration -> "Destination"
+
+def retryPolicy(maximumRetries: Int32): (
+    Int32,
+    String,
+    Bool
+) -> Bool =
+    (_attempt, _request, _outcome) -> maximumRetries > 0
 ```
 
 ```flix printWidth=129
@@ -85,8 +111,19 @@ type alias CommentedPlanner =
     EstimatedTravelDuration ->
         FinalDestination
 
+type alias HuggedPlanner = DepartureStation ->  // transfer
+    IntermediateTransferStation ->
+    EstimatedTravelDuration ->
+        FinalDestination
+
+type alias ShortCommented =
+    String ->  // result follows
+        Int32
+
 type alias Compact = String -> Int32
 
 def makePlanner(): DepartureStation -> IntermediateTransferStation -> EstimatedTravelDuration -> FinalDestination =
     _departure -> _transfer -> _duration -> "Destination"
+
+def retryPolicy(maximumRetries: Int32): (Int32, String, Bool) -> Bool = (_attempt, _request, _outcome) -> maximumRetries > 0
 ```
