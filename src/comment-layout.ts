@@ -1,7 +1,7 @@
 import { CharStream, CommonTokenStream, ParserRuleContext, TerminalNode, type ParseTree, type Token } from "antlr4ng";
 import { doc, util, type Doc } from "prettier";
 import { FlixLexer as L } from "./generated/FlixLexer.js";
-import { DefDeclarationContext } from "./generated/FlixParser.js";
+import { DefDeclarationContext, HandlerExprContext } from "./generated/FlixParser.js";
 import { ignoredDeclarationEnd, parseFlix, type FlixRoot } from "./parse.js";
 
 type LayoutOptions = { printWidth: number; tabWidth: number; useTabs: boolean };
@@ -422,6 +422,45 @@ function ignoredDeclarationLines(root: FlixRoot): Set<number> | undefined {
     return lines;
 }
 
+/** Use the printed columns to account for the handler's actual nesting and trailing comments. */
+function alignHandlerClauses(root: FlixRoot, lines: string[], options: LayoutOptions,
+    ignoredLines?: ReadonlySet<number>): void {
+    type Clause = { line: number; head: string; width: number; tail: string };
+    function flush(clauses: Clause[]): void {
+        if (clauses.length < 2) return;
+        const column = Math.max(...clauses.map((clause) => clause.width)) + 1;
+        const aligned = clauses.map((clause) => clause.head + " ".repeat(column - clause.width) + clause.tail);
+        if (aligned.some((line) => width(line, options.tabWidth) > options.printWidth)) return;
+        clauses.forEach((clause, i) => { lines[clause.line - 1] = aligned[i]; });
+    }
+    function visit(node: ParseTree): void {
+        if (node instanceof HandlerExprContext) {
+            let clauses: Clause[] = [];
+            let previousEnd = 0;
+            for (const rule of node.handlerRule()) {
+                const start = rule.start!;
+                const separator = rule.EQUAL().symbol;
+                const ownLine = start.line === separator.line && !before(lines, start).trim() &&
+                    !ignoredLines?.has(start.line);
+                if (!ownLine || start.line !== previousEnd + 1) {
+                    flush(clauses);
+                    clauses = [];
+                }
+                if (ownLine) {
+                    const prefix = before(lines, separator);
+                    const head = prefix.trimEnd();
+                    clauses.push({ line: start.line, head, width: width(head, options.tabWidth),
+                        tail: lines[start.line - 1].slice(prefix.length) });
+                }
+                previousEnd = rule.stop!.line;
+            }
+            flush(clauses);
+        }
+        for (let i = 0; i < node.getChildCount(); i++) visit(node.getChild(i)!);
+    }
+    visit(root.tree);
+}
+
 export function layoutSource(root: FlixRoot, value: Doc, options: LayoutOptions): Doc {
     let trailing = 0;
     let hasCaret = false;
@@ -431,18 +470,19 @@ export function layoutSource(root: FlixRoot, value: Doc, options: LayoutOptions)
     }
     const mayHaveTupleRows = /\b(?:Vector|List|Array|Set)#\s*\{\s*\(/.test(root.text);
     const mayHaveContinuations = /,[ \t]*\/\/[^\n]*\n[ \t]+\/\//.test(root.text);
-    if (trailing < 2 && !hasCaret && !mayHaveTupleRows && !mayHaveContinuations) return value;
+    const mayHaveHandlers = /\bhandler\s/.test(root.text);
+    if (trailing < 2 && !hasCaret && !mayHaveTupleRows && !mayHaveContinuations && !mayHaveHandlers) return value;
 
     // Measure the chosen layout, including wrapped code, actual indentation,
     // and the full comment widths, before changing horizontal space.
     const { formatted } = doc.printer.printDocToString(value, options);
-    let ignoredLines: ReadonlySet<number> | undefined;
-    if (ignoredDeclarationLines(root)?.size) {
-        // Post-layout edits use printed line numbers, which can differ from the input.
-        ignoredLines = ignoredDeclarationLines(parseFlix(formatted));
-    }
-    let tokens = lex(formatted);
+    // Post-layout edits use printed line numbers, which can differ from the input.
+    const hasIgnored = ignoredDeclarationLines(root)?.size;
+    const printedRoot = mayHaveHandlers || hasIgnored ? parseFlix(formatted) : undefined;
+    const ignoredLines = hasIgnored && printedRoot ? ignoredDeclarationLines(printedRoot) : undefined;
     let lines = formatted.split("\n");
+    if (mayHaveHandlers && printedRoot) alignHandlerClauses(printedRoot, lines, options, ignoredLines);
+    let tokens = lex(lines.join("\n"));
     if (mayHaveTupleRows && alignTupleRows(tokens, lines, options, ignoredLines) &&
         (trailing > 1 || hasCaret || mayHaveContinuations)) {
         tokens = lex(lines.join("\n"));
