@@ -902,6 +902,8 @@ export class Printer {
         }
         const dot = children[children.length - 1] as TerminalNode;
         const { items, seps } = this.splitOn(children.slice(2, -1), L.COMMA);
+        const vertical = items.length > 1 && items.every(([predicate]) => this.onNewLine(firstTerm(predicate)));
+        const bodyBreak = vertical ? hardline : line;
         const predicates = items.map((item, i) => {
             const predicate = item[0];
             const end = lastTerm(predicate);
@@ -909,12 +911,12 @@ export class Printer {
             return [
                 this.print(this.ls(predicate)),
                 comma ? this.separatorTok(end, comma) : "",
-                this.after(end, comma ? this.after(comma, line) : ""),
+                this.after(end, comma ? this.after(comma, bodyBreak) : ""),
             ];
         });
         return group([
             this.seq([head, implication], kind(n)),
-            indent([this.after(implication, line), group([predicates, this.tok(dot)])]),
+            indent([this.after(implication, bodyBreak), group([predicates, this.tok(dot)])]),
         ]);
     }
 
