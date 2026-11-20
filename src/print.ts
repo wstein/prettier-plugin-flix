@@ -167,8 +167,8 @@ export class Printer {
         const idx = t.symbol.tokenIndex;
         if (!info?.lead.length || this.consumed.has(idx)) return [];
         if (this.touchesTightOperator(t)) {
-            // Keep block comments glued to `->` or `::` so the operator stays tight.
-            return info.lead.map((c) => this.commentText(c));
+            // Keep adjacent block comments glued to `->` or `::`, and end line comments.
+            return this.leadDoc(info, false, "");
         }
         // An own-line comment must start its own line even when a space was planned here.
         const before = !this.lineStart.has(idx) && info.lead[0].nl > 0 ? [hardline] : [];
