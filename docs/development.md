@@ -156,11 +156,12 @@ change syntax, so verify each exact version before adding it to that list.
 - The grammar dependency is pinned to an exact commit. Verify grammar updates
   with `npm test` and the corpus checks.
 - The weekly upstream workflow (`flix-upstream.yml`) checks the grammar shipped
-  by the plugin against the current `flix-spec` corpus. New parse failures
+  by the plugin against a pinned `flix-spec` corpus. New parse failures
   fail the check. Known exceptions are listed in
   [the upstream workflow configuration](../.github/flix-upstream-parse-exceptions.json).
-  The compiler oracle in `flix-corpora.yml` uses a pinned `flix-spec` revision
-  and compiler.
+  The compiler oracle in `flix-corpora.yml` pins the same `flix-spec` revision
+  and uses its corresponding compiler. Update both workflow pins together
+  after reviewing the corpus changes.
 - When another Flix version passes the compatibility checks, update the release
   notes with the verified version. Release a new package when the plugin needs
   a grammar update, a formatter change, or another package change.
