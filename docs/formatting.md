@@ -370,6 +370,12 @@ one item on each line. A predicate's arguments can wrap within its own entry
 when that entry still exceeds the available width.
 [Query list fixture](../test/fixtures/datalog/query-list-wrap.md)
 
+Apply the same layout to source lists after `solve`, `psolve` and `inject`.
+A short expression stays together. A long `solve … project` or `inject … into`
+can break before its second keyword. When a source, projection or destination
+list needs more room, it starts below its keyword and uses one item per line.
+[Solve and inject fixture](../test/fixtures/datalog/fixpoint-list-wrap.md)
+
 **Before**
 
 ```flix
