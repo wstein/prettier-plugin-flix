@@ -31,8 +31,11 @@ export function renderDiff(container, { source, output }, tokenize) {
             const marker = document.createElement("span");
             marker.className = "diff-marker";
             marker.textContent = kind === "removed" ? "−" : kind === "added" ? "+" : " ";
-            if (kind === "unchanged") marker.setAttribute("aria-hidden", "true");
-            row.append(marker);
+            marker.setAttribute("aria-hidden", "true");
+            const label = document.createElement("span");
+            label.className = "visually-hidden";
+            label.textContent = `${kind[0].toUpperCase() + kind.slice(1)} line ${number}: `;
+            row.append(marker, label);
 
             const code = document.createElement("span");
             const lineTokens = tokens?.[number - 1];
