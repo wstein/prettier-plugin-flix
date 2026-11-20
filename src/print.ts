@@ -4,7 +4,7 @@ import { FlixLexer as L } from "./generated/FlixLexer.js";
 import type { Comment, FlixRoot, TokenInfo } from "./parse.js";
 import { LINE_COMMENT_GAP } from "./comment-layout.js";
 
-const { align, group, indent, line, softline, hardline, join, ifBreak, lineSuffix, literalline } = doc.builders;
+const { align, conditionalGroup, group, indent, line, softline, hardline, join, ifBreak, lineSuffix, literalline } = doc.builders;
 const { willBreak } = doc.utils;
 
 type Node = ParserRuleContext | TerminalNode;
@@ -169,6 +169,14 @@ export class Printer {
         // An own-line comment must start its own line even when a space was planned here.
         const before = !this.lineStart.has(idx) && info.lead[0].nl > 0 ? [hardline] : [];
         return [...before, ...this.leadDoc(info, false)];
+    }
+
+    /** Print comments above an expression outside its fit group. */
+    private takeLeadingOwnLineComments(t: TerminalNode | null): Doc[] {
+        if (!t || (this.info(t)?.lead[0]?.nl ?? 0) === 0) return [];
+        const leading = this.tokenLeadingDoc(t);
+        this.consumed.add(t.symbol.tokenIndex);
+        return leading;
     }
 
     /** The token with its leading comments, without trailing comments. */
@@ -381,13 +389,22 @@ export class Printer {
         return !!info && (info.lead.length > 0 || (!ignoreTrailing && info.trail.length > 0));
     }
 
-    /** Measure atoms and, for map values, flat lists of atoms. */
-    private inlineWidth(n: Node, rowEnd: TerminalNode | null = null, allowList = false): number | undefined {
+    /** Measure atoms and supported single-line map or record values. */
+    private inlineWidth(n: Node, rowEnd: TerminalNode | null = null, extra?: "list" | "add"): number | undefined {
         if (isTerm(n)) return this.hasComment(n, n === rowEnd) ? undefined : util.getStringWidth(this.src(n));
         const cs = kids(n);
-        if (cs.length === 1) return this.inlineWidth(cs[0], rowEnd, allowList);
-        if (allowList && kind(n) === "CollectionLiteral" && isTerm(cs[0]) && ttype(cs[0]) === L.LIST_HASH) {
+        if (cs.length === 1) return this.inlineWidth(cs[0], rowEnd, extra);
+        if (extra === "list" && kind(n) === "CollectionLiteral" && isTerm(cs[0]) && ttype(cs[0]) === L.LIST_HASH) {
             return this.flatListWidth(cs, rowEnd);
+        }
+        if (extra === "add" && kind(n) === "AddExpr") {
+            const [left, operator, right] = cs;
+            const leftWidth = this.inlineWidth(left);
+            const rightWidth = this.inlineWidth(right, rowEnd);
+            if (leftWidth !== undefined && rightWidth !== undefined && isTerm(operator) && !this.hasComment(operator)) {
+                return leftWidth + this.src(operator).length + 2 + rightWidth;
+            }
+            return;
         }
         if (kind(n) !== "PlainString" || !cs.every((t) => isTerm(t) && !this.hasComment(t, t === rowEnd))) return;
         const spelling = (cs as TerminalNode[]).map((t) => this.src(t)).join("");
@@ -424,7 +441,7 @@ export class Printer {
             const leftWidth = this.inlineWidth(left);
             // Suffix comments stay with their entry and take no space in the code columns.
             const end = lastTerm(right);
-            const rightWidth = this.inlineWidth(right, end, entryKind === "MapEntry");
+            const rightWidth = this.inlineWidth(right, end, entryKind === "MapEntry" ? "list" : "add");
             if (leftWidth === undefined || rightWidth === undefined) return;
             rows.push({ left, delimiter, right, end, leftWidth, rightWidth });
         }
@@ -611,6 +628,7 @@ export class Printer {
             case "IfExpr": return this.printIf(n);
             case "ForeachExpr": return this.printForeach(n);
             case "ForYieldExpr": return this.printForYield(n);
+            case "ParYieldExpr": return this.printParYield(n);
             case "FixpointExpr": return this.printFixpoint(n);
             case "DatalogConstraint": return this.printConstraint(n);
             case "RunWithExpr": return this.printRunWith(n);
@@ -789,14 +807,36 @@ export class Printer {
         const [keyword, fragments, yieldKeyword, body] = kids(n);
         if (this.flat > 0) return this.seq(kids(n), kind(n));
         const parts = kids(fragments);
-        // Include the yield expression in the fit check that determines whether
-        // to break the generators. It can still wrap on its own after a break.
-        return group([
-            this.print(keyword), this.after(lastTerm(keyword), " "),
-            this.delimited(parts, 0, parts.length - 1, "ForFragments", false),
-            this.after(lastTerm(fragments), " "), this.print(yieldKeyword),
-            this.after(lastTerm(yieldKeyword), " ", true), this.print(body),
+        return group(this.yieldDocs(keyword, parts, "ForFragments", yieldKeyword, body));
+    }
+
+    private printParYield(n: ParserRuleContext, afterEquals = false): Doc {
+        const children = kids(n);
+        if (this.flat > 0) return this.seq(children, kind(n));
+        const [keyword, ...parts] = children.slice(0, -2);
+        const [yieldKeyword, body] = children.slice(-2);
+        const leading = this.takeLeadingOwnLineComments(firstTerm(keyword));
+        const value = this.yieldDocs(keyword, parts, "ParYieldExpr", yieldKeyword, body);
+        const compact = group(value);
+        if (!afterEquals) return [leading, compact];
+
+        // Keep the opener on the binding line when possible. Move the whole
+        // expression only if there is no room even for `par (`.
+        return conditionalGroup([
+            [" ", compact],
+            [" ", group(value, { shouldBreak: true })],
+            indent([line, compact]),
         ]);
+    }
+
+    private yieldDocs(keyword: Node, parts: Node[], k: string, yieldKeyword: Node, body: Node): Doc {
+        // Include the yield expression when deciding whether the bindings fit.
+        return [
+            this.print(keyword), this.after(lastTerm(keyword), " "),
+            this.delimited(parts, 0, parts.length - 1, k, false),
+            this.after(lastTerm(parts.at(-1)!), " "), this.print(yieldKeyword),
+            this.after(lastTerm(yieldKeyword), " ", true), this.print(body),
+        ];
     }
 
     private printFixpoint(n: ParserRuleContext): Doc {
@@ -848,7 +888,8 @@ export class Printer {
         const head = this.seq([runKeyword, body], k);
         const bodyEnd = lastTerm(body);
         const ownLineComment = isTerm(firstWith) && (this.info(firstWith)?.lead[0]?.nl ?? 0) > 0;
-        const canAttach = this.isBlockExpr(body) && bodyEnd !== null && !this.hasLineTrail(bodyEnd) && !ownLineComment;
+        const hasBlock = this.isBlockExpr(body);
+        const canAttach = hasBlock && bodyEnd !== null && !this.hasLineTrail(bodyEnd) && !ownLineComment;
         if (canAttach && kind(firstHandler) === "ApplyExpr") {
             const args = kids(kids(firstHandler)[1]);
             const [open, argument] = args;
@@ -862,7 +903,12 @@ export class Printer {
             const [withKeyword, handler] = children.slice(i, i + 2);
             rest.push(hardline, this.seq([this.ls(withKeyword), handler], k));
         }
-        if (!canAttach) return [head, hardline, firstClause, rest];
+        if (!canAttach) {
+            if (rest.length === 0 && !hasBlock && bodyEnd && !this.hasLineTrail(bodyEnd) && !ownLineComment) {
+                return group([head, line, firstClause]);
+            }
+            return [head, hardline, firstClause, rest];
+        }
 
         // Keep the keyword with the closing brace and let the handler wrap internally.
         // Later clauses start under the first `with` in `} with`.
@@ -904,6 +950,10 @@ export class Printer {
         const sameLine = !!f && f.symbol.line === arrow.symbol.line;
         // Hug when the author kept the body on the arrow's line and it closes with a brace.
         if (sameLine && l !== null && ttype(l) === L.RBRACE) return [this.after(arrow, " ", true), this.print(body)];
+        if (this.flat === 0 && kind(body) === "ParYieldExpr" && ttype(arrow) === L.EQUAL &&
+            !this.hasLineTrail(arrow) && f && !this.hasComment(f, true) && !this.blankBefore(f)) {
+            return this.printParYield(body as ParserRuleContext, true);
+        }
         const d = this.print(this.ls(body));
         if (sameLine && willBreak(d)) return [this.after(arrow, " ", true), d];
         return group(indent([this.after(arrow, line), d]));
@@ -1084,13 +1134,8 @@ export class Printer {
         collect(n);
         const firstToken = firstTerm(operands[0]);
         const isPipeline = isPipe(ops[0]);
-        let leading: Doc[] = [];
-        if (isPipeline && firstToken && (this.info(firstToken)?.lead[0]?.nl ?? 0) > 0) {
-            // Comments above the pipeline must not force the pipeline itself to wrap.
-            leading = this.tokenLeadingDoc(firstToken);
-            this.consumed.add(firstToken.symbol.tokenIndex);
-        }
         if (isPipeline) {
+            const leading = this.takeLeadingOwnLineComments(firstToken);
             const first = this.print(operands[0]);
             const breakPoint = this.flat > 0 ? " " : line;
             const steps = ops.map((op, i) => [

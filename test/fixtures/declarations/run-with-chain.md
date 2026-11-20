@@ -1,6 +1,6 @@
 ---
 title: "Align chained handlers with the first with"
-description: "The first with stays after the closing brace even when its call arguments wrap. Further clauses align with the first with. Without a run block, each with starts at the level of run."
+description: "The first with stays after the closing brace even when its call arguments wrap. Further clauses align with the first with. One short unbraced run can stay compact. Wrapped clauses start at the level of run."
 flix: "0.80"
 source: "https://github.com/flix/flix/blob/v0.80.0/main/test/flix/Test.Exp.RunWith.flix#L284"
 ---
@@ -56,12 +56,10 @@ eff Log {
 }
 
 def withFallback(fallback: Int32, f: Unit -> Int32 \ ef): Int32 \ ef - Ask =
-    run f()
-    with handler Ask { def ask(k) = k(fallback) }
+    run f() with handler Ask { def ask(k) = k(fallback) }
 
 def withoutLogging(f: Unit -> Int32 \ ef): Int32 \ ef - Log =
-    run f()
-    with handler Log { def log(_message, k) = k() }
+    run f() with handler Log { def log(_message, k) = k() }
 
 def readWithLog(): Int32 =
     run {
@@ -71,9 +69,7 @@ def readWithLog(): Int32 =
       with withoutLogging
 
 def withLabeledFallback(_label: String, fallback: Int32, f: Unit -> Int32 \ ef):
-    Int32 \ ef - Ask =
-    run f()
-    with handler Ask { def ask(k) = k(fallback) }
+    Int32 \ ef - Ask = run f() with handler Ask { def ask(k) = k(fallback) }
 
 def readWithLabel(): Int32 =
     run {
