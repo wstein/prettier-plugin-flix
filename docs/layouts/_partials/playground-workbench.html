@@ -35,7 +35,7 @@
     </section>
   </div>
   <div class="playground-statusbar">
-    <p class="playground-status" role="status">{{ if .full }}Loading the editor…{{ end }}</p>
+    <p id="{{ $prefix }}format-diagnostic" class="playground-status" role="status">{{ if .full }}Loading the editor…{{ end }}</p>
     <span class="playground-cursor" data-cursor-position>Ln 1, Col 1</span>
   </div>
 </div>

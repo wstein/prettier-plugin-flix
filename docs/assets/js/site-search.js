@@ -71,8 +71,13 @@ async function loadIndex() {
     }
 }
 
+function setExpanded(expanded) {
+    dropdown.hidden = !expanded;
+    input.setAttribute("aria-expanded", String(expanded));
+}
+
 function showResults() {
-    dropdown.hidden = !input.value.trim();
+    setExpanded(Boolean(input.value.trim()));
     if (dropdown.hidden) return;
     if (entries) render();
     else void loadIndex();
@@ -86,17 +91,17 @@ input.addEventListener("click", () => {
 });
 
 form.addEventListener("focusout", (event) => {
-    if (!form.contains(event.relatedTarget)) dropdown.hidden = true;
+    if (!form.contains(event.relatedTarget)) setExpanded(false);
 });
 document.addEventListener("pointerdown", (event) => {
-    if (!form.contains(event.target)) dropdown.hidden = true;
+    if (!form.contains(event.target)) setExpanded(false);
 });
 
 form.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && !dropdown.hidden) {
         event.preventDefault();
         input.focus();
-        dropdown.hidden = true;
+        setExpanded(false);
     } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
         if (dropdown.hidden) showResults();
         if (dropdown.hidden) return;
@@ -116,5 +121,5 @@ form.addEventListener("submit", (event) => {
 });
 
 results.addEventListener("click", (event) => {
-    if (event.target.closest("a")) dropdown.hidden = true;
+    if (event.target.closest("a")) setExpanded(false);
 });

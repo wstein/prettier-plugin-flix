@@ -278,7 +278,8 @@ pre.playground-diff-code {
   flex-direction: column;
   min-height: 100dvh;
 }
-.playground-title {
+.playground-title { margin: 0; padding: 0.5rem 1rem; font-size: 1.25rem; }
+.visually-hidden {
   position: absolute;
   width: 1px;
   height: 1px;
