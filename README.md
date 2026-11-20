@@ -68,6 +68,8 @@ in your Prettier configuration to adjust the width.
 
 ## Learn more
 
+- [Changelog](CHANGELOG.md)
+- [Contributing](CONTRIBUTING.md)
 - [Flix formatting style and options](docs/formatting.md)
 - [Write and update Markdown fixtures](docs/fixtures.md)
 - [Build, run checked formatting, and verify coverage](docs/development.md)
