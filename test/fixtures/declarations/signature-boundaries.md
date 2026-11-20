@@ -22,7 +22,6 @@ eff Console {
         default = Bool
     }): Bool \ Console with ToString[a]
 }
-
 def wait(rx: Receiver[Int32], n: Int32, tx: Sender[List[Int32]]): Unit
     \ { Chan, NonDet } = Channel.send(recvN(n, rx), tx)
 ```

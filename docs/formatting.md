@@ -140,12 +140,10 @@ A block, record or member list written across multiple lines generally keeps
 its multiline structure. An inline group can stay compact when it fits.
 Sequential statements in a block get separate lines.
 
-Leave one blank line between sibling declarations when either has a braced
-body. This applies at file scope and inside declaration blocks such as
-modules and traits. A line that wraps because of the width still counts as
-an expression body. Consecutive expression-bodied declarations can stay
-together, and annotations and leading comments stay with their declaration.
-[Checkout fixture](../test/fixtures/declarations/checkout.md)
+Between sibling declarations, use the spacing from the source. Adjacent
+declarations stay together, and an existing gap becomes one blank line,
+including next to braced bodies. Annotations and leading comments stay with
+their declaration. [Declaration spacing fixture](../test/fixtures/declarations/block-spacing.md)
 
 In a `run { … } with` chain, keep the first `with` beside the closing brace,
 like `} else`. A long handler call wraps its arguments within the clause.
