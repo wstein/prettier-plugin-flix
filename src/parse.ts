@@ -11,11 +11,13 @@ import {
     type Token,
 } from "antlr4ng";
 import { FlixLexer } from "./generated/FlixLexer.js";
-import { FlixParser } from "./generated/FlixParser.js";
+import { DeclarationContext, FlixParser } from "./generated/FlixParser.js";
 
 /** A `//`, `///` or block comment captured from the hidden channels. */
 export interface Comment {
     text: string;
+    /** Exclusive source offset in code points. */
+    end: number;
     /** `//` and `///` comments run to the end of the line. */
     isLine: boolean;
     /** Newlines between the previous element (token or comment) and this comment. */
@@ -45,6 +47,14 @@ export interface FlixRoot {
     info: Map<number, TokenInfo>;
     start: number;
     end: number;
+}
+
+/** End of a declaration copied verbatim by an own-line prettier-ignore directive. */
+export function ignoredDeclarationEnd(root: FlixRoot, node: ParserRuleContext): number | undefined {
+    if (!(node instanceof DeclarationContext) || !node.start || !node.stop) return;
+    const leading = root.info.get(node.start.tokenIndex)?.lead;
+    if (!leading?.some((comment) => comment.isLine && comment.text.slice(2).trim() === "prettier-ignore")) return;
+    return root.info.get(node.stop.tokenIndex)?.trail.at(-1)?.end ?? node.stop.stop + 1;
 }
 
 class FlixSyntaxError extends SyntaxError {
@@ -129,6 +139,7 @@ function buildTokenInfo(tokens: Token[]): Map<number, TokenInfo> {
         ) {
             pending.push({
                 text: (t.text ?? "").replace(/[ \t\r]+$/, ""),
+                end: t.stop + 1,
                 isLine: t.type !== FlixLexer.BLOCK_COMMENT,
                 nl,
                 nlNext: 0,
