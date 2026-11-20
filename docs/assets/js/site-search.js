@@ -1,9 +1,8 @@
-const button = document.querySelector(".site-search-trigger");
-const dialog = document.querySelector("#site-search");
-const form = dialog.querySelector(".site-search-form");
-const input = dialog.querySelector("#site-search-query");
-const status = dialog.querySelector(".site-search-status");
-const results = dialog.querySelector(".site-search-results");
+const form = document.querySelector(".site-search");
+const input = form.querySelector("#site-search-query");
+const dropdown = form.querySelector("#site-search-dropdown");
+const status = form.querySelector(".site-search-status");
+const results = form.querySelector(".site-search-results");
 
 let entries;
 let loading;
@@ -33,7 +32,7 @@ function render() {
 
     const count = matches.length;
     const shown = matches.slice(0, 20);
-    if (count === 0) status.textContent = "No matching fixtures.";
+    if (count === 0) status.textContent = "No results found.";
     else if (count > shown.length) status.textContent = `Showing the first ${shown.length} of ${count} results.`;
     else status.textContent = `${count} ${count === 1 ? "result" : "results"}.`;
 
@@ -56,7 +55,7 @@ async function loadIndex() {
     loading = true;
     status.textContent = "Loading search…";
     try {
-        const response = await fetch(dialog.dataset.index);
+        const response = await fetch(form.dataset.index);
         if (!response.ok) throw new Error("Search index unavailable.");
         const data = await response.json();
         entries = data.map((entry) => ({
@@ -66,32 +65,56 @@ async function loadIndex() {
         }));
         render();
     } catch {
-        status.textContent = "Search could not load. Reopen the dialog to try again.";
+        status.textContent = "Search could not load. Change your query to retry.";
     } finally {
         loading = false;
     }
 }
 
-button.hidden = false;
-button.addEventListener("click", () => {
-    dialog.showModal();
-    input.focus();
-    void loadIndex();
+function showResults() {
+    dropdown.hidden = !input.value.trim();
+    if (dropdown.hidden) return;
+    if (entries) render();
+    else void loadIndex();
+}
+
+form.hidden = false;
+input.addEventListener("focus", showResults);
+input.addEventListener("input", showResults);
+input.addEventListener("click", () => {
+    if (dropdown.hidden) showResults();
 });
 
-input.addEventListener("input", render);
+form.addEventListener("focusout", (event) => {
+    if (!form.contains(event.relatedTarget)) dropdown.hidden = true;
+});
+document.addEventListener("pointerdown", (event) => {
+    if (!form.contains(event.target)) dropdown.hidden = true;
+});
 
-dialog.addEventListener("keydown", (event) => {
-    if (event.key !== "Escape") return;
-    event.preventDefault();
-    dialog.close();
+form.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !dropdown.hidden) {
+        event.preventDefault();
+        input.focus();
+        dropdown.hidden = true;
+    } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+        if (dropdown.hidden) showResults();
+        if (dropdown.hidden) return;
+        const links = [...results.querySelectorAll("a")];
+        const active = links.indexOf(document.activeElement);
+        event.preventDefault();
+        if (event.key === "ArrowDown") links[active + 1]?.focus();
+        else if (active === 0) input.focus();
+        else links[active < 0 ? links.length - 1 : active - 1]?.focus();
+    }
 });
 
 form.addEventListener("submit", (event) => {
     event.preventDefault();
-    results.querySelector("a")?.click();
+    if (dropdown.hidden) showResults();
+    else results.querySelector("a")?.click();
 });
 
 results.addEventListener("click", (event) => {
-    if (event.target.closest("a")) dialog.close();
+    if (event.target.closest("a")) dropdown.hidden = true;
 });
