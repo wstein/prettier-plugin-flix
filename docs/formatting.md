@@ -90,7 +90,10 @@ def wait(rx: Receiver[Int32], n: Int32, tx: Sender[List[Int32]]): Unit
 
 Keep short function types on one line. When an arrow chain wraps, leave
 each `->` after its parameter type, align the continued parameter types,
-and indent the final result. Parenthesized function types wrap independently. The
+and indent the final result. A type that starts on the line of its
+signature or of its `=` continues one level deeper than that line. A line
+comment after an arrow stays at the end of that line. Parenthesized
+function types wrap independently. The
 [F# formatting guide](https://learn.microsoft.com/en-us/dotnet/fsharp/style-guide/formatting#formatting-types-in-signatures)
 uses the same layout for curried function types.
 [Function type fixture](../test/fixtures/declarations/long-function-types.md)
