@@ -8,9 +8,11 @@ examples below come from Markdown fixtures in the test suite.
 ## Line width and indentation
 
 Use **four spaces per indentation level**. Four spaces make each nesting
-level visible, and deeply nested blocks use more horizontal space. Changing
-the indentation width shifts every nested line, so a shared indent keeps the
-shape of the code consistent across files and projects.
+level visible, and deeply nested blocks use more horizontal space. The
+[Scala indentation guide](https://docs.scala-lang.org/style/indentation.html)
+uses two spaces per level. Changing the indentation width shifts every nested
+line, so a shared indent keeps the shape of the code consistent across files
+and projects.
 
 `printWidth` sets the target line width and defaults to **100 columns**.
 Adjusting it mainly affects constructs near the target width. That makes it
@@ -36,6 +38,9 @@ The standalone Playground opens at 100 columns. Embedded editors default to
 Keep short calls and expressions compact. When an ordinary list of call
 arguments needs to wrap, put one argument on each line. Keep commas after
 their arguments and align the closing parenthesis with the start of the call.
+Fixed indentation keeps the argument columns stable if the callee is renamed.
+The [Scala guide to long argument lists](https://docs.scala-lang.org/style/indentation.html#methods-with-numerous-arguments)
+uses the same principle.
 
 **Before**
 
@@ -369,6 +374,9 @@ The [Flix website](https://flix.dev/) and [Flix language book](https://doc.flix.
 provide examples that guide the plugin's style choices. The
 [Datalog 2.3 User Manual](https://datalog.sourceforge.net/datalog.html) provides
 additional examples of fact and rule layout. The
+[Scala Style Guide](https://docs.scala-lang.org/style/) and
+[Scalafmt configuration guide](https://scalameta.org/scalafmt/docs/configuration.html)
+provide comparisons for argument lists, line breaks and alignment. The
 [Flix 0.80 formatter implementation](https://github.com/flix/flix/blob/v0.80.0/main/src/ca/uwaterloo/flix/tools/fmt/PrettyPrinter.scala)
 provides a comparison. The [documentation audit](official-examples.md) records
 reviewed differences against the official examples.
