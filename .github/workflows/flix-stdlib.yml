@@ -1,0 +1,61 @@
+name: Flix standard library compilation
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/flix-stdlib.yml'
+      - 'scripts/check-flix-stdlib.sh'
+  schedule:
+    - cron: '37 5 * * 1'
+  workflow_dispatch:
+    inputs:
+      flix_tag:
+        description: Exact Flix release tag, or leave blank for the latest stable release.
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: git config --global url."https://github.com/".insteadOf ssh://git@github.com/
+      - run: npm ci
+      - run: npm run build
+      - name: Download the Flix compiler
+        id: compiler
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REQUESTED_TAG: ${{ inputs.flix_tag }}
+        run: |
+          if [[ -z "$REQUESTED_TAG" ]]; then
+            release=$(gh api repos/flix/flix/releases/latest)
+          elif [[ "$REQUESTED_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            release=$(gh api "repos/flix/flix/releases/tags/$REQUESTED_TAG")
+          else
+            echo "Expected a Flix release tag such as v0.80.0." >&2
+            exit 1
+          fi
+          tag=$(jq -er '.tag_name' <<< "$release")
+          jar="$RUNNER_TEMP/flix.jar"
+          gh release download "$tag" --repo flix/flix --pattern flix.jar --output "$jar"
+          digest=$(jq -r '.assets[] | select(.name == "flix.jar") | .digest // empty' <<< "$release")
+          if [[ -n "$digest" ]]; then
+            printf '%s  %s\n' "${digest#sha256:}" "$jar" | sha256sum --check
+          fi
+          printf 'tag=%s\n' "$tag" >> "$GITHUB_OUTPUT"
+      - name: Format and compile the bundled standard library
+        env:
+          FLIX_TAG: ${{ steps.compiler.outputs.tag }}
+        run: bash scripts/check-flix-stdlib.sh "$RUNNER_TEMP/flix.jar" "$FLIX_TAG"
