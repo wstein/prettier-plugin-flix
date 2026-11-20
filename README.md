@@ -34,7 +34,7 @@ Install Prettier and the prebuilt plugin for Flix 0.80 from the GitHub release.
 
 ```sh
 npm install --save-dev --save-exact prettier@3.10.1 \
-  https://github.com/wstein/prettier-plugin-flix/releases/download/v0.80.0/prettier-plugin-flix-0.80.0.tgz
+  https://github.com/wstein/prettier-plugin-flix/releases/download/v0.80.1/prettier-plugin-flix-0.80.1.tgz
 ```
 
 Add the plugin to your `.prettierrc.json`.
