@@ -267,7 +267,8 @@ OCamlFormat's `break-cases` option offers a comparison between margin-driven
 wrapping and vertical branches.
 Flix can keep a short arm body after `=>` and indent a longer body beneath it.
 Keep a guarded pattern and its `=>` together when they fit, as in Rust's
-match style. The body can wrap independently.
+match style. A guard that does not fit wraps at an operator and continues at
+the body indent; Rust instead breaks before `if` and uses a block body.
 [Rust Style Guide](https://doc.rust-lang.org/style-guide/expressions.html#match)
 [OCamlFormat options](https://github.com/ocaml-ppx/ocamlformat/blob/main/doc/manpage_ocamlformat.mld)
 
