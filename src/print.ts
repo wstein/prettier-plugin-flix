@@ -1260,7 +1260,13 @@ export class Printer {
             rest = remaining;
         }
         continuation.push(indent([this.after(lastTerm(previousArrow), line), this.print(this.ls(rest))]));
-        return group([head, atLineStart ? continuation : indent(continuation)]);
+        // `placeBody` keeps a type that a comment breaks on the line of its `=`.
+        const previous = firstToken === null ? null : prevTerm(firstToken);
+        const hugged = previous !== null && BODY_ARROWS.has(ttype(previous)) &&
+            previous.symbol.line === firstToken!.symbol.line &&
+            willBreak([head, continuation]);
+        // A head that breaks inside its own brackets keeps a fitting rest on its last line.
+        return group([head, group(atLineStart && !hugged ? continuation : indent(continuation))]);
     }
 
     private printBinary(n: ParserRuleContext): Doc {
