@@ -1,6 +1,6 @@
 ---
 title: Keep a handler call with its run block
-description: At 80 columns the Base Directory handler follows the closing brace. At 60 columns it starts on the next line, aligned with run.
+description: The Base Directory handler follows the closing brace at both widths. At 60 columns the handler argument wraps.
 source: "https://doc.flix.dev/filesystem.html#base-directory"
 flix: "0.80"
 options: { printWidth: 80 }
@@ -76,7 +76,8 @@ def main(): Unit \ { FileSystem, IO } =
                                 )
                         }
                 }
-            }
-            with FileSystem.withBaseDir("/tmp/flix-basedir")
+            } with FileSystem.withBaseDir(
+                "/tmp/flix-basedir"
+            )
     }
 ```

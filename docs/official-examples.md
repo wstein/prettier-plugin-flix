@@ -98,8 +98,9 @@ match. Review a new diff before updating that hash.
   within a group that fits the configured width.
 - `inline-short-function-body` and `inline-short-loop-body` join a single
   expression to its header when the whole line fits.
-- `layout-with-chain` attaches the first `with` to the closing brace when it
-  fits and aligns subsequent clauses with that keyword.
+- `layout-with-chain` keeps the first `with` with the closing brace and aligns
+  subsequent clauses with that keyword when it follows the brace. Handler
+  arguments can wrap within their clause.
 - `leading-pipeline-operators` moves operators to the start of each step
   when a pipeline wraps.
 - `final-newline` records the addition of a terminating newline.

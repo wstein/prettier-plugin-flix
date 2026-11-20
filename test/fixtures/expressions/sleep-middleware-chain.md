@@ -1,6 +1,6 @@
 ---
 title: Align Sleep middleware with the first handler
-description: The first handler follows the closing brace when it fits. The logging handler starts beneath its with keyword.
+description: The first with stays at the closing brace when the handler arguments wrap. The logging handler begins beneath its with keyword.
 flix: "0.80"
 source: "https://github.com/flix/book/blob/64d81bd6984ede06442ef7b63235092b9fe3c29c/src/sleep.md#L76"
 options: { printWidth: 80 }
@@ -51,9 +51,8 @@ def main(): Unit
         );
         Sleep.sleep(seconds(2));
         println("Done!")
-    }
-    with Sleep.withMaxSleep(
+    } with Sleep.withMaxSleep(
         milliseconds(500)
     )
-    with Sleep.withLogging
+      with Sleep.withLogging
 ```
