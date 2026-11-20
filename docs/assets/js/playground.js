@@ -3,9 +3,9 @@ import { renderDiff } from "./playground-diff.js";
 import { createEditor, createFlixHighlighter } from "./playground-editor.js";
 import { readHandoff, writeHandoff } from "./playground-link.js";
 import { playgroundIndentation } from "./playground-options.js";
+import { requestFormat } from "./playground-requests.js";
 
 let highlighterPromise;
-let formatter;
 let nextRequest = 0;
 
 function readableDiagnostic(message) {
@@ -35,12 +35,10 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
     let preview = initial?.output === undefined ? undefined : { source: initial.source, output: initial.output };
     let highlighter;
     let fixtures;
-    let formatterFailed = false;
     let highlightingFailed = false;
 
     const input = createEditor(playground.querySelector("[data-input]"), queuePreview, initial?.source, showCursor);
     const output = createEditor(formatted, undefined, preview?.output);
-    formatter ??= new Worker(playground.dataset.worker, { type: "module" });
 
     function replaceCode(view, code) {
         if (view.state.doc.toString() !== code) {
@@ -68,28 +66,35 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
         const id = revision = ++nextRequest;
         clearTimeout(timer);
         copy.disabled = true;
-        if (!formatterFailed) showStatus("Formatting…");
+        showStatus("Formatting…");
         onChange?.(snapshot());
         timer = setTimeout(() => updatePreview(id), 250);
     }
 
     function updatePreview(id) {
         highlighter?.apply(input.view);
-        if (formatterFailed) return;
         if (!printWidth.validity.valid) {
             showStatus("Enter a whole number greater than zero for line width.", true);
             return;
         }
-        formatter.postMessage({
+        requestFormat(playground.dataset.worker, {
             id,
             asset: playground.dataset.formatter,
             source: input.view.state.doc.toString(),
             options: { printWidth: printWidth.valueAsNumber, ...playgroundIndentation },
+        }, (data) => {
+            if (id !== revision) return;
+            if (data.failure) {
+                showStatus(data.failure === "timeout"
+                    ? "Formatting timed out. Edit to try again."
+                    : "The formatter could not load. Edit to try again.", true);
+                return;
+            }
+            displayPreview(data);
         });
     }
 
-    formatter.addEventListener("message", ({ data }) => {
-        if (data.id !== revision) return;
+    function displayPreview(data) {
         if (data.error) {
             const { location, message } = data.error;
             const where = location ? `Line ${location.line}, column ${location.column}. ` : "";
@@ -114,12 +119,7 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
         refreshDiff();
         copy.disabled = data.output.length === 0;
         if (!data.error) showStatus(highlightingFailed ? "Syntax highlighting could not load." : "");
-    });
-
-    formatter.addEventListener("error", () => {
-        formatterFailed = true;
-        showStatus("The formatter could not load. Reload the page to try again.", true);
-    });
+    }
 
     function refreshDiff() {
         if (!diff.hidden && preview) renderDiff(diff, preview, highlighter?.tokenize);
@@ -139,7 +139,7 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
         const fixture = Object.hasOwn(fixtures, key) ? fixtures[key] : undefined;
         const options = variant === undefined ? undefined : fixture?.options[variant];
         loadDraft({ source: fixture?.input ?? "", ...options });
-        if (fixture && !formatterFailed) showStatus("Loading example…");
+        if (fixture) showStatus("Loading example…");
     }
 
     function loadDraft({ source, printWidth: width = defaultWidth }) {
@@ -182,7 +182,7 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
     }
 
     async function loadExamples() {
-        if (revision === 0 && !formatterFailed) showStatus("Loading examples…");
+        if (revision === 0) showStatus("Loading examples…");
         try {
             const data = await fetchFixtures(playground.dataset.examples);
             fixtures = data.fixtures;
