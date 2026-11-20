@@ -52,8 +52,10 @@ def winner(totals: (Int32, Int32)): String = match totals {
 
 pub def scoreboard(home: List[Int32], away: List[Int32]): String = {
     // Each team's score can be calculated independently.
-    let totals =
-        par (left <- score(home); right <- score(away)) yield (left, right);
+    let totals = par (
+        left <- score(home);
+        right <- score(away)
+    ) yield (left, right);
     winner(totals)
 }
 

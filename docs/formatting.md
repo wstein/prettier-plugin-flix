@@ -120,9 +120,11 @@ Sequential statements in a block get separate lines.
 In a `run { … } with` chain, keep the first `with` beside the closing brace,
 like `} else`. A long handler call wraps its arguments within the clause.
 If its single argument is itself a call, the closing parentheses can share
-a line. Later clauses start beneath the first `with`. If the `run` expression has
-no block or a line comment follows its closing brace, start the `with`
-clauses on separate lines aligned with `run`.
+a line. Later clauses start beneath the first `with`. A `run` expression without
+a block and with a single short handler can stay on one line. When it wraps, or
+it has multiple handlers, start the `with` clauses on separate lines aligned
+with `run`. A line comment after a closing brace also moves the clauses to
+separate lines aligned with `run`.
 
 **At 80 columns**
 
@@ -155,11 +157,19 @@ def main(): Unit
 [Middleware fixture](../test/fixtures/expressions/sleep-middleware-chain.md) ·
 [Handler chain at narrow width](../test/fixtures/declarations/run-with-chain.md)
 
+## Parallel bindings
+
+Keep a short `par … yield` together when it fits. When it wraps, put each binding
+on its own line and keep the short `yield` expression with the closing
+parenthesis. Keep `par (` on the binding line when there is room for it.
+[Parallel scoreboard fixture](../test/fixtures/expressions/scoreboard.md)
+
 ## Alignment
 
 Matching rows can share an operator column. Map arrows and record equals
 signs align in eligible multiline literals with short, simple keys and values.
-Flat `List#{…}` values can also qualify in maps. Map and record operator padding
+Flat `List#{…}` values can also qualify in maps. Short sums or differences
+of simple values can qualify in records. Map and record operator padding
 is capped at eight extra spaces. Complex rows or rows that would exceed
 `printWidth` use ordinary spacing.
 
