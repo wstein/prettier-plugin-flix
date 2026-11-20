@@ -121,7 +121,10 @@ each constraint on its own indented line. A constraint's type arguments can
 still wrap if that constraint alone needs more room. A line comment after a
 comma stays with the preceding constraint.
 
-The Rust guide uses a similar list layout for `where` clauses.
+Like `where` clauses in the Rust guide, a wrapped list puts each constraint
+on its own block-indented line. Unlike Rust, `with` stays at the end of the
+signature line, the list has no trailing comma, and the `=` or `{` follows
+the last constraint.
 [Rust Style Guide](https://doc.rust-lang.org/style-guide/items.html#where-clauses) ·
 [Trait constraint fixture](../test/fixtures/declarations/trait-constraint-lists.md)
 
