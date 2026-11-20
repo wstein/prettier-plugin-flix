@@ -6,6 +6,10 @@ on:
       source_commit:
         description: Full SHA of the release commit on main. Defaults to the commit that starts this run.
         type: string
+      publish_npm:
+        description: Also publish to npm after Trusted Publishing is configured.
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -39,6 +43,13 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - name: Check npm publishing opt-in
+        if: inputs.publish_npm
+        run: |
+          if [[ "$(node -p 'require("./package.json").private === true')" == true ]]; then
+            echo 'This commit still marks the package private in package.json.' >&2
+            exit 1
+          fi
       - run: git config --global url."https://github.com/".insteadOf ssh://git@github.com/
       - run: npm ci
       - run: npm test
@@ -54,6 +65,17 @@ jobs:
           mkdir -p "$RUNNER_TEMP/package"
           npm pack --pack-destination "$RUNNER_TEMP/package"
           printf 'version=%s\ncommit=%s\n' "$version" "$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Smoke-test the packed plugin
+        run: |
+          prettier_version=$(node -p 'require("./node_modules/prettier/package.json").version')
+          smoke_dir=$(mktemp -d)
+          cd "$smoke_dir"
+          npm init --yes > /dev/null
+          npm install --no-audit --no-fund "prettier@$prettier_version" "$RUNNER_TEMP/package/"*.tgz
+          printf 'def smoke():Int32=42\n' > Smoke.flix
+          npm exec -- prettier --plugin prettier-plugin-flix --write Smoke.flix
+          diff -u <(printf 'def smoke(): Int32 = 42\n') Smoke.flix
+          npm exec -- prettier --plugin prettier-plugin-flix --check Smoke.flix
       - uses: actions/upload-artifact@v4
         with:
           name: plugin-package
@@ -112,3 +134,25 @@ jobs:
             gh release upload "$tag" "$package"
           fi
           gh release edit "$tag" --draft=false --latest
+
+  publish_npm:
+    if: inputs.publish_npm
+    needs: [package, publish]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: plugin-package
+          path: ${{ runner.temp }}/package
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Publish the verified tarball to npm
+        env:
+          PACKAGE_VERSION: ${{ needs.package.outputs.version }}
+        run: |
+          package="$RUNNER_TEMP/package/prettier-plugin-flix-$PACKAGE_VERSION.tgz"
+          npm publish "$package" --access public --registry=https://registry.npmjs.org
