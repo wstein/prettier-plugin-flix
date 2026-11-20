@@ -6,3 +6,4 @@ src/generated/
 # Copied from @wstein/flix-antlr-grammar by `npm run generate`
 src/FlixLexerBase.ts
 /test-results/
+/coverage.lcov
