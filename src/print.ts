@@ -951,7 +951,7 @@ export class Printer {
         // Hug when the author kept the body on the arrow's line and it closes with a brace.
         if (sameLine && l !== null && ttype(l) === L.RBRACE) return [this.after(arrow, " ", true), this.print(body)];
         if (this.flat === 0 && kind(body) === "ParYieldExpr" && ttype(arrow) === L.EQUAL &&
-            !this.hasLineTrail(arrow) && f && !this.hasComment(f, true) && !this.blankBefore(f)) {
+            !this.hasLineTrail(arrow) && f && !this.hasComment(f, true)) {
             return this.printParYield(body as ParserRuleContext, true);
         }
         const d = this.print(this.ls(body));
