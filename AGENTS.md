@@ -26,6 +26,9 @@ npm run coverage:syntax -- --check
 
 ## Change formatter behavior
 
+Use the [formatting-rule skill](.agents/skills/flix-formatting-rule/SKILL.md)
+for the fixture-to-review workflow.
+
 - Reproduce the issue with a minimal Markdown fixture in `test/fixtures/`.
   Use [the fixture guide](docs/fixtures.md) for expected output, width variants
   and compiler references. For wrapping changes, test the compact and wrapped
@@ -42,6 +45,9 @@ npm run coverage:syntax -- --check
   a documented rule.
 
 ## Change the Playground or fixture site
+
+Use the [Playground check skill](.agents/skills/flix-playground-check/SKILL.md)
+for browser checks.
 
 - Use the shared workbench for the standalone Playground and embedded editors.
   The plugin defaults to 100 columns. Standalone starts at 80, including after
