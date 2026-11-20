@@ -253,25 +253,39 @@ function placeCaretComments(source: string, output: Token[], lines: string[], ta
         sameTokens(outputComments, tokens.filter((token) => !isCode(token)), true) ? revised : lines;
 }
 
-type TupleCell = { kind: "text" | "integer" | "character" | "boolean"; text: string; width: number };
+type TupleCell = { kind: "text" | "integer" | "decimal" | "character" | "boolean" | "regex" | "null"; text: string; width: number };
 type TupleRow = { indent: string; cells: TupleCell[]; suffix: string; line: number };
 const TABLE_COLLECTIONS = new Set([L.VECTOR_HASH, L.LIST_HASH, L.ARRAY_HASH, L.SET_HASH]);
+
+function isStringLiteral(tokens: Token[]): boolean {
+    const start = tokens[0]?.type === L.DEBUG_INTERPOLATOR ? 1 : 0;
+    if (tokens[start]?.type !== L.STRING_START) return false;
+    let depth = 0;
+    for (let i = start; i < tokens.length; i++) {
+        if (tokens[i].type === L.STRING_START) depth++;
+        if (tokens[i].type === L.STRING_END && --depth === 0) return i === tokens.length - 1;
+    }
+    return false;
+}
 
 function tupleCell(tokens: Token[], line: string[]): TupleCell | undefined {
     const first = tokens[0];
     const last = tokens.at(-1);
     if (!first || !last) return;
     let kind: TupleCell["kind"];
-    if (first.type === L.STRING_START && last.type === L.STRING_END &&
-        tokens.slice(1, -1).every((token) => token.type === L.STRING_CONTENT)) {
+    if (isStringLiteral(tokens)) {
         kind = "text";
     } else if ((tokens.length === 1 || (tokens.length === 2 && first.type === L.MINUS)) &&
-        (last.type === L.INT_LITERAL || last.type === L.HEX_LITERAL)) {
-        kind = "integer";
+        (last.type === L.INT_LITERAL || last.type === L.HEX_LITERAL || last.type === L.FLOAT_LITERAL)) {
+        kind = last.type === L.FLOAT_LITERAL ? "decimal" : "integer";
     } else if (tokens.length === 1 && first.type === L.CHAR_LITERAL) {
         kind = "character";
     } else if (tokens.length === 1 && (first.type === L.TRUE || first.type === L.FALSE)) {
         kind = "boolean";
+    } else if (tokens.length === 1 && first.type === L.REGEX_LITERAL) {
+        kind = "regex";
+    } else if (tokens.length === 1 && first.type === L.NULL) {
+        kind = "null";
     } else return;
     const text = line.slice(first.column, last.column + Array.from(last.text ?? "").length).join("");
     if (!/[\t\r\n]/.test(text)) return { kind, text, width: util.getStringWidth(text) };
@@ -289,8 +303,12 @@ function tupleRow(tokens: Token[], text: string, line: number): TupleRow | undef
     if (indent.trim()) return;
     const cells: TupleCell[] = [];
     let start = 1;
+    let interpolationDepth = 0;
     for (let i = 1; i <= row.length; i++) {
-        if (i < row.length && row[i].type !== L.COMMA) continue;
+        const type = row[i]?.type;
+        if (type === L.INTERPOLATION_START) interpolationDepth++;
+        if (type === L.INTERPOLATION_END) interpolationDepth--;
+        if (i < row.length && (type !== L.COMMA || interpolationDepth > 0)) continue;
         const cell = tupleCell(row.slice(start, i), chars);
         if (!cell) return;
         cells.push(cell);
@@ -325,12 +343,16 @@ function alignTupleRows(tokens: Token[], lines: string[], options: LayoutOptions
         const aligned = rows.map((row) => {
             const fields = row.cells.map((cell, col) => {
                 const padding = " ".repeat(widths[col] - cell.width);
-                if (col === widths.length - 1) return (cell.kind === "integer" ? padding : "") + cell.text;
-                return cell.kind === "integer" ? padding + cell.text + ", " : cell.text + ", " + padding;
+                const numeric = cell.kind === "integer" || cell.kind === "decimal";
+                if (numeric) return padding + cell.text + (col === widths.length - 1 ? "" : ", ");
+                return cell.text + (col === widths.length - 1 ? "" : ", " + padding);
             });
             return row.indent + "(" + fields.join("") + ")" + row.suffix;
         });
-        if (aligned.some((text) => width(text, options.tabWidth) > options.printWidth)) continue;
+        // A long literal or trailing comment can already exceed the target. Alignment may
+        // leave that row as it is, but must not increase the overrun.
+        if (aligned.some((text, i) => width(text, options.tabWidth) >
+            Math.max(options.printWidth, width(lines[rows[i].line - 1], options.tabWidth)))) continue;
         rows.forEach((row, i) => {
             changed ||= lines[row.line - 1] !== aligned[i];
             lines[row.line - 1] = aligned[i];

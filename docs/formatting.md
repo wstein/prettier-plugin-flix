@@ -214,14 +214,16 @@ is capped at eight extra spaces. Complex rows or rows that would exceed
 `printWidth` use ordinary spacing.
 
 When a vector, list, array, or set prints matching rows of literal tuples
-on separate lines, align columns of plain strings, integers, characters or
-booleans. Each column must use the same literal kind in every row. Integers
-align on the right and the other values start at the same column. An
-unsupported cell, such as a floating-point literal or an interpolated
-string, keeps the collection in its ordinary layout. The same applies if
-padding would exceed the available width, including a trailing comment.
-Compact collections keep their inline layout. For an example, see the
-[tuple-row fixture](../test/fixtures/expressions/align-tuple-rows.md).
+on separate lines, align columns of integers, floating-point and decimal
+literals, strings, characters, booleans, regexes and `null`. Each column must
+use the same literal kind in every row. Numeric literals align on the right.
+Other literals, including strings with single-line interpolations, align on
+the left. Nested expressions outside an interpolation use ordinary formatting.
+Padding must fit the available width, including any trailing comment. A row
+that is already too wide may stay that wide. Compact collections stay inline.
+
+[Tuple-row fixture](../test/fixtures/expressions/align-tuple-rows.md) ·
+[Literal types in tuple rows](../test/fixtures/expressions/align-tuple-literals.md)
 
 Match arms can share an arrow column when their heads fit on single lines and
 the padding fits the group. This includes groups with some multiline bodies.
