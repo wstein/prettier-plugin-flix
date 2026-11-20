@@ -55,6 +55,25 @@ On pull requests and main, `npm run coverage:syntax -- --check` requires the Mar
 
 For layout decisions, prefer the [Flix language documentation](https://doc.flix.dev/) and hand-written upstream tests and examples. Wrapped list constructors follow the leading `::` layout shown in [the railroad example](https://github.com/flix/flix/blob/4022083acf86ab8b92308f2fb47ae615d5088de0/examples/datalog/railroad-network.flix#L49). The built-in formatter is recorded separately as a comparison.
 
+## Verify the Playground in Chromium
+
+The fixture documentation workflow runs a Playwright smoke test against
+`docs/public` before uploading it to Pages. It checks live formatting, cursor
+and error status, partial formatting and recovery, and Unicode handoff from
+an embedded editor with default and overridden line widths.
+
+With the development dependencies and the fixture workflow's Hugo version
+installed, run:
+
+```sh
+npx playwright install chromium
+npm run docs:build
+npm run docs:test:browser
+```
+
+To use a local Chromium binary, set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH`.
+The test starts its own loopback server at the same URL prefix as Pages.
+
 ## Test sources
 
 | Source | How | Needs expected output? |
