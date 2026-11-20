@@ -9,7 +9,6 @@
       <select id="playground-example" disabled><option value="" selected disabled hidden>Choose an example</option></select>
     </label>{{ end }}
     <label>Line width <input id="{{ $prefix }}print-width" data-print-width type="number" min="1" step="1" required value="{{ $width }}"></label>
-    <label>Indent <input id="{{ $prefix }}tab-width" data-tab-width type="number" min="1" step="1" required value="4"></label>
     <button type="button" class="playground-clear">Clear input</button>
     <button type="button" class="playground-copy" disabled>Copy output</button>
     {{ with .handoff }}<div class="playground-links">

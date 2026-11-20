@@ -1,10 +1,11 @@
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import { indentUnit } from "@codemirror/language";
-import { Compartment, EditorState, StateEffect, StateField } from "@codemirror/state";
+import { EditorState, StateEffect, StateField } from "@codemirror/state";
 import { Decoration, EditorView, drawSelection, keymap, lineNumbers } from "@codemirror/view";
 import { createHighlighterCore } from "shiki/core";
 import { createOnigurumaEngine } from "shiki/engine/oniguruma";
 import { flixThemes } from "./flix-themes.js";
+import { playgroundIndentation } from "./playground-options.js";
 import grammar from "../syntax/flix.tmLanguage.json";
 
 const setHighlighting = StateEffect.define();
@@ -34,7 +35,7 @@ const errorLine = Decoration.line({ class: "flix-error-line" });
 const errorCharacter = Decoration.mark({ class: "flix-error-character" });
 
 export function createEditor(parent, onEdit, doc = "", onCursor) {
-    const indentation = new Compartment();
+    const { tabWidth } = playgroundIndentation;
     const view = new EditorView({
         parent,
         doc,
@@ -42,7 +43,8 @@ export function createEditor(parent, onEdit, doc = "", onCursor) {
             lineNumbers(),
             drawSelection(),
             highlighting,
-            indentation.of([EditorState.tabSize.of(4), indentUnit.of("    ")]),
+            EditorState.tabSize.of(tabWidth),
+            indentUnit.of(" ".repeat(tabWidth)),
             EditorView.contentAttributes.of({
                 "aria-labelledby": `${parent.id}-label`,
                 spellcheck: "false",
@@ -57,7 +59,7 @@ export function createEditor(parent, onEdit, doc = "", onCursor) {
                 history(),
                 keymap.of([...defaultKeymap, ...historyKeymap]),
                 EditorView.updateListener.of((update) => {
-                    if (update.docChanged || update.selectionSet || update.startState.tabSize !== update.state.tabSize) {
+                    if (update.docChanged || update.selectionSet) {
                         onCursor?.(update.state);
                     }
                     if (update.docChanged) onEdit();
@@ -83,12 +85,6 @@ export function createEditor(parent, onEdit, doc = "", onCursor) {
                 }
             }
             view.dispatch({ effects: setErrorMarks.of(Decoration.set(marks, true)) });
-        },
-        setTabWidth(width) {
-            if (view.state.tabSize === width) return;
-            // CodeMirror's indent unit is for interactive editing; the formatter takes the full width above.
-            const spaces = " ".repeat(Math.min(width, 100));
-            view.dispatch({ effects: indentation.reconfigure([EditorState.tabSize.of(width), indentUnit.of(spaces)]) });
         },
     };
 }

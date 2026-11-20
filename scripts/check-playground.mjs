@@ -5,6 +5,7 @@ import { basename } from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadFixture, optionsFor } from "../test/fixture.mjs";
 import { readHandoff, writeHandoff } from "../docs/assets/js/playground-link.js";
+import { playgroundIndentation } from "../docs/assets/js/playground-options.js";
 import { fingerprint, fmt, programProblems } from "../test/lib.mjs";
 
 const site = new URL("../docs/public/", import.meta.url);
@@ -86,6 +87,21 @@ test("embedded examples open with their 60-column preview", async () => {
     assert.match(chapter, /data-print-width[^>]*\bvalue=(?:"60"|60)(?:\s|>)/);
 });
 
+test("the Playground and embedded editors have fixed four-space indentation", async () => {
+    const optionsPage = await readFile(new URL("options/index.html", site), "utf8");
+    assert.doesNotMatch(page, /data-tab-width/);
+    assert.doesNotMatch(optionsPage, /data-tab-width/);
+    const catalog = JSON.parse(await readFile(new URL("../docs/data/fixtures.json", import.meta.url), "utf8"));
+    const fixtures = catalog.options.groups.flatMap((group) => group.fixtures);
+    for (const id of ["tab-width", "use-tabs"]) {
+        const { initial, outputs } = fixtures.find((fixture) => fixture.id === id);
+        assert.equal(outputs[1].playgroundCompatible, false);
+        assert.equal(initial.output, await formatFlix(initial.source, { printWidth: initial.printWidth, ...playgroundIndentation }));
+        assert.doesNotMatch(optionsPage, new RegExp(`fixture=options%2F${id}\\.md(?:&amp;|&)variant=1`, "i"));
+    }
+    assert.deepEqual(playgroundIndentation, { tabWidth: 4, useTabs: false });
+});
+
 test("all curated examples match their fixtures in the published browser bundle", async () => {
     const data = await readFile(new URL("../docs/data/playground.json", import.meta.url), "utf8");
     const { fixtures } = JSON.parse(data);
@@ -105,10 +121,12 @@ test("all curated examples match their fixtures in the published browser bundle"
     }
 });
 
-test("the Playground handoff preserves Unicode source and formatting options in a URL fragment", () => {
-    const draft = { source: 'pub def board(): String = "🚉 Köln & Zürich"\n', printWidth: 47, tabWidth: 2, useTabs: true };
+test("the Playground handoff preserves Unicode source and line width in a URL fragment", () => {
+    const draft = { source: 'pub def board(): String = "🚉 Köln & Zürich"\n', printWidth: 47 };
     const url = new URL(writeHandoff("https://example.test/flix/playground/?fixture=strings%2Fitinerary.md", draft));
     assert.equal(url.searchParams.get("fixture"), "strings/itinerary.md");
+    assert.doesNotMatch(url.hash, /tabWidth|useTabs/);
     assert.deepEqual(readHandoff(url.hash), draft);
+    assert.deepEqual(readHandoff(url.hash + "&tabWidth=2&useTabs=true"), draft);
     assert.equal(readHandoff("#code=%21"), undefined);
 });

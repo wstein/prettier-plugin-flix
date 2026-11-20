@@ -248,7 +248,7 @@ pre.playground-diff-code {
   border-radius: 0;
   background: var(--code-background);
   font: 0.875rem/1.55 ui-monospace, monospace;
-  tab-size: inherit;
+  tab-size: 4;
 }
 .diff-line { display: flex; min-height: 1.55em; padding-inline-end: 0.75rem; }
 .diff-marker { display: inline-block; width: 2.4em; flex-shrink: 0; text-align: center; user-select: none; }
