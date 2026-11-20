@@ -38,9 +38,20 @@ function matchingDelimiters(tokens: Token[]): Map<number, number> {
     for (const token of tokens) {
         if (closers.has(token.type)) stack.push(token);
         else if (closingTokens.has(token.type)) {
-            const open = stack.pop();
-            if (open && closers.get(open.type) === token.type) pairs.set(open.tokenIndex, token.tokenIndex);
-            else stack.length = 0;
+            // Pop only until this closer is accounted for so outer braces in a
+            // module or Datalog block still pair after one mismatched delimiter.
+            let matchIndex = -1;
+            for (let i = stack.length - 1; i >= 0; i--) {
+                if (closers.get(stack[i].type) === token.type) {
+                    matchIndex = i;
+                    break;
+                }
+            }
+            if (matchIndex >= 0) {
+                stack.length = matchIndex + 1;
+                const open = stack.pop()!;
+                pairs.set(open.tokenIndex, token.tokenIndex);
+            }
         }
     }
     return pairs;
@@ -130,9 +141,11 @@ function recoverySlices(source: string, layout: Layout): Slice[] {
             if (paired !== undefined && paired < to) {
                 while (entries[i + 1]?.tokenIndex <= paired) i++;
             } else if (closers.has(kind)) {
-                // An unclosed construct has no reliable lexical boundary. Declaration
-                // starts confirmed by the parser above can still be used.
-                break;
+                // Unclosed opener: end the in-progress slice at this token when
+                // partitions are terminator-based, then keep scanning so later
+                // sibling dots/fields still split. Module/enum starts are filled
+                // from `starts` / `case` below, so they only need to continue.
+                if (unit === "datalog" || unit === "struct") partitionEnds.push(i);
             }
         }
 
@@ -174,7 +187,16 @@ function recoverySlices(source: string, layout: Layout): Slice[] {
     }
     visit(tree);
     split(tree, "declaration");
-    for (const { node, unit, open, close } of enclosed) split(node, unit, open, close);
+    for (const item of enclosed) {
+        // An unclosed construct can leave the AST without a `}` child even when
+        // the source still has a matching brace. Prefer the lexically paired
+        // closer so module / Datalog bodies keep splitting.
+        const paired = pairs.get(item.open.tokenIndex);
+        if (paired !== undefined && item.close?.tokenIndex !== paired) {
+            item.close = code.find((token) => token.tokenIndex === paired);
+        }
+        split(item.node, item.unit, item.open, item.close);
+    }
     return slices.sort((a, b) => a.start - b.start || b.end - a.end);
 }
 
