@@ -80,6 +80,21 @@ jobs:
           tag="v$PACKAGE_VERSION"
           name="prettier-plugin-flix-$PACKAGE_VERSION.tgz"
           package="$RUNNER_TEMP/package/$name"
+
+          # GitHub ignores --target for a tag that already exists.
+          refs=$(gh api "repos/$GH_REPO/git/matching-refs/tags/$tag")
+          tagged=$(jq -c --arg ref "refs/tags/$tag" 'first(.[] | select(.ref == $ref) | .object) // empty' <<< "$refs")
+          if [[ -n "$tagged" ]]; then
+            while [[ $(jq -r '.type' <<< "$tagged") == tag ]]; do
+              sha=$(jq -er '.sha' <<< "$tagged")
+              tagged=$(gh api "repos/$GH_REPO/git/tags/$sha" --jq .object)
+            done
+            if ! jq -e --arg commit "$TARGET_COMMIT" '.type == "commit" and .sha == $commit' <<< "$tagged" > /dev/null; then
+              echo "Existing tag $tag does not point to release commit $TARGET_COMMIT." >&2
+              exit 1
+            fi
+          fi
+
           if release=$(gh release view "$tag" --json isDraft,targetCommitish,assets); then
             if ! jq -e --arg commit "$TARGET_COMMIT" '.isDraft and .targetCommitish == $commit' <<< "$release" > /dev/null; then
               echo "Release $tag must be a draft targeting $TARGET_COMMIT."

@@ -50,9 +50,9 @@ Use the [Playground check skill](.agents/skills/flix-playground-check/SKILL.md)
 for browser checks.
 
 - Use the shared workbench for the standalone Playground and embedded editors.
-  The plugin defaults to 100 columns. Standalone starts at 80, including after
-  an embedded handoff, and embedded editors start at 60. The web editors use
-  four spaces and refresh the preview after a 250 ms pause.
+  The plugin defaults to 100 columns. Standalone defaults to 80 and embedded
+  editors default to 60. An embedded handoff carries an explicit width override.
+  The web editors use four spaces and refresh the preview after a 250 ms pause.
 - Verify the handoff with an edited snippet. It should load that source and
   leave the Playground example selector empty. For diagnostic changes, verify
   the marked input span and the preview both before and after correcting an

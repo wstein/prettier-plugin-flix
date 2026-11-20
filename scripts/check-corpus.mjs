@@ -12,6 +12,10 @@ const args = process.argv.slice(2);
 const exceptionsFile = args[0]?.startsWith("--parse-exceptions=") ? args.shift().slice("--parse-exceptions=".length) : null;
 const parseExceptions = exceptionsFile === null ? null : JSON.parse(readFileSync(exceptionsFile, "utf8"));
 args.forEach(walk);
+if (files.length === 0) {
+    console.error("No .flix files found. Pass a Flix source file or a directory containing Flix sources.");
+    process.exit(1);
+}
 
 let bad = 0, skipped = 0;
 for (const f of files) {
@@ -43,4 +47,8 @@ for (const f of files) {
     if (problems.length) { bad++; console.log(`FAIL ${f}: ${problems.join("; ")}`); }
 }
 console.log(`${files.length} files, ${skipped} skipped (do not parse), ${bad} failing`);
+if (skipped === files.length) {
+    console.error("No Flix source could be checked because every input failed to parse.");
+    process.exit(1);
+}
 process.exit(bad ? 1 : 0);
