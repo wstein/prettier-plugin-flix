@@ -8,6 +8,7 @@
   --link: light-dark(#1953a2, #9cc7ff);
   --code-background: light-dark(#fff, #1e1e1e);
   --code-foreground: light-dark(#000, #d4d4d4);
+  --catalog-width: min(104rem, calc(100% - 2 * clamp(1rem, 2vw, 2rem)));
 }
 :root[data-theme="light"] { color-scheme: light; }
 :root[data-theme="dark"] { color-scheme: dark; }
@@ -34,19 +35,22 @@ body { margin: 0; color: var(--foreground); line-height: 1.55; }
   font: inherit;
 }
 main { min-width: 0; padding-block: 1rem 4rem; }
-.site-shell {
-  display: grid;
-  grid-template-columns: minmax(11rem, 14rem) minmax(0, 76rem);
-  justify-content: center;
-  gap: 2rem;
-  width: min(92rem, calc(100% - 2rem));
+.site-shell, body:not(.playground-page) .site-toolbar {
+  width: var(--catalog-width);
   margin-inline: auto;
 }
+body:not(.playground-page) .site-toolbar { padding-inline: 0; }
+.site-shell {
+  display: grid;
+  grid-template-columns: clamp(10rem, 16vw, 13rem) minmax(0, 1fr);
+  gap: clamp(1rem, 2vw, 2rem);
+  padding-block-start: 1.65rem;
+}
+.site-shell main { padding-block-start: 0; }
 .chapter-nav {
   align-self: start;
   position: sticky;
   top: 1rem;
-  margin-top: 1.65rem;
   padding-inline-end: 1rem;
   border-inline-end: 1px solid var(--border);
 }
@@ -58,13 +62,13 @@ main { min-width: 0; padding-block: 1rem 4rem; }
   .chapter-nav { position: static; }
 }
 @media (max-width: 60rem) {
-  .site-shell { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .site-shell { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
   .chapter-nav { padding-inline-end: 0; padding-bottom: 0.6rem; border-inline-end: 0; border-bottom: 1px solid var(--border); }
   .chapter-nav ul { display: flex; flex-wrap: wrap; column-gap: 0.5rem; }
 }
 a { color: var(--link); }
 h1, h2, h3 { line-height: 1.25; overflow-wrap: anywhere; }
-h1 { font-size: clamp(2rem, 5vw, 3.25rem); margin-bottom: 0.5rem; }
+h1 { font-size: clamp(2rem, 3.8vw, 3rem); margin-block: 0 0.5rem; }
 .chapters { padding: 0; list-style: none; }
 .chapters li { border-bottom: 1px solid var(--border); padding-block: 0.8rem; }
 .chapters p { margin: 0.25rem 0 0; }
@@ -258,6 +262,12 @@ pre.playground-diff-code {
 
 [data-embedded-playground] :is(.playground-editor .cm-editor, .playground-diff) {
   height: clamp(13rem, calc(var(--source-lines) * 1.36rem + 1.2rem), 27rem);
+}
+
+[data-embedded-playground] { container: embedded-editor / inline-size; }
+@container embedded-editor (max-width: 66rem) {
+  .playground-panes { grid-template-columns: minmax(0, 1fr); }
+  .playground-pane + .playground-pane { border-inline-start: 0; border-block-start: 1px solid var(--border); }
 }
 
 .playground-page {

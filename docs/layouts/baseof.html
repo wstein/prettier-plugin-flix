@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ if not .IsHome }}{{ .Title }} · {{ end }}{{ site.Title }}</title>
+  <title>{{ if .IsHome }}{{ site.Title }} · Test Catalog{{ else }}{{ .Title }} · {{ site.Title }}{{ end }}</title>
   {{ $themeScript := resources.Get "js/site-theme.js" | fingerprint }}
   <script src="{{ $themeScript.RelPermalink }}" integrity="{{ $themeScript.Data.Integrity }}"></script>
   {{ $stylesheet := resources.Get "css/catalog.css" | minify | fingerprint }}

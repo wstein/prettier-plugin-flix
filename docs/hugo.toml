@@ -1,6 +1,6 @@
 baseURL = "https://wstein.github.io/prettier-plugin-flix/"
 languageCode = "en"
-title = "Flix Formatter Fixtures"
+title = "Prettier Plugin for Flix"
 disableKinds = ["taxonomy", "term", "RSS"]
 
 [build]
