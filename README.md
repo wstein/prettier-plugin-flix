@@ -1,6 +1,8 @@
 # prettier-plugin-flix
 
 [![CI status on main](https://github.com/wstein/prettier-plugin-flix/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/wstein/prettier-plugin-flix/actions/workflows/ci.yml)
+[![Line coverage on main](https://img.shields.io/endpoint?url=https%3A%2F%2Fwstein.github.io%2Fprettier-plugin-flix%2Fcoverage%2Flines.json)](https://github.com/wstein/prettier-plugin-flix/actions/workflows/fixture-docs.yml?query=branch%3Amain)
+[![Branch coverage on main](https://img.shields.io/endpoint?url=https%3A%2F%2Fwstein.github.io%2Fprettier-plugin-flix%2Fcoverage%2Fbranches.json)](https://github.com/wstein/prettier-plugin-flix/actions/workflows/fixture-docs.yml?query=branch%3Amain)
 [![npm version](https://img.shields.io/npm/v/prettier-plugin-flix)](https://www.npmjs.com/package/prettier-plugin-flix)
 [![Tested with Flix 0.80.0](https://img.shields.io/badge/tested_with_Flix-0.80.0-cf4647)](https://github.com/flix/flix/releases/tag/v0.80.0)
 [![Open the Flix Playground](https://img.shields.io/badge/Flix-Playground-1953a2)](https://wstein.github.io/prettier-plugin-flix/playground/)
