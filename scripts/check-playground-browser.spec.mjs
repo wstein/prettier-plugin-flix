@@ -136,6 +136,7 @@ test("the live preview keeps trailing comments, reports cursor selection, and re
     await input.press("Shift+ArrowRight");
     await expect(cursor).toHaveText("Ln 1, Col 2 · 1 selected");
 
+    // Partial recovery: damaged declaration between valid ones.
     await input.fill("def first():Int32=1 /* first */\n\ndef broken():Int32=)\n\ndef second():Int32=2\n");
     await expect(status).toContainText("Partially formatted. Error. Line 3, column 20.");
     await expect(status).toBeVisible();
@@ -151,6 +152,21 @@ test("the live preview keeps trailing comments, reports cursor selection, and re
     await expect(status).toBeEmpty();
 });
 
+test("partial recovery formats module siblings after a bad delimiter", async ({ page }) => {
+    await page.goto(siteUrl + "playground/");
+    const input = page.getByRole("textbox", { name: "Flix input" });
+    const preview = page.getByRole("textbox", { name: "Preview" });
+    const status = page.locator("[data-full-playground]").getByRole("status", { includeHidden: true });
+
+    await input.fill("mod Demo {\n    def first():Int32=1\n    def bad():Int32=(]\n    def next():Int32=2\n}\n");
+    await expect(status).toContainText("Partially formatted.");
+    await expect(input).toHaveAttribute("aria-invalid", "true");
+    await expect(preview).toContainText("def first(): Int32 = 1");
+    await expect(preview).toContainText("def bad():Int32=(]");
+    await expect(preview).toContainText("def next(): Int32 = 2");
+    await expect(status).not.toContainText("Not formatted.");
+});
+
 test("unrecoverable input clears a stale formatted preview", async ({ page }) => {
     await page.goto(siteUrl + "playground/");
     const input = page.getByRole("textbox", { name: "Flix input" });
@@ -161,8 +177,10 @@ test("unrecoverable input clears a stale formatted preview", async ({ page }) =>
     await expect(preview).toContainText("def first(): Int32 = 1");
     await expect(preview).toContainText("def second(): Int32 = 2");
 
+    // No recovery: replace a valid program with one unrecoverable declaration.
     await input.fill("def bad():Int32=\n");
     await expect(status).toContainText("Not formatted.");
+    await expect(status).not.toContainText("Partially formatted.");
     await expect(status).toBeVisible();
     await expect(input).toHaveAttribute("aria-invalid", "true");
     await expect(preview).toContainText("def bad():Int32=");
