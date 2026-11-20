@@ -1,7 +1,7 @@
 # prettier-plugin-flix
 
 [![CI status on main](https://github.com/wstein/prettier-plugin-flix/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/wstein/prettier-plugin-flix/actions/workflows/ci.yml)
-[![Latest GitHub release](https://img.shields.io/github/v/release/wstein/prettier-plugin-flix)](https://github.com/wstein/prettier-plugin-flix/releases/latest)
+[![npm version](https://img.shields.io/npm/v/prettier-plugin-flix)](https://www.npmjs.com/package/prettier-plugin-flix)
 [![Tested with Flix 0.80.0](https://img.shields.io/badge/tested_with_Flix-0.80.0-cf4647)](https://github.com/flix/flix/releases/tag/v0.80.0)
 [![Open the Flix Playground](https://img.shields.io/badge/Flix-Playground-1953a2)](https://wstein.github.io/prettier-plugin-flix/playground/)
 [![Read the formatting style](https://img.shields.io/badge/Flix-Formatting_Style-6d28d9)](https://wstein.github.io/prettier-plugin-flix/formatting/)
@@ -38,12 +38,11 @@ def label(code: Int32): String =
 
 ## Try it in a project
 
-Install Prettier and the prebuilt plugin from the GitHub release. Plugin version
-0.1.1 was tested with Flix 0.80.0.
+Install Prettier and the prebuilt plugin from npm. Plugin version 0.1.2 was
+tested with Flix 0.80.0.
 
 ```sh
-npm install --save-dev --save-exact prettier@3.10.1 \
-  https://github.com/wstein/prettier-plugin-flix/releases/download/v0.1.1/prettier-plugin-flix-0.1.1.tgz
+npm install --save-dev --save-exact prettier@3.10.1 prettier-plugin-flix
 ```
 
 Add the plugin to your `.prettierrc.json`.

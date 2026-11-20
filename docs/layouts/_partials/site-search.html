@@ -1,4 +1,18 @@
 {{ $entries := slice }}
+{{ with site.GetPage "formatting" }}
+  {{ $entries = $entries | append (dict
+    "title" .Title
+    "chapter" "Documentation"
+    "source" (readFile "formatting.md")
+    "href" .RelPermalink) }}
+{{ end }}
+{{ with site.GetPage "examples" }}
+  {{ $entries = $entries | append (dict
+    "title" .Title
+    "chapter" "Examples"
+    "description" .Description
+    "href" .RelPermalink) }}
+{{ end }}
 {{ range site.Sections }}
   {{ if ne .Section "examples" }}
     {{ $chapter := . }}
@@ -21,15 +35,11 @@
 {{ end }}
 {{ $index := resources.FromString "data/search.json" ($entries | jsonify) | fingerprint }}
 {{ $script := resources.Get "js/site-search.js" | fingerprint }}
-<dialog class="site-search" id="site-search" aria-labelledby="site-search-title" data-index="{{ $index.RelPermalink }}">
-  <div class="site-search-heading">
-    <h2 id="site-search-title">Search fixtures</h2>
-    <form method="dialog"><button type="submit">Close</button></form>
+<form class="site-search" role="search" aria-label="Catalog" data-index="{{ $index.RelPermalink }}" hidden>
+  <input id="site-search-query" type="search" aria-label="Search catalog" placeholder="Search catalog…" autocomplete="off" aria-controls="site-search-dropdown">
+  <div id="site-search-dropdown" class="site-search-dropdown" hidden>
+    <p class="site-search-status" role="status"></p>
+    <ul class="site-search-results"></ul>
   </div>
-  <form class="site-search-form" role="search">
-    <input id="site-search-query" type="search" aria-label="Search fixtures" placeholder="Title, chapter, or Flix code" autocomplete="off" autofocus>
-  </form>
-  <p class="site-search-status" role="status"></p>
-  <ul class="site-search-results"></ul>
-</dialog>
+</form>
 <script defer src="{{ $script.RelPermalink }}" integrity="{{ $script.Data.Integrity }}"></script>

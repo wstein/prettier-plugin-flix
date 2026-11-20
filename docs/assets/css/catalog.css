@@ -317,32 +317,38 @@ pre.playground-diff-code {
   .playground-shell .playground-diff { height: auto; }
 }
 
-.site-search-trigger, .site-search button, .site-search input {
-  padding: 0.2rem 0.5rem;
+.site-search {
+  position: relative;
+  flex: 0 1 16rem;
+  min-width: 8rem;
+}
+.site-search input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0.35rem 0.65rem;
   border: 1px solid var(--border);
   border-radius: 0.35rem;
   background: var(--code-background);
   color: inherit;
   font: inherit;
 }
-.site-search-trigger, .site-search button { cursor: pointer; }
-.site-search {
-  box-sizing: border-box;
-  width: min(38rem, calc(100% - 1.5rem));
-  max-height: calc(100dvh - 2rem);
-  margin: min(9dvh, 3rem) auto auto;
-  padding: 0.85rem;
+.site-search-dropdown {
+  position: absolute;
+  z-index: 5;
+  inset-block-start: calc(100% + 0.3rem);
+  inset-inline: 0;
+  max-height: min(26rem, 65dvh);
+  overflow: auto;
   border: 1px solid var(--border);
-  border-radius: 0.6rem;
-  background: var(--surface);
-  color: var(--foreground);
+  border-radius: 0.45rem;
+  background: var(--code-background);
+  box-shadow: 0 0.3rem 0.9rem rgb(0 0 0 / 0.12);
 }
-.site-search::backdrop { background: rgb(0 0 0 / 0.45); }
-.site-search-heading { display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; }
-.site-search-heading h2 { margin: 0; font-size: 1.1rem; }
-.site-search-form { margin-top: 0.65rem; }
-.site-search input { box-sizing: border-box; width: 100%; padding: 0.45rem 0.6rem; }
-.site-search-status { margin: 0.5rem 0; font-size: 0.85rem; }
+.site-search-status { margin: 0; padding: 0.45rem 0.6rem; font-size: 0.85rem; }
 .site-search-results { list-style: none; padding: 0; margin: 0; }
 .site-search-results a { display: block; padding: 0.45rem 0.6rem; border-top: 1px solid var(--border); }
+.site-search-results a:is(:hover, :focus-visible) { background: var(--surface); }
 .site-search-results span { display: block; color: var(--foreground); font-size: 0.85rem; }
+@media (max-width: 32rem) {
+  .site-search { flex-basis: 100%; }
+}

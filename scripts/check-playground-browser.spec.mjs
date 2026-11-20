@@ -54,6 +54,40 @@ test.use({
     launchOptions: { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH },
 });
 
+test("inline search finds both documentation pages and still finds fixtures", async ({ page }) => {
+    await page.goto(siteUrl);
+    const search = page.getByRole("search", { name: "Catalog" });
+    const input = search.getByRole("searchbox");
+    const results = search.locator(".site-search-dropdown");
+
+    await input.fill("formatting style");
+    const style = results.getByRole("link", { name: /Flix formatting style/ });
+    await expect(style).toHaveAttribute("href", basePath + "formatting/");
+    await input.press("ArrowDown");
+    await expect(style).toBeFocused();
+    await style.press("Enter");
+    await expect(page).toHaveURL(/\/formatting\/$/);
+
+    await page.setViewportSize({ width: 390, height: 760 });
+    await input.fill("comprehensions and parallel bindings");
+    await expect(style).toBeVisible();
+    await input.press("Escape");
+    await expect(results).toBeHidden();
+    await expect(input).toBeFocused();
+
+    await input.fill("before and after");
+    await expect(results.getByRole("link", { name: /Before and after/ })).toHaveAttribute("href", basePath + "examples/");
+    await input.press("Enter");
+    await expect(page).toHaveURL(/\/examples\/$/);
+
+    await input.fill("block comments at the end of a line");
+    await expect(results.getByRole("link", { name: /Block comments at the end of a line/ }))
+        .toHaveAttribute("href", basePath + "comments/#trailing-block-comment");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
+    await input.clear();
+    await expect(results).toBeHidden();
+});
+
 test("the catalog gives embedded editors room and aligns the header with the chapters", async ({ page }) => {
     const heading = page.getByRole("heading", { name: "Before and after", exact: true });
     const chapters = page.getByRole("navigation", { name: "Documentation" });
