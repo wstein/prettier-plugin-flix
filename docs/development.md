@@ -53,6 +53,10 @@ npm run test:coverage
 4. keeps `->` arrows in the same class (field access versus arrow) and ends every Datalog constraint with a dot followed by whitespace, and
 5. formats to itself (idempotence).
 
+`test/fixture-idempotence.test.mjs` also formats every parseable fixture input
+twice at print widths 40, 50, 60, 80, and 100 and asserts equality. That sweep
+catches width-dependent drift that a single pinned Output block can miss.
+
 To run the same checks over any directory:
 
 ```sh
