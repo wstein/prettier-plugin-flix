@@ -360,12 +360,15 @@ A multiline return schema can align its predicates beneath the first one
 when the remaining signature fits.
 
 [Query and schema fixture](../test/fixtures/datalog/query-clause-layout.md) ·
-[Rule fixture](../test/fixtures/datalog/lattice-rule-layout.md)
+[Rule fixture](../test/fixtures/datalog/lattice-rule-layout.md) ·
+[Datalog User Manual: Clauses](https://datalog.sourceforge.net/datalog.html#index-clause-24)
 
 ## Sources and limits
 
-The reference uses the official Flix documentation and handwritten examples
-to guide style choices. The
+The [Flix website](https://flix.dev/) and [Flix language book](https://doc.flix.dev/)
+provide examples that guide the plugin's style choices. The
+[Datalog 2.3 User Manual](https://datalog.sourceforge.net/datalog.html) provides
+additional examples of fact and rule layout. The
 [Flix 0.80 formatter implementation](https://github.com/flix/flix/blob/v0.80.0/main/src/ca/uwaterloo/flix/tools/fmt/PrettyPrinter.scala)
 provides a comparison. The [documentation audit](official-examples.md) records
 reviewed differences against the official examples.
