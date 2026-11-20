@@ -97,7 +97,11 @@ test("the preview keeps the tail of an unclosed block and leaves valid neighbori
     assert.equal((await formatFlixPreview("def first():Int32=1\n" + bad, {})).output,
         "def first(): Int32 = 1\n" + bad);
     const valid = "def first(): Int32 = 1\n";
-    assert.equal((await formatFlixPreview(valid + bad, {})).output, undefined);
+    const unrecoverable = await formatFlixPreview(valid + bad, {});
+    assert.equal(unrecoverable.output, undefined);
+    assert.ok(unrecoverable.error?.message);
+    // The workbench shows the current source and a "Not formatted" status when
+    // recovery returns no output; see check-playground-browser.spec.mjs.
     const comment = "/* unclosed comment\ndef notCode():Int32=2\n";
     assert.equal((await formatFlixPreview("def first():Int32=1\n" + comment, {})).output,
         "def first(): Int32 = 1\n" + comment);
