@@ -101,7 +101,7 @@ const BINARY = new Set([
 ]);
 /** Own-separator nodes: they emit their trailing space or newline themselves. */
 const SELF_SPACED = new Set(["DeclPrefix", "AnnotationList", "ModifierList"]);
-const DECLARATION_BLOCKS = new Set(["ModDeclaration", "TraitDeclaration", "InstanceDeclaration", "EffectDeclaration"]);
+const DECLARATION_BLOCKS = new Set(["ModDeclaration", "TraitDeclaration", "InstanceDeclaration", "EffDeclaration"]);
 
 const CALL_LIKE = new Set([
     L.NAME_LOWERCASE, L.NAME_UPPERCASE, L.NAME_MATH, L.STATIC_UPPER, L.ANNOTATION, L.HOLE_NAMED,
