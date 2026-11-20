@@ -10,6 +10,10 @@ on:
         description: Also publish to npm after Trusted Publishing is configured.
         type: boolean
         default: false
+      flix_tag:
+        description: Exact Flix release tag for the standard-library compile gate.
+        type: string
+        default: v0.80.0
 
 permissions:
   contents: read
@@ -22,6 +26,7 @@ jobs:
   package:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     outputs:
       version: ${{ steps.package.outputs.version }}
       commit: ${{ steps.package.outputs.commit }}
@@ -43,6 +48,10 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
       - name: Check npm publishing opt-in
         if: inputs.publish_npm
         run: |
@@ -50,18 +59,69 @@ jobs:
             echo 'This commit still marks the package private in package.json.' >&2
             exit 1
           fi
+      - name: Check CHANGELOG and npm version
+        id: version
+        run: |
+          version=$(node -p 'require("./package.json").version')
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo 'Expected a stable plugin version in package.json.' >&2
+            exit 1
+          fi
+          if ! grep -qE "^## \[${version}\]" CHANGELOG.md; then
+            echo "CHANGELOG.md must contain a '## [${version}]' heading before release." >&2
+            exit 1
+          fi
+          if npm view "prettier-plugin-flix@$version" version >/dev/null 2>&1; then
+            echo "prettier-plugin-flix@$version is already on npm." >&2
+            exit 1
+          fi
+          printf 'version=%s\n' "$version" >> "$GITHUB_OUTPUT"
       - run: git config --global url."https://github.com/".insteadOf ssh://git@github.com/
       - run: npm ci
-      - run: npm test
+      - run: npm run test:coverage
       - run: npm run coverage:syntax -- --check
+      - name: Install Hugo
+        env:
+          HUGO_VERSION: 0.154.5
+          HUGO_SHA256: 99b2f2f3db3e65bbbdb5840bc5158e271975b17d152904bb750ebae3c2a2aecc
+        run: |
+          archive="hugo_${HUGO_VERSION}_linux-amd64.tar.gz"
+          curl -fsSL "https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/${archive}" -o "$RUNNER_TEMP/$archive"
+          printf '%s  %s\n' "$HUGO_SHA256" "$RUNNER_TEMP/$archive" | sha256sum -c -
+          mkdir -p "$RUNNER_TEMP/hugo"
+          tar -xzf "$RUNNER_TEMP/$archive" -C "$RUNNER_TEMP/hugo" hugo
+          echo "$RUNNER_TEMP/hugo" >> "$GITHUB_PATH"
+      - run: npm run docs:build
+      - name: Install Chromium for Playwright
+        run: npx playwright install --with-deps chromium
+      - run: npm run docs:test:browser
+      - name: Download the Flix compiler
+        id: compiler
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REQUESTED_TAG: ${{ inputs.flix_tag || 'v0.80.0' }}
+        run: |
+          if [[ ! "$REQUESTED_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Expected a Flix release tag such as v0.80.0." >&2
+            exit 1
+          fi
+          release=$(gh api "repos/flix/flix/releases/tags/$REQUESTED_TAG")
+          tag=$(jq -er '.tag_name' <<< "$release")
+          jar="$RUNNER_TEMP/flix.jar"
+          gh release download "$tag" --repo flix/flix --pattern flix.jar --output "$jar"
+          digest=$(jq -r '.assets[] | select(.name == "flix.jar") | .digest // empty' <<< "$release")
+          if [[ -n "$digest" ]]; then
+            printf '%s  %s\n' "${digest#sha256:}" "$jar" | sha256sum --check
+          fi
+          printf 'tag=%s\n' "$tag" >> "$GITHUB_OUTPUT"
+      - name: Format and compile the bundled standard library
+        env:
+          FLIX_TAG: ${{ steps.compiler.outputs.tag }}
+        run: bash scripts/check-flix-stdlib.sh "$RUNNER_TEMP/flix.jar" "$FLIX_TAG"
       - name: Pack the release
         id: package
         run: |
           version=$(node -p 'require("./package.json").version')
-          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo 'Expected a stable plugin version in package.json.'
-            exit 1
-          fi
           mkdir -p "$RUNNER_TEMP/package"
           npm pack --pack-destination "$RUNNER_TEMP/package"
           printf 'version=%s\ncommit=%s\n' "$version" "$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
@@ -85,6 +145,7 @@ jobs:
   publish:
     needs: package
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: write
     steps:
@@ -139,6 +200,8 @@ jobs:
     if: inputs.publish_npm
     needs: [package, publish]
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: npm
     permissions:
       contents: read
       id-token: write
@@ -149,10 +212,11 @@ jobs:
           path: ${{ runner.temp }}/package
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 22
+          registry-url: https://registry.npmjs.org
       - name: Publish the verified tarball to npm
         env:
           PACKAGE_VERSION: ${{ needs.package.outputs.version }}
         run: |
           package="$RUNNER_TEMP/package/prettier-plugin-flix-$PACKAGE_VERSION.tgz"
-          npm publish "$package" --access public --registry=https://registry.npmjs.org
+          npm publish "$package" --provenance --access public
