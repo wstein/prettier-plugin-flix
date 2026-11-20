@@ -37,7 +37,7 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
     let fixtures;
     let highlightingFailed = false;
 
-    const input = createEditor(playground.querySelector("[data-input]"), queuePreview, initial?.source, showCursor);
+    const input = createEditor(playground.querySelector("[data-input]"), queuePreview, initial?.source, showCursor, status.id);
     const output = createEditor(formatted, undefined, preview?.output);
 
     function replaceCode(view, code) {
@@ -73,10 +73,15 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
 
     function updatePreview(id) {
         highlighter?.apply(input.view);
-        if (!printWidth.validity.valid) {
+        const invalidWidth = !printWidth.validity.valid;
+        if (invalidWidth) {
+            printWidth.setAttribute("aria-invalid", "true");
+            printWidth.setAttribute("aria-errormessage", status.id);
             showStatus("Enter a whole number greater than zero for line width.", true);
             return;
         }
+        printWidth.removeAttribute("aria-invalid");
+        printWidth.removeAttribute("aria-errormessage");
         requestFormat(playground.dataset.worker, {
             id,
             asset: playground.dataset.formatter,
@@ -98,7 +103,7 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
         if (data.error) {
             const { location, message } = data.error;
             const where = location ? `Line ${location.line}, column ${location.column}. ` : "";
-            input.markError(location);
+            input.markError(location, true);
             if (data.output === undefined) {
                 // Recovery could not change the source: show it unchanged and
                 // drop any previous formatted snapshot so Diff is not stale.
@@ -122,7 +127,9 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
     }
 
     function refreshDiff() {
-        if (!diff.hidden && preview) renderDiff(diff, preview, highlighter?.tokenize);
+        if (diff.hidden) return;
+        if (preview) renderDiff(diff, preview, highlighter?.tokenize);
+        else diff.textContent = "No formatted preview is available.";
     }
 
     for (const button of previewModes) {

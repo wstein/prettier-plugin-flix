@@ -21,20 +21,21 @@ const highlighting = StateField.define({
 });
 
 const setErrorMarks = StateEffect.define();
+const noError = { marks: Decoration.none, invalid: false };
 const errorMarks = StateField.define({
-    create: () => Decoration.none,
+    create: () => noError,
     update(marks, transaction) {
         for (const effect of transaction.effects) {
             if (effect.is(setErrorMarks)) return effect.value;
         }
-        return transaction.docChanged ? Decoration.none : marks;
+        return transaction.docChanged ? noError : marks;
     },
-    provide: (field) => EditorView.decorations.from(field),
+    provide: (field) => EditorView.decorations.from(field, ({ marks }) => marks),
 });
 const errorLine = Decoration.line({ class: "flix-error-line" });
 const errorCharacter = Decoration.mark({ class: "flix-error-character" });
 
-export function createEditor(parent, onEdit, doc = "", onCursor) {
+export function createEditor(parent, onEdit, doc = "", onCursor, diagnosticId) {
     const { tabWidth } = playgroundIndentation;
     const view = new EditorView({
         parent,
@@ -54,7 +55,7 @@ export function createEditor(parent, onEdit, doc = "", onCursor) {
             ...(onEdit ? [
                 errorMarks,
                 EditorView.contentAttributes.compute([errorMarks], (state) =>
-                    state.field(errorMarks).size ? { "aria-invalid": "true" } : {},
+                    state.field(errorMarks).invalid ? { "aria-invalid": "true", "aria-errormessage": diagnosticId } : {},
                 ),
                 history(),
                 keymap.of([...defaultKeymap, ...historyKeymap]),
@@ -70,7 +71,7 @@ export function createEditor(parent, onEdit, doc = "", onCursor) {
 
     return {
         view,
-        markError(location) {
+        markError(location, invalid = false) {
             const { doc } = view.state;
             const marks = [];
             if (location && location.line > 0 && location.line <= doc.lines) {
@@ -84,7 +85,7 @@ export function createEditor(parent, onEdit, doc = "", onCursor) {
                     marks.push(errorCharacter.range(from, from + characters[column].length));
                 }
             }
-            view.dispatch({ effects: setErrorMarks.of(Decoration.set(marks, true)) });
+            view.dispatch({ effects: setErrorMarks.of({ marks: Decoration.set(marks, true), invalid }) });
         },
     };
 }
