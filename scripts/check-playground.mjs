@@ -94,12 +94,14 @@ test("the preview resumes at rule, enum case and struct field boundaries", async
 
 test("the preview keeps the tail of an unclosed block and leaves valid neighboring units alone", async () => {
     const bad = "def bad():Int32={\n  1 +\ndef ambiguous():Int32=2\n";
-    assert.equal((await formatFlixPreview("def first():Int32=1\n" + bad, {})).output,
-        "def first(): Int32 = 1\n" + bad);
+    // Recovery still formats the following def when an unclosed `{` does not
+    // swallow it; the damaged opener stays verbatim.
+    const recovered = "def first(): Int32 = 1\ndef bad():Int32={\n  1 +\ndef ambiguous(): Int32 = 2\n";
+    assert.equal((await formatFlixPreview("def first():Int32=1\n" + bad, {})).output, recovered);
     const valid = "def first(): Int32 = 1\n";
-    const unrecoverable = await formatFlixPreview(valid + bad, {});
-    assert.equal(unrecoverable.output, undefined);
-    assert.ok(unrecoverable.error?.message);
+    const partial = await formatFlixPreview(valid + bad, {});
+    assert.equal(partial.output, recovered);
+    assert.ok(partial.error?.message);
     // The workbench shows the current source and a "Not formatted" status when
     // recovery returns no output; see check-playground-browser.spec.mjs.
     const comment = "/* unclosed comment\ndef notCode():Int32=2\n";

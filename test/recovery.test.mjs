@@ -57,15 +57,78 @@ test("recovers enum cases and struct fields around invalid entries", async () =>
     assert.equal(await recover(structSource), structSource.replace("a:Int32", "a: Int32").replace("c:Bool", "c: Bool"));
 });
 
-test("keeps regions with unclosed comments or mismatched delimiters intact", async () => {
+test("keeps unclosed comments and truncated modules intact", async () => {
     for (const region of [
         "/* unclosed\ndef outside():Int32=2",
         "mod A {\n    def inside():Int32=(\n",
-        "mod A {\n    def inside():Int32=(]\n    def next():Int32=2\n}",
     ]) {
         assert.equal(await recover(lines("def first():Int32=1", region)), lines("def first(): Int32 = 1", region));
     }
     assert.equal(await recover(""), undefined);
+});
+
+test("formats module siblings after a mismatched or unclosed delimiter", async () => {
+    const mismatched = lines(
+        "mod Demo {",
+        "    def first():Int32=1",
+        "    def bad():Int32=(]",
+        "    def next():Int32=2",
+        "}",
+        "",
+    );
+    assert.equal(
+        await recover(mismatched),
+        lines(
+            "mod Demo {",
+            "    def first(): Int32 = 1",
+            "    def bad():Int32=(]",
+            "    def next(): Int32 = 2",
+            "}",
+            "",
+        ),
+    );
+
+    const unclosed = lines(
+        "mod Demo {",
+        "    def first():Int32=1",
+        "    def bad():Int32=(",
+        "    def next():Int32=2",
+        "}",
+        "",
+    );
+    assert.equal(
+        await recover(unclosed),
+        lines(
+            "mod Demo {",
+            "    def first(): Int32 = 1",
+            "    def bad():Int32=(",
+            "    def next(): Int32 = 2",
+            "}",
+            "",
+        ),
+    );
+});
+
+test("formats Datalog rules around a broken rule with a bad delimiter", async () => {
+    const source = lines(
+        "def d() = #{",
+        "    Path(1,2).",
+        "    Broken(.",
+        "    Q(3,4).",
+        "}",
+        "",
+    );
+    assert.equal(
+        await recover(source),
+        lines(
+            "def d() = #{",
+            "    Path(1, 2).",
+            "    Broken(.",
+            "    Q(3, 4).",
+            "}",
+            "",
+        ),
+    );
 });
 
 test("rejects a nonconforming recovery wrapper and propagates unexpected formatter errors", async () => {
