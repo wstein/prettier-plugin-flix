@@ -11,7 +11,7 @@ const site = new URL("../docs/public/", import.meta.url);
 const page = await readFile(new URL("playground/index.html", site), "utf8");
 const asset = page.match(/\bdata-formatter=(?:"([^"]+)"|([^\s>]+))/);
 assert.ok(asset, "Playground page links to its formatter bundle");
-const { formatFlix } = await import(new URL(`js/${basename(asset[1] ?? asset[2])}`, site));
+const { formatFlix, formatFlixPreview } = await import(new URL(`js/${basename(asset[1] ?? asset[2])}`, site));
 
 test("the formatting reference publishes highlighted examples and links to catalog fixtures", async () => {
     const [source, guide, home] = await Promise.all([
@@ -50,6 +50,58 @@ test("the published browser bundle reports syntax error locations", async () => 
     await assert.rejects(() => formatFlix("def", {}), (error) =>
         error instanceof SyntaxError && error.loc?.start.line === 1 && error.loc.start.column > 0,
     );
+});
+
+test("the preview formats declarations around a damaged declaration and returns its error", async () => {
+    const eol = "\r\n";
+    const bad = "def broken(x:Int32:Int32=x  // retain this text  ";
+    const source = ['def first():String="München 🍊"', bad, "@Test", "def next():Int32=2", ""].join(eol);
+    await assert.rejects(() => formatFlix(source, {}), SyntaxError);
+    const preview = await formatFlixPreview(source, {});
+    assert.equal(preview.output, ['def first(): String = "München 🍊"', bad, "@Test", "def next(): Int32 = 2", ""].join(eol));
+    assert.equal(preview.error.location.line, 2);
+    const fixed = source.replace(bad, "def broken(x:Int32):Int32=x");
+    assert.deepEqual(await formatFlixPreview(fixed, {}), { output: await formatFlix(fixed, {}) });
+});
+
+test("the preview resumes at rule, enum case and struct field boundaries", async () => {
+    const cases = [
+        {
+            source: ["def rules() = #{", " A( 1). // first", " Broken(x) :- .", " C( Mod.f(3) ).", "}", ""],
+            expected: ["def rules() = #{", "    A(1).  // first", " Broken(x) :- .", "    C(Mod.f(3)).", "}", ""],
+        },
+        {
+            source: ["enum Choice {", " case A (Int32,String)", " case Broken(,)", " case C (Int32)", "}", ""],
+            expected: ["enum Choice {", "    case A(Int32, String)", " case Broken(,)", "    case C(Int32)", "}", ""],
+        },
+        {
+            source: ["struct Fields {", " a:Int32,", " broken: ,", " c:String", "}", ""],
+            expected: ["struct Fields {", "    a: Int32,", " broken: ,", "    c: String", "}", ""],
+        },
+        {
+            source: ["mod Example {", "    def first():Int32=1", "    def broken():Int32=", "    pub def next():Int32=2", "}", ""],
+            expected: ["mod Example {", "    def first(): Int32 = 1", "    def broken():Int32=", "    pub def next(): Int32 = 2", "}", ""],
+        },
+    ];
+    for (const { source, expected } of cases) {
+        const preview = await formatFlixPreview(source.join("\n"), {});
+        assert.equal(preview.output, expected.join("\n"), source.join("\n"));
+        assert.ok(preview.error?.location);
+        assert.equal((await formatFlixPreview(preview.output, {})).output, undefined);
+    }
+});
+
+test("the preview keeps the tail of an unclosed block and leaves valid neighboring units alone", async () => {
+    const bad = "def bad():Int32={\n  1 +\ndef ambiguous():Int32=2\n";
+    assert.equal((await formatFlixPreview("def first():Int32=1\n" + bad, {})).output,
+        "def first(): Int32 = 1\n" + bad);
+    const valid = "def first(): Int32 = 1\n";
+    assert.equal((await formatFlixPreview(valid + bad, {})).output, undefined);
+    const comment = "/* unclosed comment\ndef notCode():Int32=2\n";
+    assert.equal((await formatFlixPreview("def first():Int32=1\n" + comment, {})).output,
+        "def first(): Int32 = 1\n" + comment);
+    const quoted = 'def valid(): String = "def pretend():Int32=1"\n';
+    assert.equal((await formatFlixPreview(quoted + "def bad():Int32=\n", {})).output, undefined);
 });
 
 test("the browser formatter points to the backslash before a real newline", async () => {

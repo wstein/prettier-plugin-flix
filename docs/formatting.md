@@ -262,7 +262,10 @@ reviewed differences against the official examples.
 
 - The plugin uses the Flix grammar to parse source. The Flix compiler remains
   the authority for type checking and other language checks.
-- Syntax errors stop formatting and report a line and column.
+- The CLI reports a syntax error with its line and column. The Playground
+  can also format independently parseable declarations, Datalog rules and
+  constructor or field entries around an error. The preview preserves the
+  original text where it cannot determine a complete unit.
 - Flix assigns meaning to whitespace around certain tokens. Field access
   `s->field`, dots in `a.b` and package qualifiers in `use Pkg::Name` stay
   together. Very long method chains may exceed the configured width.
