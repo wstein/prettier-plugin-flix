@@ -11,6 +11,7 @@ use Foo /* before */::Bar.before
 use Foo::/* after */ Bar.after
 use Foo::Bar.spaced // ordinary use
 use Foo::// keep glued
+// keep this line too
 Bar.next
 
 def imported():Int32=before()+after()+spaced()+next()
@@ -33,6 +34,7 @@ use Foo/* before */::Bar.before
 use Foo::/* after */Bar.after
 use Foo::Bar.spaced  // ordinary use
 use Foo::// keep glued
+// keep this line too
 Bar.next
 
 def imported(): Int32 = before() + after() + spaced() + next()
@@ -55,6 +57,7 @@ use Foo/* before */::Bar.before
 use Foo::/* after */Bar.after
 use Foo::Bar.spaced  // ordinary use
 use Foo::// keep glued
+// keep this line too
 Bar.next
 
 def imported(): Int32 =
