@@ -109,6 +109,17 @@ The weekly drift check still compares the exact recorded examples. These
 lists explain case-specific decisions and provide no blanket approval for
 unreviewed diffs.
 
+### Automatically explained differences
+
+The audit replays the `align-trailing-comments` rule on the original code.
+A diff appears under **Automatically explained** when that rule reproduces
+the entire formatted result. Every changed comment gap is listed by line
+and column width in the HTML and JSON reports. Mixed diffs, including
+changes to code layout or the final newline, stay in the review groups.
+
+The baseline and explicit approval checks still use exact comparisons.
+Changes to the official examples trigger the usual drift check.
+
 ### Review a weekly failure
 
 The workflow compares with [the observed baseline](../test/official-docs-baseline.tsv).
