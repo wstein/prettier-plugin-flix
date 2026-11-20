@@ -266,6 +266,9 @@ decide whether the aligned lines fit, including any trailing comment.
 OCamlFormat's `break-cases` option offers a comparison between margin-driven
 wrapping and vertical branches.
 Flix can keep a short arm body after `=>` and indent a longer body beneath it.
+Keep a guarded pattern and its `=>` together when they fit, as in Rust's
+match style. The body can wrap independently.
+[Rust Style Guide](https://doc.rust-lang.org/style-guide/expressions.html#match)
 [OCamlFormat options](https://github.com/ocaml-ppx/ocamlformat/blob/main/doc/manpage_ocamlformat.mld)
 
 **Before**
@@ -289,6 +292,7 @@ def next(xs: List[Int32]): Int32 = match xs {
 ```
 
 [Match fixture](../test/fixtures/expressions/mixed-match-bodies.md) ·
+[Guarded match fixture](../test/fixtures/expressions/guarded-match-wrap-boundary.md) ·
 [Handler clauses and group boundaries](../test/fixtures/expressions/align-handler-clauses.md) ·
 [Map alignment](../test/fixtures/expressions/align-map-entries.md) ·
 [Record alignment](../test/fixtures/expressions/align-record-fields.md)
