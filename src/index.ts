@@ -38,4 +38,5 @@ const flixAstPrinter: Printer<FlixRoot> = {
 export const printers: Record<string, Printer<FlixRoot>> = { "flix-ast": flixAstPrinter };
 
 const plugin: Plugin<FlixRoot> = { languages, parsers, printers, defaultOptions };
+export { recoverFormatting } from "./recover.js";
 export default plugin;

@@ -103,16 +103,16 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
             const { location, message } = data.error;
             const where = location ? `Line ${location.line}, column ${location.column}. ` : "";
             input.markError(location);
-            showStatus("Error. " + where + readableDiagnostic(message), true);
-            return;
-        }
+            const label = data.output === undefined ? "Error. " : "Partially formatted. Error. ";
+            showStatus(label + where + readableDiagnostic(message), true);
+            if (data.output === undefined) return;
+        } else if (input.view.contentDOM.hasAttribute("aria-invalid")) input.markError();
         preview = { source: input.view.state.doc.toString(), output: data.output };
-        if (input.view.contentDOM.hasAttribute("aria-invalid")) input.markError();
         replaceCode(output.view, preview.output);
         highlighter?.apply(output.view);
         refreshDiff();
         copy.disabled = data.output.length === 0;
-        showStatus(highlightingFailed ? "Syntax highlighting could not load." : "");
+        if (!data.error) showStatus(highlightingFailed ? "Syntax highlighting could not load." : "");
     });
 
     formatter.addEventListener("error", () => {
