@@ -416,7 +416,10 @@ reviewed differences against the official examples.
   original text where it cannot determine a complete unit.
 - Flix assigns meaning to whitespace around certain tokens. Field access
   `s->field`, dots in `a.b` and package qualifiers in `use Pkg::Name` stay
-  together. Very long method chains may exceed the configured width.
+  together. Flix 0.80.0 rejects a line break on either side of a method-access
+  dot. A long method chain can wrap inside an argument list. A chain of
+  argument-free calls may exceed the configured width.
+  [Method chain fixture](../test/fixtures/expressions/long-method-chain.md)
 - Put `// prettier-ignore` on its own line before a declaration to preserve
   that declaration's source text. The rest of the file is formatted normally.
   The declaration still needs to parse. [Fixture](../test/fixtures/comments/prettier-ignore.md)
