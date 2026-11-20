@@ -255,38 +255,6 @@ export class Printer {
         return (info.lead.length > 0 ? info.lead[0].nl : info.nlAfter) >= 2;
     }
 
-    private declarationHasBlock(item: Node): boolean {
-        if (!["Declaration", "TraitMember", "InstanceMember"].includes(kind(item))) return false;
-        const declaration = kids(item)[0];
-        const tail = kids(declaration).at(-1);
-        if (!tail) return false;
-
-        switch (kind(declaration)) {
-            case "DefDeclaration":
-            case "ValDeclaration": {
-                if (kind(tail) !== "Statement") return false;
-                const parts = this.statementParts(tail as ParserRuleContext);
-                return parts.length === 1 && this.isBlockExpr(parts[0].expr);
-            }
-            case "EnumDeclaration": {
-                const close = kids(tail).at(-1);
-                return isTerm(close) && ttype(close) === L.RBRACE;
-            }
-            case "ModDeclaration":
-            case "StructDeclaration":
-            case "TraitDeclaration":
-            case "InstanceDeclaration":
-            case "EffDeclaration":
-                return isTerm(tail) && ttype(tail) === L.RBRACE;
-            default:
-                return false;
-        }
-    }
-
-    private blankBetween(previous: Node, next: Node): boolean {
-        return this.blankBefore(firstTerm(next)) || this.declarationHasBlock(previous) || this.declarationHasBlock(next);
-    }
-
     private onNewLine(t: TerminalNode | null): boolean {
         const info = t && this.info(t);
         return !!info && info.nlBefore > 0;
@@ -584,9 +552,8 @@ export class Printer {
             entries.forEach((entry, k) => {
                 const node = entry[0];
                 if (k > 0) {
-                    const previous = entries[k - 1].at(-1)!;
-                    const blank = this.blankBetween(previous, node);
-                    const prevLast = lastTerm(previous);
+                    const blank = this.blankBefore(firstTerm(node));
+                    const prevLast = lastTerm(entries[k - 1][entries[k - 1].length - 1]);
                     docs.push(sourceMultiline || blank ? hardline : this.after(structSplit ? structSplit.seps[k - 1] : prevLast, line));
                     if (blank) docs.push(hardline);
                 }
@@ -729,7 +696,7 @@ export class Printer {
         items.forEach((it, k) => {
             if (k > 0) {
                 const prev = items[k - 1];
-                const blank = kind(prev) !== kind(it) || this.blankBetween(prev, it);
+                const blank = this.blankBefore(firstTerm(it)) || kind(prev) !== kind(it);
                 docs.push(hardline);
                 if (blank) docs.push(hardline);
             }
