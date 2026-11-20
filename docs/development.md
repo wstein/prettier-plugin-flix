@@ -115,12 +115,14 @@ The compiler oracle compiles each file in its own throwaway project, as flix/fli
 
 ## Compile the formatted standard library
 
-The **Flix standard library compilation** workflow runs weekly against the
-latest stable Flix release. Run it manually with `flix_tag` to check an exact
-release. It extracts the sources bundled in the release JAR, compiles the
-original library as a control, and compiles a separate copy after Prettier
-formatting. Both builds use `--Xlib nix`, so they compile the extracted
-library without also loading the copy bundled in the compiler.
+The **Flix standard library compilation** workflow runs on pull requests and
+`main` pushes that touch formatter sources (`src/**`), weekly on a schedule, and
+on demand. It pins Flix to `v0.80.0` by default; override with `flix_tag` on
+`workflow_dispatch` or when the release workflow calls it. It extracts the
+sources bundled in the release JAR, compiles the original library as a control,
+and compiles a separate copy after Prettier formatting. Both builds use
+`--Xlib nix`, so they compile the extracted library without also loading the
+copy bundled in the compiler.
 
 The formatting step checks token and parse-tree preservation and verifies
 that formatting twice gives the same result. The workflow summary records
