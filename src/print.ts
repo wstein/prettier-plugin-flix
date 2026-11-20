@@ -735,8 +735,7 @@ export class Printer {
         const docs: Doc[] = [];
         items.forEach((it, k) => {
             if (k > 0) {
-                const prev = items[k - 1];
-                const blank = this.blankBefore(firstTerm(it)) || kind(prev) !== kind(it);
+                const blank = this.blankBefore(firstTerm(it));
                 docs.push(hardline);
                 if (blank) docs.push(hardline);
             }
