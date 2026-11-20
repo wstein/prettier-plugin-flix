@@ -66,7 +66,7 @@ test("the live preview keeps trailing comments, reports cursor selection, and re
     await input.fill("def first():Int32=1 /* first */\n\ndef second():Int32=2\n");
     await expect(preview).toContainText("def first(): Int32 = 1 /* first */");
     await expect(preview).toContainText("def second(): Int32 = 2");
-    await input.press("Control+Home");
+    await input.press("ControlOrMeta+Home");
     await input.press("Shift+ArrowRight");
     await expect(cursor).toHaveText("Ln 1, Col 2 · 1 selected");
 
