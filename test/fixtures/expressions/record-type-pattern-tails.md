@@ -37,6 +37,10 @@ def eightyOne(r: { departureStationName = String, estimatedTravelMinutes = Int32
 def patternCommented(journey: { departureStationName = String, estimatedTravelMinutes = Int32 | r }): String = match journey {
     case { departureStationName = name, estimatedTravelMinutes = _duration /* c */ | _remainingJourneyDetailsBeforeServiceChange } => name
 }
+
+def ownLineCommented(r: { departureStationName = String, estimatedTravelMinutes = Int32
+    // own line before the pipe
+    | remainingJourneyFieldsBeforeServiceChange }): String = r#departureStationName
 ```
 
 ## Output
@@ -102,6 +106,13 @@ def patternCommented(journey: {
         estimatedTravelMinutes = _duration /* c */ | _remainingJourneyDetailsBeforeServiceChange
     } => name
 }
+
+def ownLineCommented(r: {
+    departureStationName = String,
+    estimatedTravelMinutes = Int32
+    // own line before the pipe
+    | remainingJourneyFieldsBeforeServiceChange
+}): String = r#departureStationName
 ```
 
 ```flix printWidth=80
@@ -163,6 +174,13 @@ def patternCommented(journey: {
         estimatedTravelMinutes = _duration /* c */ | _remainingJourneyDetailsBeforeServiceChange
     } => name
 }
+
+def ownLineCommented(r: {
+    departureStationName = String,
+    estimatedTravelMinutes = Int32
+    // own line before the pipe
+    | remainingJourneyFieldsBeforeServiceChange
+}): String = r#departureStationName
 ```
 
 ```flix printWidth=100
@@ -222,4 +240,11 @@ def patternCommented(journey: {
         estimatedTravelMinutes = _duration /* c */ | _remainingJourneyDetailsBeforeServiceChange
     } => name
 }
+
+def ownLineCommented(r: {
+    departureStationName = String,
+    estimatedTravelMinutes = Int32
+    // own line before the pipe
+    | remainingJourneyFieldsBeforeServiceChange
+}): String = r#departureStationName
 ```
