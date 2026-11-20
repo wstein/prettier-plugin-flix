@@ -34,6 +34,10 @@ function before(lines: string[], token: Token): string {
     return Array.from(lines[token.line - 1]).slice(0, token.column).join("");
 }
 
+function indentation(text: string): string {
+    return /^[ \t]*/.exec(text)![0];
+}
+
 /** Locate printed definition separators using the source parse tree and code-token order. */
 function printedDefinitionEquals(root: FlixRoot, tokens: Token[]): Set<Token> {
     const input: Token[] = [];
@@ -78,7 +82,7 @@ function lineCommentGroups(tokens: Token[], lines: string[], tabWidth: number, d
             token.text.startsWith("///") || token.text.includes("\t") || CARET.test(token.text)) continue;
 
         const code = before(lines, token).trimEnd();
-        const indent = width(/^[ \t]*/.exec(code)![0], tabWidth);
+        const indent = width(indentation(code), tabWidth);
         const prev = group.at(-1);
         const startsBody = definitionEquals.has(lastCode);
         const continuesDefinition = prev?.startsBody && indent === prev.indent + tabWidth;
@@ -151,6 +155,46 @@ function sameTokens(a: Token[], b: Token[], types: boolean): boolean {
     return a.length === b.length && a.every((token, i) =>
         (!types || token.type === b[i].type) &&
         (isCode(token) ? token.text === b[i].text : commentText(token) === commentText(b[i])));
+}
+
+/** Keep source-indented continuations under the trailing comment after a comma. */
+function alignCommentContinuations(source: string, output: Token[], lines: string[], tabWidth: number,
+    ignoredLines?: ReadonlySet<number>): void {
+    const input = lex(source);
+    const original = source.split("\n");
+    const outputComments = output.filter((token) => !isCode(token));
+    if (!sameTokens(input.filter((token) => !isCode(token)), outputComments, true)) return;
+
+    let commentIndex = 0;
+    for (const [i, token] of input.entries()) {
+        if (isCode(token)) continue;
+        const anchor = outputComments[commentIndex++];
+        const comma = input[i - 1];
+        if (token.type !== L.LINE_COMMENT || comma?.type !== L.COMMA || comma.line !== token.line ||
+            ignoredLines?.has(anchor.line) || !before(lines, anchor).trim()) continue;
+
+        // Find the uninterrupted run of standalone comments and the next item, if present.
+        let end = i + 1;
+        while (input[end]?.type === L.LINE_COMMENT && input[end].line === input[end - 1].line + 1 &&
+            !before(original, input[end]).trim()) end++;
+        if (end === i + 1) continue;
+        const next = input[end];
+        const nextIndent = next && isCode(next) && next.line > input[end - 1].line
+            ? width(indentation(original[next.line - 1]), tabWidth) : 0;
+        const itemIndent = Math.max(nextIndent, width(indentation(original[token.line - 1]), tabWidth));
+        const anchorLine = lines[anchor.line - 1].trimEnd();
+        const column = width(anchorLine.slice(0, -commentText(anchor).length), tabWidth);
+        const indent = indentation(anchorLine);
+        const padding = indent + " ".repeat(column - width(indent, tabWidth));
+        for (let j = i + 1; j < end; j++) {
+            const continuation = input[j];
+            const printed = outputComments[commentIndex + j - i - 1];
+            if (CARET.test(commentText(continuation)) || commentText(continuation).slice(2).trim() === "prettier-ignore" ||
+                width(before(original, continuation), tabWidth) <= itemIndent ||
+                printed.line !== anchor.line + j - i || ignoredLines?.has(printed.line) || before(lines, printed).trim()) break;
+            lines[printed.line - 1] = padding + commentText(printed);
+        }
+    }
 }
 
 /** Move standalone caret lines with the code token marked on the preceding input line. */
@@ -322,7 +366,8 @@ export function layoutSource(root: FlixRoot, value: Doc, options: LayoutOptions)
         hasCaret ||= info.lead.some((comment) => CARET.test(comment.text));
     }
     const mayHaveTupleRows = /\b(?:Vector|List|Array|Set)#\s*\{\s*\(/.test(root.text);
-    if (trailing < 2 && !hasCaret && !mayHaveTupleRows) return value;
+    const mayHaveContinuations = /,[ \t]*\/\/[^\n]*\n[ \t]+\/\//.test(root.text);
+    if (trailing < 2 && !hasCaret && !mayHaveTupleRows && !mayHaveContinuations) return value;
 
     // Measure the chosen layout, including wrapped code, actual indentation,
     // and the full comment widths, before changing horizontal space.
@@ -334,10 +379,12 @@ export function layoutSource(root: FlixRoot, value: Doc, options: LayoutOptions)
     }
     let tokens = lex(formatted);
     let lines = formatted.split("\n");
-    if (mayHaveTupleRows && alignTupleRows(tokens, lines, options, ignoredLines) && (trailing > 1 || hasCaret)) {
+    if (mayHaveTupleRows && alignTupleRows(tokens, lines, options, ignoredLines) &&
+        (trailing > 1 || hasCaret || mayHaveContinuations)) {
         tokens = lex(lines.join("\n"));
     }
     if (trailing > 1) alignTrailingComments(root, tokens, lines, options, ignoredLines);
+    if (mayHaveContinuations) alignCommentContinuations(root.text, tokens, lines, options.tabWidth, ignoredLines);
     if (hasCaret) lines = placeCaretComments(root.text, tokens, lines, options.tabWidth, ignoredLines);
     return lines.join("\n") === formatted ? value : doc.builders.join(doc.builders.literalline, lines);
 }
