@@ -931,7 +931,7 @@ export class Printer {
                 comma ? this.after(end, this.after(comma, line)) : "",
             ];
         });
-        return group([this.tok(keyword), indent([this.after(keyword, line), entries])]);
+        return [this.tok(keyword), group(indent([this.after(keyword, line), entries]))];
     }
 
     private printConstraint(n: ParserRuleContext): Doc {
