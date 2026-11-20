@@ -31,11 +31,11 @@ def label(code: Int32): String =
 ## Try it in a project
 
 Install Prettier and the prebuilt plugin from the GitHub release. Plugin version
-0.1.0 was tested with Flix 0.80.0.
+0.1.1 was tested with Flix 0.80.0.
 
 ```sh
 npm install --save-dev --save-exact prettier@3.10.1 \
-  https://github.com/wstein/prettier-plugin-flix/releases/download/v0.1.0/prettier-plugin-flix-0.1.0.tgz
+  https://github.com/wstein/prettier-plugin-flix/releases/download/v0.1.1/prettier-plugin-flix-0.1.1.tgz
 ```
 
 Add the plugin to your `.prettierrc.json`.
