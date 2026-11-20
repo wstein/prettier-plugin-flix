@@ -58,9 +58,11 @@ npm run coverage:syntax -- --check
 ## Verify against upstream Flix
 
 - For the official examples, follow [the audit guide](docs/official-examples.md).
-  Check the Flix book's Markdown blocks and the website's JavaScript examples.
-  Review the before-and-after output and record a reason for accepted layout
-  changes. Keep documented upstream issues separate from formatter findings.
+  Use the [documentation audit skill](.agents/skills/flix-docs-audit/SKILL.md)
+  to triage a run and prepare findings. Check the Flix book's Markdown blocks
+  and the website's JavaScript examples. Review the before-and-after output and
+  record a reason for accepted layout changes. Keep documented upstream issues
+  separate from formatter findings.
 - Preserve the original audit input. The comparison ignores trailing spaces and
   tabs. If a weekly run detects drift, review the artifact and the individual
   changes before updating the assessment hashes or baseline. Snippets may need
