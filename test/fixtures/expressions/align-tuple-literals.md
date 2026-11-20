@@ -1,6 +1,6 @@
 ---
 title: Align numeric, regex, null and interpolated tuple cells
-description: "Numeric literals align on the right. Regexes, null and strings containing interpolations can also be table cells."
+description: "Decimal points align vertically. Regexes, null and strings containing interpolations can also be table cells."
 flix: "0.80"
 options: { printWidth: 60 }
 ---
@@ -49,15 +49,15 @@ def nested(): Vector[(String, (Int32, Int32))] = Vector#{
 def timetable(): Vector[
     (String, Float64, String)
 ] = Vector#{
-    ("Museum",   8.0, "Central"),
-    ("Central",  7.0, "Library"),
-    ("Central", 45.6, "Airport"),  // This leg exceeds the short-trip limit.
-    ("Library", 6.77, "Park"),
-    ("Park",    9.89, "Museum")
+    ("Museum",   8.0,  "Central"),
+    ("Central",  7.0,  "Library"),
+    ("Central", 45.6,  "Airport"),  // This leg exceeds the short-trip limit.
+    ("Library",  6.77, "Park"),
+    ("Park",     9.89, "Museum")
 }
 
 def readings(): List[(Float32, BigDecimal)] = List#{
-    (-8.0f32,   5.00ff),
+    (-8.0f32,    5.00ff),
     ( 6e2f32, -125.6ff)
 }
 

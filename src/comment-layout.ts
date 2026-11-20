@@ -253,7 +253,12 @@ function placeCaretComments(source: string, output: Token[], lines: string[], ta
         sameTokens(outputComments, tokens.filter((token) => !isCode(token)), true) ? revised : lines;
 }
 
-type TupleCell = { kind: "text" | "integer" | "decimal" | "character" | "boolean" | "regex" | "null"; text: string; width: number };
+type TupleCell = {
+    kind: "text" | "integer" | "decimal" | "character" | "boolean" | "regex" | "null";
+    text: string;
+    before: number;
+    after: number;
+};
 type TupleRow = { indent: string; cells: TupleCell[]; suffix: string; line: number };
 const TABLE_COLLECTIONS = new Set([L.VECTOR_HASH, L.LIST_HASH, L.ARRAY_HASH, L.SET_HASH]);
 
@@ -288,7 +293,11 @@ function tupleCell(tokens: Token[], line: string[]): TupleCell | undefined {
         kind = "null";
     } else return;
     const text = line.slice(first.column, last.column + Array.from(last.text ?? "").length).join("");
-    if (!/[\t\r\n]/.test(text)) return { kind, text, width: util.getStringWidth(text) };
+    if (/[\t\r\n]/.test(text)) return;
+    const width = util.getStringWidth(text);
+    // For a suffix-only or exponent-only literal, the point is implicit after the mantissa.
+    const before = kind === "decimal" ? text.split(/[.ef]/, 1)[0].length : kind === "integer" ? width : 0;
+    return { kind, text, before, after: width - before };
 }
 
 function tupleRow(tokens: Token[], text: string, line: number): TupleRow | undefined {
@@ -339,20 +348,27 @@ function alignTupleRows(tokens: Token[], lines: string[], options: LayoutOptions
         const first = rows[0];
         if (!rows.every((row) => row.indent === first.indent && row.cells.length === first.cells.length &&
             row.cells.every((cell, col) => cell.kind === first.cells[col].kind))) continue;
-        const widths = first.cells.map((_, col) => rows.reduce((max, row) => Math.max(max, row.cells[col].width), 0));
+        const widths = first.cells.map((_, col) => rows.reduce(({ before, after }, { cells }) => ({
+            before: Math.max(before, cells[col].before),
+            after: Math.max(after, cells[col].after),
+        }), { before: 0, after: 0 }));
         const aligned = rows.map((row) => {
             const fields = row.cells.map((cell, col) => {
-                const padding = " ".repeat(widths[col] - cell.width);
-                const numeric = cell.kind === "integer" || cell.kind === "decimal";
-                if (numeric) return padding + cell.text + (col === widths.length - 1 ? "" : ", ");
-                return cell.text + (col === widths.length - 1 ? "" : ", " + padding);
+                const leading = " ".repeat(widths[col].before - cell.before);
+                const separator = col === widths.length - 1 ? "" : ", " + " ".repeat(widths[col].after - cell.after);
+                return leading + cell.text + separator;
             });
             return row.indent + "(" + fields.join("") + ")" + row.suffix;
         });
-        // A long literal or trailing comment can already exceed the target. Alignment may
-        // leave that row as it is, but must not increase the overrun.
-        if (aligned.some((text, i) => width(text, options.tabWidth) >
-            Math.max(options.printWidth, width(lines[rows[i].line - 1], options.tabWidth)))) continue;
+        if (aligned.some((text, i) => {
+            const original = lines[rows[i].line - 1];
+            const originalWidth = width(original, options.tabWidth);
+            if (width(text, options.tabWidth) <= Math.max(options.printWidth, originalWidth)) return false;
+            // If a comment alone already exceeds the target, the aligned code still has room.
+            const comment = rows[i].suffix.indexOf("//");
+            return originalWidth <= options.printWidth || comment < 0 ||
+                width(text.slice(0, text.length - rows[i].suffix.length + comment).trimEnd(), options.tabWidth) > options.printWidth;
+        })) continue;
         rows.forEach((row, i) => {
             changed ||= lines[row.line - 1] !== aligned[i];
             lines[row.line - 1] = aligned[i];
