@@ -487,6 +487,19 @@ export class Printer {
         ]);
     }
 
+    private printListItem(item: Node[], parentKind: string): Doc {
+        if (item.length === 0) return "";
+        const [field, bar, ...base] = item;
+        this.ls(field);
+        if (this.flat === 0 && parentKind === "RecordOperation" && isTerm(bar) && ttype(bar) === L.BAR) {
+            return [
+                this.print(field),
+                group([this.after(lastTerm(field), line), this.seq([bar, ...base], parentKind)]),
+            ];
+        }
+        return this.seq(item, parentKind);
+    }
+
     /** Prints `open inner close` with its items laid out as a list or as vertical members. */
     private delimited(children: Node[], i: number, j: number, parentKind: string, groupList = true): Doc {
         const open = children[i] as TerminalNode;
@@ -590,7 +603,7 @@ export class Printer {
             const formatted = mayAlign ? this.alignEntries(rows, split.seps.slice(offset, offset + rows.length), layoutId) : undefined;
             offset += rows.length;
             aligned ||= formatted !== undefined;
-            return formatted ?? rows.map((it) => this.seq(it.length > 0 ? [this.ls(it[0]), ...it.slice(1)] : it, parentKind));
+            return formatted ?? rows.map((item) => this.printListItem(item, parentKind));
         });
         const itemLast = (it: Node[]): TerminalNode | null => (it.length > 0 ? lastTerm(it[it.length - 1]) : null);
         const sepDocs = split.seps.slice(0, docs.length - 1).map((t, k) => this.separatorTok(itemLast(items[k]), t));

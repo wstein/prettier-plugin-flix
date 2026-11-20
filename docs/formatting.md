@@ -293,6 +293,10 @@ def next(xs: List[Int32]): Int32 = match xs {
 [Map alignment](../test/fixtures/expressions/align-map-entries.md) ·
 [Record alignment](../test/fixtures/expressions/align-record-fields.md)
 
+A record update keeps `| base` with the last field when they fit on one line.
+When the line would exceed the width, start a new line at the field
+indentation with `| base`. [Record update fixture](../test/fixtures/expressions/record-update-tail.md)
+
 ## Comments
 
 Keep an ordinary trailing `//` comment at least two spaces from the code.
