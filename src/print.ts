@@ -108,6 +108,7 @@ export class Printer {
     private consumed = new Set<number>();
     /** Tokens that start a line in the output, so own-line comments need no extra line break. */
     private lineStart = new Set<number>();
+    private handlerArgumentOpeners = new Set<number>();
 
     constructor(
         private root: FlixRoot,
@@ -472,7 +473,8 @@ export class Printer {
         const flatSline: Doc = this.flat > 0 ? (pad ? " " : "") : sline;
         const innerLast = inner.length > 0 ? lastTerm(inner[inner.length - 1]) : null;
         const firstSline = this.after(open, flatSline);
-        const lastSline = this.after(innerLast, flatSline);
+        const compactHandlerClose = this.handlerArgumentOpeners.has(open.symbol.tokenIndex) && comments.length === 0;
+        const lastSline = this.after(innerLast, compactHandlerClose ? "" : flatSline);
         const tail: Doc[] = comments.flatMap((c) => [hardline, c]);
 
         const ruleKids = inner.filter((n) => !isTerm(n));
@@ -847,6 +849,13 @@ export class Printer {
         const bodyEnd = lastTerm(body);
         const ownLineComment = isTerm(firstWith) && (this.info(firstWith)?.lead[0]?.nl ?? 0) > 0;
         const canAttach = this.isBlockExpr(body) && bodyEnd !== null && !this.hasLineTrail(bodyEnd) && !ownLineComment;
+        if (canAttach && kind(firstHandler) === "ApplyExpr") {
+            const args = kids(kids(firstHandler)[1]);
+            const [open, argument] = args;
+            if (args.length === 3 && isTerm(open) && kids(argument).length === 1 && kind(kids(argument)[0]) === "ApplyExpr") {
+                this.handlerArgumentOpeners.add(open.symbol.tokenIndex);
+            }
+        }
         const firstClause = this.seq([this.ls(firstWith), firstHandler], k);
         const rest: Doc[] = [];
         for (let i = 4; i < children.length; i += 2) {

@@ -52,7 +52,6 @@ def main(): Unit
         Sleep.sleep(seconds(2));
         println("Done!")
     } with Sleep.withMaxSleep(
-        milliseconds(500)
-    )
+        milliseconds(500))
       with Sleep.withLogging
 ```

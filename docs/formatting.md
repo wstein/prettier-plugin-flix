@@ -27,7 +27,9 @@ Prettier also accepts its standard configuration options. The Flix style in
 this guide uses `tabWidth: 4`, `useTabs: false` and `endOfLine: "lf"`.
 The Playground and embedded editors use four spaces per indentation level
 and let you adjust the line width.
-The examples below use an 80-column width unless a different width is shown.
+The standalone Playground opens at 80 columns. Embedded editors default to
+60 columns to fit their narrower panels. The examples below use an
+80-column width unless a different width is shown.
 
 ## Calls and function signatures
 
@@ -117,7 +119,8 @@ Sequential statements in a block get separate lines.
 
 In a `run { … } with` chain, keep the first `with` beside the closing brace,
 like `} else`. A long handler call wraps its arguments within the clause.
-Later clauses start beneath the first `with`. If the `run` expression has
+If its single argument is itself a call, the closing parentheses can share
+a line. Later clauses start beneath the first `with`. If the `run` expression has
 no block or a line comment follows its closing brace, start the `with`
 clauses on separate lines aligned with `run`.
 
@@ -145,8 +148,7 @@ def main(): Unit
         Sleep.sleep(seconds(2));
         println("Done!")
     } with Sleep.withMaxSleep(
-        milliseconds(500)
-    )
+        milliseconds(500))
       with Sleep.withLogging
 ```
 

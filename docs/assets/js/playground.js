@@ -125,9 +125,9 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
         });
     }
 
-    function useExample(key, variant = 0) {
+    function useExample(key, variant) {
         const fixture = Object.hasOwn(fixtures, key) ? fixtures[key] : undefined;
-        const options = fixture?.options[variant] ?? fixture?.options[0] ?? {};
+        const options = variant === undefined ? undefined : fixture?.options[variant];
         loadDraft({ source: fixture?.input ?? "", ...options });
         if (fixture && !formatterFailed) showStatus("Loading example…");
     }
@@ -178,6 +178,7 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
             fixtures = data.fixtures;
             const params = new URLSearchParams(location.search);
             const requested = params.get("fixture");
+            const variant = params.has("variant") ? Number(params.get("variant")) : undefined;
             for (const { title, examples } of data.groups) {
                 const group = document.createElement("optgroup");
                 group.label = title;
@@ -188,7 +189,7 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
             // Keep any edits made while the examples or linked fixture loaded.
             if (revision !== 0) return;
             if (Object.hasOwn(fixtures, requested)) {
-                useExample(requested, Number(params.get("variant")));
+                useExample(requested, variant);
                 return;
             }
             if (requested) {
@@ -196,7 +197,7 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
                 if (revision !== 0) return;
                 if (Object.hasOwn(linked, requested)) {
                     fixtures[requested] = linked[requested];
-                    useExample(requested, Number(params.get("variant")));
+                    useExample(requested, variant);
                     return;
                 }
             }
@@ -236,7 +237,10 @@ function startEmbedded(embedded) {
     embedded.style.setProperty("--source-lines", lines);
     mountWorkbench(embedded, {
         initial,
-        onChange: (draft) => { link.href = writeHandoff(originalLink, draft); },
+        onChange: ({ source, printWidth }) => {
+            const widthOverride = printWidth === initial.printWidth ? undefined : printWidth;
+            link.href = writeHandoff(originalLink, { source, printWidth: widthOverride });
+        },
     });
     embedded.hidden = false;
     embedded.previousElementSibling.hidden = true;

@@ -27,6 +27,21 @@ def readWithLog(): Int32 =
         Log.log("Reading a value");
         Ask.ask()
     } with withFallback(Int32.max(100, 200)) with withoutLogging
+
+def withLabeledFallback(_label: String, fallback: Int32, f: Unit -> Int32 \ ef): Int32 \ ef - Ask =
+    run f() with handler Ask { def ask(k) = k(fallback) }
+
+def readWithLabel(): Int32 =
+    run {
+        Ask.ask()
+    } with withLabeledFallback("request", Int32.max(100, 200))
+
+def readWithComment(): Int32 =
+    run {
+        Ask.ask()
+    } with withFallback(
+        Int32.max(100, 200) // Use the larger default
+    )
 ```
 
 ## Output
@@ -54,6 +69,23 @@ def readWithLog(): Int32 =
         Ask.ask()
     } with withFallback(Int32.max(100, 200))
       with withoutLogging
+
+def withLabeledFallback(_label: String, fallback: Int32, f: Unit -> Int32 \ ef):
+    Int32 \ ef - Ask =
+    run f()
+    with handler Ask { def ask(k) = k(fallback) }
+
+def readWithLabel(): Int32 =
+    run {
+        Ask.ask()
+    } with withLabeledFallback("request", Int32.max(100, 200))
+
+def readWithComment(): Int32 =
+    run {
+        Ask.ask()
+    } with withFallback(
+        Int32.max(100, 200)  // Use the larger default
+    )
 ```
 
 ```flix printWidth=37
@@ -87,7 +119,31 @@ def readWithLog(): Int32 =
         Log.log("Reading a value");
         Ask.ask()
     } with withFallback(
+        Int32.max(100, 200))
+      with withoutLogging
+
+def withLabeledFallback(
+    _label: String,
+    fallback: Int32,
+    f: Unit -> Int32 \ ef
+): Int32 \ ef - Ask =
+    run f()
+    with handler Ask {
+        def ask(k) = k(fallback)
+    }
+
+def readWithLabel(): Int32 =
+    run {
+        Ask.ask()
+    } with withLabeledFallback(
+        "request",
         Int32.max(100, 200)
     )
-      with withoutLogging
+
+def readWithComment(): Int32 =
+    run {
+        Ask.ask()
+    } with withFallback(
+        Int32.max(100, 200)  // Use the larger default
+    )
 ```
