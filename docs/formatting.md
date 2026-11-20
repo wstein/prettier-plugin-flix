@@ -206,8 +206,12 @@ parenthesis. Keep `par (` on the binding line when there is room for it.
 
 ## Alignment
 
-Matching rows can share an operator column. Map arrows and record equals
-signs align in eligible multiline literals with short, simple keys and values.
+Consecutive items of the same kind in one block can share a separator
+column. A blank line or standalone comment starts a new group. The formatter
+places the separator one space after the longest single-line head.
+
+Map arrows and record equals signs align in eligible multiline literals
+with short, simple keys and values.
 Flat `List#{…}` values can also qualify in maps. Short sums or differences
 of simple values can qualify in records. Map and record operator padding
 is capped at eight extra spaces. Complex rows or rows that would exceed
@@ -229,9 +233,9 @@ Compact collections stay inline.
 [Tuple-row fixture](../test/fixtures/expressions/align-tuple-rows.md) ·
 [Literal types in tuple rows](../test/fixtures/expressions/align-tuple-literals.md)
 
-Match arms can share an arrow column when their heads fit on single lines and
-the padding fits the group. This includes groups with some multiline bodies.
-The minimum space before an aligned `=>` or `=` is one.
+Match arms and handler clauses can share a separator column even when a
+body spans multiple lines. Handler clauses use the configured width to
+decide whether the aligned lines fit, including any trailing comment.
 
 **Before**
 
@@ -254,6 +258,7 @@ def next(xs: List[Int32]): Int32 = match xs {
 ```
 
 [Match fixture](../test/fixtures/expressions/mixed-match-bodies.md) ·
+[Handler clauses and group boundaries](../test/fixtures/expressions/align-handler-clauses.md) ·
 [Map alignment](../test/fixtures/expressions/align-map-entries.md) ·
 [Record alignment](../test/fixtures/expressions/align-record-fields.md)
 

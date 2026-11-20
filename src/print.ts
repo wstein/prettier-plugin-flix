@@ -387,16 +387,18 @@ export class Printer {
         return docs.flatMap((d, i) => (i < docs.length - 1 ? [d, seps[i], afters[i]] : [d]));
     }
 
-    private hasComment(t: TerminalNode, ignoreTrailing = false): boolean {
+    private hasComment(t: TerminalNode, ignoreTrailing = false, ignoreOwnLine = false): boolean {
         const info = this.info(t);
-        return !!info && (info.lead.length > 0 || (!ignoreTrailing && info.trail.length > 0));
+        return !!info && (info.lead.some((comment) => !ignoreOwnLine || comment.nl === 0) ||
+            (!ignoreTrailing && info.trail.length > 0));
     }
 
     /** Measure atoms and supported single-line map or record values. */
-    private inlineWidth(n: Node, rowEnd: TerminalNode | null = null, extra?: "list" | "add"): number | undefined {
-        if (isTerm(n)) return this.hasComment(n, n === rowEnd) ? undefined : util.getStringWidth(this.src(n));
+    private inlineWidth(n: Node, rowEnd: TerminalNode | null = null, extra?: "list" | "add",
+        rowStart?: TerminalNode | null): number | undefined {
+        if (isTerm(n)) return this.hasComment(n, n === rowEnd, n === rowStart) ? undefined : util.getStringWidth(this.src(n));
         const cs = kids(n);
-        if (cs.length === 1) return this.inlineWidth(cs[0], rowEnd, extra);
+        if (cs.length === 1) return this.inlineWidth(cs[0], rowEnd, extra, rowStart);
         if (extra === "list" && kind(n) === "CollectionLiteral" && isTerm(cs[0]) && ttype(cs[0]) === L.LIST_HASH) {
             return this.flatListWidth(cs, rowEnd);
         }
@@ -409,7 +411,7 @@ export class Printer {
             }
             return;
         }
-        if (kind(n) !== "PlainString" || !cs.every((t) => isTerm(t) && !this.hasComment(t, t === rowEnd))) return;
+        if (kind(n) !== "PlainString" || !cs.every((t) => isTerm(t) && !this.hasComment(t, t === rowEnd, t === rowStart))) return;
         const spelling = (cs as TerminalNode[]).map((t) => this.src(t)).join("");
         if (!/[\t\r\n]/.test(spelling)) return util.getStringWidth(spelling);
     }
@@ -431,6 +433,21 @@ export class Printer {
         return width + 2 * seps.length;
     }
 
+    private alignmentGroups<T>(items: T[], first: (item: T) => TerminalNode | null): T[][] {
+        const groups: T[][] = [];
+        let group: T[] = [];
+        for (const item of items) {
+            const token = first(item);
+            if (group.length && (this.blankBefore(token) || (token && this.info(token)?.lead.some((comment) => comment.nl > 0)))) {
+                groups.push(group);
+                group = [];
+            }
+            group.push(item);
+        }
+        if (group.length) groups.push(group);
+        return groups;
+    }
+
     private alignEntries(items: Node[][], seps: TerminalNode[], layoutId: symbol): Doc[] | undefined {
         if (this.flat > 0 || items.length < 2) return;
         const rows = [];
@@ -441,7 +458,7 @@ export class Printer {
             const [left, delimiter, right, ...rest] = kids(item[0]);
             const expected = entryKind === "MapEntry" ? L.ARROW_THICK_R : L.EQUAL;
             if (rest.length || !right || !isTerm(delimiter) || ttype(delimiter) !== expected || this.hasComment(delimiter)) return;
-            const leftWidth = this.inlineWidth(left);
+            const leftWidth = this.inlineWidth(left, null, undefined, firstTerm(left));
             // Suffix comments stay with their entry and take no space in the code columns.
             const end = lastTerm(right);
             const rightWidth = this.inlineWidth(right, end, entryKind === "MapEntry" ? "list" : "add");
@@ -562,17 +579,28 @@ export class Printer {
         const collection = children[i - 1];
         const isMap = parentKind === "CollectionLiteral" && isTerm(collection) && ttype(collection) === L.MAP_HASH;
         const layoutId = Symbol();
-        const aligned = (isMap || parentKind === "RecordOperation") &&
+        const alignable = isMap || parentKind === "RecordOperation";
+        const mayAlign = alignable &&
             !this.hasComment(open) && !this.hasComment(close, true) &&
-            !split.seps.some((t) => this.hasComment(t, true))
-            ? this.alignEntries(items, split.seps, layoutId)
-            : undefined;
-        const docs = aligned ?? items.map((it) => this.seq(it.length > 0 ? [this.ls(it[0]), ...it.slice(1)] : it, parentKind));
+            !split.seps.some((t) => this.hasComment(t, true));
+        let offset = 0;
+        let aligned = false;
+        const groups = mayAlign ? this.alignmentGroups(items, (it) => it[0] ? firstTerm(it[0]) : null) : [items];
+        const docs = groups.flatMap((rows) => {
+            const formatted = mayAlign ? this.alignEntries(rows, split.seps.slice(offset, offset + rows.length), layoutId) : undefined;
+            offset += rows.length;
+            aligned ||= formatted !== undefined;
+            return formatted ?? rows.map((it) => this.seq(it.length > 0 ? [this.ls(it[0]), ...it.slice(1)] : it, parentKind));
+        });
         const itemLast = (it: Node[]): TerminalNode | null => (it.length > 0 ? lastTerm(it[it.length - 1]) : null);
         const sepDocs = split.seps.slice(0, docs.length - 1).map((t, k) => this.separatorTok(itemLast(items[k]), t));
         // After a separator the next item starts on a new line if a comment ends the line there.
-        const sepAfters = split.seps.slice(0, docs.length - 1).map((t, k) =>
-            this.hasLineTrail(t) || (itemLast(items[k]) !== null && this.hasLineTrail(itemLast(items[k])!)) ? hardline : this.flat > 0 ? " " : line);
+        const sepAfters = split.seps.slice(0, docs.length - 1).map((t, k) => {
+            const next = items[k + 1][0];
+            if (alignable && next && this.blankBefore(firstTerm(next))) return [hardline, hardline];
+            return this.hasLineTrail(t) || (itemLast(items[k]) !== null && this.hasLineTrail(itemLast(items[k])!))
+                ? hardline : this.flat > 0 ? " " : line;
+        });
 
         // Hug a final brace-closed argument (`f(a, x -> {...})`). Decided from the syntax alone, never
         // from how a doc happens to break, so that a second formatting pass changes nothing.
@@ -603,7 +631,7 @@ export class Printer {
             list.push(quiet ? ifBreak(this.src(trailingTok), "") : this.tok(trailingTok));
         }
         list.push(...tail);
-        const preserveMultiline = (pad && openType === L.LBRACE) || (isMap && aligned !== undefined);
+        const preserveMultiline = (pad && openType === L.LBRACE) || (isMap && aligned);
         const innerFirst = inner.length > 0 ? firstTerm(inner[0]) : null;
         const forceBreak = preserveMultiline && this.flat === 0 &&
             innerFirst !== null && innerFirst.symbol.line > open.symbol.line;
@@ -928,7 +956,15 @@ export class Printer {
 
     private alignMatchRules(rules: Node[], layoutId: symbol): Doc[] | undefined {
         if (this.flat > 0 || rules.length < 2 || !rules.every((rule) => kind(rule) === "MatchRule")) return;
-        const rows = rules.map((rule) => this.eqBodyDocs(this.ls(rule as ParserRuleContext)));
+        return this.alignmentGroups(rules, firstTerm).flatMap((group) => this.alignMatchGroup(group, layoutId));
+    }
+
+    private alignMatchGroup(rules: Node[], layoutId: symbol): Doc[] {
+        const rows = rules.map((rule) => {
+            this.ls(rule);
+            const leading = this.takeLeadingOwnLineComments(firstTerm(rule));
+            return { leading, ...this.eqBodyDocs(rule as ParserRuleContext) };
+        });
         const options = { printWidth: this.printWidth, tabWidth: this.tabWidth };
         const measure = (value: Doc): number => {
             const { formatted } = doc.printer.printDocToString(value, options);
@@ -937,7 +973,7 @@ export class Printer {
         const widths = rows.map(({ head }) => measure(head));
         const column = Math.max(...widths);
         if (!Number.isFinite(column) || widths.every((width) => width === column)) {
-            return rows.map(({ head, gap, tail }) => [head, gap, tail]);
+            return rows.map(({ leading, head, gap, tail }) => [leading, head, gap, tail]);
         }
         // A multiline body can start below its arrow. If every arm would
         // otherwise fit, don't introduce a wrap just to align the arrows.
@@ -947,7 +983,8 @@ export class Printer {
         const modestPadding = widths.every((width) => column - width <= 16);
         const fits = column + " =>".length + 2 * this.tabWidth <= this.printWidth &&
             rows.every(({ gap }) => gap === " ") && (allStayCompact || (hasWrappedArm && modestPadding));
-        return rows.map(({ head, gap, tail }, i) => [
+        return rows.map(({ leading, head, gap, tail }, i) => [
+            leading,
             head,
             fits ? ifBreak(" ".repeat(column - widths[i] + 1), gap, { groupId: layoutId }) : gap,
             tail,
