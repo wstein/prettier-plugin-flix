@@ -2,9 +2,9 @@
 
 [![CI status on main](https://github.com/wstein/prettier-plugin-flix/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/wstein/prettier-plugin-flix/actions/workflows/ci.yml)
 [![Latest GitHub release](https://img.shields.io/github/v/release/wstein/prettier-plugin-flix)](https://github.com/wstein/prettier-plugin-flix/releases/latest)
-[![Tested with Flix 0.80.0](https://img.shields.io/badge/tested_with_Flix-0.80.0-1953a2)](https://github.com/flix/flix/releases/tag/v0.80.0)
+[![Tested with Flix 0.80.0](https://img.shields.io/badge/tested_with_Flix-0.80.0-cf4647)](https://github.com/flix/flix/releases/tag/v0.80.0)
 [![Open the Flix Playground](https://img.shields.io/badge/Flix-Playground-1953a2)](https://wstein.github.io/prettier-plugin-flix/playground/)
-[![Read the formatting style](https://img.shields.io/badge/Flix-Formatting_Style-1953a2)](https://wstein.github.io/prettier-plugin-flix/formatting/)
+[![Read the formatting style](https://img.shields.io/badge/Flix-Formatting_Style-6d28d9)](https://wstein.github.io/prettier-plugin-flix/formatting/)
 
 Format Flix source files with Prettier. Start with one file, preview the result, and write it back when you’re happy with it.
 
