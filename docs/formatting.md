@@ -219,8 +219,9 @@ literals, strings, characters, booleans, regexes and `null`. Each column must
 use the same literal kind in every row. Integers align on the right.
 Floating-point and decimal literals align at the decimal point. If a literal
 has no point, align at the end of its mantissa. Other literals, including
-strings with single-line interpolations, align on the left. Nested expressions
-outside an interpolation use ordinary formatting.
+strings with single-line interpolations, align on the left. A nested tuple or
+collection can also occupy a column when it fits on one line. Align the start
+of the nested value and use ordinary formatting inside it.
 Padding must fit the available width. If a trailing comment already extends
 past the target, align the values when the code before that comment still fits.
 Compact collections stay inline.

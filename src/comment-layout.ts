@@ -254,13 +254,17 @@ function placeCaretComments(source: string, output: Token[], lines: string[], ta
 }
 
 type TupleCell = {
-    kind: "text" | "integer" | "decimal" | "character" | "boolean" | "regex" | "null";
+    kind: "text" | "integer" | "decimal" | "character" | "boolean" | "regex" | "null" | "tuple" | "collection";
     text: string;
     before: number;
     after: number;
 };
 type TupleRow = { indent: string; cells: TupleCell[]; suffix: string; line: number };
 const TABLE_COLLECTIONS = new Set([L.VECTOR_HASH, L.LIST_HASH, L.ARRAY_HASH, L.SET_HASH]);
+
+function delimiterDepth(type: number): number {
+    return OPEN.has(type) ? 1 : CLOSE.has(type) ? -1 : 0;
+}
 
 function isStringLiteral(tokens: Token[]): boolean {
     const start = tokens[0]?.type === L.DEBUG_INTERPOLATOR ? 1 : 0;
@@ -271,6 +275,23 @@ function isStringLiteral(tokens: Token[]): boolean {
         if (tokens[i].type === L.STRING_END && --depth === 0) return i === tokens.length - 1;
     }
     return false;
+}
+
+function nestedCellKind(tokens: Token[]): "tuple" | "collection" | undefined {
+    const first = tokens[0].type;
+    const collection = TABLE_COLLECTIONS.has(first) || first === L.MAP_HASH;
+    if (collection ? tokens[1]?.type !== L.LBRACE : first !== L.LPAREN) return;
+    let depth = 0;
+    let tuple = false;
+    for (let i = collection ? 1 : 0; i < tokens.length; i++) {
+        const type = tokens[i].type;
+        if (type === L.COMMA && depth === 1) tuple = true;
+        depth += delimiterDepth(type);
+        if (depth === 0) {
+            if (i === tokens.length - 1 && (collection || tuple)) return collection ? "collection" : "tuple";
+            return;
+        }
+    }
 }
 
 function tupleCell(tokens: Token[], line: string[]): TupleCell | undefined {
@@ -291,7 +312,11 @@ function tupleCell(tokens: Token[], line: string[]): TupleCell | undefined {
         kind = "regex";
     } else if (tokens.length === 1 && first.type === L.NULL) {
         kind = "null";
-    } else return;
+    } else {
+        const nested = nestedCellKind(tokens);
+        if (!nested) return;
+        kind = nested;
+    }
     const text = line.slice(first.column, last.column + Array.from(last.text ?? "").length).join("");
     if (/[\t\r\n]/.test(text)) return;
     const width = util.getStringWidth(text);
@@ -312,12 +337,13 @@ function tupleRow(tokens: Token[], text: string, line: number): TupleRow | undef
     if (indent.trim()) return;
     const cells: TupleCell[] = [];
     let start = 1;
-    let interpolationDepth = 0;
+    let depth = 0;
     for (let i = 1; i <= row.length; i++) {
-        const type = row[i]?.type;
-        if (type === L.INTERPOLATION_START) interpolationDepth++;
-        if (type === L.INTERPOLATION_END) interpolationDepth--;
-        if (i < row.length && (type !== L.COMMA || interpolationDepth > 0)) continue;
+        if (i < row.length) {
+            const type = row[i].type;
+            depth += delimiterDepth(type);
+            if (type !== L.COMMA || depth !== 0) continue;
+        }
         const cell = tupleCell(row.slice(start, i), chars);
         if (!cell) return;
         cells.push(cell);
