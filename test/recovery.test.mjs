@@ -33,6 +33,14 @@ test("recovers annotated module declarations with tabs and CRLF", async () => {
     assert.equal(await recover(source.join("\r\n"), { useTabs: true }), expected.join("\r\n"));
 });
 
+test("recovers a use with a comment beside the tight package qualifier", async () => {
+    const invalid = "def broken():Int32=(,)";
+    const source = lines("use Foo  /* keep */::Bar.value", invalid, "def good():Int32=value()", "");
+    const expected = lines("use Foo/* keep */::Bar.value", invalid, "def good(): Int32 = value()", "");
+    assert.equal(await recover(source), expected);
+    assert.equal(await recover(expected), undefined);
+});
+
 test("recovers Datalog facts and rules without splitting qualified names", async () => {
     const source = lines(
         "def d() = #{", "    N(Foo.Bar). N(2).", "    P(x) :- .", "    P(x):-N(x).", "}",

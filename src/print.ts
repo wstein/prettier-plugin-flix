@@ -78,6 +78,7 @@ const HASH_COLLECTIONS = new Set([L.ARRAY_HASH, L.LIST_HASH, L.MAP_HASH, L.SET_H
 
 /** Characters that make up user operators; two adjacent runs of them would lex as one token. */
 const OP_CHARS = "+-*<>=!&|^$";
+const TIGHT_OPERATORS = new Set([L.ARROW_TIGHT, L.COLON_COLON_TIGHT]);
 
 /** Brace lists printed without inner padding: `use A.{b, c}`, `List#{1, 2}`. */
 const NO_PAD = new Set(["UseClause", "ImportClause", "CollectionLiteral"]);
@@ -165,9 +166,8 @@ export class Printer {
         const info = this.info(t);
         const idx = t.symbol.tokenIndex;
         if (!info?.lead.length || this.consumed.has(idx)) return [];
-        if (this.touchesTightArrow(t)) {
-            // `s/* c */->/* c */f`: whitespace around `->` would turn the field access into an
-            // arrow, so block comments there stay glued to it.
+        if (this.touchesTightOperator(t)) {
+            // Keep block comments glued to `->` or `::` so the operator stays tight.
             return info.lead.map((c) => this.commentText(c));
         }
         // An own-line comment must start its own line even when a space was planned here.
@@ -201,10 +201,10 @@ export class Printer {
         return [this.tokCore(sep), info.trail.map((c) => [hardline, this.commentText(c)])];
     }
 
-    private touchesTightArrow(t: TerminalNode): boolean {
-        if (ttype(t) === L.ARROW_TIGHT) return true;
+    private touchesTightOperator(t: TerminalNode): boolean {
+        if (TIGHT_OPERATORS.has(ttype(t))) return true;
         const p = prevTerm(t);
-        return p !== null && ttype(p) === L.ARROW_TIGHT;
+        return p !== null && TIGHT_OPERATORS.has(ttype(p));
     }
 
     private tokTrail(t: TerminalNode): Doc {
@@ -214,8 +214,8 @@ export class Printer {
             return info ? this.trailDoc(info, "") : "";
         }
         const info = this.info(t);
-        // `s->// c\nfield`: whitespace after the arrow would turn the field access into a lambda arrow.
-        const gap = ttype(t) === L.ARROW_TIGHT ? "" : " ";
+        // A space before a glued line comment would change the operator token.
+        const gap = TIGHT_OPERATORS.has(ttype(t)) ? "" : " ";
         return info ? this.trailDoc(info, gap) : "";
     }
 
@@ -290,8 +290,7 @@ export class Printer {
         if (ta === L.LPAREN || ta === L.LBRACK || ta === L.HASH_LPAREN) return "";
         if (ta === L.DOT || ta === L.DOT_WS || tb === L.DOT || tb === L.DOT_WS) return "";
         if (ta === L.HASH || tb === L.HASH) return "";
-        if (ta === L.ARROW_TIGHT || tb === L.ARROW_TIGHT) return "";
-        if (parentKind === "UseClause" && (ta === L.COLON_COLON_TIGHT || tb === L.COLON_COLON_TIGHT)) return "";
+        if (TIGHT_OPERATORS.has(ta) || TIGHT_OPERATORS.has(tb)) return "";
         if (tb === L.LBRACE && HASH_COLLECTIONS.has(ta)) return "";
         if ((tb === L.LPAREN || tb === L.LBRACK) && this.callLike(a)) return "";
         if (parentKind === "SignExpr" && (ta === L.PLUS || ta === L.MINUS)) return "";
@@ -1250,12 +1249,18 @@ export class Printer {
         }
 
         const links = ops.map((op, i) => {
+            const tightCons = isTerm(op) && ttype(op) === L.COLON_COLON_TIGHT;
             // Multiline list constructors follow the leading :: style in the Flix examples.
-            const leadingCons = rightAssoc && isTerm(op) && ttype(op) !== L.COLON_COLON_COLON;
+            const leadingCons = rightAssoc && isTerm(op) && ttype(op) === L.COLON_COLON;
             const breakPoint = this.flat > 0 ? " " : line;
+            const hasOwnLineComment = leadingCons && (this.info(op)?.lead[0]?.nl ?? 0) > 0;
+            const before = hasOwnLineComment ? hardline : leadingCons ? breakPoint : " ";
+            const after = leadingCons ? " " : breakPoint;
             return {
-                operator: [this.after(lastTerm(operands[i]), leadingCons ? breakPoint : " "), this.print(op)],
-                after: this.after(lastTerm(op), leadingCons ? " " : breakPoint),
+                operator: [
+                    this.after(lastTerm(operands[i]), tightCons ? "" : before), this.print(leadingCons ? this.ls(op) : op),
+                ],
+                after: this.after(lastTerm(op), tightCons ? "" : after),
                 operand: this.print(this.ls(operands[i + 1])),
             };
         });
