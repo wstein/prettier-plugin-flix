@@ -3,8 +3,8 @@
 //
 // Every test source and fixture input is tried with a `// note` line comment inserted after each
 // token in turn (string literals excluded, where a line break ends the string). By default every
-// sixth site is checked, which takes a few seconds; COMMENT_SITES_EVERY=1 checks all of them
-// (about 1000 sites, roughly two minutes).
+// sixth site is checked, plus every tight dot and double colon with a glued comment.
+// COMMENT_SITES_EVERY=1 checks all sites.
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readdirSync, readFileSync } from "node:fs";
@@ -27,12 +27,12 @@ for (const [name, source] of inputs) {
     test(`line comment after any token: ${name}`, async () => {
         const failures = [];
         let checked = 0;
-        for (const site of commentSites(source).filter((_, i) => i % every === 0)) {
+        for (const site of commentSites(source).filter((site, i) => site.glued || i % every === 0)) {
             const variant = withLineCommentAfter(source, site);
             const before = fingerprint(variant);
             if (before.errors.length > 0) continue; // a comment in a place the grammar does not allow
             checked++;
-            const at = variant.indexOf(" // note");
+            const at = variant.indexOf("// note");
             const where = JSON.stringify(variant.slice(Math.max(0, at - 30), at + 30));
             let out;
             try {

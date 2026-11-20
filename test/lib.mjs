@@ -27,22 +27,21 @@ export function fingerprint(text) {
     const tokens = stream.getTokens().filter((t) => t.channel === 0 && t.type !== FlixLexer.EOF).map((t) => t.text);
     const comments = stream.getTokens().filter((t) => t.channel >= 2).map((t) => t.text.trim());
     const shape = (n) => (n.children ? `${n.constructor.name}(${n.children.map(shape).join(",")})` : "t");
-    // Flix reads `a->b` (field access) and `a -> b` (arrow) differently, and a Datalog constraint
-    // ends only at a dot followed by whitespace; the token text alone does not show a change.
-    const arrows = stream.getTokens().filter((t) => t.type === FlixLexer.ARROW_TIGHT || t.type === FlixLexer.ARROW_WS).map((t) => FlixLexer.symbolicNames[t.type]);
-    const constraintEnds = [];
+    const constraintEnds = new Map();
     const walk = (n) => {
         if (n.constructor.name === "DatalogConstraintContext") {
-            const last = n.children[n.children.length - 1];
-            constraintEnds.push(FlixLexer.symbolicNames[last.symbol.type]);
+            const { symbol } = n.children[n.children.length - 1];
+            constraintEnds.set(symbol.tokenIndex, FlixLexer.symbolicNames[symbol.type]);
         }
         (n.children ?? []).forEach(walk);
     };
     walk(tree);
-    // Every token whose class depends on the characters around it.
     const classified = new Set([FlixLexer.ARROW_TIGHT, FlixLexer.ARROW_WS, FlixLexer.DOT, FlixLexer.DOT_WS, FlixLexer.FREE_DOT, FlixLexer.COLON_COLON, FlixLexer.COLON_COLON_TIGHT]);
-    const classes = stream.getTokens().filter((t) => classified.has(t.type)).map((t) => FlixLexer.symbolicNames[t.type]);
-    return { errors, tokens, comments, arrows, classes, constraintEnds, shape: shape(tree) };
+    const sensitive = stream.getTokens().filter((t) => classified.has(t.type));
+    const classes = sensitive.map((t) => FlixLexer.symbolicNames[t.type]);
+    // Only parsed Datalog terminators may be normalized from DOT to DOT_WS.
+    const programClasses = sensitive.map((t, i) => constraintEnds.has(t.tokenIndex) ? "DatalogTerminator" : classes[i]);
+    return { errors, tokens, comments, classes, programClasses, constraintEnds: [...constraintEnds.values()], shape: shape(tree) };
 }
 
 /** Optional trailing commas may legitimately vanish when a list fits on one line. */
@@ -52,8 +51,8 @@ export const dropTrailingCommas = (tokens) =>
 /**
  * Everything a formatter must preserve, as a list of problems (empty when the program is intact):
  * the output parses, has the same tokens (optional trailing commas aside), comments, parse-tree
- * shape and arrow token classes, and (unless `terminators: false`) every Datalog constraint ends in
- * a dot followed by whitespace.
+ * shape and whitespace-sensitive token classes. For formatter output, Datalog terminators must
+ * be DOT_WS. With `terminators: false`, compare those token classes as written as well.
  */
 export function programProblems(before, after, { terminators = true } = {}) {
     if (after.errors.length > 0) return [`output does not parse: ${after.errors[0]}`];
@@ -62,7 +61,8 @@ export function programProblems(before, after, { terminators = true } = {}) {
     if (!same(dropTrailingCommas(before.tokens), dropTrailingCommas(after.tokens))) problems.push("tokens differ");
     if (!same(before.comments, after.comments)) problems.push("comments differ");
     if (before.shape !== after.shape) problems.push("parse-tree shape differs");
-    if (!same(before.arrows, after.arrows)) problems.push("arrow token classes differ");
+    const classKey = terminators ? "programClasses" : "classes";
+    if (!same(before[classKey], after[classKey])) problems.push("whitespace-sensitive token classes differ");
     // Only formatter output must satisfy this: an input may legitimately end a constraint with a bare dot.
     if (terminators && !after.constraintEnds.every((t) => t === "DOT_WS")) problems.push(`Datalog constraint not ended by a dot followed by whitespace (${after.constraintEnds})`);
     return problems;
@@ -109,9 +109,8 @@ export function perturbWhitespace(text, seed) {
 }
 
 /**
- * The positions (token indexes) after which a line comment can be inserted without leaving the
- * default lexer mode: every default-channel token except those of string literals, where a
- * newline would end the string.
+ * A comment site is a default-channel token outside a string. Tight dots and double colons
+ * use a glued comment to exercise their original token classes.
  */
 export function commentSites(text) {
     const lexer = new FlixLexer(CharStream.fromString(text));
@@ -119,20 +118,21 @@ export function commentSites(text) {
     const stream = new CommonTokenStream(lexer);
     stream.fill();
     const stringTypes = new Set([FlixLexer.STRING_START, FlixLexer.STRING_END, FlixLexer.STRING_CONTENT, FlixLexer.INTERPOLATION_START, FlixLexer.INTERPOLATION_END, FlixLexer.DEBUG_INTERPOLATOR]);
+    const tightTypes = new Set([FlixLexer.DOT, FlixLexer.COLON_COLON_TIGHT]);
     const sites = [];
     let depth = 0;
     for (const t of stream.getTokens()) {
         if (t.channel !== 0 || t.type === FlixLexer.EOF) continue;
         if (t.type === FlixLexer.STRING_START) depth++;
         const inString = depth > 0 || stringTypes.has(t.type);
-        if (!inString) sites.push(t.tokenIndex);
+        if (!inString) sites.push({ tokenIndex: t.tokenIndex, glued: tightTypes.has(t.type) });
         if (t.type === FlixLexer.STRING_END) depth--;
     }
     return sites;
 }
 
-/** `text` with ` // note` and a line break inserted right after the default-channel token `tokenIndex`. */
-export function withLineCommentAfter(text, tokenIndex) {
+/** Insert a line comment after the selected token, with no gap for tight punctuation. */
+export function withLineCommentAfter(text, { tokenIndex, glued }) {
     const lexer = new FlixLexer(CharStream.fromString(text));
     lexer.removeErrorListeners();
     const stream = new CommonTokenStream(lexer);
@@ -141,7 +141,7 @@ export function withLineCommentAfter(text, tokenIndex) {
     for (const t of stream.getTokens()) {
         if (t.type === FlixLexer.EOF) break;
         out += t.text;
-        if (t.tokenIndex === tokenIndex) out += " // note\n";
+        if (t.tokenIndex === tokenIndex) out += glued ? "// note\n" : " // note\n";
     }
     return out;
 }
