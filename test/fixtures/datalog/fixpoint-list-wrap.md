@@ -29,6 +29,16 @@ def compact(): Unit =
     let _ = psolve p, // retain both sources
         p;
     ()
+
+def commented(): #{ A(Int32) } =
+    let p = inject Vector#{1}, Vector#{2} // after the last source
+        into A/1, B/1;
+    let q = inject Vector#{3}
+        // before into
+        into A/1;
+    let aVeryLongSingleSourceIdentifierNameThatDoesNotFitAtAll = q;
+    let _ = solve aVeryLongSingleSourceIdentifierNameThatDoesNotFitAtAll project A;
+    solve p project A
 ```
 
 ## Output
@@ -74,6 +84,19 @@ def compact(): Unit =
         p,  // retain both sources
         p;
     ()
+
+def commented(): #{ A(Int32) } =
+    let p = inject Vector#{1}, Vector#{2}  // after the last source
+        into A/1, B/1;
+    let q = inject Vector#{3}
+        // before into
+        into A/1;
+    let aVeryLongSingleSourceIdentifierNameThatDoesNotFitAtAll =
+        q;
+    let _ =
+        solve aVeryLongSingleSourceIdentifierNameThatDoesNotFitAtAll
+            project A;
+    solve p project A
 ```
 
 ```flix printWidth=100
@@ -101,4 +124,14 @@ def compact(): Unit =
         p,  // retain both sources
         p;
     ()
+
+def commented(): #{ A(Int32) } =
+    let p = inject Vector#{1}, Vector#{2}  // after the last source
+        into A/1, B/1;
+    let q = inject Vector#{3}
+        // before into
+        into A/1;
+    let aVeryLongSingleSourceIdentifierNameThatDoesNotFitAtAll = q;
+    let _ = solve aVeryLongSingleSourceIdentifierNameThatDoesNotFitAtAll project A;
+    solve p project A
 ```
