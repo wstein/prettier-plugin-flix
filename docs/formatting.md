@@ -293,11 +293,13 @@ def next(xs: List[Int32]): Int32 = match xs {
 [Map alignment](../test/fixtures/expressions/align-map-entries.md) ·
 [Record alignment](../test/fixtures/expressions/align-record-fields.md)
 
-A record update keeps `| base` with the last field when they fit on one line.
-When the line would exceed the width or a line comment ends the last field,
-start a new line at the field indentation with `| base`. When a comment
-belongs to the pipe, keep it next to the pipe.
-[Record update fixture](../test/fixtures/expressions/record-update-tail.md)
+Record updates, open record types and record patterns keep their `| …` tail
+with the last field when they fit on one line. Start the tail on a new line
+at the field indentation when the line would exceed the width or a line
+comment ends the last field. A comment attached to the pipe keeps its
+existing layout.
+[Record update fixture](../test/fixtures/expressions/record-update-tail.md) ·
+[Record type and pattern fixture](../test/fixtures/expressions/record-type-pattern-tails.md)
 
 ## Comments
 
