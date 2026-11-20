@@ -114,6 +114,17 @@ def f(): Unit = List.forEach(xs, x -> {
 [Trailing lambda fixture](../test/fixtures/expressions/hug-trailing-lambda.md) ·
 [Width fallback fixture](../test/fixtures/expressions/trailing-lambda-width.md)
 
+### Trait constraints
+
+Keep a short `with` list inline when it fits. When the list wraps, put
+each constraint on its own indented line. A constraint's type arguments can
+still wrap if that constraint alone needs more room. A line comment after a
+comma stays with the preceding constraint.
+
+The Rust guide uses a similar list layout for `where` clauses.
+[Rust Style Guide](https://doc.rust-lang.org/style-guide/items.html#where-clauses) ·
+[Trait constraint fixture](../test/fixtures/declarations/trait-constraint-lists.md)
+
 ## Pipelines
 
 A pipeline using `|>` or `!>` stays on one line when it fits. In a multiline
