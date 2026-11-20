@@ -33,6 +33,9 @@
       <p class="chapter-nav-title">Chapters</p>
       <ul>
         {{ $current := . }}
+        {{ with site.GetPage "formatting" }}
+        <li><a href="{{ .RelPermalink }}"{{ if eq .RelPermalink $current.RelPermalink }} aria-current="page"{{ end }}>Formatting style</a></li>
+        {{ end }}
         {{ range site.Sections }}
         <li><a href="{{ .RelPermalink }}"{{ if eq .RelPermalink $current.RelPermalink }} aria-current="page"{{ end }}>{{ .Title }}</a></li>
         {{ end }}

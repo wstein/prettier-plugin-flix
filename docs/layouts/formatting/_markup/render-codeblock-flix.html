@@ -1,0 +1,6 @@
+{{- $code := strings.TrimRight "\n" .Inner -}}
+{{- with index site.Data.formattingHighlight $code -}}
+  {{- . | safeHTML -}}
+{{- else -}}
+  <pre><code class="language-flix">{{ $code }}</code></pre>
+{{- end -}}

@@ -132,10 +132,16 @@ for (const path of findFixtures(root)) {
     };
 }
 
+const formatting = await readFile(new URL("../docs/formatting.md", import.meta.url), "utf8");
+const formattingHighlight = Object.fromEntries(
+    [...formatting.matchAll(/^```flix[^\S\n]*\n([\s\S]*?)^```$/gm)]
+        .map(([, code]) => [code.trimEnd(), highlight(code)]),
+);
 highlighter.dispose();
 showcase.sort((a, b) => a.order - b.order);
 chapters.examples = { count: showcase.length, groups: [{ title: "", fixtures: showcase.map(({ example }) => example) }] };
 await mkdir(destination, { recursive: true });
+await writeFile(new URL("formattingHighlight.json", destination), JSON.stringify(formattingHighlight) + "\n");
 await writeFile(new URL("fixtures.json", destination), JSON.stringify(chapters, null, 2) + "\n");
 const examples = {};
 for (const group of playground.groups) {
