@@ -2,9 +2,9 @@
 /**
  * Generate the antlr-ng (TypeScript) target from the shared grammars.
  *
- * The grammars in grammars/ are canonical, but their embedded actions are Java
- * syntax and antlr-ng's TypeScript target ignores `options { superClass }`
- * (docs/DEFECTS.md D11). This closes both gaps without forking the grammar:
+ * The pinned @wstein/flix-antlr-grammar package provides the canonical grammars.
+ * Their embedded actions use Java syntax, and antlr-ng's TypeScript target
+ * ignores `options { superClass }`. Adapt the generated copy:
  *
  *   1. Pre-process a TypeScript-flavored copy of the grammars into build/.
  *   2. Run antlr-ng over the copy.
