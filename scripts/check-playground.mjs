@@ -13,6 +13,28 @@ const asset = page.match(/\bdata-formatter=(?:"([^"]+)"|([^\s>]+))/);
 assert.ok(asset, "Playground page links to its formatter bundle");
 const { formatFlix } = await import(new URL(`js/${basename(asset[1] ?? asset[2])}`, site));
 
+test("the formatting reference publishes highlighted examples and links to catalog fixtures", async () => {
+    const [source, guide, home] = await Promise.all([
+        readFile(new URL("../docs/formatting.md", import.meta.url), "utf8"),
+        readFile(new URL("formatting/index.html", site), "utf8"),
+        readFile(new URL("index.html", site), "utf8"),
+    ]);
+    assert.match(home, /href=(?:"[^"]*\/formatting\/"|[^\s>]*\/formatting\/)>Read the formatting style/);
+    assert.match(guide, /<h1[^>]*>Flix formatting style<\/h1>/);
+    const sourceBlocks = source.match(/^```flix$/gm) ?? [];
+    assert.ok(sourceBlocks.length > 0);
+    assert.equal((guide.match(/<pre class=(?:"shiki\b|shiki\b)/g) ?? []).length, sourceBlocks.length);
+
+    const fixtures = [...source.matchAll(/\]\(\.\.\/test\/fixtures\/([\w-]+)\/([\w-]+)\.md\)/g)];
+    assert.ok(fixtures.length > 0);
+    for (const [, chapter, id] of fixtures) {
+        const link = new RegExp(`href=(?:"[^"]*/${chapter}/#${id}"|[^\\s>]*/${chapter}/#${id})(?=[\\s>])`);
+        assert.match(guide, link, `guide should link to ${chapter}/#${id}`);
+        const chapterPage = await readFile(new URL(`${chapter}/index.html`, site), "utf8");
+        assert.match(chapterPage, new RegExp(`<article id=(?:"${id}"|${id})(?=[\\s>])`));
+    }
+});
+
 test("the published browser bundle matches CLI and fixture output", async () => {
     const path = fileURLToPath(new URL("../test/fixtures/expressions/align-map-comment.md", import.meta.url));
     const fixture = loadFixture(path);
