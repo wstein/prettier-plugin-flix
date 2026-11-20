@@ -20,8 +20,6 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      # The grammar is a git dependency; its lockfile entry uses ssh, which CI has no key for.
-      - run: git config --global url."https://github.com/".insteadOf ssh://git@github.com/
       - run: npm ci
       - run: npm run build
       - run: npm run test:coverage

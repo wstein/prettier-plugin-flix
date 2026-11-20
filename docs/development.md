@@ -7,7 +7,6 @@
 Install the locked dependencies and generate the parser before formatting:
 
 ```sh
-git config --local url."https://github.com/".insteadOf ssh://git@github.com/
 npm ci
 npm run build
 npx prettier --plugin=./dist/index.js --check "path/to/**/*.flix"

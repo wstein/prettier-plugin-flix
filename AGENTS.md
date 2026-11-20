@@ -6,11 +6,9 @@ decisions and [the development guide](docs/development.md) for command details.
 
 ## Start here
 
-Use Node.js 22, as CI does. The lockfile pins the ANTLR grammar to a Git commit.
-A clean checkout without GitHub SSH access can install it over HTTPS.
+Use Node.js 22, as CI does. The lockfile pins an HTTPS archive of the ANTLR grammar to a Git commit.
 
 ```sh
-git config --local url."https://github.com/".insteadOf ssh://git@github.com/
 npm ci
 npm test
 npm run coverage:syntax -- --check
