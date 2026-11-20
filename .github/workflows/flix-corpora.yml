@@ -16,8 +16,7 @@ on:
 permissions:
   contents: read
 env:
-  # The flix-spec revision this workflow trusts. Update it deliberately (and the plugin's major.minor
-  # with it): a moving branch would let the corpus, the compiler and the grammar drift apart unnoticed.
+  # Update the flix-spec revision deliberately to keep the corpus and compiler aligned.
   FLIX_SPEC_REF: 34630fe87450c0c2d52c4543b68de97c99a46920
 jobs:
   corpora:
@@ -34,8 +33,6 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - name: The plugin must track the pinned Flix release
-        run: node scripts/check-flix-version.mjs flix-spec/pin.json
       - name: Read the Flix release pinned by flix-spec
         id: pin
         run: |

@@ -93,7 +93,7 @@ jobs:
             fi
           else
             gh release create "$tag" --draft --target "$TARGET_COMMIT" \
-              --title "Prettier plugin for Flix $tag" --generate-notes
+              --title "prettier-plugin-flix $tag" --generate-notes
             gh release upload "$tag" "$package"
           fi
           gh release edit "$tag" --draft=false --latest
