@@ -1,5 +1,5 @@
 import type { AstPath, Doc, Options, Parser, Plugin, Printer, SupportLanguage } from "prettier";
-import { layoutComments } from "./comment-layout.js";
+import { layoutSource } from "./comment-layout.js";
 import { parseFlix, type FlixRoot } from "./parse.js";
 import { Printer as FlixPrinter } from "./print.js";
 
@@ -31,7 +31,7 @@ const flixAstPrinter: Printer<FlixRoot> = {
     print(path: AstPath<FlixRoot>, options: Options): Doc {
         const { printWidth = defaultOptions.printWidth, tabWidth = defaultOptions.tabWidth, useTabs = false } = options;
         const value = new FlixPrinter(path.node, printWidth, tabWidth).printRoot();
-        return layoutComments(path.node, value, { printWidth, tabWidth, useTabs });
+        return layoutSource(path.node, value, { printWidth, tabWidth, useTabs });
     },
 };
 
