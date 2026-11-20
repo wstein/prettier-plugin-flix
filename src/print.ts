@@ -61,6 +61,10 @@ function nextTerm(n: Node): TerminalNode | null {
     return null;
 }
 
+function isAccessDot(t: TerminalNode): boolean {
+    return (ttype(t) === L.DOT || ttype(t) === L.DOT_WS) && kind(t.parent as Node) === "Dot";
+}
+
 const OPEN_TO_CLOSE = new Map<number, number>([
     [L.LPAREN, L.RPAREN],
     [L.LBRACK, L.RBRACK],
@@ -138,12 +142,12 @@ export class Printer {
         return join(literalline, lines);
     }
 
-    private leadDoc(info: TokenInfo, closing: boolean): Doc[] {
+    private leadDoc(info: TokenInfo, closing: boolean, inlineGap = " "): Doc[] {
         const parts: Doc[] = [];
         info.lead.forEach((c, i) => {
             if (i > 0 && c.nl >= 2) parts.push(hardline);
             parts.push(this.commentText(c));
-            parts.push(c.isLine || c.nlNext > 0 ? hardline : " ");
+            parts.push(c.isLine || c.nlNext > 0 ? hardline : inlineGap);
         });
         if (info.lead.length > 0 && info.nlAfter >= 2 && !closing) parts.push(hardline);
         return parts;
@@ -168,7 +172,9 @@ export class Printer {
         }
         // An own-line comment must start its own line even when a space was planned here.
         const before = !this.lineStart.has(idx) && info.lead[0].nl > 0 ? [hardline] : [];
-        return [...before, ...this.leadDoc(info, false)];
+        const previous = prevTerm(t);
+        const touchesDot = isAccessDot(t) || (previous !== null && ttype(previous) === L.DOT && isAccessDot(previous));
+        return [...before, ...this.leadDoc(info, false, touchesDot ? "" : " ")];
     }
 
     /** Print comments above an expression outside its fit group. */
@@ -203,6 +209,8 @@ export class Printer {
 
     private tokTrail(t: TerminalNode): Doc {
         const info = this.info(t);
+        // `a.// c\nb`: the comment must touch the dot. Datalog terminators use whitespace instead.
+        if (info && ttype(t) === L.DOT && isAccessDot(t)) return this.trailDoc(info, "");
         // `s->// c\nfield`: whitespace after the arrow would turn the field access into a lambda arrow.
         const gap = ttype(t) === L.ARROW_TIGHT ? "" : " ";
         return info ? this.trailDoc(info, gap) : "";
@@ -274,6 +282,7 @@ export class Printer {
         const sa = this.src(a);
         const sb = this.src(b);
         if (OP_CHARS.includes(sa.charAt(sa.length - 1)) && OP_CHARS.includes(sb.charAt(0))) return " ";
+        if (ta === L.DOT_WS && isAccessDot(a)) return " ";
         if (tb === L.COMMA || tb === L.SEMI || tb === L.RPAREN || tb === L.RBRACK || tb === L.COLON) return "";
         if (ta === L.LPAREN || ta === L.LBRACK || ta === L.HASH_LPAREN) return "";
         if (ta === L.DOT || ta === L.DOT_WS || tb === L.DOT || tb === L.DOT_WS) return "";
