@@ -15,6 +15,5 @@ pub def render():String \ IO=new StringBuilder().append("Flix").toString()
 
 ```flix
 import java.lang.StringBuilder
-
 pub def render(): String \ IO = new StringBuilder().append("Flix").toString()
 ```

@@ -15,7 +15,6 @@ pub def positiveSizes(xs:List[String]):List[Int32]=mapValues(String.length,keepM
 
 ```flix
 use List.{map => mapValues, filter => keepMatching}
-
 pub def positiveSizes(xs: List[String]): List[Int32] =
     mapValues(String.length, keepMatching(s -> String.length(s) > 0, xs))
 ```
@@ -25,7 +24,6 @@ use List.{
     map => mapValues,
     filter => keepMatching
 }
-
 pub def positiveSizes(xs: List[String]):
     List[Int32] =
     mapValues(

@@ -7,6 +7,8 @@ flix: "0.80"
 ## Input
 
 ```flix
+import java.lang.StringBuilder
+use List.append
 mod Steps {
     def first(): Int32 = 1
     def second(): Int32 = 2
@@ -29,6 +31,8 @@ def zero(): Int32 = 0
 ## Output
 
 ```flix
+import java.lang.StringBuilder
+use List.append
 mod Steps {
     def first(): Int32 = 1
     def second(): Int32 = 2
