@@ -53,12 +53,6 @@ On pull requests and main, `npm run coverage:syntax -- --check` requires the Mar
 
 For layout decisions, prefer the [Flix language documentation](https://doc.flix.dev/) and hand-written upstream tests and examples. Wrapped list constructors follow the leading `::` layout shown in [the railroad example](https://github.com/flix/flix/blob/4022083acf86ab8b92308f2fb47ae615d5088de0/examples/datalog/railroad-network.flix#L49). The built-in formatter is recorded separately as a comparison.
 
-The version policy check:
-
-```sh
-node scripts/check-flix-version.mjs <path-to>/flix-spec/pin.json
-```
-
 ## Test sources
 
 | Source | How | Needs expected output? |
@@ -84,12 +78,18 @@ The compiler oracle compiles each file in its own throwaway project, as flix/fli
 
 ## Flix versions
 
-Flix changes quickly, so the plugin follows one rule: **the plugin's `major.minor` is the Flix release it was checked against** (plugin `0.80.x` for Flix 0.80), the same scheme `wstein/flix-spec` uses.
+The plugin uses its own version numbers. Record the exact Flix versions
+verified for a plugin release in its release notes. Flix patch releases can
+change syntax, so verify each exact version before adding it to that list.
 
-- There is one grammar, the newest, which is a permissive superset of the language. Older programs still parse; newer syntax needs a grammar update.
-- The grammar dependency is pinned to an exact commit. Updating it is a normal PR, gated by `npm test` and the corpus check.
-- A weekly workflow (`flix-upstream.yml`) runs the corpus check over the `flix-spec` fixtures with the newest grammar, and fails when the Flix release pinned by `flix-spec` no longer matches the plugin's `major.minor`. A red run means "Flix moved: update the grammar, re-run, and bump the version".
-- Fixes for an older Flix minor go on a `0.<minor>` maintenance branch only when someone needs one.
+- The grammar dependency is pinned to an exact commit. Verify grammar updates
+  with `npm test` and the corpus checks.
+- The weekly upstream workflow (`flix-upstream.yml`) checks the grammar shipped
+  by the plugin against the current `flix-spec` corpus. The compiler oracle in
+  `flix-corpora.yml` uses a pinned `flix-spec` revision and compiler.
+- When another Flix version passes the compatibility checks, update the release
+  notes with the verified version. Release a new package when the plugin needs
+  a grammar update, a formatter change, or another package change.
 
 ## Publish a plugin release
 
@@ -99,7 +99,7 @@ The workflow builds and tests the selected commit and publishes its prebuilt
 npm tarball as a GitHub Release. It uses the commit that starts the run unless
 you supply an earlier full SHA from `main`.
 
-Prepare a draft targeting that exact commit if you want to write the release
-notes before publication. The workflow uses the draft and its notes. It can
+Prepare a draft targeting that exact commit to record the tested Flix versions
+in the release notes before publication. The workflow uses the draft and its notes. It can
 also create a draft with generated notes. The release becomes public after the
 tarball is available.
