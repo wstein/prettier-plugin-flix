@@ -34,6 +34,8 @@ def label(code: Int32): String =
     }
 ```
 
+[Open this example in the Playground](https://wstein.github.io/prettier-plugin-flix/playground/#code=ZGVmIGxhYmVsKGNvZGU6SW50MzIpOlN0cmluZz0KbWF0Y2ggY29kZXsKY2FzZSAyMDA9PiJPSyIgLy8gUmVxdWVzdCBjb21wbGV0ZWQKY2FzZSA0MDQgPT4iTm90IGZvdW5kIiAvLyBDaGVjayB0aGUgcmVxdWVzdGVkIFVSTApjYXNlIF8gPT4iT3RoZXIiIC8vIEZhbGxiYWNrIGZvciB1bmtub3duIGNvZGVzCn0K)
+
 ## Try it in a project
 
 Install Prettier and the prebuilt plugin from the GitHub release. Plugin version
