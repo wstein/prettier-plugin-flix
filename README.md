@@ -11,8 +11,9 @@ Format Flix source files with Prettier. Start with one file, preview the result,
 ```flix
 def label(code:Int32):String=
 match code{
-case 0=>"Open"
-case _ =>"Closed"
+case 200=>"OK" // Request completed
+case 404 =>"Not found" // Check the requested URL
+case _ =>"Other" // Fallback for unknown codes
 }
 ```
 
@@ -21,8 +22,9 @@ case _ =>"Closed"
 ```flix
 def label(code: Int32): String =
     match code {
-        case 0 => "Open"
-        case _ => "Closed"
+        case 200 => "OK"         // Request completed
+        case 404 => "Not found"  // Check the requested URL
+        case _   => "Other"      // Fallback for unknown codes
     }
 ```
 
