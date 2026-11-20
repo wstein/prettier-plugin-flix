@@ -18,13 +18,14 @@ def counts():Set[(String,Int32)]=Set#{("A",8),("Library",126)}
 def compact():Set[(Int32,Int32)]=Set#{(1,2),(30,4)}
 
 def inRegion(r:Region[a]):Array[(String,Int32),a] \ a = Array#{
-("A",8), // Platform number
-("Library",126)
+("Central Station",8),
+("Library",126),
+("Park Station",1200)
 } @ r
 
 def commented():Vector[(String,Int32,String)]=Vector#{
-("Museum",8,"Central"), // The first leg.
-("Park",126,"Airport")
+("Park",126,"Airport"),
+("Museum",8,"Central") // The first leg.
 }
 ```
 
@@ -43,21 +44,20 @@ def counts(): Set[(String, Int32)] = Set#{
 
 def compact(): Set[(Int32, Int32)] = Set#{(1, 2), (30, 4)}
 
-def inRegion(r: Region[a]): Array[
-    (String, Int32),
-    a
-] \ a = Array#{
-    ("A",         8),  // Platform number
-    ("Library", 126)
-} @ r
+def inRegion(r: Region[a]): Array[(String, Int32), a] \ a =
+    Array#{
+        ("Central Station",    8),
+        ("Library",          126),
+        ("Park Station",    1200)
+    } @ r
 
 def commented(): Vector[(String, Int32, String)] = Vector#{
-    ("Museum",   8, "Central"),  // The first leg.
-    ("Park",   126, "Airport")
+    ("Park",   126, "Airport"),
+    ("Museum",   8, "Central")  // The first leg.
 }
 ```
 
-```flix printWidth=48
+```flix printWidth=47
 def stops(): List[
     (String, Int32, String)
 ] = List#{
@@ -76,14 +76,16 @@ def compact(): Set[(Int32, Int32)] = Set#{
 }
 
 def inRegion(r: Region[a]):
-    Array[(String, Int32), a] \ a = Array#{
-    ("A",         8),  // Platform number
-    ("Library", 126)
-} @ r
+    Array[(String, Int32), a] \ a =
+    Array#{
+        ("Central Station",    8),
+        ("Library",          126),
+        ("Park Station",    1200)
+    } @ r
 
 def commented():
     Vector[(String, Int32, String)] = Vector#{
-    ("Museum", 8, "Central"),  // The first leg.
-    ("Park", 126, "Airport")
+    ("Park", 126, "Airport"),
+    ("Museum", 8, "Central")  // The first leg.
 }
 ```
