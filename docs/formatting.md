@@ -381,6 +381,16 @@ provide comparisons for argument lists, line breaks and alignment. The
 provides a comparison. The [documentation audit](official-examples.md) records
 reviewed differences against the official examples.
 
+Other functional languages offer comparisons for specific layout decisions.
+
+- **F#** provides examples of multiline pipelines, match arms and function
+  application. [F# formatting guidelines](https://learn.microsoft.com/en-us/dotnet/fsharp/style-guide/formatting)
+- **Haskell** provides an example of using source layout to choose between
+  compact and multiline forms while keeping formatting idempotent.
+  [Ormolu](https://github.com/tweag/ormolu#readme)
+- **OCaml** provides another formatter to compare for pattern matches, record
+  layouts and the effect of style profiles. [OCamlFormat](https://github.com/ocaml-ppx/ocamlformat#readme)
+
 - The plugin uses the Flix grammar to parse source. The Flix compiler remains
   the authority for type checking and other language checks.
 - The CLI reports a syntax error with its line and column. The Playground
