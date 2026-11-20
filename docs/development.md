@@ -90,3 +90,16 @@ Flix changes quickly, so the plugin follows one rule: **the plugin's `major.mino
 - The grammar dependency is pinned to an exact commit. Updating it is a normal PR, gated by `npm test` and the corpus check.
 - A weekly workflow (`flix-upstream.yml`) runs the corpus check over the `flix-spec` fixtures with the newest grammar, and fails when the Flix release pinned by `flix-spec` no longer matches the plugin's `major.minor`. A red run means "Flix moved: update the grammar, re-run, and bump the version".
 - Fixes for an older Flix minor go on a `0.<minor>` maintenance branch only when someone needs one.
+
+## Publish a plugin release
+
+Merge the package version, lockfile and README install-link update into
+`main`, then run **Publish plugin release** from the Actions tab on `main`.
+The workflow builds and tests the selected commit and publishes its prebuilt
+npm tarball as a GitHub Release. It uses the commit that starts the run unless
+you supply an earlier full SHA from `main`.
+
+Prepare a draft targeting that exact commit if you want to write the release
+notes before publication. The workflow uses the draft and its notes. It can
+also create a draft with generated notes. The release becomes public after the
+tarball is available.
