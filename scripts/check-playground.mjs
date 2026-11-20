@@ -180,5 +180,8 @@ test("the Playground handoff preserves Unicode source and line width in a URL fr
     assert.doesNotMatch(url.hash, /tabWidth|useTabs/);
     assert.deepEqual(readHandoff(url.hash), draft);
     assert.deepEqual(readHandoff(url.hash + "&tabWidth=2&useTabs=true"), draft);
+    const unconfigured = new URL(writeHandoff(url.href, { source: draft.source }));
+    assert.equal(new URLSearchParams(unconfigured.hash.slice(1)).has("printWidth"), false);
+    assert.deepEqual(readHandoff(unconfigured.hash), { source: draft.source, printWidth: undefined });
     assert.equal(readHandoff("#code=%21"), undefined);
 });

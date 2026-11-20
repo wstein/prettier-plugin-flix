@@ -2,7 +2,8 @@ export function writeHandoff(url, { source, printWidth }) {
     const bytes = new TextEncoder().encode(source);
     const encoded = btoa(Array.from(bytes, (byte) => String.fromCharCode(byte)).join(""))
         .replaceAll("+", "-").replaceAll("/", "_").replace(/=+$/, "");
-    const params = new URLSearchParams({ code: encoded, printWidth });
+    const params = new URLSearchParams({ code: encoded });
+    if (printWidth !== undefined) params.set("printWidth", printWidth);
     const link = new URL(url);
     link.hash = params.toString();
     return link.href;
