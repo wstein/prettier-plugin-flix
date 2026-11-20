@@ -24,6 +24,7 @@ trait Convert[a] {
     type Result[a]: Type
     pub def convert(x: a): Convert.Result[a]
 }
+
 instance Convert[Int32] {
     type Result[Int32] = Int32
     pub def convert(x: Int32): Int32 = x + 1

@@ -25,6 +25,7 @@ Assert.assertEq(expected=42,value)
 eff Ask {
     def ask(): Int32
 }
+
 @Test
 def testAsk(): Unit \ Assert = {
     let value = run { Ask.ask() } with handler Ask {
