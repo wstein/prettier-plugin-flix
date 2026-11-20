@@ -15,6 +15,15 @@ pub def same[a: Type](first: a, second: a): Bool with Eq[a], // equality comes f
     ToString[a] =
     if (first == second) ToString.toString(first) != "" else false
 
+pub def tagged[a: Type](first: a): String with // both constraints
+    ToString[a], Hash[a] = ToString.toString(first)
+
+pub def notes[a: Type](first: a, second: a): String with
+    // shown first
+    ToString[a] // before the comma
+    , // after the comma
+    Hash[a] = ToString.toString(first) + ToString.toString(second)
+
 pub trait ValueFormat[a: Type] with ToString[a], Eq[a], Hash[a] {}
 ```
 
@@ -44,6 +53,17 @@ pub def same[a: Type] (first: a, second: a): Bool with
     else
         false
 
+pub def tagged[a: Type] (first: a): String with  // both constraints
+    ToString[a],
+    Hash[a] = ToString.toString(first)
+
+pub def notes[a: Type] (first: a, second: a): String with
+    // shown first
+    ToString[a],  // before the comma
+    // after the comma
+    Hash[a] =
+    ToString.toString(first) + ToString.toString(second)
+
 pub trait ValueFormat[a: Type] with
     ToString[a],
     Eq[a],
@@ -62,6 +82,16 @@ pub def same[a: Type] (first: a, second: a): Bool with
     Eq[a],  // equality comes first
     ToString[a] = if (first == second) ToString.toString(first) != "" else false
 
+pub def tagged[a: Type] (first: a): String with  // both constraints
+    ToString[a],
+    Hash[a] = ToString.toString(first)
+
+pub def notes[a: Type] (first: a, second: a): String with
+    // shown first
+    ToString[a],  // before the comma
+    // after the comma
+    Hash[a] = ToString.toString(first) + ToString.toString(second)
+
 pub trait ValueFormat[a: Type] with ToString[a], Eq[a], Hash[a] {}
 ```
 
@@ -72,6 +102,16 @@ pub def render[a: Type, b: Type, c: Type, d: Type] (first: a, second: b, third: 
 pub def same[a: Type] (first: a, second: a): Bool with
     Eq[a],  // equality comes first
     ToString[a] = if (first == second) ToString.toString(first) != "" else false
+
+pub def tagged[a: Type] (first: a): String with  // both constraints
+    ToString[a],
+    Hash[a] = ToString.toString(first)
+
+pub def notes[a: Type] (first: a, second: a): String with
+    // shown first
+    ToString[a],  // before the comma
+    // after the comma
+    Hash[a] = ToString.toString(first) + ToString.toString(second)
 
 pub trait ValueFormat[a: Type] with ToString[a], Eq[a], Hash[a] {}
 ```
