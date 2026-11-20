@@ -77,6 +77,29 @@ def wait(rx: Receiver[Int32], n: Int32, tx: Sender[List[Int32]]): Unit
 [Call fixture](../test/fixtures/expressions/wrap-arguments.md) ·
 [Signature fixture](../test/fixtures/declarations/signature-boundaries.md)
 
+A block-bodied lambda can start on the call line when it is the final
+argument and the call prefix fits. Indent the statements inside the lambda.
+
+**Before**
+
+```flix
+def f(): Unit = List.forEach(xs, x -> {
+println(x);
+println(x)
+})
+```
+
+**After**
+
+```flix
+def f(): Unit = List.forEach(xs, x -> {
+    println(x);
+    println(x)
+})
+```
+
+[Trailing lambda fixture](../test/fixtures/expressions/hug-trailing-lambda.md)
+
 ## Pipelines
 
 A pipeline using `|>` or `!>` stays on one line when it fits. In a multiline
@@ -157,11 +180,28 @@ def main(): Unit
 [Middleware fixture](../test/fixtures/expressions/sleep-middleware-chain.md) ·
 [Handler chain at narrow width](../test/fixtures/declarations/run-with-chain.md)
 
-## Parallel bindings
+## Comprehensions and parallel bindings
+
+A short `for … yield` or `forM … yield` can stay compact. When the generator
+list wraps, put one generator on each line and keep a short `yield` expression
+beside the closing parenthesis.
+
+**At 80 columns**
+
+```flix
+def f(): Option[Int32] =
+    forM (
+        x <- divide(5, 2);
+        y <- divide(x, 8);
+        z <- divide(9, y)
+    ) yield x + y + z
+```
 
 Keep a short `par … yield` together when it fits. When it wraps, put each binding
 on its own line and keep the short `yield` expression with the closing
 parenthesis. Keep `par (` on the binding line when there is room for it.
+
+[Comprehension fixture](../test/fixtures/expressions/for-yield-generators.md) ·
 [Parallel scoreboard fixture](../test/fixtures/expressions/scoreboard.md)
 
 ## Alignment
@@ -174,9 +214,12 @@ is capped at eight extra spaces. Complex rows or rows that would exceed
 `printWidth` use ordinary spacing.
 
 When a vector, list, array, or set prints matching rows of literal tuples
-on separate lines, align the corresponding columns. Text starts at the
-same column and integers align on the right. The rows keep ordinary spacing
-if padding would exceed the available width, including a trailing comment.
+on separate lines, align columns of plain strings, integers, characters or
+booleans. Each column must use the same literal kind in every row. Integers
+align on the right and the other values start at the same column. An
+unsupported cell, such as a floating-point literal or an interpolated
+string, keeps the collection in its ordinary layout. The same applies if
+padding would exceed the available width, including a trailing comment.
 Compact collections keep their inline layout. For an example, see the
 [tuple-row fixture](../test/fixtures/expressions/align-tuple-rows.md).
 
@@ -239,8 +282,38 @@ width, the body comments can still align with each other. A standalone
 `// ^` comment keeps pointing at the same token when the correspondence is
 clear, including when the annotated line wraps.
 
+After a trailing `//` comment on a comma, consecutive comment-only lines that
+are indented farther than the surrounding items in the source align with that
+`//`. A comment at item indentation or after a blank line starts a separate
+group.
+
+**Before**
+
+```flix
+def a(): Unit = g(
+    1,  // after the comma this is a pretty long comment saying
+       // needing a second line...
+          // and a third line
+    // comment on the lambda
+    x -> { println(x) }
+)
+```
+
+**After**
+
+```flix
+def a(): Unit = g(
+    1,  // after the comma this is a pretty long comment saying
+        // needing a second line...
+        // and a third line
+    // comment on the lambda
+    x -> { println(x) }
+)
+```
+
 [Tuple comments](../test/fixtures/comments/align-tuple-type-comments.md) ·
 [Signature comments](../test/fixtures/comments/align-function-signature-comments.md) ·
+[Comment continuations](../test/fixtures/comments/indented-comment-continuations.md) ·
 [Caret markers](../test/fixtures/comments/caret-markers.md)
 
 ## Datalog
