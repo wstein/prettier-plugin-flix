@@ -337,6 +337,10 @@ pipe keeps its existing layout.
 
 ## Comments
 
+A standalone comment above an operator chain stays on its own line. The
+chain can still fit on one line underneath it.
+[Leading operator comments](../test/fixtures/comments/leading-operator-comments.md)
+
 Keep an ordinary trailing `//` comment at least two spaces from the code.
 Consecutive commented lines at the same level share a column when each line
 fits after alignment. A blank line, an uncommented line or a block boundary
