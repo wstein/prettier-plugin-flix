@@ -299,7 +299,8 @@ the tail on a new line at the field indentation when the line would exceed
 the width or a line comment ends the last field. A comment attached to the
 pipe keeps its existing layout.
 [Record update fixture](../test/fixtures/expressions/record-update-tail.md) ·
-[Record type and pattern fixture](../test/fixtures/expressions/record-type-pattern-tails.md)
+[Record type and pattern fixture](../test/fixtures/expressions/record-type-pattern-tails.md) ·
+[Row type fixture](../test/fixtures/declarations/row-type-tails.md)
 
 ## Comments
 
@@ -406,8 +407,10 @@ The Datalog 2.3 manual shows the same split between a rule's head and its
 indented body. [Datalog User Manual](https://datalog.sourceforge.net/datalog.html#index-clause-24)
 A multiline return schema can align its predicates beneath the first one
 when the remaining signature fits. In schema types and schema-row aliases,
-keep the final predicate and its `| …` tail together when they fit. Otherwise,
-start the tail on a new line at the predicate indentation.
+keep the final predicate and its `| …` tail together when they fit. Start
+the tail on a new line at the predicate indentation when the line would
+exceed the width or a line comment ends the final predicate. A comment
+attached to the pipe keeps its existing layout.
 [Row type fixture](../test/fixtures/declarations/row-type-tails.md)
 
 When the source places every predicate of a multi-predicate body on its own
