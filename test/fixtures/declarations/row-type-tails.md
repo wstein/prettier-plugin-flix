@@ -16,9 +16,17 @@ def preserve[additionalDatalogPredicatesBeforeServiceChange: SchemaRow](rules: #
 
 type alias CommentedRow[r: RecordRow] = (name = String, description = String /* keep the remaining fields */ | r)
 
+type alias CommentedSchema[r: SchemaRow] = #(Stop(String), Platform(Int32) /* keep the remaining predicates */ | r)
+
+type alias CommentedSchemaType[r: SchemaRow] = #{ Stop(String), Platform(Int32) /* keep all previously defined predicates */ | r }
+
 type alias CompactRow[r: RecordRow] = (name = String | r)
 
 type alias CompactSchema[r: SchemaRow] = #(Stop(String) | r)
+
+type alias EdgeRow[remainingFieldsOfTheStopRecordRow: RecordRow] = (name = String, platform = Int32 | remainingFieldsOfTheStopRecordRow)
+
+type alias OverRow[remainingFieldsOfTheStopRecordRows: RecordRow] = (name = String, platform = Int32 | remainingFieldsOfTheStopRecordRows)
 ```
 
 ## Output
@@ -60,9 +68,41 @@ type alias CommentedRow[r: RecordRow] =
         description = String /* keep the remaining fields */ | r
     )
 
+type alias CommentedSchema[r: SchemaRow] =
+    #(
+        Stop(String),
+        Platform(
+            Int32
+        ) /* keep the remaining predicates */ | r
+    )
+
+type alias CommentedSchemaType[r: SchemaRow] = #{
+    Stop(String),
+    Platform(
+        Int32
+    ) /* keep all previously defined predicates */ | r
+}
+
 type alias CompactRow[r: RecordRow] = (name = String | r)
 
 type alias CompactSchema[r: SchemaRow] = #(Stop(String) | r)
+
+type alias EdgeRow[
+    remainingFieldsOfTheStopRecordRow: RecordRow
+] =
+    (
+        name = String,
+        platform = Int32 | remainingFieldsOfTheStopRecordRow
+    )
+
+type alias OverRow[
+    remainingFieldsOfTheStopRecordRows: RecordRow
+] =
+    (
+        name = String,
+        platform = Int32
+        | remainingFieldsOfTheStopRecordRows
+    )
 ```
 
 ```flix printWidth=80
@@ -97,9 +137,23 @@ def preserve[
 type alias CommentedRow[r: RecordRow] =
     (name = String, description = String /* keep the remaining fields */ | r)
 
+type alias CommentedSchema[r: SchemaRow] =
+    #(Stop(String), Platform(Int32) /* keep the remaining predicates */ | r)
+
+type alias CommentedSchemaType[r: SchemaRow] = #{
+    Stop(String),
+    Platform(Int32) /* keep all previously defined predicates */ | r
+}
+
 type alias CompactRow[r: RecordRow] = (name = String | r)
 
 type alias CompactSchema[r: SchemaRow] = #(Stop(String) | r)
+
+type alias EdgeRow[remainingFieldsOfTheStopRecordRow: RecordRow] =
+    (name = String, platform = Int32 | remainingFieldsOfTheStopRecordRow)
+
+type alias OverRow[remainingFieldsOfTheStopRecordRows: RecordRow] =
+    (name = String, platform = Int32 | remainingFieldsOfTheStopRecordRows)
 ```
 
 ```flix printWidth=100
@@ -126,7 +180,21 @@ def preserve[additionalDatalogPredicatesBeforeServiceChange: SchemaRow] (rules: 
 type alias CommentedRow[r: RecordRow] =
     (name = String, description = String /* keep the remaining fields */ | r)
 
+type alias CommentedSchema[r: SchemaRow] =
+    #(Stop(String), Platform(Int32) /* keep the remaining predicates */ | r)
+
+type alias CommentedSchemaType[r: SchemaRow] = #{
+    Stop(String),
+    Platform(Int32) /* keep all previously defined predicates */ | r
+}
+
 type alias CompactRow[r: RecordRow] = (name = String | r)
 
 type alias CompactSchema[r: SchemaRow] = #(Stop(String) | r)
+
+type alias EdgeRow[remainingFieldsOfTheStopRecordRow: RecordRow] =
+    (name = String, platform = Int32 | remainingFieldsOfTheStopRecordRow)
+
+type alias OverRow[remainingFieldsOfTheStopRecordRows: RecordRow] =
+    (name = String, platform = Int32 | remainingFieldsOfTheStopRecordRows)
 ```
