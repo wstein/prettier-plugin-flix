@@ -1322,15 +1322,18 @@ export class Printer {
             // Multiline list constructors follow the leading :: style in the Flix examples.
             const leadingCons = rightAssoc && isTerm(op) && ttype(op) === L.COLON_COLON;
             const breakPoint = this.flat > 0 ? " " : line;
-            const hasOwnLineComment = leadingCons && (this.info(op)?.lead[0]?.nl ?? 0) > 0;
-            const before = hasOwnLineComment ? hardline : leadingCons ? breakPoint : " ";
-            const after = leadingCons ? " " : breakPoint;
+            const operand = operands[i + 1];
+            const firstOperand = leadingCons ? firstTerm(operand) : null;
+            const hasOwnLineCommentBefore = leadingCons && (this.info(op)?.lead[0]?.nl ?? 0) > 0;
+            const hasOwnLineCommentAfter = firstOperand !== null && (this.info(firstOperand)?.lead[0]?.nl ?? 0) > 0;
+            const before = hasOwnLineCommentBefore ? hardline : leadingCons ? breakPoint : " ";
+            const after = hasOwnLineCommentAfter ? hardline : leadingCons ? " " : breakPoint;
             return {
                 operator: [
                     this.after(lastTerm(operands[i]), tightCons ? "" : before), this.print(leadingCons ? this.ls(op) : op),
                 ],
                 after: this.after(lastTerm(op), tightCons ? "" : after),
-                operand: this.print(this.ls(operands[i + 1])),
+                operand: this.print(this.ls(operand)),
             };
         });
         const first = this.print(operands[0]);
