@@ -33,6 +33,10 @@ jobs:
           tar -xzf "$RUNNER_TEMP/$archive" -C "$RUNNER_TEMP/hugo" hugo
           echo "$RUNNER_TEMP/hugo" >> "$GITHUB_PATH"
       - run: npm run docs:build
+      - name: Install Chromium for Playwright
+        run: npx playwright install --with-deps chromium
+      - name: Smoke-test the built site in Chromium
+        run: npm run docs:test:browser
       - uses: actions/upload-pages-artifact@v4
         with:
           path: docs/public

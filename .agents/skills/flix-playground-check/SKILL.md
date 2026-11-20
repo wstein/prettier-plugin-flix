@@ -15,7 +15,8 @@ hugo server --source docs --baseURL http://localhost:1313/ --bind 127.0.0.1
 ```
 
 The build regenerates the catalog and checks the published formatter bundle.
-Use a browser for interactions involving the editor, status bar, layout,
+Run the [Chromium smoke test](../../../docs/development.md#verify-the-playground-in-chromium)
+after building. Use a browser for interactions involving the editor, status bar, layout,
 worker timing, or navigation.
 
 ## Check the affected flows
