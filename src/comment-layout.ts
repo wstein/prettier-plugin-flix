@@ -204,20 +204,110 @@ function placeCaretComments(source: string, output: Token[], lines: string[], ta
         sameTokens(outputComments, tokens.filter((token) => !isCode(token)), true) ? revised : lines;
 }
 
-export function layoutComments(root: FlixRoot, value: Doc, options: LayoutOptions): Doc {
+type TupleCell = { kind: "text" | "integer" | "character" | "boolean"; text: string; width: number };
+type TupleRow = { indent: string; cells: TupleCell[]; suffix: string; line: number };
+const TABLE_COLLECTIONS = new Set([L.VECTOR_HASH, L.LIST_HASH, L.ARRAY_HASH, L.SET_HASH]);
+
+function tupleCell(tokens: Token[], line: string[]): TupleCell | undefined {
+    const first = tokens[0];
+    const last = tokens.at(-1);
+    if (!first || !last) return;
+    let kind: TupleCell["kind"];
+    if (first.type === L.STRING_START && last.type === L.STRING_END &&
+        tokens.slice(1, -1).every((token) => token.type === L.STRING_CONTENT)) {
+        kind = "text";
+    } else if ((tokens.length === 1 || (tokens.length === 2 && first.type === L.MINUS)) &&
+        (last.type === L.INT_LITERAL || last.type === L.HEX_LITERAL)) {
+        kind = "integer";
+    } else if (tokens.length === 1 && first.type === L.CHAR_LITERAL) {
+        kind = "character";
+    } else if (tokens.length === 1 && (first.type === L.TRUE || first.type === L.FALSE)) {
+        kind = "boolean";
+    } else return;
+    const text = line.slice(first.column, last.column + Array.from(last.text ?? "").length).join("");
+    if (!/[\t\r\n]/.test(text)) return { kind, text, width: util.getStringWidth(text) };
+}
+
+function tupleRow(tokens: Token[], text: string, line: number): TupleRow | undefined {
+    const row = tokens.slice();
+    if (row.at(-1)?.type === L.LINE_COMMENT) row.pop();
+    if (row.at(-1)?.type === L.COMMA) row.pop();
+    const close = row.pop();
+    if (row[0]?.type !== L.LPAREN || close?.type !== L.RPAREN) return;
+
+    const chars = Array.from(text);
+    const indent = chars.slice(0, row[0].column).join("");
+    if (indent.trim()) return;
+    const cells: TupleCell[] = [];
+    let start = 1;
+    for (let i = 1; i <= row.length; i++) {
+        if (i < row.length && row[i].type !== L.COMMA) continue;
+        const cell = tupleCell(row.slice(start, i), chars);
+        if (!cell) return;
+        cells.push(cell);
+        start = i + 1;
+    }
+    if (cells.length < 2) return;
+    return { indent, cells, suffix: chars.slice(close.column + 1).join(""), line };
+}
+
+function alignTupleRows(tokens: Token[], lines: string[], options: LayoutOptions): boolean {
+    const byLine = new Map<number, Token[]>();
+    for (const token of tokens) {
+        const row = byLine.get(token.line);
+        if (row) row.push(token);
+        else byLine.set(token.line, [token]);
+    }
+    let changed = false;
+    for (const [openingLine, opening] of byLine) {
+        if (opening.at(-1)?.type !== L.LBRACE || !TABLE_COLLECTIONS.has(opening.at(-2)?.type ?? -1)) continue;
+        const rows: TupleRow[] = [];
+        let line = openingLine + 1;
+        for (; line <= lines.length; line++) {
+            const row = tupleRow(byLine.get(line) ?? [], lines[line - 1], line);
+            if (!row) break;
+            rows.push(row);
+        }
+        if (rows.length < 2 || byLine.get(line)?.[0].type !== L.RBRACE) continue;
+        const first = rows[0];
+        if (!rows.every((row) => row.indent === first.indent && row.cells.length === first.cells.length &&
+            row.cells.every((cell, col) => cell.kind === first.cells[col].kind))) continue;
+        const widths = first.cells.map((_, col) => rows.reduce((max, row) => Math.max(max, row.cells[col].width), 0));
+        const aligned = rows.map((row) => {
+            const fields = row.cells.map((cell, col) => {
+                const padding = " ".repeat(widths[col] - cell.width);
+                if (col === widths.length - 1) return (cell.kind === "integer" ? padding : "") + cell.text;
+                return cell.kind === "integer" ? padding + cell.text + ", " : cell.text + ", " + padding;
+            });
+            return row.indent + "(" + fields.join("") + ")" + row.suffix;
+        });
+        if (aligned.some((text) => width(text, options.tabWidth) > options.printWidth)) continue;
+        rows.forEach((row, i) => {
+            changed ||= lines[row.line - 1] !== aligned[i];
+            lines[row.line - 1] = aligned[i];
+        });
+    }
+    return changed;
+}
+
+export function layoutSource(root: FlixRoot, value: Doc, options: LayoutOptions): Doc {
     let trailing = 0;
     let hasCaret = false;
     for (const info of root.info.values()) {
         trailing += info.trail.filter((comment) => comment.isLine && comment.text.startsWith("//")).length;
         hasCaret ||= info.lead.some((comment) => CARET.test(comment.text));
     }
-    if (trailing < 2 && !hasCaret) return value;
+    const mayHaveTupleRows = /\b(?:Vector|List|Array|Set)#\s*\{\s*\(/.test(root.text);
+    if (trailing < 2 && !hasCaret && !mayHaveTupleRows) return value;
 
     // Measure the chosen layout, including wrapped code, actual indentation,
     // and the full comment widths, before changing horizontal space.
     const { formatted } = doc.printer.printDocToString(value, options);
-    const tokens = lex(formatted);
+    let tokens = lex(formatted);
     let lines = formatted.split("\n");
+    if (mayHaveTupleRows && alignTupleRows(tokens, lines, options) && (trailing > 1 || hasCaret)) {
+        tokens = lex(lines.join("\n"));
+    }
     if (trailing > 1) alignTrailingComments(root, tokens, lines, options);
     if (hasCaret) lines = placeCaretComments(root.text, tokens, lines, options.tabWidth);
     return lines.join("\n") === formatted ? value : doc.builders.join(doc.builders.literalline, lines);

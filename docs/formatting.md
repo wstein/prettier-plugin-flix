@@ -163,6 +163,13 @@ Flat `List#{…}` values can also qualify in maps. Map and record operator paddi
 is capped at eight extra spaces. Complex rows or rows that would exceed
 `printWidth` use ordinary spacing.
 
+When a vector, list, array, or set prints matching rows of literal tuples
+on separate lines, align the corresponding columns. Text starts at the
+same column and integers align on the right. The rows keep ordinary spacing
+if padding would exceed the available width, including a trailing comment.
+Compact collections keep their inline layout. For an example, see the
+[tuple-row fixture](../test/fixtures/expressions/align-tuple-rows.md).
+
 Match arms can share an arrow column when their heads fit on single lines and
 the padding fits the group. This includes groups with some multiline bodies.
 The minimum space before an aligned `=>` or `=` is one.

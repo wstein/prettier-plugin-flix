@@ -31,9 +31,9 @@ pub def shortTrips():Vector[String]=
 reachableStops("Museum",15)
 
 @Test
-def testShortTripsSkipAirport():Unit \ Assert={
-let includesAirport=Vector.exists(stop -> stop == "Airport",shortTrips());
-Assert.assertEq(expected=false,includesAirport)
+def testShortTripsReachAllNearbyStops():Unit \ Assert={
+let stops=Vector.toSet(shortTrips());
+Assert.assertEq(expected=Set#{"Central","Library","Park"},stops)
 }
 ```
 
@@ -41,11 +41,11 @@ Assert.assertEq(expected=false,includesAirport)
 
 ```flix
 def timetable(): Vector[(String, Int32, String)] = Vector#{
-    ("Museum", 8, "Central"),
-    ("Central", 7, "Library"),
+    ("Museum",   8, "Central"),
+    ("Central",  7, "Library"),
     ("Central", 45, "Airport"),  // This leg exceeds the short-trip limit.
-    ("Library", 6, "Park"),
-    ("Park", 9, "Museum")
+    ("Library",  6, "Park"),
+    ("Park",     9, "Museum")
 }
 
 pub def reachableStops(origin: String, maxLegMinutes: Int32): Vector[String] = {
@@ -65,9 +65,8 @@ pub def reachableStops(origin: String, maxLegMinutes: Int32): Vector[String] = {
 pub def shortTrips(): Vector[String] = reachableStops("Museum", 15)
 
 @Test
-def testShortTripsSkipAirport(): Unit \ Assert = {
-    let includesAirport =
-        Vector.exists(stop -> stop == "Airport", shortTrips());
-    Assert.assertEq(expected = false, includesAirport)
+def testShortTripsReachAllNearbyStops(): Unit \ Assert = {
+    let stops = Vector.toSet(shortTrips());
+    Assert.assertEq(expected = Set#{"Central", "Library", "Park"}, stops)
 }
 ```
