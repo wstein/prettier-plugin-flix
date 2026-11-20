@@ -7,52 +7,59 @@ flix: "0.80"
 ## Input
 
 ```flix
-def routes() = #{
-    Link("Library", "Station").
-    Link("Station", "Park").
+def routes(): Unit =
+    let _ = #{
+        Link("Library", "Station").
+        Link("Station", "Park").
 
-    Reachable(a, b) :- Link(a, b).
-    Reachable(a, b) :-
-        Link(a, middle),
-        Reachable(middle, b).
-    TwoHop(a, b) :- Link(a, middle), Link(middle, b).
-    Guarded(a, b) :-
-        Link(a, b), // require a useful link
-        if (a != b).
-}
+        Reachable(a, b) :- Link(a, b).
+        Reachable(a, b) :-
+            Link(a, middle),
+            Reachable(middle, b).
+        TwoHop(a, b) :- Link(a, middle), Link(middle, b).
+        Guarded(a, b) :-
+            Link(a, b), // require a useful link
+            if (a != b).
+    };
+    ()
 ```
 
 ## Output
 
 ```flix
-def routes() = #{
-    Link("Library", "Station").
-    Link("Station", "Park").
+def routes(): Unit =
+    let _ = #{
+        Link("Library", "Station").
+        Link("Station", "Park").
 
-    Reachable(a, b) :- Link(a, b).
-    Reachable(a, b) :-
-        Link(a, middle),
-        Reachable(middle, b).
-    TwoHop(a, b) :- Link(a, middle), Link(middle, b).
-    Guarded(a, b) :-
-        Link(a, b),  // require a useful link
-        if (a != b).
-}
+        Reachable(a, b) :- Link(a, b).
+        Reachable(a, b) :-
+            Link(a, middle),
+            Reachable(middle, b).
+        TwoHop(a, b) :- Link(a, middle), Link(middle, b).
+        Guarded(a, b) :-
+            Link(a, b),  // require a useful link
+            if (a != b).
+    };
+    ()
 ```
 
 ```flix printWidth=44
-def routes() = #{
-    Link("Library", "Station").
-    Link("Station", "Park").
+def routes(): Unit =
+    let _ = #{
+        Link("Library", "Station").
+        Link("Station", "Park").
 
-    Reachable(a, b) :- Link(a, b).
-    Reachable(a, b) :-
-        Link(a, middle),
-        Reachable(middle, b).
-    TwoHop(a, b) :-
-        Link(a, middle), Link(middle, b).
-    Guarded(a, b) :-
-        Link(a, b),  // require a useful link
-        if (a != b).
-}
+        Reachable(a, b) :- Link(a, b).
+        Reachable(a, b) :-
+            Link(a, middle),
+            Reachable(middle, b).
+        TwoHop(a, b) :-
+            Link(a, middle),
+            Link(middle, b).
+        Guarded(a, b) :-
+            Link(a, b),  // require a useful link
+            if (a != b).
+    };
+    ()
 ```
