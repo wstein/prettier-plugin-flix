@@ -293,11 +293,11 @@ def next(xs: List[Int32]): Int32 = match xs {
 [Map alignment](../test/fixtures/expressions/align-map-entries.md) ·
 [Record alignment](../test/fixtures/expressions/align-record-fields.md)
 
-Record updates, open record types and record patterns keep their `| …` tail
-with the last field when they fit on one line. Start the tail on a new line
-at the field indentation when the line would exceed the width or a line
-comment ends the last field. A comment attached to the pipe keeps its
-existing layout.
+Record updates, open record types, record patterns, and record-row aliases
+keep their `| …` tail with the last field when they fit on one line. Start
+the tail on a new line at the field indentation when the line would exceed
+the width or a line comment ends the last field. A comment attached to the
+pipe keeps its existing layout.
 [Record update fixture](../test/fixtures/expressions/record-update-tail.md) ·
 [Record type and pattern fixture](../test/fixtures/expressions/record-type-pattern-tails.md)
 
@@ -405,7 +405,10 @@ indented line. If the body needs more room, break it between predicates.
 The Datalog 2.3 manual shows the same split between a rule's head and its
 indented body. [Datalog User Manual](https://datalog.sourceforge.net/datalog.html#index-clause-24)
 A multiline return schema can align its predicates beneath the first one
-when the remaining signature fits.
+when the remaining signature fits. In schema types and schema-row aliases,
+keep the final predicate and its `| …` tail together when they fit. Otherwise,
+start the tail on a new line at the predicate indentation.
+[Row type fixture](../test/fixtures/declarations/row-type-tails.md)
 
 When the source places every predicate of a multi-predicate body on its own
 line after the head, preserve that layout at wider widths.

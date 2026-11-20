@@ -491,8 +491,10 @@ export class Printer {
         if (item.length === 0) return "";
         const [field, bar, ...base] = item;
         this.ls(field);
-        const isRecord = parentKind === "RecordOperation" || parentKind === "RecordType" || parentKind === "RecordPattern";
-        if (this.flat === 0 && isRecord && isTerm(bar) && ttype(bar) === L.BAR && !this.hasComment(bar)) {
+        const hasRowTail = parentKind === "RecordOperation" || parentKind === "RecordType" ||
+            parentKind === "RecordPattern" || parentKind === "TupleType" ||
+            parentKind === "SchemaType" || parentKind === "SchemaRowType";
+        if (this.flat === 0 && hasRowTail && isTerm(bar) && ttype(bar) === L.BAR && !this.hasComment(bar)) {
             return [
                 this.print(field),
                 group([this.after(lastTerm(field), line), this.seq([bar, ...base], parentKind)]),
