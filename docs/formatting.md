@@ -216,11 +216,14 @@ is capped at eight extra spaces. Complex rows or rows that would exceed
 When a vector, list, array, or set prints matching rows of literal tuples
 on separate lines, align columns of integers, floating-point and decimal
 literals, strings, characters, booleans, regexes and `null`. Each column must
-use the same literal kind in every row. Numeric literals align on the right.
-Other literals, including strings with single-line interpolations, align on
-the left. Nested expressions outside an interpolation use ordinary formatting.
-Padding must fit the available width, including any trailing comment. A row
-that is already too wide may stay that wide. Compact collections stay inline.
+use the same literal kind in every row. Integers align on the right.
+Floating-point and decimal literals align at the decimal point. If a literal
+has no point, align at the end of its mantissa. Other literals, including
+strings with single-line interpolations, align on the left. Nested expressions
+outside an interpolation use ordinary formatting.
+Padding must fit the available width. If a trailing comment already extends
+past the target, align the values when the code before that comment still fits.
+Compact collections stay inline.
 
 [Tuple-row fixture](../test/fixtures/expressions/align-tuple-rows.md) ·
 [Literal types in tuple rows](../test/fixtures/expressions/align-tuple-literals.md)
