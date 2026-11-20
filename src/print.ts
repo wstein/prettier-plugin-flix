@@ -326,8 +326,11 @@ export class Printer {
             let step = 1;
             const close = isTerm(ch) && OPEN_TO_CLOSE.has(ttype(ch)) ? this.findClose(children, i) : -1;
             if (close > 0) {
-                piece = this.delimited(children, i, close, parentKind);
                 first = ch as TerminalNode;
+                piece = [
+                    this.takeLeadingOwnLineComments(first),
+                    this.delimited(children, i, close, parentKind),
+                ];
                 last = children[close] as TerminalNode;
                 step = close - i + 1;
             } else {
