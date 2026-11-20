@@ -1,0 +1,99 @@
+name: Publish plugin release
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_commit:
+        description: Full SHA of the release commit on main. Defaults to the commit that starts this run.
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: plugin-release
+  cancel-in-progress: false
+
+jobs:
+  package:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.package.outputs.version }}
+      commit: ${{ steps.package.outputs.commit }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Select the release commit
+        env:
+          SOURCE_COMMIT: ${{ inputs.source_commit || github.sha }}
+        run: |
+          if [[ ! "$SOURCE_COMMIT" =~ ^[0-9a-f]{40}$ ]] || ! git merge-base --is-ancestor "$SOURCE_COMMIT" HEAD; then
+            echo 'The release commit must be a full SHA in the history of main.'
+            exit 1
+          fi
+          git checkout --detach "$SOURCE_COMMIT"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: git config --global url."https://github.com/".insteadOf ssh://git@github.com/
+      - run: npm ci
+      - run: npm test
+      - run: npm run coverage:syntax -- --check
+      - name: Pack the release
+        id: package
+        run: |
+          version=$(node -p 'require("./package.json").version')
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo 'Expected a stable plugin version in package.json.'
+            exit 1
+          fi
+          mkdir -p "$RUNNER_TEMP/package"
+          npm pack --pack-destination "$RUNNER_TEMP/package"
+          printf 'version=%s\ncommit=%s\n' "$version" "$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: plugin-package
+          path: ${{ runner.temp }}/package/*.tgz
+          if-no-files-found: error
+
+  publish:
+    needs: package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: plugin-package
+          path: ${{ runner.temp }}/package
+      - name: Upload and publish the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PACKAGE_VERSION: ${{ needs.package.outputs.version }}
+          TARGET_COMMIT: ${{ needs.package.outputs.commit }}
+        run: |
+          tag="v$PACKAGE_VERSION"
+          name="prettier-plugin-flix-$PACKAGE_VERSION.tgz"
+          package="$RUNNER_TEMP/package/$name"
+          if release=$(gh release view "$tag" --json isDraft,targetCommitish,assets); then
+            if ! jq -e --arg commit "$TARGET_COMMIT" '.isDraft and .targetCommitish == $commit' <<< "$release" > /dev/null; then
+              echo "Release $tag must be a draft targeting $TARGET_COMMIT."
+              exit 1
+            fi
+            if jq -e --arg name "$name" 'any(.assets[]; .name == $name)' <<< "$release" > /dev/null; then
+              gh release download "$tag" --pattern "$name" --dir "$RUNNER_TEMP/existing"
+              cmp "$package" "$RUNNER_TEMP/existing/$name"
+            else
+              gh release upload "$tag" "$package"
+            fi
+          else
+            gh release create "$tag" --draft --target "$TARGET_COMMIT" \
+              --title "Prettier plugin for Flix $tag" --generate-notes
+            gh release upload "$tag" "$package"
+          fi
+          gh release edit "$tag" --draft=false --latest
