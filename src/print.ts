@@ -895,14 +895,32 @@ export class Printer {
         if (this.flat > 0 || !isTerm(keyword) || (ttype(keyword) !== L.QUERY && ttype(keyword) !== L.PQUERY) ||
             clauses.length === 0) return this.seq(children, kind(n));
 
-        const head = this.seq([keyword, sources], kind(n));
-        const body = clauses.map((clause, index) => [
-            index === 0 ? "" : this.after(lastTerm(clauses[index - 1]), line),
-            group(this.print(this.ls(clause))),
-        ]);
+        const sourceItems = kids(sources);
+        const head = sourceItems.length > 1 ? this.printQueryList(keyword, sourceItems) : this.seq([keyword, sources], kind(n));
+        const body = clauses.map((clause, index) => {
+            const [clauseKeyword, ...items] = kids(this.ls(clause));
+            const content = isTerm(clauseKeyword) && ttype(clauseKeyword) === L.FROM && items.length > 1
+                ? this.printQueryList(clauseKeyword, items)
+                : this.print(clause);
+            return [index === 0 ? "" : this.after(lastTerm(clauses[index - 1]), line), group(content)];
+        });
         // Break at the whole query's boundary first. The clauses can still
         // share a line after moving to an indented continuation.
         return group([head, indent([this.after(lastTerm(sources), line), group(body)])]);
+    }
+
+    private printQueryList(keyword: TerminalNode, nodes: Node[]): Doc {
+        const { items, seps } = this.splitOn(nodes, L.COMMA);
+        const entries = items.map(([item], i) => {
+            const comma = seps[i];
+            const end = lastTerm(item);
+            return [
+                this.print(this.ls(item)),
+                comma ? this.separatorTok(end, comma) : "",
+                comma ? this.after(end, this.after(comma, line)) : "",
+            ];
+        });
+        return group([this.tok(keyword), indent([this.after(keyword, line), entries])]);
     }
 
     private printConstraint(n: ParserRuleContext): Doc {

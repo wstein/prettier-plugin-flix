@@ -364,6 +364,12 @@ Keep a short query together. A longer query breaks before `select`, with
 `from` on the same continuation line when it fits. At narrower widths,
 the clauses get their own lines.
 
+Keep the sources after `query` and the predicates after `from` together
+when their list fits. Otherwise, start the list below its keyword and put
+one item on each line. A predicate's arguments can wrap within its own entry
+when that entry still exceeds the available width.
+[Query list fixture](../test/fixtures/datalog/query-list-wrap.md)
+
 **Before**
 
 ```flix
