@@ -79,6 +79,8 @@ def wait(rx: Receiver[Int32], n: Int32, tx: Sender[List[Int32]]): Unit
 
 A block-bodied lambda can start on the call line when it is the final
 argument and the call prefix fits. Indent the statements inside the lambda.
+When the prefix needs to wrap, the call can put the lambda on its own
+argument line and close the call on a separate line.
 
 **Before**
 
@@ -98,7 +100,8 @@ def f(): Unit = List.forEach(xs, x -> {
 })
 ```
 
-[Trailing lambda fixture](../test/fixtures/expressions/hug-trailing-lambda.md)
+[Trailing lambda fixture](../test/fixtures/expressions/hug-trailing-lambda.md) ·
+[Width fallback fixture](../test/fixtures/expressions/trailing-lambda-width.md)
 
 ## Pipelines
 

@@ -4,7 +4,7 @@ import { FlixLexer as L } from "./generated/FlixLexer.js";
 import { ignoredDeclarationEnd, type Comment, type FlixRoot, type TokenInfo } from "./parse.js";
 import { LINE_COMMENT_GAP } from "./comment-layout.js";
 
-const { align, conditionalGroup, group, indent, line, softline, hardline, join, ifBreak, lineSuffix, literalline } = doc.builders;
+const { align, breakParent, conditionalGroup, group, indent, line, softline, hardline, join, ifBreak, lineSuffix, literalline } = doc.builders;
 const { willBreak } = doc.utils;
 
 type Node = ParserRuleContext | TerminalNode;
@@ -602,8 +602,8 @@ export class Printer {
                 ? hardline : this.flat > 0 ? " " : line;
         });
 
-        // Hug a final brace-closed argument (`f(a, x -> {...})`). Decided from the syntax alone, never
-        // from how a doc happens to break, so that a second formatting pass changes nothing.
+        // Syntax decides whether a final brace-closed argument can hug. A
+        // trailing lambda also needs room on the line where the call starts.
         const lastItem = items[items.length - 1];
         const lastTok = lastItem.length > 0 ? lastTerm(lastItem[lastItem.length - 1]) : null;
         const finalArgument = lastItem[0] && kind(lastItem[0]) === "Argument" ? kids(lastItem[0])[0] : undefined;
@@ -622,7 +622,12 @@ export class Printer {
             !(items.length > 1 && matchCallback) &&
             !items.slice(0, -1).some((it) => it.length > 0 && lastTerm(it[it.length - 1]) !== null && ttype(lastTerm(it[it.length - 1])!) === L.RBRACE) &&
             !docs.slice(0, -1).some(willBreak);
-        if (huggable) return [openDoc, this.joinWithSeps(docs, sepDocs, sepDocs.map(() => " ")), closeDoc, closeTrail];
+        const hugged: Doc | undefined = huggable
+            ? [openDoc, this.joinWithSeps(docs, sepDocs, sepDocs.map(() => " ")), closeDoc]
+            : undefined;
+        if (hugged && (!finalArgument || kind(finalArgument) !== "LambdaExpr" || !groupList)) {
+            return [hugged, closeTrail];
+        }
 
         const list: Doc[] = this.joinWithSeps(docs, sepDocs, sepAfters);
         if (trailingTok) {
@@ -638,6 +643,12 @@ export class Printer {
         const contents: Doc = [
             openDoc, indent([firstSline, list]), trailingTok && this.hasLineTrail(trailingTok) ? hardline : lastSline, closeDoc,
         ];
+        if (hugged) {
+            // A conditional group's alternatives do not propagate forced
+            // breaks. Preserve the enclosing layout of a multiline callback.
+            const propagateBreak = willBreak(hugged) ? breakParent : "";
+            return [conditionalGroup([hugged, contents], { id: layoutId }), propagateBreak, closeTrail];
+        }
         return [
             groupList ? group(contents, { id: layoutId, shouldBreak: forceBreak || comments.length > 0 }) : contents,
             closeTrail,
