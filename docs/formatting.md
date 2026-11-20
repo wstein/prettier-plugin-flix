@@ -88,6 +88,13 @@ def wait(rx: Receiver[Int32], n: Int32, tx: Sender[List[Int32]]): Unit
 [Call fixture](../test/fixtures/expressions/wrap-arguments.md) ·
 [Signature fixture](../test/fixtures/declarations/signature-boundaries.md)
 
+Keep short function types on one line. When an arrow chain wraps, leave
+each `->` after its parameter type, align the continued parameter types,
+and indent the final result. Parenthesized function types wrap independently. The
+[F# formatting guide](https://learn.microsoft.com/en-us/dotnet/fsharp/style-guide/formatting#formatting-types-in-signatures)
+uses the same layout for curried function types.
+[Function type fixture](../test/fixtures/declarations/long-function-types.md)
+
 A block-bodied lambda can start on the call line when it is the final
 argument and the call prefix fits. Indent the statements inside the lambda.
 When the prefix needs to wrap, the call can put the lambda on its own
