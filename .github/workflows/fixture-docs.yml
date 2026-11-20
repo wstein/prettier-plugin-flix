@@ -23,9 +23,7 @@ jobs:
           node-version: 22
           cache: npm
       - name: Install dependencies
-        run: |
-          git config --global url."https://github.com/".insteadOf ssh://git@github.com/
-          npm ci
+        run: npm ci
       - name: Install Hugo
         env:
           HUGO_VERSION: 0.154.5
