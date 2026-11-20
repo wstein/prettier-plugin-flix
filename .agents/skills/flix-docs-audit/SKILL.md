@@ -20,12 +20,13 @@ results are comparable with previous runs.
     --name official-flix-examples --dir "$audit_dir"
   ```
 
-- For a local run, use clean `flix/book` and `flix/flix.dev` checkouts. Reuse the exact
-  source revisions and plugin commit from the run if reproducing a failure.
+- For a local run or if artifact download fails, use clean `flix/book` and
+  `flix/flix.dev` checkouts. When reproducing a failure, reuse the exact
+  source revisions and plugin commit from the run.
   After installing the repository dependencies, run:
 
   ```sh
-  audit_dir=$(mktemp -d)
+  audit_dir="$(mktemp -d)/audit"
   npm run test:docs-examples -- "$book_checkout" "$website_checkout" "$audit_dir" \
     --baseline test/official-docs-baseline.tsv
   ```
