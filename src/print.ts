@@ -1,7 +1,7 @@
 import { ParserRuleContext, TerminalNode } from "antlr4ng";
 import { doc, util, type Doc } from "prettier";
 import { FlixLexer as L } from "./generated/FlixLexer.js";
-import type { Comment, FlixRoot, TokenInfo } from "./parse.js";
+import { ignoredDeclarationEnd, type Comment, type FlixRoot, type TokenInfo } from "./parse.js";
 import { LINE_COMMENT_GAP } from "./comment-layout.js";
 
 const { align, conditionalGroup, group, indent, line, softline, hardline, join, ifBreak, lineSuffix, literalline } = doc.builders;
@@ -621,6 +621,14 @@ export class Printer {
     print(n: Node): Doc {
         if (isTerm(n)) return this.tok(n);
         const k = kind(n);
+        if (k === "Declaration") {
+            const end = ignoredDeclarationEnd(this.root, n);
+            if (end !== undefined) {
+                const first = firstTerm(n)!;
+                const raw = this.root.codePoints.slice(first.symbol.start, end).join("");
+                return [this.tokenLeadingDoc(first), join(literalline, raw.split("\n"))];
+            }
+        }
         if (EQ_BODY.has(k) && this.hasBodyArrow(n)) return this.printEqBody(n);
         if (BINARY.has(k)) return this.printBinary(n);
         switch (k) {

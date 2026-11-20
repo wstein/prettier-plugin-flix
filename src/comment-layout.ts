@@ -1,8 +1,8 @@
-import { CharStream, CommonTokenStream, TerminalNode, type ParseTree, type Token } from "antlr4ng";
+import { CharStream, CommonTokenStream, ParserRuleContext, TerminalNode, type ParseTree, type Token } from "antlr4ng";
 import { doc, util, type Doc } from "prettier";
 import { FlixLexer as L } from "./generated/FlixLexer.js";
 import { DefDeclarationContext } from "./generated/FlixParser.js";
-import { parseFlix, type FlixRoot } from "./parse.js";
+import { ignoredDeclarationEnd, parseFlix, type FlixRoot } from "./parse.js";
 
 type LayoutOptions = { printWidth: number; tabWidth: number; useTabs: boolean };
 type Scope = { parent: Scope | undefined };
@@ -58,7 +58,8 @@ function printedDefinitionEquals(root: FlixRoot, tokens: Token[]): Set<Token> {
         : new Set();
 }
 
-function lineCommentGroups(tokens: Token[], lines: string[], tabWidth: number, definitionEquals: Set<Token>): Row[][] {
+function lineCommentGroups(tokens: Token[], lines: string[], tabWidth: number, definitionEquals: Set<Token>,
+    ignoredLines?: ReadonlySet<number>): Row[][] {
     const groups: Row[][] = [];
     let scope: Scope | undefined;
     let lineScope: Scope | undefined;
@@ -72,7 +73,7 @@ function lineCommentGroups(tokens: Token[], lines: string[], tabWidth: number, d
             lastCode = token;
             continue;
         }
-        if (token.type !== L.LINE_COMMENT || lastCode?.line !== token.line ||
+        if (token.type !== L.LINE_COMMENT || lastCode?.line !== token.line || ignoredLines?.has(token.line) ||
             lastCode.type === L.ARROW_TIGHT || scope !== lineScope || !token.text ||
             token.text.startsWith("///") || token.text.includes("\t") || CARET.test(token.text)) continue;
 
@@ -99,11 +100,12 @@ function alignGroup(group: Row[], lines: string[], printWidth: number): boolean 
     return true;
 }
 
-function alignTrailingComments(root: FlixRoot, tokens: Token[], lines: string[], options: LayoutOptions): void {
+function alignTrailingComments(root: FlixRoot, tokens: Token[], lines: string[], options: LayoutOptions,
+    ignoredLines?: ReadonlySet<number>): void {
     const hasCommentedEquals = tokens.some((token, i) => token.type === L.EQUAL &&
         tokens[i + 1]?.type === L.LINE_COMMENT && tokens[i + 1].line === token.line);
     const definitionEquals = hasCommentedEquals ? printedDefinitionEquals(root, tokens) : new Set<Token>();
-    for (const group of lineCommentGroups(tokens, lines, options.tabWidth, definitionEquals)) {
+    for (const group of lineCommentGroups(tokens, lines, options.tabWidth, definitionEquals, ignoredLines)) {
         if (!alignGroup(group, lines, options.printWidth) && group[0].startsBody) {
             alignGroup(group.slice(1), lines, options.printWidth);
         }
@@ -123,7 +125,7 @@ export function explainTrailingCommentAlignment(source: string, output: string, 
     const tokens = lex(source);
     const lines = source.split("\n");
     const expected = [...lines];
-    alignTrailingComments(root, tokens, expected, options);
+    alignTrailingComments(root, tokens, expected, options, ignoredDeclarationLines(root));
     if (expected.join("\n") !== output) return undefined;
 
     return tokens.flatMap((token) => {
@@ -152,7 +154,8 @@ function sameTokens(a: Token[], b: Token[], types: boolean): boolean {
 }
 
 /** Move standalone caret lines with the code token marked on the preceding input line. */
-function placeCaretComments(source: string, output: Token[], lines: string[], tabWidth: number): string[] {
+function placeCaretComments(source: string, output: Token[], lines: string[], tabWidth: number,
+    ignoredLines?: ReadonlySet<number>): string[] {
     const input = lex(source);
     const originalLines = source.split("\n");
     const inputCode = input.filter(isCode);
@@ -167,7 +170,7 @@ function placeCaretComments(source: string, output: Token[], lines: string[], ta
         const caret = CARET.exec(commentText(token));
         if (token.type !== L.LINE_COMMENT || !caret || before(originalLines, token).trim()) continue;
         const comment = outputComments[i];
-        if (before(lines, comment).trim()) continue;
+        if (ignoredLines?.has(comment.line) || before(lines, comment).trim()) continue;
         const markerOffset = caret[0].indexOf("^");
         const markerColumn = width(before(originalLines, token) + caret[0].slice(0, markerOffset), tabWidth);
         const anchorIndex = inputCode.findIndex((candidate) => {
@@ -188,7 +191,9 @@ function placeCaretComments(source: string, output: Token[], lines: string[], ta
             const after = anchor.line - 1;
             const crossesComment = outputComments.some((other) => other !== comment &&
                 other.line - 1 > Math.min(from, after) && other.line - 1 <= Math.max(from, after));
-            if (!crossesComment) moves.push({ from, after, text });
+            const crossesIgnored = ignoredLines && [...ignoredLines].some((line) =>
+                line - 1 >= Math.min(from, after) && line - 1 <= Math.max(from, after));
+            if (!crossesComment && !crossesIgnored) moves.push({ from, after, text });
         } else {
             replacements.set(comment.line - 1, text);
         }
@@ -251,7 +256,7 @@ function tupleRow(tokens: Token[], text: string, line: number): TupleRow | undef
     return { indent, cells, suffix: chars.slice(close.column + 1).join(""), line };
 }
 
-function alignTupleRows(tokens: Token[], lines: string[], options: LayoutOptions): boolean {
+function alignTupleRows(tokens: Token[], lines: string[], options: LayoutOptions, ignoredLines?: ReadonlySet<number>): boolean {
     const byLine = new Map<number, Token[]>();
     for (const token of tokens) {
         const row = byLine.get(token.line);
@@ -260,7 +265,7 @@ function alignTupleRows(tokens: Token[], lines: string[], options: LayoutOptions
     }
     let changed = false;
     for (const [openingLine, opening] of byLine) {
-        if (opening.at(-1)?.type !== L.LBRACE || !TABLE_COLLECTIONS.has(opening.at(-2)?.type ?? -1)) continue;
+        if (ignoredLines?.has(openingLine) || opening.at(-1)?.type !== L.LBRACE || !TABLE_COLLECTIONS.has(opening.at(-2)?.type ?? -1)) continue;
         const rows: TupleRow[] = [];
         let line = openingLine + 1;
         for (; line <= lines.length; line++) {
@@ -290,6 +295,25 @@ function alignTupleRows(tokens: Token[], lines: string[], options: LayoutOptions
     return changed;
 }
 
+function ignoredDeclarationLines(root: FlixRoot): Set<number> | undefined {
+    if (!root.text.includes("prettier-ignore")) return;
+    const lines = new Set<number>();
+    function visit(node: ParseTree): void {
+        if (!(node instanceof ParserRuleContext)) return;
+        const end = ignoredDeclarationEnd(root, node);
+        if (end !== undefined) {
+            const { start, stop } = node;
+            const tail = root.codePoints.slice(stop!.start, end).join("");
+            const lastLine = stop!.line + tail.split("\n").length - 1;
+            for (let line = start!.line; line <= lastLine; line++) lines.add(line);
+            return;
+        }
+        for (let i = 0; i < node.getChildCount(); i++) visit(node.getChild(i)!);
+    }
+    visit(root.tree);
+    return lines;
+}
+
 export function layoutSource(root: FlixRoot, value: Doc, options: LayoutOptions): Doc {
     let trailing = 0;
     let hasCaret = false;
@@ -303,12 +327,17 @@ export function layoutSource(root: FlixRoot, value: Doc, options: LayoutOptions)
     // Measure the chosen layout, including wrapped code, actual indentation,
     // and the full comment widths, before changing horizontal space.
     const { formatted } = doc.printer.printDocToString(value, options);
+    let ignoredLines: ReadonlySet<number> | undefined;
+    if (ignoredDeclarationLines(root)?.size) {
+        // Post-layout edits use printed line numbers, which can differ from the input.
+        ignoredLines = ignoredDeclarationLines(parseFlix(formatted));
+    }
     let tokens = lex(formatted);
     let lines = formatted.split("\n");
-    if (mayHaveTupleRows && alignTupleRows(tokens, lines, options) && (trailing > 1 || hasCaret)) {
+    if (mayHaveTupleRows && alignTupleRows(tokens, lines, options, ignoredLines) && (trailing > 1 || hasCaret)) {
         tokens = lex(lines.join("\n"));
     }
-    if (trailing > 1) alignTrailingComments(root, tokens, lines, options);
-    if (hasCaret) lines = placeCaretComments(root.text, tokens, lines, options.tabWidth);
+    if (trailing > 1) alignTrailingComments(root, tokens, lines, options, ignoredLines);
+    if (hasCaret) lines = placeCaretComments(root.text, tokens, lines, options.tabWidth, ignoredLines);
     return lines.join("\n") === formatted ? value : doc.builders.join(doc.builders.literalline, lines);
 }

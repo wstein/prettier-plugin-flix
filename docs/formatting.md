@@ -290,4 +290,6 @@ reviewed differences against the official examples.
 - Flix assigns meaning to whitespace around certain tokens. Field access
   `s->field`, dots in `a.b` and package qualifiers in `use Pkg::Name` stay
   together. Very long method chains may exceed the configured width.
-- The plugin currently has no `// prettier-ignore` support.
+- Put `// prettier-ignore` on its own line before a declaration to preserve
+  that declaration's source text. The rest of the file is formatted normally.
+  The declaration still needs to parse. [Fixture](../test/fixtures/comments/prettier-ignore.md)
