@@ -2,6 +2,7 @@ import { countColumn, Transaction } from "@codemirror/state";
 import { renderDiff } from "./playground-diff.js";
 import { createEditor, createFlixHighlighter } from "./playground-editor.js";
 import { readHandoff, writeHandoff } from "./playground-link.js";
+import { playgroundIndentation } from "./playground-options.js";
 
 let highlighterPromise;
 let formatter;
@@ -21,7 +22,6 @@ function readableDiagnostic(message) {
 function mountWorkbench(playground, { initial, onChange } = {}) {
     const select = playground.querySelector("#playground-example");
     const printWidth = playground.querySelector("[data-print-width]");
-    const tabWidth = playground.querySelector("[data-tab-width]");
     const defaultWidth = Number(printWidth.defaultValue);
     const status = playground.querySelector(".playground-status");
     const cursorPosition = playground.querySelector("[data-cursor-position]");
@@ -32,7 +32,6 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
 
     let timer;
     let revision = 0;
-    let useTabs = initial?.useTabs ?? false;
     let preview = initial?.output === undefined ? undefined : { source: initial.source, output: initial.output };
     let highlighter;
     let fixtures;
@@ -74,26 +73,18 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
         timer = setTimeout(() => updatePreview(id), 250);
     }
 
-    function setEditorIndent(width) {
-        input.setTabWidth(width);
-        output.setTabWidth(width);
-        diff.style.tabSize = width;
-    }
-
     function updatePreview(id) {
         highlighter?.apply(input.view);
         if (formatterFailed) return;
-        if (!printWidth.validity.valid || !tabWidth.validity.valid) {
-            showStatus("Enter a whole number greater than zero for line width and indent.", true);
+        if (!printWidth.validity.valid) {
+            showStatus("Enter a whole number greater than zero for line width.", true);
             return;
         }
-        const width = tabWidth.valueAsNumber;
-        setEditorIndent(width);
         formatter.postMessage({
             id,
             asset: playground.dataset.formatter,
             source: input.view.state.doc.toString(),
-            options: { printWidth: printWidth.valueAsNumber, tabWidth: width, useTabs },
+            options: { printWidth: printWidth.valueAsNumber, ...playgroundIndentation },
         });
     }
 
@@ -141,10 +132,8 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
         if (fixture && !formatterFailed) showStatus("Loading example…");
     }
 
-    function loadDraft({ source, printWidth: width = defaultWidth, tabWidth: indent = 4, useTabs: tabs = false }) {
+    function loadDraft({ source, printWidth: width = defaultWidth }) {
         printWidth.value = width;
-        tabWidth.value = indent;
-        useTabs = tabs;
         replaceCode(input.view, source);
         queuePreview();
     }
@@ -153,8 +142,6 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
         return {
             source: input.view.state.doc.toString(),
             printWidth: printWidth.validity.valid ? printWidth.valueAsNumber : defaultWidth,
-            tabWidth: tabWidth.validity.valid ? tabWidth.valueAsNumber : 4,
-            useTabs,
         };
     }
 
@@ -164,7 +151,7 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
         input.view.dispatch({ changes: { from: 0, to: input.view.state.doc.length, insert: "" } });
         input.view.focus();
     });
-    for (const field of [printWidth, tabWidth]) field.addEventListener("input", queuePreview);
+    printWidth.addEventListener("input", queuePreview);
 
     copy.addEventListener("click", async () => {
         try {
@@ -222,8 +209,6 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
 
     if (initial) {
         printWidth.value = initial.printWidth ?? defaultWidth;
-        tabWidth.value = initial.tabWidth ?? 4;
-        setEditorIndent(tabWidth.valueAsNumber);
         if (preview) copy.disabled = preview.output.length === 0;
         else queuePreview();
     }

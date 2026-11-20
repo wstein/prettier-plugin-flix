@@ -52,7 +52,9 @@
       <figcaption>
         {{ $variant.options }}
         {{ with $variant.note }}<span>{{ . }}</span>{{ end }}
+        {{ if $variant.playgroundCompatible }}
         <a class="fixture-variant-link" href="{{ $playground }}?{{ querify "fixture" $.fixture.path "variant" (add $index 1) | safeURL }}">Open with these settings <span aria-hidden="true">↗</span></a>
+        {{ end }}
       </figcaption>
     </figure>
   </details>

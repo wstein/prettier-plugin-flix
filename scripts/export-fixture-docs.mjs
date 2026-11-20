@@ -3,6 +3,7 @@ import { basename } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createHighlighter } from "shiki";
 import { flixThemes } from "../docs/assets/js/flix-themes.js";
+import { playgroundIndentation } from "../docs/assets/js/playground-options.js";
 import { defaultOptions } from "../dist/index.js";
 import { EXAMPLE_PRINT_WIDTH, findFixtures, loadFixture, optionsFor, relativeTo } from "../test/fixture.mjs";
 import { fmt } from "../test/lib.mjs";
@@ -72,6 +73,8 @@ function describeOptions(fixture, block) {
         options: Object.entries({ printWidth: defaults.printWidth, ...configured })
             .map(([key, value]) => `${key}: ${value}`).join(", "),
         note: notes.join(" "),
+        playgroundCompatible: effective.tabWidth === playgroundIndentation.tabWidth &&
+            effective.useTabs === playgroundIndentation.useTabs,
     };
 }
 
@@ -97,10 +100,14 @@ for (const path of findFixtures(root)) {
         entry.groups.push(group);
     }
     entry.count++;
-    const liveOptions = { printWidth: EMBEDDED_PRINT_WIDTH, ...meta.options };
+    const liveOptions = { printWidth: meta.options?.printWidth ?? EMBEDDED_PRINT_WIDTH, ...playgroundIndentation };
     const firstOutput = outputs[0];
+    const displayedOutputs = outputs.map((block) => ({
+        html: highlight(block.code),
+        ...describeOptions(fixture, block),
+    }));
     const liveOutput = meta.status !== "pass" ? undefined :
-        liveOptions.printWidth === optionsFor(fixture, firstOutput).printWidth
+        displayedOutputs[0].playgroundCompatible && liveOptions.printWidth === optionsFor(fixture, firstOutput).printWidth
             ? firstOutput.code : await fmt(input.code, liveOptions);
     const example = {
         id: basename(relative, ".md"),
@@ -114,12 +121,9 @@ for (const path of findFixtures(root)) {
         initial: {
             source: input.code,
             output: liveOutput,
-            ...liveOptions,
+            printWidth: liveOptions.printWidth,
         },
-        outputs: outputs.map((block) => ({
-            html: highlight(block.code),
-            ...describeOptions(fixture, block),
-        })),
+        outputs: displayedOutputs,
         reference,
     };
     group.fixtures.push(example);

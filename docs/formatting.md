@@ -25,6 +25,8 @@ choice for each construct.
 
 Prettier also accepts its standard configuration options. The Flix style in
 this guide uses `tabWidth: 4`, `useTabs: false` and `endOfLine: "lf"`.
+The Playground and embedded editors use four spaces per indentation level
+and let you adjust the line width.
 The examples below use an 80-column width unless a different width is shown.
 
 ## Calls and function signatures
