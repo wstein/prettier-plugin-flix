@@ -208,9 +208,12 @@ export class Printer {
     }
 
     private tokTrail(t: TerminalNode): Doc {
-        const info = this.info(t);
         // `a.// c\nb`: the comment must touch the dot. Datalog terminators use whitespace instead.
-        if (info && ttype(t) === L.DOT && isAccessDot(t)) return this.trailDoc(info, "");
+        if (ttype(t) === L.DOT && isAccessDot(t)) {
+            const info = this.info(t);
+            return info ? this.trailDoc(info, "") : "";
+        }
+        const info = this.info(t);
         // `s->// c\nfield`: whitespace after the arrow would turn the field access into a lambda arrow.
         const gap = ttype(t) === L.ARROW_TIGHT ? "" : " ";
         return info ? this.trailDoc(info, gap) : "";
