@@ -55,7 +55,6 @@ checks; enabling the ruleset itself is a repository settings step.
 Run the same coverage check locally with Node.js 22:
 
 ```sh
-npm run build
 npm run test:coverage
 ```
 
