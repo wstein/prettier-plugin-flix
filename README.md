@@ -40,7 +40,7 @@ def label(code: Int32): String =
 
 ## Try it in a project
 
-Install Prettier and the prebuilt plugin from npm. Plugin version 0.1.2 was
+Install Prettier and the prebuilt plugin from npm. Plugin version 0.1.3 was
 tested with Flix 0.80.0.
 
 ```sh

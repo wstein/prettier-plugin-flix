@@ -4,13 +4,23 @@ User-facing changes to Prettier Plugin for Flix. Plugin releases have their own 
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-11-20
+
+Tested with Flix 0.80.0 and Prettier 3.10.1.
+
 ### Formatting changes
 
-- Align `=` in consecutive handler clauses and record fields, and `=>` in consecutive match arms and map entries. Blank lines and standalone comments separate groups. Alignment applies when the group fits the configured width. ([commit][sibling-alignment])
+- Align `=` in consecutive handler clauses and record fields, and `=>` in consecutive match arms and map entries. Blank lines and standalone comments separate groups. Alignment applies when the group fits the configured width, so existing Flix files may reformat on upgrade. ([commit][sibling-alignment])
 
 ### Playground and documentation
 
 - Search the catalog from the toolbar. Results include the Formatting Style and Before and After pages. The README now installs the plugin from npm. ([commit][catalog-search])
+- The standalone Playground starts at 100 columns. Embedded editors start at 60 and preserve explicit width overrides when opened in the Playground. The catalog sidebar groups chapters under Guide, Language fixtures, and Formatter behavior. ([PR #73][catalog-chapters])
+- Add contributor guidelines and templates, and generate release-note drafts from Git tags for review before publishing. ([PR #71][community-and-release])
+
+### Verification
+
+- Add tests for partial formatting around invalid code and require 95% line and 90% branch coverage in CI. The README shows the measured coverage from `main`. ([badges][coverage-badges], [PR #74][recovery-coverage])
 
 ## [0.1.2] - 2026-11-20
 
@@ -59,7 +69,8 @@ First independently versioned plugin release. Tested with Flix 0.80.0 and Pretti
 - Show cursor position, selection, and formatting status. Keep formatting independently parseable portions of a snippet around a syntax error. ([status][playground-status], [partial formatting][partial-formatting])
 - Use four-space indentation in the web editors, with 80 columns in the standalone Playground and 60 columns in embedded editors. Publish the formatting guide with examples from test fixtures. ([widths][playground-widths], [guide][style-guide])
 
-[Unreleased]: https://github.com/wstein/prettier-plugin-flix/compare/v0.1.2...main
+[Unreleased]: https://github.com/wstein/prettier-plugin-flix/compare/v0.1.3...main
+[0.1.3]: https://github.com/wstein/prettier-plugin-flix/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/wstein/prettier-plugin-flix/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/wstein/prettier-plugin-flix/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/wstein/prettier-plugin-flix/releases/tag/v0.1.0
@@ -68,6 +79,10 @@ First independently versioned plugin release. Tested with Flix 0.80.0 and Pretti
 [npm]: https://www.npmjs.com/package/prettier-plugin-flix/v/0.1.2
 [sibling-alignment]: https://github.com/wstein/prettier-plugin-flix/commit/da2c4d1
 [catalog-search]: https://github.com/wstein/prettier-plugin-flix/commit/faccacd
+[catalog-chapters]: https://github.com/wstein/prettier-plugin-flix/pull/73
+[community-and-release]: https://github.com/wstein/prettier-plugin-flix/pull/71
+[coverage-badges]: https://github.com/wstein/prettier-plugin-flix/pull/72
+[recovery-coverage]: https://github.com/wstein/prettier-plugin-flix/pull/74
 [tuple-literals]: https://github.com/wstein/prettier-plugin-flix/commit/8862615
 [tuple-decimals]: https://github.com/wstein/prettier-plugin-flix/commit/94e8370
 [tuple-nested]: https://github.com/wstein/prettier-plugin-flix/commit/2845bd0
