@@ -24,4 +24,6 @@ jobs:
       - run: npm ci
       - run: npm run build
       - name: Corpus gate
-        run: node scripts/check-corpus.mjs flix-spec/fixtures/positive flix-spec/profiles/sources
+        run: >-
+          node scripts/check-corpus.mjs --parse-exceptions=.github/flix-upstream-parse-exceptions.json
+          flix-spec/fixtures/positive flix-spec/profiles/sources

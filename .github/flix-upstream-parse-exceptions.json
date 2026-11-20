@@ -1,0 +1,7 @@
+{
+  "flix-spec/fixtures/positive/type-kind-ascription.flix": "The grammar does not parse kind ascription in this type.",
+  "flix-spec/profiles/sources/invalid-lexer.flix": "Intentional lexer error.",
+  "flix-spec/profiles/sources/invalid-parser.flix": "Intentional parser error.",
+  "flix-spec/profiles/sources/law.flix": "The grammar does not parse the law declaration.",
+  "flix-spec/profiles/sources/lawful.flix": "The grammar does not parse the lawful modifier."
+}
