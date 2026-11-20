@@ -33,6 +33,10 @@ def pipeCommented(r: { name = String | // keep the tail
 def eighty(r: { departureStationName = String, estimatedTravelMinutes = Int32 | tailFitsAtEightyxxxxxxxxxxxxxxxxxxxxxxxxxxx }): String = r#departureStationName
 
 def eightyOne(r: { departureStationName = String, estimatedTravelMinutes = Int32 | tailFitsAtEightyxxxxxxxxxxxxxxxxxxxxxxxxxxxy }): String = r#departureStationName
+
+def patternCommented(journey: { departureStationName = String, estimatedTravelMinutes = Int32 | r }): String = match journey {
+    case { departureStationName = name, estimatedTravelMinutes = _duration /* c */ | _remainingJourneyDetailsBeforeServiceChange } => name
+}
 ```
 
 ## Output
@@ -88,6 +92,16 @@ def eightyOne(r: {
     estimatedTravelMinutes = Int32
     | tailFitsAtEightyxxxxxxxxxxxxxxxxxxxxxxxxxxxy
 }): String = r#departureStationName
+
+def patternCommented(journey: {
+    departureStationName = String,
+    estimatedTravelMinutes = Int32 | r
+}): String = match journey {
+    case {
+        departureStationName = name,
+        estimatedTravelMinutes = _duration /* c */ | _remainingJourneyDetailsBeforeServiceChange
+    } => name
+}
 ```
 
 ```flix printWidth=80
@@ -139,6 +153,16 @@ def eightyOne(r: {
     estimatedTravelMinutes = Int32
     | tailFitsAtEightyxxxxxxxxxxxxxxxxxxxxxxxxxxxy
 }): String = r#departureStationName
+
+def patternCommented(journey: {
+    departureStationName = String,
+    estimatedTravelMinutes = Int32 | r
+}): String = match journey {
+    case {
+        departureStationName = name,
+        estimatedTravelMinutes = _duration /* c */ | _remainingJourneyDetailsBeforeServiceChange
+    } => name
+}
 ```
 
 ```flix printWidth=100
@@ -188,4 +212,14 @@ def eightyOne(r: {
     departureStationName = String,
     estimatedTravelMinutes = Int32 | tailFitsAtEightyxxxxxxxxxxxxxxxxxxxxxxxxxxxy
 }): String = r#departureStationName
+
+def patternCommented(journey: {
+    departureStationName = String,
+    estimatedTravelMinutes = Int32 | r
+}): String = match journey {
+    case {
+        departureStationName = name,
+        estimatedTravelMinutes = _duration /* c */ | _remainingJourneyDetailsBeforeServiceChange
+    } => name
+}
 ```
