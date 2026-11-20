@@ -491,7 +491,8 @@ export class Printer {
         if (item.length === 0) return "";
         const [field, bar, ...base] = item;
         this.ls(field);
-        if (this.flat === 0 && parentKind === "RecordOperation" && isTerm(bar) && ttype(bar) === L.BAR) {
+        if (this.flat === 0 && parentKind === "RecordOperation" &&
+            isTerm(bar) && ttype(bar) === L.BAR && !this.hasComment(bar)) {
             return [
                 this.print(field),
                 group([this.after(lastTerm(field), line), this.seq([bar, ...base], parentKind)]),

@@ -11,7 +11,7 @@ options: { printWidth: 60 }
 def extend(previousJourneyDetailsBeforeServiceChange: { departureStationName = String, estimatedTravelMinutes = Int32 }): String = {
     let updated = {
         departureStationName = "Central Station",
-        estimatedTravelMinutes = 35 | previousJourneyDetailsBeforeServiceChange
+        estimatedTravelMinutes = 350 | previousJourneyDetailsBeforeServiceChange
     };
     updated#departureStationName
 }
@@ -26,6 +26,18 @@ def commented(original: { name = String }): String = {
     };
     updated#name
 }
+
+def blockComment(originalRecord: { name = String, label = String }): String = {
+    let updated = { name = "Flix", label = "formatter" /* keep the base */ | originalRecord };
+    updated#name
+}
+
+def pipeComment(original: { alpha = Int32 }): Int32 = {
+    let updated = { alpha = 1 | // keep the base
+        original
+    };
+    updated#alpha
+}
 ```
 
 ## Output
@@ -37,7 +49,7 @@ def extend(previousJourneyDetailsBeforeServiceChange: {
 }): String = {
     let updated = {
         departureStationName = "Central Station",
-        estimatedTravelMinutes = 35
+        estimatedTravelMinutes = 350
         | previousJourneyDetailsBeforeServiceChange
     };
     updated#departureStationName
@@ -53,6 +65,25 @@ def commented(original: { name = String }): String = {
     };
     updated#name
 }
+
+def blockComment(originalRecord: {
+    name = String,
+    label = String
+}): String = {
+    let updated = {
+        name = "Flix",
+        label = "formatter" /* keep the base */ | originalRecord
+    };
+    updated#name
+}
+
+def pipeComment(original: { alpha = Int32 }): Int32 = {
+    let updated = {
+        alpha = 1 |  // keep the base
+        original
+    };
+    updated#alpha
+}
 ```
 
 ```flix printWidth=80
@@ -62,7 +93,7 @@ def extend(previousJourneyDetailsBeforeServiceChange: {
 }): String = {
     let updated = {
         departureStationName = "Central Station",
-        estimatedTravelMinutes = 35 | previousJourneyDetailsBeforeServiceChange
+        estimatedTravelMinutes = 350 | previousJourneyDetailsBeforeServiceChange
     };
     updated#departureStationName
 }
@@ -77,6 +108,22 @@ def commented(original: { name = String }): String = {
     };
     updated#name
 }
+
+def blockComment(originalRecord: { name = String, label = String }): String = {
+    let updated = {
+        name = "Flix",
+        label = "formatter" /* keep the base */ | originalRecord
+    };
+    updated#name
+}
+
+def pipeComment(original: { alpha = Int32 }): Int32 = {
+    let updated = {
+        alpha = 1 |  // keep the base
+        original
+    };
+    updated#alpha
+}
 ```
 
 ```flix printWidth=100
@@ -86,7 +133,7 @@ def extend(previousJourneyDetailsBeforeServiceChange: {
 }): String = {
     let updated = {
         departureStationName = "Central Station",
-        estimatedTravelMinutes = 35 | previousJourneyDetailsBeforeServiceChange
+        estimatedTravelMinutes = 350 | previousJourneyDetailsBeforeServiceChange
     };
     updated#departureStationName
 }
@@ -99,5 +146,18 @@ def commented(original: { name = String }): String = {
         | original
     };
     updated#name
+}
+
+def blockComment(originalRecord: { name = String, label = String }): String = {
+    let updated = { name = "Flix", label = "formatter" /* keep the base */ | originalRecord };
+    updated#name
+}
+
+def pipeComment(original: { alpha = Int32 }): Int32 = {
+    let updated = {
+        alpha = 1 |  // keep the base
+        original
+    };
+    updated#alpha
 }
 ```
