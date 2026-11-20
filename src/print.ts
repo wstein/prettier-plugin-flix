@@ -688,6 +688,7 @@ export class Printer {
         if (BINARY.has(k)) return this.printBinary(n);
         switch (k) {
             case "CompilationUnit": return this.printUnit(n);
+            case "ArrowType": return this.printArrowType(n);
             case "Statement": return this.printStatement(n);
             case "UseExpr": return this.printUseExpr(n);
             case "Block": return this.printBlock(n);
@@ -1234,6 +1235,33 @@ export class Printer {
     }
 
     // --------------------------------------------------------------- operators
+
+    private printArrowType(n: ParserRuleContext): Doc {
+        const children = kids(n);
+        if (this.flat > 0) return this.seq(children, "ArrowType");
+
+        const [first, arrow, result] = children;
+        // An inline type after a signature prefix needs a hanging indent.
+        const firstToken = firstTerm(first);
+        const atLineStart = firstToken !== null && this.lineStart.has(firstToken.symbol.tokenIndex);
+        const head = this.seq([first, arrow], "ArrowType");
+        const continuation: Doc[] = [];
+        let previousArrow = arrow;
+        let rest = result;
+        // Flix associates arrow types to the right. Parenthesized types and
+        // effect annotations keep their own layout.
+        while (kind(rest) === "ArrowType") {
+            const [parameter, nextArrow, remaining] = kids(rest);
+            continuation.push(
+                this.after(lastTerm(previousArrow), line),
+                this.seq([this.ls(parameter), nextArrow], "ArrowType"),
+            );
+            previousArrow = nextArrow;
+            rest = remaining;
+        }
+        continuation.push(indent([this.after(lastTerm(previousArrow), line), this.print(this.ls(rest))]));
+        return group([head, atLineStart ? continuation : indent(continuation)]);
+    }
 
     private printBinary(n: ParserRuleContext): Doc {
         const k = kind(n);
