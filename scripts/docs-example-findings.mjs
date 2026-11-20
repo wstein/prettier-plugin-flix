@@ -24,6 +24,7 @@ function splitDiff(diff) {
 }
 
 const sectionNames = {
+    reference: "Reference cases",
     formatter: "Formatter recommendations",
     documentation: "Documentation improvements",
 };
