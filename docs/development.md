@@ -38,6 +38,17 @@ suite in the plugin's own code. CI requires at least 95% line coverage and 90%
 branch coverage. The Pages workflow publishes the measured percentages on
 `main`. Generated ANTLR code and the copied lexer base are excluded.
 
+### Branch protection
+
+Require these status checks on `main` (ruleset or classic branch protection),
+require the checks from the latest push, and disallow force-pushes:
+
+- `CI / test`
+- `Fixture documentation / build`
+
+The workflow YAML sets `concurrency` and job `timeout-minutes` for those
+checks; enabling the ruleset itself is a repository settings step.
+
 Run the same coverage check locally with Node.js 22:
 
 ```sh
