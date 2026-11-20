@@ -1,5 +1,12 @@
 [
   {
+    "case": "book.library-effects.filesystem.reading-and-writing-lines",
+    "digest": "53b3850c812f350ea9b38399d9e74003d18b864836608b697daaf4f2ca6b712b",
+    "area": "reference",
+    "title": "FileWrite.writeLines at the 80-column boundary",
+    "recommendation": "The original match header is 89 columns including indentation. The opening and first argument through its comma use 75 columns. At 80 columns the plugin starts each argument on a separate line. Use this case to compare that layout with keeping the first argument on the opening line."
+  },
+  {
     "case": "book.functions.functions.pipelines",
     "digest": "23d3a536cc7e672a0173909d17c0ff8e2a9e43388dae8566ac503088f1b8a6dc",
     "area": "formatter",
