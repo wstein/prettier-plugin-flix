@@ -95,6 +95,9 @@ function buildTokenInfo(tokens: Token[]): Map<number, TokenInfo> {
 
     for (const t of tokens) {
         if (t.channel === 0) {
+            pending.forEach((c, i) => {
+                c.nlNext = i + 1 < pending.length ? pending[i + 1].nl : nl;
+            });
             const trail: Comment[] = [];
             let lead = pending;
             if (prevDefault !== null) {
@@ -107,9 +110,6 @@ function buildTokenInfo(tokens: Token[]): Map<number, TokenInfo> {
                 trail.push(...lead.slice(0, k));
                 lead = lead.slice(k);
             }
-            pending.forEach((c, i) => {
-                c.nlNext = i + 1 < pending.length ? pending[i + 1].nl : nl;
-            });
             let nlBefore = nl;
             for (const c of pending) nlBefore += c.nl;
             info.set(t.tokenIndex, { trail: [], lead, nlAfter: nl, nlBefore });
