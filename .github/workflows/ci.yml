@@ -17,6 +17,7 @@ jobs:
       # The grammar is a git dependency; its lockfile entry uses ssh, which CI has no key for.
       - run: git config --global url."https://github.com/".insteadOf ssh://git@github.com/
       - run: npm ci
-      - run: npm test
+      - run: npm run build
+      - run: npm run test:coverage
       - name: Check Markdown fixture syntax coverage
         run: npm run coverage:syntax -- --check

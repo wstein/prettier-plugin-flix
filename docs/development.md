@@ -34,9 +34,16 @@ It follows the standard plugin shape: a **parser** (source → AST) and a **prin
 ## Verification
 
 The README's coverage badges show the lines and branches exercised by the test
-suite in the plugin's own code. The Pages workflow publishes these percentages
-from its Node.js coverage run on `main`. Generated ANTLR code and the copied
-lexer base are excluded.
+suite in the plugin's own code. CI requires at least 95% line coverage and 90%
+branch coverage. The Pages workflow publishes the measured percentages on
+`main`. Generated ANTLR code and the copied lexer base are excluded.
+
+Run the same coverage check locally with Node.js 22:
+
+```sh
+npm run build
+npm run test:coverage
+```
 
 `npm test` builds the plugin and runs `test/*.test.mjs`. For every `.flix` file it checks that the formatted output
 
