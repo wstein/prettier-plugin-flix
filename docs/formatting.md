@@ -115,10 +115,11 @@ A block, record or member list written across multiple lines generally keeps
 its multiline structure. An inline group can stay compact when it fits.
 Sequential statements in a block get separate lines.
 
-In a `run { … } with` chain, the first `with` follows the closing brace when
-its clause fits. Later clauses start on their own lines beneath that first
-`with`. If the first clause needs a new line, or the run expression has no
-block to attach to, the clauses align with `run`.
+In a `run { … } with` chain, keep the first `with` beside the closing brace,
+like `} else`. A long handler call wraps its arguments within the clause.
+Later clauses start beneath the first `with`. If the `run` expression has
+no block or a line comment follows its closing brace, start the `with`
+clauses on separate lines aligned with `run`.
 
 **At 80 columns**
 
@@ -143,11 +144,10 @@ def main(): Unit
         );
         Sleep.sleep(seconds(2));
         println("Done!")
-    }
-    with Sleep.withMaxSleep(
+    } with Sleep.withMaxSleep(
         milliseconds(500)
     )
-    with Sleep.withLogging
+      with Sleep.withLogging
 ```
 
 [Middleware fixture](../test/fixtures/expressions/sleep-middleware-chain.md) ·

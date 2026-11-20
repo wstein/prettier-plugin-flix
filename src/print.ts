@@ -855,15 +855,9 @@ export class Printer {
         }
         if (!canAttach) return [head, hardline, firstClause, rest];
 
-        // Start the continuation under the first `with` in `} with`.
-        const joinedRest = align(2, rest);
-        if (kind(firstHandler) === "HandlerExpr") return [head, " ", firstClause, joinedRest];
-        const attachment = Symbol("run with attachment");
-        return [
-            head,
-            group([line, firstClause], { id: attachment }),
-            ifBreak(rest, joinedRest, { groupId: attachment }),
-        ];
+        // Keep the keyword with the closing brace and let the handler wrap internally.
+        // Later clauses start under the first `with` in `} with`.
+        return [head, " ", firstClause, align(2, rest)];
     }
 
     private alignMatchRules(rules: Node[], layoutId: symbol): Doc[] | undefined {

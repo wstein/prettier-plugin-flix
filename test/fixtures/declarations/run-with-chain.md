@@ -1,6 +1,6 @@
 ---
 title: "Align chained handlers with the first with"
-description: "A handler can follow the closing brace when it fits. Further clauses align with the first with. If the first with wraps, the clauses align with run."
+description: "The first with stays after the closing brace even when its call arguments wrap. Further clauses align with the first with. Without a run block, each with starts at the level of run."
 flix: "0.80"
 source: "https://github.com/flix/flix/blob/v0.80.0/main/test/flix/Test.Exp.RunWith.flix#L284"
 ---
@@ -86,9 +86,8 @@ def readWithLog(): Int32 =
     run {
         Log.log("Reading a value");
         Ask.ask()
-    }
-    with withFallback(
+    } with withFallback(
         Int32.max(100, 200)
     )
-    with withoutLogging
+      with withoutLogging
 ```

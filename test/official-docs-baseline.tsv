@@ -385,7 +385,7 @@ book.library-effects.http-and-https.inspecting-the-response	layout-change	wrappi
 book.library-effects.http-and-https.logging	unchanged	-	ebd2b9714c7a9a852322f0c835fe40698230684fb07b6ed8a64eaa96cfad3699
 book.library-effects.http-and-https.post-requests-and-json	layout-change	wrapping	38185d661087557901411f47cb815697c4c51b449f13aba17479d7a0d3b73d54
 book.library-effects.http-and-https.rate-limiting	layout-change	wrapping	65e7918f01d92cf9d012e90bd1fa0701f2fada77e04dad67766ede260d3a252a
-book.library-effects.http-and-https.retries	layout-change	wrapping	e67875532e46dba87957049196ce33779eecf783227e3fa2f4d735ce66969308
+book.library-effects.http-and-https.retries	layout-change	wrapping	6f16718f8993d00394ed3b5b95ebbadedf8c97b4fcac725f85e074744cd025d5
 book.library-effects.http-and-https.sending-a-get-request	unchanged	-	be6d1a76624d5a8513c4133b24d22ee4d8ac8e821f43b2d19f9b5fbc93c1506a
 book.library-effects.http-and-https.the-https-effect	unchanged	-	e6c1de3abb0768adcf1385cbad2986ffb628770e2147d9602e9f2a00dedd8dbc
 book.library-effects.logger.logging-messages	unchanged	-	6c78dbcdf8cd61b9f22b7f7401cf89814db88cc087c9c16c11c6bfbc8b13630b
