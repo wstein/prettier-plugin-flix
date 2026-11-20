@@ -31,13 +31,23 @@
   <div class="{{ if $isPlayground }}playground-shell{{ else }}site-shell{{ end }}">
     {{ if not $isPlayground }}<nav class="chapter-nav" aria-label="Documentation">
       <p class="chapter-nav-title">Chapters</p>
-      <ul>
-        {{ $current := . }}
-        {{ with site.GetPage "formatting" }}
-        <li><a href="{{ .RelPermalink }}"{{ if eq .RelPermalink $current.RelPermalink }} aria-current="page"{{ end }}>Formatting style</a></li>
-        {{ end }}
-        {{ range site.Sections }}
-        <li><a href="{{ .RelPermalink }}"{{ if eq .RelPermalink $current.RelPermalink }} aria-current="page"{{ end }}>{{ .Title }}</a></li>
+      {{ $current := .RelPermalink }}
+      {{ $behaviorSections := slice "comments" "options" "errors" "whitespace" }}
+      {{ $groups := slice
+        (dict "title" "Guide" "pages" (slice (site.GetPage "formatting") (site.GetPage "examples")))
+        (dict "title" "Language fixtures" "pages" (where site.Sections "Section" "not in" (union (slice "examples") $behaviorSections)))
+        (dict "title" "Formatter behavior" "pages" (where site.Sections "Section" "in" $behaviorSections)) }}
+      <ul class="chapter-nav-groups">
+        {{ range $groups }}
+        {{ $label := printf "chapters-%s" (.title | anchorize) }}
+        <li>
+          <p class="chapter-nav-group-title" id="{{ $label }}">{{ .title }}</p>
+          <ul class="chapter-nav-links" aria-labelledby="{{ $label }}">
+            {{ range .pages }}
+            <li><a href="{{ .RelPermalink }}"{{ if eq .RelPermalink $current }} aria-current="page"{{ end }}>{{ .LinkTitle }}</a></li>
+            {{ end }}
+          </ul>
+        </li>
         {{ end }}
       </ul>
     </nav>{{ end }}
