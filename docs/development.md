@@ -189,6 +189,13 @@ After the release commit lands on `main`, create a GitHub draft release with
 the reviewed notes and set its target to that commit's full SHA. Run
 **Publish plugin release** from the Actions tab on `main` with the same SHA in
 `source_commit`. The workflow requires an existing draft with release notes
-targeting that SHA. It builds and tests the package, then publishes the draft
-after the tarball is available. Enable **publish_npm** when the package has
-npm Trusted Publishing configured.
+targeting that SHA. Before packing it re-runs the advertised gates
+(`test:coverage`, syntax coverage, `docs:build`, Playwright, and the pinned
+Flix standard-library compile), refuses a missing `CHANGELOG.md` version
+heading or a version already on npm, then publishes that one tarball.
+Enable **publish_npm** when npm Trusted Publishing and the `npm` GitHub
+Environment (with protection rules) are configured. The publish job uses
+Node 22, `--provenance`, and `registry.npmjs.org`. Local `npm publish` runs
+`prepublishOnly` so an empty `dist/` cannot ship. Do not deprecate the
+historical `0.0.0-stage` tag from the release workflow; handle that
+separately if needed.
