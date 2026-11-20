@@ -47,7 +47,6 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
-      - run: git config --global url."https://github.com/".insteadOf ssh://git@github.com/
       - run: npm ci
       - run: npm run build
       - name: Download the pinned compiler
