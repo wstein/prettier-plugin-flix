@@ -41,6 +41,11 @@ def nested(): Vector[(String, (Int32, Int32))] = Vector#{
     ("A long station name", (1, 22)),
     ("A longer terminal name", (15, 4))
 }
+
+def routes(): Vector[(String, Vector[Int32], Bool)] = Vector#{
+    ("A", Vector#{1,22}, true),
+    ("Library", Vector#{15,4,2}, false)
+}
 ```
 
 ## Output
@@ -78,7 +83,14 @@ def missing(): Vector[(String, Null, Int32)] = Vector#{
 }
 
 def nested(): Vector[(String, (Int32, Int32))] = Vector#{
-    ("A long station name", (1, 22)),
+    ("A long station name",    (1, 22)),
     ("A longer terminal name", (15, 4))
+}
+
+def routes(): Vector[
+    (String, Vector[Int32], Bool)
+] = Vector#{
+    ("A",       Vector#{1, 22},    true),
+    ("Library", Vector#{15, 4, 2}, false)
 }
 ```
