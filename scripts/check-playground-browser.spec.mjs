@@ -99,12 +99,20 @@ test("the catalog gives embedded editors room and aligns the header with the cha
     await page.setViewportSize({ width: 1600, height: 900 });
     await page.goto(siteUrl + "examples/");
     await expect(heading).toBeVisible();
+    const guide = chapters.getByRole("list", { name: "Guide" });
+    await expect(guide.getByRole("link")).toHaveText(["Formatting style", "Before and after"]);
+    await expect(guide.getByRole("link", { name: "Before and after" })).toHaveAttribute("aria-current", "page");
+    await expect(chapters.getByRole("list", { name: "Language fixtures" }).getByRole("link"))
+        .toHaveText(["Datalog", "Declarations", "Expressions", "Strings"]);
+    await expect(chapters.getByRole("list", { name: "Formatter behavior" }).getByRole("link"))
+        .toHaveText(["Comments", "Options", "Syntax errors", "Whitespace-sensitive syntax"]);
     await expect(fixture.getByRole("textbox", { name: "Flix input" })).toBeVisible();
     expect((await siteLink.boundingBox()).x).toBeCloseTo((await chapters.boundingBox()).x, 0);
     expect((await input.boundingBox()).y).toBeCloseTo((await preview.boundingBox()).y, 0);
 
     for (const width of [1120, 390]) {
         await page.setViewportSize({ width, height: 900 });
+        await expect(guide.getByRole("link", { name: "Formatting style" })).toBeVisible();
         expect((await preview.boundingBox()).y).toBeGreaterThan((await input.boundingBox()).y);
         expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
     }
@@ -116,8 +124,10 @@ test("the live preview keeps trailing comments, reports cursor selection, and re
     const preview = page.getByRole("textbox", { name: "Preview" });
     const cursor = page.locator("[data-cursor-position]");
     const status = page.locator("[data-full-playground]").getByRole("status", { includeHidden: true });
-    await expect(page.getByLabel("Line width")).toHaveValue("80");
+    await expect(page.getByLabel("Line width")).toHaveValue("100");
     await expect(page.getByLabel("Example")).toBeEnabled();
+    await page.getByLabel("Example").selectOption("strings/itinerary.md");
+    await expect(page.getByLabel("Line width")).toHaveValue("100");
 
     await input.fill("def first():Int32=1 /* first */\n\ndef second():Int32=2\n");
     await expect(preview).toContainText("def first(): Int32 = 1 /* first */");
@@ -142,7 +152,7 @@ test("the live preview keeps trailing comments, reports cursor selection, and re
 });
 
 for (const override of [undefined, "54"]) {
-    test(`the embedded editor hands off Unicode source with width ${override ?? "80 by default"}`, async ({ page }) => {
+    test(`the embedded editor hands off Unicode source with width ${override ?? "100 by default"}`, async ({ page }) => {
         await page.goto(siteUrl + "comments/#trailing-block-comment");
         const fixture = page.locator("#trailing-block-comment [data-embedded-playground]");
         const width = fixture.getByLabel("Line width");
@@ -157,7 +167,7 @@ for (const override of [undefined, "54"]) {
         await expect(page).toHaveURL(/\/playground\/\?/);
         await expect(page.getByLabel("Example")).toBeEnabled();
         await expect(page.getByLabel("Example")).toHaveValue("");
-        await expect(page.getByLabel("Line width")).toHaveValue(override ?? "80");
+        await expect(page.getByLabel("Line width")).toHaveValue(override ?? "100");
         await expect(page.getByRole("textbox", { name: "Flix input" })).toHaveText(source);
         await expect(page.getByRole("textbox", { name: "Preview" })).toContainText('def smokeText(): String = "Grüße 🚉"');
     });

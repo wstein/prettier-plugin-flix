@@ -119,8 +119,8 @@ test("the browser formatter points to the backslash before a real newline", asyn
     assert.equal(await formatFlix(valid, {}), valid);
 });
 
-test("Playground examples start at 80 columns and the formatter defaults to 100", async () => {
-    assert.match(page, /data-print-width[^>]*\bvalue=(?:"80"|80)(?:\s|>)/);
+test("the standalone Playground and formatter default to 100 columns", async () => {
+    assert.match(page, /data-print-width[^>]*\bvalue=(?:"100"|100)(?:\s|>)/);
     assert.match(page, /data-cursor-position[^>]*>Ln 1, Col 1/);
     assert.match(page, /playground-statusbar[^>]*>\s*<p[^>]*role=(?:"status"|status)>Loading the editor…/);
     const input = 'def sample(): Bool = verifyExample("a moderately long argument", "a second moderately long argument")';

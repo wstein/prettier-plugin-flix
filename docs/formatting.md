@@ -27,7 +27,7 @@ Prettier also accepts its standard configuration options. The Flix style in
 this guide uses `tabWidth: 4`, `useTabs: false` and `endOfLine: "lf"`.
 The Playground and embedded editors use four spaces per indentation level
 and let you adjust the line width.
-The standalone Playground opens at 80 columns. Embedded editors default to
+The standalone Playground opens at 100 columns. Embedded editors default to
 60 columns to fit their narrower panels. The examples below use an
 80-column width unless a different width is shown.
 

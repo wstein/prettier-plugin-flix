@@ -56,6 +56,9 @@ body:not(.playground-page) .site-toolbar { padding-inline: 0; }
 }
 .chapter-nav-title { margin: 0 0 0.5rem; font-weight: 650; }
 .chapter-nav ul { margin: 0; padding: 0; list-style: none; }
+.chapter-nav-groups { display: grid; gap: 0.65rem; }
+.chapter-nav-group-title { margin: 0 0 0.15rem; font-size: 0.8rem; font-weight: 650; }
+.chapter-nav .chapter-nav-links { padding-inline-start: 0.35rem; }
 .chapter-nav a { display: block; padding: 0.25rem 0.45rem; border-radius: 0.3rem; }
 .chapter-nav a[aria-current="page"] { background: var(--surface); font-weight: 700; }
 @media (max-width: 60rem), (max-height: 32rem) {
@@ -64,7 +67,7 @@ body:not(.playground-page) .site-toolbar { padding-inline: 0; }
 @media (max-width: 60rem) {
   .site-shell { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
   .chapter-nav { padding-inline-end: 0; padding-bottom: 0.6rem; border-inline-end: 0; border-bottom: 1px solid var(--border); }
-  .chapter-nav ul { display: flex; flex-wrap: wrap; column-gap: 0.5rem; }
+  .chapter-nav .chapter-nav-links { display: flex; flex-wrap: wrap; column-gap: 0.5rem; }
 }
 a { color: var(--link); }
 h1, h2, h3 { line-height: 1.25; overflow-wrap: anywhere; }

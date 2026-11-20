@@ -21,7 +21,7 @@ worker timing, or navigation.
 
 ## Check the affected flows
 
-- **Standalone.** Open `/playground/`. Check the starting width of 80 columns,
+- **Standalone.** Open `/playground/`. Check the starting width of 100 columns,
   fixed four-space indentation, and the input and preview panes. Choose a
   curated fixture, edit it, and check that the preview refreshes after the
   250 ms debounce. When checking cursor status, move the cursor and select
@@ -30,7 +30,7 @@ worker timing, or navigation.
   into view to initialize its editor. Check its 60-column default and the
   shared controls. After editing, use **Open in Playground**. The Playground
   should load the edited source with an empty Example selection. It should
-  start at 80 columns when the embedded width was left at its default and
+  start at 100 columns when the embedded width was left at its default and
   carry an explicitly selected width through the handoff. Include Unicode
   in the edited source when testing transfer.
 - **Diagnostics.** Introduce a syntax error between otherwise valid

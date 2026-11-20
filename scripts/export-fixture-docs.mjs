@@ -159,7 +159,7 @@ for (const group of playground.groups) {
 }
 if (!Object.hasOwn(examples, playground.defaultFixture)) throw new Error("The default playground fixture must be a menu example.");
 await writeFile(new URL("playground.json", destination), JSON.stringify({
-    ...playground, defaultOptions: { ...defaultOptions, printWidth: EXAMPLE_PRINT_WIDTH },
+    ...playground, defaultOptions,
     embeddedPrintWidth: EMBEDDED_PRINT_WIDTH, fixtures: examples,
 }) + "\n");
 await writeFile(new URL("playgroundFixtures.json", destination), JSON.stringify(playgroundFixtures) + "\n");
