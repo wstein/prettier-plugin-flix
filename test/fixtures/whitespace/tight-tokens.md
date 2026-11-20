@@ -15,6 +15,5 @@ def f(s: S[r]): Int32 \ IO = s->field + (x -> x)(1)
 
 ```flix
 use Foo::Bar.{baz, qux}
-
 def f(s: S[r]): Int32 \ IO = s->field + (x -> x)(1)
 ```
