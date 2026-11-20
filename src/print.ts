@@ -892,15 +892,26 @@ export class Printer {
     private printFixpoint(n: ParserRuleContext): Doc {
         const children = kids(n);
         const [keyword, sources, ...clauses] = children;
-        if (this.flat > 0 || !isTerm(keyword) || (ttype(keyword) !== L.QUERY && ttype(keyword) !== L.PQUERY) ||
-            clauses.length === 0) return this.seq(children, kind(n));
+        if (this.flat > 0 || !isTerm(keyword)) return this.seq(children, kind(n));
+        const type = ttype(keyword);
+        const isQuery = type === L.QUERY || type === L.PQUERY;
+        if (!isQuery && type !== L.SOLVE && type !== L.PSOLVE && type !== L.INJECT) {
+            return this.seq(children, kind(n));
+        }
 
         const sourceItems = kids(sources);
-        const head = sourceItems.length > 1 ? this.printQueryList(keyword, sourceItems) : this.seq([keyword, sources], kind(n));
+        const head = sourceItems.length > 1 ? this.printFixpointList(keyword, sourceItems) : this.seq([keyword, sources], kind(n));
+        if (clauses.length === 0) return head;
+        if (!isQuery) {
+            const [clauseKeyword, ...items] = clauses;
+            const tail = this.printFixpointList(this.ls(clauseKeyword as TerminalNode), items);
+            return group([head, indent([this.after(lastTerm(sources), line), tail])]);
+        }
+
         const body = clauses.map((clause, index) => {
             const [clauseKeyword, ...items] = kids(this.ls(clause));
             const content = isTerm(clauseKeyword) && ttype(clauseKeyword) === L.FROM && items.length > 1
-                ? this.printQueryList(clauseKeyword, items)
+                ? this.printFixpointList(clauseKeyword, items)
                 : this.print(clause);
             return [index === 0 ? "" : this.after(lastTerm(clauses[index - 1]), line), group(content)];
         });
@@ -909,7 +920,7 @@ export class Printer {
         return group([head, indent([this.after(lastTerm(sources), line), group(body)])]);
     }
 
-    private printQueryList(keyword: TerminalNode, nodes: Node[]): Doc {
+    private printFixpointList(keyword: TerminalNode, nodes: Node[]): Doc {
         const { items, seps } = this.splitOn(nodes, L.COMMA);
         const entries = items.map(([item], i) => {
             const comma = seps[i];
