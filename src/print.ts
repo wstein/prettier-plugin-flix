@@ -1302,10 +1302,8 @@ export class Printer {
             }
         };
         collect(n);
-        const firstToken = firstTerm(operands[0]);
-        const isPipeline = isPipe(ops[0]);
-        if (isPipeline) {
-            const leading = this.takeLeadingOwnLineComments(firstToken);
+        const leading = this.takeLeadingOwnLineComments(firstTerm(operands[0]));
+        if (isPipe(ops[0])) {
             const first = this.print(operands[0]);
             const breakPoint = this.flat > 0 ? " " : line;
             const steps = ops.map((op, i) => [
@@ -1338,7 +1336,7 @@ export class Printer {
         });
         const first = this.print(operands[0]);
         if (k !== "AddExpr" || !ops.every((op) => isTerm(op) && ttype(op) === L.PLUS)) {
-            return group([first, indent(links.map(({ operator, after, operand }) => [operator, after, operand]))]);
+            return [leading, group([first, indent(links.map(({ operator, after, operand }) => [operator, after, operand]))])];
         }
 
         // A newline literal acts as a separator. Keep it with the preceding text when that
@@ -1355,11 +1353,11 @@ export class Printer {
             else segment.push(after, operand);
         }
         const [head, ...tail] = segments;
-        if (tail.length === 0) return group([first, indent(head.slice(1))]);
-        return group([
+        if (tail.length === 0) return [leading, group([first, indent(head.slice(1))])];
+        return [leading, group([
             group([head[0], indent(head.slice(1))]),
             indent(tail.map(([before, ...parts]) => [before, group(parts)])),
-        ]);
+        ])];
     }
 
     // ------------------------------------------------------- annotations, strings

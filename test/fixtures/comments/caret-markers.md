@@ -36,3 +36,12 @@ def total(
     secondArgument: Int32
 ): Int32 = first + secondArgument
 ```
+
+```flix printWidth=60
+def inc(x: Int32): Int32 \ {} = x + 1
+                        // ^^ empty effect set
+
+def total(first: Int32, secondArgument: Int32): Int32 =
+       // ^^^^^ first input
+    first + secondArgument
+```
