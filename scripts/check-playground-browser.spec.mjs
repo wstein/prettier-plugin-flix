@@ -54,6 +54,28 @@ test.use({
     launchOptions: { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH },
 });
 
+test("the catalog gives embedded editors room and aligns the header with the chapters", async ({ page }) => {
+    const heading = page.getByRole("heading", { name: "Before and after", exact: true });
+    const chapters = page.getByRole("navigation", { name: "Documentation" });
+    const siteLink = page.getByRole("navigation", { name: "Site" }).getByRole("link", { name: "Prettier Plugin for Flix" });
+    const fixture = page.locator("[data-embedded-playground]").first();
+    const input = fixture.locator(".playground-pane").first();
+    const preview = fixture.locator(".playground-pane").last();
+
+    await page.setViewportSize({ width: 1600, height: 900 });
+    await page.goto(siteUrl + "examples/");
+    await expect(heading).toBeVisible();
+    await expect(fixture.getByRole("textbox", { name: "Flix input" })).toBeVisible();
+    expect((await siteLink.boundingBox()).x).toBeCloseTo((await chapters.boundingBox()).x, 0);
+    expect((await input.boundingBox()).y).toBeCloseTo((await preview.boundingBox()).y, 0);
+
+    for (const width of [1120, 390]) {
+        await page.setViewportSize({ width, height: 900 });
+        expect((await preview.boundingBox()).y).toBeGreaterThan((await input.boundingBox()).y);
+        expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+    }
+});
+
 test("the live preview keeps trailing comments, reports cursor selection, and recovers from a syntax error", async ({ page }) => {
     await page.goto(siteUrl + "playground/");
     const input = page.getByRole("textbox", { name: "Flix input" });
