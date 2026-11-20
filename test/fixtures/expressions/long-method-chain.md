@@ -16,6 +16,9 @@ def compact(input: String): String =
 
 def chained(input: String): String \ IO =
     input.trim().toLowerCase().strip().stripLeading().stripTrailing().toUpperCase().trim()
+
+def commented(input: String): String =
+    input.trim()/* keep */.toLowerCase().replace("station", "stop")
 ```
 
 ## Output
@@ -32,6 +35,12 @@ def compact(input: String): String =
 
 def chained(input: String): String \ IO =
     input.trim().toLowerCase().strip().stripLeading().stripTrailing().toUpperCase().trim()
+
+def commented(input: String): String =
+    input.trim() /* keep */.toLowerCase().replace(
+        "station",
+        "stop"
+    )
 ```
 
 ```flix printWidth=100
@@ -42,4 +51,7 @@ def compact(input: String): String = input.trim().toLowerCase()
 
 def chained(input: String): String \ IO =
     input.trim().toLowerCase().strip().stripLeading().stripTrailing().toUpperCase().trim()
+
+def commented(input: String): String =
+    input.trim() /* keep */.toLowerCase().replace("station", "stop")
 ```
