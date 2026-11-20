@@ -294,8 +294,10 @@ def next(xs: List[Int32]): Int32 = match xs {
 [Record alignment](../test/fixtures/expressions/align-record-fields.md)
 
 A record update keeps `| base` with the last field when they fit on one line.
-When the line would exceed the width, start a new line at the field
-indentation with `| base`. [Record update fixture](../test/fixtures/expressions/record-update-tail.md)
+When the line would exceed the width or a line comment ends the last field,
+start a new line at the field indentation with `| base`. When a comment
+belongs to the pipe, keep it next to the pipe.
+[Record update fixture](../test/fixtures/expressions/record-update-tail.md)
 
 ## Comments
 
