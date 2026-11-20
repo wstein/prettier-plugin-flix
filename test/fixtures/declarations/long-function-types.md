@@ -127,3 +127,38 @@ def makePlanner(): DepartureStation -> IntermediateTransferStation -> EstimatedT
 
 def retryPolicy(maximumRetries: Int32): (Int32, String, Bool) -> Bool = (_attempt, _request, _outcome) -> maximumRetries > 0
 ```
+
+```flix printWidth=128
+type alias DepartureStation = String
+type alias IntermediateTransferStation = String
+type alias EstimatedTravelDuration = Int32
+type alias FinalDestination = String
+type alias JourneyPlanner = DepartureStation -> IntermediateTransferStation -> EstimatedTravelDuration -> FinalDestination
+
+type alias NestedPlanner = (DepartureStation -> IntermediateTransferStation) -> EstimatedTravelDuration -> FinalDestination
+
+type alias EffectfulPlanner =
+    DepartureStation -> IntermediateTransferStation -> EstimatedTravelDuration -> FinalDestination \ IO
+
+type alias CommentedPlanner =
+    DepartureStation ->  // transfer station follows
+    IntermediateTransferStation ->
+    EstimatedTravelDuration ->
+        FinalDestination
+
+type alias HuggedPlanner = DepartureStation ->  // transfer
+    IntermediateTransferStation ->
+    EstimatedTravelDuration ->
+        FinalDestination
+
+type alias ShortCommented =
+    String ->  // result follows
+        Int32
+
+type alias Compact = String -> Int32
+
+def makePlanner(): DepartureStation -> IntermediateTransferStation -> EstimatedTravelDuration -> FinalDestination =
+    _departure -> _transfer -> _duration -> "Destination"
+
+def retryPolicy(maximumRetries: Int32): (Int32, String, Bool) -> Bool = (_attempt, _request, _outcome) -> maximumRetries > 0
+```
