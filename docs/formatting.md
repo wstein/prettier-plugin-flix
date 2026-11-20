@@ -20,10 +20,16 @@ a way to fit code to the available editor space while keeping the indentation
 style consistent. Long string literals and other indivisible tokens can
 exceed the target.
 
+Rust uses the same indentation and width defaults.
+[Rust Style Guide](https://doc.rust-lang.org/style-guide/#indentation-and-line-width)
+
 The plugin supplies one layout per construct for a given width and source.
 Operator placement, brace layout and alignment follow the same rules across
 projects. This keeps formatting predictable and avoids a project-by-project
 choice for each construct.
+Go's formatter also gives projects a shared layout. Go leaves the decision
+about when a line is too long to the author. Flix uses the target width to
+wrap calls and signatures consistently. [Effective Go](https://go.dev/doc/effective_go#formatting)
 
 Prettier also accepts its standard configuration options. The Flix style in
 this guide uses `tabWidth: 4`, `useTabs: false` and `endOfLine: "lf"`.
@@ -112,6 +118,10 @@ pipeline, the input expression comes first and each step starts on its own line
 with its operator. Operators in the same chain align even when a step has
 multiline arguments.
 
+F# also starts each wrapped step with `|>`. Flix indents the steps one level
+beneath the input to show that they continue the same expression.
+[F# formatting guidelines](https://learn.microsoft.com/en-us/dotnet/fsharp/style-guide/formatting#formatting-pipeline-expressions)
+
 **Before**
 
 ```flix
@@ -144,6 +154,8 @@ preceding text so the separator is easy to associate with that line.
 A block, record or member list written across multiple lines generally keeps
 its multiline structure. An inline group can stay compact when it fits.
 Sequential statements in a block get separate lines.
+The Haskell formatter Ormolu similarly uses source layout as a signal for
+choosing between compact and multiline forms. [Ormolu](https://github.com/tweag/ormolu#readme)
 
 Between sibling declarations, use the spacing from the source. Adjacent
 declarations stay together, and an existing gap becomes one blank line,
@@ -226,6 +238,8 @@ Flat `List#{…}` values can also qualify in maps. Short sums or differences
 of simple values can qualify in records. Map and record operator padding
 is capped at eight extra spaces. Complex rows or rows that would exceed
 `printWidth` use ordinary spacing.
+Scalafmt's alignment settings illustrate the same trade-off between aligned
+columns and the line width. [Scalafmt configuration](https://scalameta.org/scalafmt/docs/configuration.html#alignallowoverflow)
 
 When a vector, list, array, or set prints matching rows of literal tuples
 on separate lines, align columns of integers, floating-point and decimal
@@ -246,6 +260,10 @@ Compact collections stay inline.
 Match arms and handler clauses can share a separator column even when a
 body spans multiple lines. Handler clauses use the configured width to
 decide whether the aligned lines fit, including any trailing comment.
+OCamlFormat's `break-cases` option offers a comparison between margin-driven
+wrapping and vertical branches.
+Flix can keep a short arm body after `=>` and indent a longer body beneath it.
+[OCamlFormat options](https://github.com/ocaml-ppx/ocamlformat/blob/main/doc/manpage_ocamlformat.mld)
 
 **Before**
 
@@ -361,35 +379,21 @@ def directPaths(): Vector[(String, String)] =
 
 For a long rule, keep `:-` at the end of the head and place the body on an
 indented line. If the body needs more room, break it between predicates.
+The Datalog 2.3 manual shows the same split between a rule's head and its
+indented body. [Datalog User Manual](https://datalog.sourceforge.net/datalog.html#index-clause-24)
 A multiline return schema can align its predicates beneath the first one
 when the remaining signature fits.
 
 [Query and schema fixture](../test/fixtures/datalog/query-clause-layout.md) ·
-[Rule fixture](../test/fixtures/datalog/lattice-rule-layout.md) ·
-[Datalog User Manual: Clauses](https://datalog.sourceforge.net/datalog.html#index-clause-24)
+[Rule fixture](../test/fixtures/datalog/lattice-rule-layout.md)
 
 ## Sources and limits
 
 The [Flix website](https://flix.dev/) and [Flix language book](https://doc.flix.dev/)
 provide examples that guide the plugin's style choices. The
-[Datalog 2.3 User Manual](https://datalog.sourceforge.net/datalog.html) provides
-additional examples of fact and rule layout. The
-[Scala Style Guide](https://docs.scala-lang.org/style/) and
-[Scalafmt configuration guide](https://scalameta.org/scalafmt/docs/configuration.html)
-provide comparisons for argument lists, line breaks and alignment. The
 [Flix 0.80 formatter implementation](https://github.com/flix/flix/blob/v0.80.0/main/src/ca/uwaterloo/flix/tools/fmt/PrettyPrinter.scala)
 provides a comparison. The [documentation audit](official-examples.md) records
 reviewed differences against the official examples.
-
-Other functional languages offer comparisons for specific layout decisions.
-
-- **F#** provides examples of multiline pipelines, match arms and function
-  application. [F# formatting guidelines](https://learn.microsoft.com/en-us/dotnet/fsharp/style-guide/formatting)
-- **Haskell** provides an example of using source layout to choose between
-  compact and multiline forms while keeping formatting idempotent.
-  [Ormolu](https://github.com/tweag/ormolu#readme)
-- **OCaml** provides another formatter to compare for pattern matches, record
-  layouts and the effect of style profiles. [OCamlFormat](https://github.com/ocaml-ppx/ocamlformat#readme)
 
 - The plugin uses the Flix grammar to parse source. The Flix compiler remains
   the authority for type checking and other language checks.
