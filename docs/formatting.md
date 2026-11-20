@@ -359,6 +359,10 @@ indented line. If the body needs more room, break it between predicates.
 A multiline return schema can align its predicates beneath the first one
 when the remaining signature fits.
 
+When the source places every predicate of a multi-predicate body on its own
+line after the head, preserve that layout at wider widths.
+[Vertical rule fixture](../test/fixtures/datalog/vertical-rule-body.md)
+
 [Query and schema fixture](../test/fixtures/datalog/query-clause-layout.md) ·
 [Rule fixture](../test/fixtures/datalog/lattice-rule-layout.md)
 
