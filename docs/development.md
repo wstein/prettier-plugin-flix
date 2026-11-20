@@ -137,13 +137,29 @@ change syntax, so verify each exact version before adding it to that list.
 
 ## Publish a plugin release
 
-Merge the package version, lockfile and README install-link update into
-`main`, then run **Publish plugin release** from the Actions tab on `main`.
-The workflow builds and tests the selected commit and publishes its prebuilt
-npm tarball as a GitHub Release. It uses the commit that starts the run unless
-you supply an earlier full SHA from `main`.
+Generate a release-note draft from the latest stable plugin tag on the target
+commit's first-parent history. Run this in a checkout with full history and
+tags:
 
-Prepare a draft targeting that exact commit to record the tested Flix versions
-in the release notes before publication. The workflow uses the draft and its notes. It can
-also create a draft with generated notes. The release becomes public after the
-tarball is available.
+```sh
+git fetch --tags origin
+npm run --silent changelog:draft -- origin/main > release-notes.md
+```
+
+The command defaults to `HEAD` and accepts an optional second argument for an
+explicit base tag. It uses scoped Conventional Commit subjects, prefers
+`Changelog:` trailers when present, and puts older unprefixed commits under
+**Other changes to review**.
+
+Review the draft before publishing. Combine related changes, call out layout
+changes that can reformat existing files, and add the exact tested Flix
+versions. Promote the reviewed entries from **Unreleased** in
+[CHANGELOG.md](../CHANGELOG.md) as part of the version and lockfile update.
+
+After the release commit lands on `main`, create a GitHub draft release with
+the reviewed notes and set its target to that commit's full SHA. Run
+**Publish plugin release** from the Actions tab on `main` with the same SHA in
+`source_commit`. The workflow requires an existing draft with release notes
+targeting that SHA. It builds and tests the package, then publishes the draft
+after the tarball is available. Enable **publish_npm** when the package has
+npm Trusted Publishing configured.

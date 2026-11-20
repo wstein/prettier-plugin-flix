@@ -117,20 +117,20 @@ jobs:
             fi
           fi
 
-          if release=$(gh release view "$tag" --json isDraft,targetCommitish,assets); then
-            if ! jq -e --arg commit "$TARGET_COMMIT" '.isDraft and .targetCommitish == $commit' <<< "$release" > /dev/null; then
-              echo "Release $tag must be a draft targeting $TARGET_COMMIT."
-              exit 1
-            fi
-            if jq -e --arg name "$name" 'any(.assets[]; .name == $name)' <<< "$release" > /dev/null; then
-              gh release download "$tag" --pattern "$name" --dir "$RUNNER_TEMP/existing"
-              cmp "$package" "$RUNNER_TEMP/existing/$name"
-            else
-              gh release upload "$tag" "$package"
-            fi
+          if ! release=$(gh release view "$tag" --json isDraft,targetCommitish,body,assets); then
+            echo "Create and review a release draft for $tag before publishing." >&2
+            exit 1
+          fi
+          if ! jq -e --arg commit "$TARGET_COMMIT" '
+            .isDraft and .targetCommitish == $commit and (.body | test("\\S"))
+          ' <<< "$release" > /dev/null; then
+            echo "Release $tag must be a draft with release notes targeting $TARGET_COMMIT." >&2
+            exit 1
+          fi
+          if jq -e --arg name "$name" 'any(.assets[]; .name == $name)' <<< "$release" > /dev/null; then
+            gh release download "$tag" --pattern "$name" --dir "$RUNNER_TEMP/existing"
+            cmp "$package" "$RUNNER_TEMP/existing/$name"
           else
-            gh release create "$tag" --draft --target "$TARGET_COMMIT" \
-              --title "prettier-plugin-flix $tag" --generate-notes
             gh release upload "$tag" "$package"
           fi
           gh release edit "$tag" --draft=false --latest

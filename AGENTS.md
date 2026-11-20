@@ -79,6 +79,31 @@ for browser checks.
   `--Xlib nix`. See [the development guide](docs/development.md#compile-the-formatted-standard-library)
   for the local command and exact-tag workflow input.
 
+## Write commits and changelog entries
+
+- Use scoped Conventional Commits for commit subjects and PR titles that
+  become squash-merge subjects. Write `type(scope): imperative summary`, with a
+  scope such as `formatter`, `parser`, `playground`, `catalog`, or `release`.
+  Use `feat`, `fix`, `perf`, `docs`, `test`, `refactor`, `build`, `ci`, or
+  `chore` according to the change.
+- Describe the user-visible result in the subject. Add an optional
+  `Changelog: ...` trailer when the subject needs a clearer release-note entry.
+  Mention when an intentional layout change may reformat existing files. For
+  an incompatible change to a supported interface, use `!` in the subject or
+  a `BREAKING CHANGE:` footer and explain the migration.
+- Build [the changelog](CHANGELOG.md) from the default branch and release tags.
+  Run `npm run --silent changelog:draft` and review the draft before release.
+  Put changes after the newest tag in `Unreleased`. Group related commits into
+  one entry, link the commits or PRs, and include user-visible documentation,
+  compatibility, and distribution changes. Omit routine maintenance and
+  release bumps. Classify older unprefixed commits by their actual changes.
+
+```text
+fix(formatter): preserve indented argument comment continuations
+
+Changelog: Keep a continued comment with the argument it describes.
+```
+
 ## Publish and verify a release
 
 - Version the plugin independently of Flix. Record exact tested Flix versions

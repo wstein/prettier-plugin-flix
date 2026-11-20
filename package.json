@@ -15,6 +15,7 @@
     "dist"
   ],
   "scripts": {
+    "changelog:draft": "node scripts/changelog-draft.mjs",
     "generate": "node scripts/generate.mjs",
     "build": "npm run generate && tsc",
     "test": "npm run build && node --test test/*.test.mjs",
