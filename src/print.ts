@@ -696,6 +696,7 @@ export class Printer {
             case "ForYieldExpr": return this.printForYield(n);
             case "ParYieldExpr": return this.printParYield(n);
             case "FixpointExpr": return this.printFixpoint(n);
+            case "WithClause": return this.printWithClause(n);
             case "DatalogConstraint": return this.printConstraint(n);
             case "RunWithExpr": return this.printRunWith(n);
             case "DefDeclaration":
@@ -1129,6 +1130,24 @@ export class Printer {
             align(column, [hardline, join(hardline, rows.slice(1))]),
             " ", close, ...withSuffix,
         ];
+    }
+
+    private printWithClause(n: ParserRuleContext): Doc {
+        const children = kids(n);
+        if (this.flat > 0 || children.length < 4) return this.seq(children, kind(n));
+
+        const [keyword, ...constraints] = children;
+        const { items, seps } = this.splitOn(constraints, L.COMMA);
+        const rows = items.map(([constraint], index) => {
+            const separator = seps[index];
+            const end = lastTerm(constraint);
+            return [
+                this.print(this.ls(constraint)),
+                separator ? this.separatorTok(end, separator) : "",
+                separator ? this.after(end, this.after(separator, line)) : "",
+            ];
+        });
+        return [this.print(keyword), group(indent([this.after(lastTerm(keyword), line), rows]))];
     }
 
     private declarationIndent(n: ParserRuleContext): number {
