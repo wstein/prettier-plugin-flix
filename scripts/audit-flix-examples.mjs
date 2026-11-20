@@ -4,6 +4,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { parseArgs, promisify } from "node:util";
+import { explainTrailingCommentAlignment } from "../dist/comment-layout.js";
 import { defaultOptions } from "../dist/index.js";
 import { EXAMPLE_PRINT_WIDTH } from "../test/fixture.mjs";
 import { fingerprint, fmt, programProblems } from "../test/lib.mjs";
@@ -92,6 +93,7 @@ export async function auditExample(example) {
         return { context, status: "invariant-failure", reason: error.message, input, formatted };
     }
 
+    const wrappedOutput = formatted;
     if (context !== "file") {
         const snippet = unwrapSnippet(formatted);
         if (snippet === undefined || programProblems(before, fingerprint(wrapper + snippet + "}\n")).length) {
@@ -103,10 +105,19 @@ export async function auditExample(example) {
     const afterLayout = trimLineEnds(formatted);
     if (beforeLayout === afterLayout) return { context, status: "unchanged" };
     const digest = hash([context, formatOptions, beforeLayout, afterLayout]);
+    const kind = changeKind(beforeLayout, afterLayout);
+    const alignment = kind === "spacing" && beforeLayout.endsWith("\n") === afterLayout.endsWith("\n")
+        ? explainTrailingCommentAlignment(trimLineEnds(input), trimLineEnds(wrappedOutput), formatOptions)
+        : undefined;
+    const explanation = alignment?.length ? {
+        type: "align-trailing-comments",
+        changes: context === "file" ? alignment : alignment.map((change) => ({ ...change, line: change.line - 1 })),
+    } : undefined;
     return {
-        context, status: "layout-change", input: beforeLayout, formatted: afterLayout, digest,
-        changeKind: changeKind(beforeLayout, afterLayout),
-        reason: "The parser, program fingerprint and second formatting pass agree. Review the diff for readability.",
+        context, status: "layout-change", input: beforeLayout, formatted: afterLayout, digest, changeKind: kind,
+        ...(explanation && { explanation }),
+        reason: explanation ? "Replaying comment alignment accounts for the entire diff." :
+            "The parser, program fingerprint and second formatting pass agree. Review the diff for readability.",
     };
 }
 
@@ -181,7 +192,9 @@ async function audit(book, website, output, reviewsPath, baselinePath) {
     const baseline = [baselineHeader, ...baselineRows.sort(), ""].join("\n");
     const drift = previous === undefined ? undefined : compareBaseline(previous, baseline);
     if (drift && Object.values(drift).some((names) => names.length)) failed = true;
-    const summary = ["# Official Flix examples", "", ...Object.entries(totals).map(([key, count]) => `- ${key} · ${count}`), ""];
+    const explained = cases.filter((item) => item.explanation).length;
+    const summary = ["# Official Flix examples", "", ...Object.entries(totals).map(([key, count]) => `- ${key} · ${count}`),
+        `- automatically explained · ${explained}`, ""];
     if (drift) {
         summary.push("## Changes since the recorded baseline", "");
         for (const [type, names] of Object.entries(drift)) {

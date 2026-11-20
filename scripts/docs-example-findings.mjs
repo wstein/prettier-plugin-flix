@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 
 const groups = {
+    explained: ["Automatically explained", "The audit verifies the complete diff. Exact baseline and approval checks still apply."],
     unsafe: ["Formatter invariant failures", "Reduce to a regression fixture and fix the formatter before approval."],
     wrapping: ["Line wrapping and layout", "Review syntax units together. Keep generator, handler or rule boundaries visible."],
     spacing: ["Spacing and alignment", "Prefer consistent spacing and preserve alignment when it makes code easier to scan."],
@@ -88,7 +89,7 @@ ${code ? `<pre><code>${snippet ? escape(code) : colorDiff(code)}</code></pre>` :
 
     markdown.push("## All layout differences", "");
     for (const [group, [title, recommendation]] of Object.entries(groups)) {
-        const entries = cases.filter((item) => item.changeKind === group);
+        const entries = cases.filter((item) => (item.explanation ? "explained" : item.changeKind) === group);
         if (!entries.length) continue;
         const heading = `${title} (${entries.length})`;
         navigation.push([group, heading]);
@@ -99,11 +100,17 @@ ${code ? `<pre><code>${snippet ? escape(code) : colorDiff(code)}</code></pre>` :
             const code = diffs.get(name);
             if (item.hasDiff && !code) throw new Error(`Missing diff for ${name}`);
             const caption = item.context === "expression-or-statements" ? " · fragment" : "";
+            const explanation = item.explanation;
+            const changes = explanation?.changes.map(({ line, beforeColumns, afterColumns }) =>
+                `Line ${line} · ${beforeColumns} → ${afterColumns} columns before //`).join(" · ");
             markdown.push("<details>", `<summary>${name}${caption}</summary>`, "");
+            if (explanation) markdown.push(`\`${explanation.type}\` · ${changes}`, "");
             if (code) markdown.push(markdownCode(code, "diff"), "");
             markdown.push(`[Source](${item.url})`, "", "</details>", "");
-            html.push(`<details><summary>${name}${caption}</summary>${code ? `<pre><code>${colorDiff(code)}</code></pre>` :
-                `<p>${escape(item.reason)}</p>`}<p><a href="${escape(item.url)}">Source</a></p></details>`);
+            html.push(`<details><summary>${name}${caption}</summary>${explanation ?
+                `<p><code>${escape(explanation.type)}</code> · ${escape(changes)}</p>` : ""}${code ?
+                `<pre><code>${colorDiff(code)}</code></pre>` : `<p>${escape(item.reason)}</p>`}
+                <p><a href="${escape(item.url)}">Source</a></p></details>`);
         }
         html.push("</section>");
     }

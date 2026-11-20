@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import test from "node:test";
 import { promisify } from "node:util";
+import { explainTrailingCommentAlignment } from "../dist/comment-layout.js";
 import { approvalFor, auditExample, changeKind, compareBaseline } from "../scripts/audit-flix-examples.mjs";
 import { renderFindings, reviewedTransformations } from "../scripts/docs-example-findings.mjs";
 import { extractExamples, markdownBlocks } from "../scripts/extract-flix-examples.mjs";
@@ -84,6 +85,19 @@ test("shows reviewed transformations only for the recorded case and diff", async
     ].join("\n");
     const result = await auditExample({ code: source, language: "flix" });
     const item = { ...result, case_name: caseName, url: "https://example.invalid" };
+    assert.deepEqual(result.explanation, {
+        type: "align-trailing-comments",
+        changes: [
+            { line: 1, beforeColumns: 1, afterColumns: 2 },
+            { line: 2, beforeColumns: 17, afterColumns: 18 },
+        ],
+    });
+    const diff = `diff --git a/before/${caseName}.flix b/after/${caseName}.flix\n@@ -1 +1 @@\n-a\n+b\n`;
+    const findings = renderFindings([{ ...item, hasDiff: true }], diff);
+    assert.match(findings.html, /<h2>Automatically explained \(1\)<\/h2>/);
+    assert.match(findings.markdown, /Line 2 · 17 → 18 columns before \/\//);
+    assert.equal((await auditExample({ code: source.trimEnd(), language: "flix" })).explanation, undefined);
+    assert.equal((await auditExample({ code: source.replace("let l =", "let l="), language: "flix" })).explanation, undefined);
     assert.deepEqual(reviewedTransformations(item), [
         { type: "align-trailing-comments", scope: "Type comments on the list binding and List.map" },
     ]);
@@ -92,6 +106,21 @@ test("shows reviewed transformations only for the recorded case and diff", async
     const { html, markdown } = renderFindings([item], "");
     assert.match(html, /<code>align-trailing-comments<[/]code>/);
     assert.match(markdown, /- `align-trailing-comments`/);
+});
+
+test("comment alignment explanations require a fitting group of actual comments", () => {
+    const settings = { printWidth: 80, tabWidth: 4, useTabs: false };
+    const original = 'def a(): String = "// inside a string" // first\n' +
+        'def longer(): String = "value" // second\n';
+    const changedString = original.replace("// inside", "//  inside");
+    assert.equal(explainTrailingCommentAlignment(original, changedString, settings), undefined);
+
+    const code = 'def a(): Int32 = 1 // First\ndef longer(): Int32 = 2 // Second\n';
+    const aligned = 'def a(): Int32 = 1       // First\ndef longer(): Int32 = 2  // Second\n';
+    assert.equal(explainTrailingCommentAlignment(code, aligned, { ...settings, printWidth: 25 }), undefined);
+    assert.equal(explainTrailingCommentAlignment(
+        code.replace("First\n", "First\n\n"), aligned.replace("First\n", "First\n\n"), settings,
+    ), undefined);
 });
 
 test("groups byte differences by their main change", () => {

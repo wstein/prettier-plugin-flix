@@ -2,7 +2,7 @@ import { CharStream, CommonTokenStream, TerminalNode, type ParseTree, type Token
 import { doc, util, type Doc } from "prettier";
 import { FlixLexer as L } from "./generated/FlixLexer.js";
 import { DefDeclarationContext } from "./generated/FlixParser.js";
-import type { FlixRoot } from "./parse.js";
+import { parseFlix, type FlixRoot } from "./parse.js";
 
 type LayoutOptions = { printWidth: number; tabWidth: number; useTabs: boolean };
 type Scope = { parent: Scope | undefined };
@@ -108,6 +108,37 @@ function alignTrailingComments(root: FlixRoot, tokens: Token[], lines: string[],
             alignGroup(group.slice(1), lines, options.printWidth);
         }
     }
+}
+
+/** Replay only comment alignment and describe it if it accounts for the entire diff. */
+export function explainTrailingCommentAlignment(source: string, output: string, options: LayoutOptions) {
+    if (source === output || !source.includes("//")) return undefined;
+    let root: FlixRoot;
+    try {
+        root = parseFlix(source);
+    } catch (error) {
+        if (error instanceof SyntaxError) return undefined;
+        throw error;
+    }
+    const tokens = lex(source);
+    const lines = source.split("\n");
+    const expected = [...lines];
+    alignTrailingComments(root, tokens, expected, options);
+    if (expected.join("\n") !== output) return undefined;
+
+    return tokens.flatMap((token) => {
+        const i = token.line - 1;
+        if (token.type !== L.LINE_COMMENT || lines[i] === expected[i]) return [];
+        const prefix = before(lines, token);
+        const code = prefix.trimEnd();
+        const codeWidth = width(code, options.tabWidth);
+        const alignedPrefix = expected[i].slice(0, -token.text!.length);
+        return [{
+            line: token.line,
+            beforeColumns: width(prefix, options.tabWidth) - codeWidth,
+            afterColumns: width(alignedPrefix, options.tabWidth) - codeWidth,
+        }];
+    });
 }
 
 function commentText(token: Token): string {
