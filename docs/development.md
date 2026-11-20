@@ -76,6 +76,26 @@ The compiler oracle compiles each file in its own throwaway project, as flix/fli
 
 `.github/workflows/flix-corpora.yml` runs the corpus checks and a sample of the oracle weekly and on demand.
 
+## Compile the formatted standard library
+
+The **Flix standard library compilation** workflow runs weekly against the
+latest stable Flix release. Run it manually with `flix_tag` to check an exact
+release. It extracts the sources bundled in the release JAR, compiles the
+original library as a control, and compiles a separate copy after Prettier
+formatting. Both builds use `--Xlib nix`, so they compile the extracted
+library without also loading the copy bundled in the compiler.
+
+The formatting step checks token and parse-tree preservation and verifies
+that formatting twice gives the same result. The workflow summary records
+the checked Flix version and the source and class counts.
+
+For a local run with Java 21, Bash and unzip, use the release JAR and its tag.
+
+```sh
+npm run build
+bash scripts/check-flix-stdlib.sh /path/to/flix.jar v0.80.0
+```
+
 ## Flix versions
 
 The plugin uses its own version numbers. Record the exact Flix versions
