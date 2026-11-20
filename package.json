@@ -5,6 +5,10 @@
   "description": "Prettier plugin for the Flix programming language (ANTLR4 parser, Prettier doc-IR printer)",
   "type": "module",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wstein/prettier-plugin-flix.git"
+  },
   "main": "dist/index.js",
   "exports": "./dist/index.js",
   "files": [
