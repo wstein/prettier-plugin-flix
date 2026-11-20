@@ -57,7 +57,7 @@ test("checked formatting refuses a field-access mutation without writing any fil
     } finally {
         closeSync(log);
     }
-    assert.match(readFileSync(logPath, "utf8"), /refused to write: .*arrow token classes differ/);
+    assert.match(readFileSync(logPath, "utf8"), /refused to write: .*whitespace-sensitive token classes differ/);
     assert.equal(readFileSync(first, "utf8"), "def a():Int32=1\n");
     assert.equal(readFileSync(field, "utf8"), source);
 });

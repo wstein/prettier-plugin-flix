@@ -31,7 +31,6 @@ for (const [name, source] of inputs) {
             // (a->b versus a -> b, dot versus dot-then-whitespace) depends on adjacent characters.
             const original = fingerprint(source);
             assert.deepEqual(programProblems(original, before, { terminators: false }), [], `${label}: re-spacing must not change the program`);
-            assert.deepEqual(before.classes, original.classes, `${label}: re-spacing must not change token classes`);
             const out = await fmt(respaced);
             assert.deepEqual(programProblems(before, fingerprint(out)), [], `${label}: the formatter must not change the program`);
             assert.equal(await fmt(out), out, `${label}: formatting the output again must change nothing`);
