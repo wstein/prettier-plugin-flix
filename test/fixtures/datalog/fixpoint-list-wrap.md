@@ -38,6 +38,8 @@ def commented(): #{ A(Int32) } =
         into A/1;
     let aVeryLongSingleSourceIdentifierNameThatDoesNotFitAtAll = q;
     let _ = solve aVeryLongSingleSourceIdentifierNameThatDoesNotFitAtAll project A;
+    let _ = solve p project // after project
+        A;
     solve p project A
 ```
 
@@ -96,6 +98,9 @@ def commented(): #{ A(Int32) } =
     let _ =
         solve aVeryLongSingleSourceIdentifierNameThatDoesNotFitAtAll
             project A;
+    let _ = solve p
+        project  // after project
+            A;
     solve p project A
 ```
 
@@ -133,5 +138,8 @@ def commented(): #{ A(Int32) } =
         into A/1;
     let aVeryLongSingleSourceIdentifierNameThatDoesNotFitAtAll = q;
     let _ = solve aVeryLongSingleSourceIdentifierNameThatDoesNotFitAtAll project A;
+    let _ = solve p
+        project  // after project
+            A;
     solve p project A
 ```
