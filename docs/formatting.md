@@ -168,8 +168,12 @@ def countSmallValues(
         |> List.length
 ```
 
-A wrapped cons chain similarly begins continuation lines with `::`. String
-concatenation has its own rule. When it fits, `+ "\n" +` stays with the
+A wrapped cons chain with spaced `::` starts each continuation with the
+operator. Tight `::` stays glued in cons expressions and patterns, including
+next to comments. The same applies to the package qualifier in a `use`.
+[Fixture](../test/fixtures/whitespace/package-qualifier-tight-comments.md)
+
+String concatenation has its own rule. When it fits, `+ "\n" +` stays with the
 preceding text so the separator is easy to associate with that line.
 
 [Pipeline fixture](../test/fixtures/expressions/leading-pipeline-operators.md) ·

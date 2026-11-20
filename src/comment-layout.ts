@@ -78,7 +78,8 @@ function lineCommentGroups(tokens: Token[], lines: string[], tabWidth: number, d
             continue;
         }
         if (token.type !== L.LINE_COMMENT || lastCode?.line !== token.line || ignoredLines?.has(token.line) ||
-            lastCode.type === L.ARROW_TIGHT || scope !== lineScope || !token.text ||
+            lastCode.type === L.ARROW_TIGHT || lastCode.type === L.COLON_COLON_TIGHT ||
+            scope !== lineScope || !token.text ||
             token.text.startsWith("///") || token.text.includes("\t") || CARET.test(token.text)) continue;
         if (lastCode.type === L.DOT) continue;
 
