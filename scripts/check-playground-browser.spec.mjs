@@ -151,6 +151,47 @@ test("the live preview keeps trailing comments, reports cursor selection, and re
     await expect(status).toBeEmpty();
 });
 
+test("unrecoverable input clears a stale formatted preview", async ({ page }) => {
+    await page.goto(siteUrl + "playground/");
+    const input = page.getByRole("textbox", { name: "Flix input" });
+    const preview = page.getByRole("textbox", { name: "Preview" });
+    const status = page.locator("[data-full-playground]").getByRole("status", { includeHidden: true });
+
+    await input.fill("def first():Int32=1\ndef second():Int32=2\n");
+    await expect(preview).toContainText("def first(): Int32 = 1");
+    await expect(preview).toContainText("def second(): Int32 = 2");
+
+    await input.fill("def bad():Int32=\n");
+    await expect(status).toContainText("Not formatted.");
+    await expect(status).toBeVisible();
+    await expect(input).toHaveAttribute("aria-invalid", "true");
+    await expect(preview).toContainText("def bad():Int32=");
+    await expect(preview).not.toContainText("def first()");
+    await expect(preview).not.toContainText("def second()");
+});
+
+test("syntax error samples show the source unchanged and mark the input invalid", async ({ page }) => {
+    await page.goto(siteUrl + "errors/");
+    const fixtures = page.locator("[data-embedded-playground]");
+    await expect(fixtures).not.toHaveCount(0);
+    const count = await fixtures.count();
+    for (let i = 0; i < count; i++) {
+        const fixture = fixtures.nth(i);
+        await fixture.scrollIntoViewIfNeeded();
+        const input = fixture.getByRole("textbox", { name: "Flix input" });
+        const preview = fixture.getByRole("textbox", { name: "Preview" });
+        await expect(input).toBeVisible();
+        await expect(input).toHaveAttribute("aria-invalid", "true");
+        const { source, previewText } = await fixture.evaluate((root) => {
+            const panes = root.querySelectorAll(".cm-content");
+            return { source: panes[0]?.textContent ?? "", previewText: panes[1]?.textContent ?? "" };
+        });
+        expect(previewText).toBe(source);
+        await expect(preview).not.toBeEmpty();
+        await expect(fixture.getByRole("status", { includeHidden: true })).toContainText("Not formatted.");
+    }
+});
+
 for (const override of [undefined, "54"]) {
     test(`the embedded editor hands off Unicode source with width ${override ?? "100 by default"}`, async ({ page }) => {
         await page.goto(siteUrl + "comments/#trailing-block-comment");

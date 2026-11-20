@@ -94,9 +94,19 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
             const { location, message } = data.error;
             const where = location ? `Line ${location.line}, column ${location.column}. ` : "";
             input.markError(location);
-            const label = data.output === undefined ? "Error. " : "Partially formatted. Error. ";
-            showStatus(label + where + readableDiagnostic(message), true);
-            if (data.output === undefined) return;
+            if (data.output === undefined) {
+                // Recovery could not change the source: show it unchanged and
+                // drop any previous formatted snapshot so Diff is not stale.
+                const source = input.view.state.doc.toString();
+                preview = undefined;
+                replaceCode(output.view, source);
+                highlighter?.apply(output.view);
+                refreshDiff();
+                copy.disabled = source.length === 0;
+                showStatus("Not formatted. " + where + readableDiagnostic(message), true);
+                return;
+            }
+            showStatus("Partially formatted. Error. " + where + readableDiagnostic(message), true);
         } else if (input.view.contentDOM.hasAttribute("aria-invalid")) input.markError();
         preview = { source: input.view.state.doc.toString(), output: data.output };
         replaceCode(output.view, preview.output);
