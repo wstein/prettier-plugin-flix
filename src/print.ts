@@ -92,8 +92,7 @@ const MEMBERS = new Set([
 /** Rules shaped `head (= | =>) body`, laid out with the body hugged or indented. */
 const EQ_BODY = new Set([
     "DefDeclaration", "ValDeclaration", "AliasDeclaration", "AssocTypeDeclaration", "LocalDefExpr",
-    "HandlerRule", "NewBody", "MatchRule", "MatchLambdaExpr", "CatchRule", "SelectRule", "LetExpr",
-    "LambdaExpr",
+    "HandlerRule", "NewBody", "MatchRule", "CatchRule", "SelectRule", "LetExpr", "LambdaExpr",
 ]);
 const BODY_ARROWS = new Set([L.EQUAL, L.ARROW_THICK_R, L.ARROW_WS]);
 const BINARY = new Set([
@@ -819,6 +818,7 @@ export class Printer {
             case "Statement": return this.printStatement(n);
             case "UseExpr": return this.printUseExpr(n);
             case "Block": return this.printBlock(n);
+            case "MatchLambdaExpr": return this.printMatchLambda(n);
             case "IfExpr": return this.printIf(n);
             case "ForeachExpr": return this.printForeach(n);
             case "ForYieldExpr": return this.printForYield(n);
@@ -950,6 +950,32 @@ export class Printer {
         if (kind(n) === "BlockPrimary") return true;
         if (kind(n) === "Expr" || kind(n) === "PrimaryExpr") return cs.length === 1 && this.isBlockExpr(cs[0]);
         return false;
+    }
+
+    /**
+     * `match pattern -> body`. Same spacing as seq, but hug soft-trail applies only to the
+     * pattern so an EOL block comment there does not change the printed arrow or body.
+     */
+    private printMatchLambda(n: ParserRuleContext): Doc {
+        const cs = kids(n);
+        if (this.softTrailBreaks === 0 || cs.length < 4) return this.seq(cs, kind(n));
+        const head = this.seq(cs.slice(0, 2), kind(n));
+        const soft = this.softTrailBreaks;
+        this.softTrailBreaks = 0;
+        try {
+            const patLast = lastTerm(cs[1]);
+            const arrow = cs[2] as TerminalNode;
+            const bodyFirst = firstTerm(cs[3]);
+            return [
+                head,
+                this.after(patLast, patLast && bodyFirst ? this.gap(patLast, arrow, kind(n)) : " "),
+                this.tok(arrow),
+                this.after(arrow, bodyFirst ? this.gap(arrow, bodyFirst, kind(n)) : " "),
+                this.print(cs[3]),
+            ];
+        } finally {
+            this.softTrailBreaks = soft;
+        }
     }
 
     private printIf(n: ParserRuleContext, groupChain = true): Doc {
@@ -1404,13 +1430,10 @@ export class Printer {
         const comma = rest.length > 0 && isTerm(rest[0]) && ttype(rest[0] as TerminalNode) === L.COMMA;
         const tailDoc: Doc = rest.length > 0 ? (comma ? restDoc : [" ", restDoc]) : "";
 
-        // Keep hug soft-trail for a nested match-lambda pattern; clear it for ordinary bodies
-        // so EOL block comments after => / -> still force a line break when soft docs print.
+        // Keep hug soft-trail for a nested match-lambda pattern only; clear it for MatchExpr
+        // and other bodies so scrutinee / arm / guard EOL block comments keep their breaks.
         const place = (expr: Node): Doc => {
-            const bodyKind = kind(expr);
-            if (bodyKind === "MatchLambdaExpr" || bodyKind === "MatchExpr") {
-                return this.placeBody(expr, arrow);
-            }
+            if (kind(expr) === "MatchLambdaExpr") return this.placeBody(expr, arrow);
             const soft = this.softTrailBreaks;
             this.softTrailBreaks = 0;
             try {
