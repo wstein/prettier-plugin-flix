@@ -131,6 +131,77 @@ test("formats Datalog rules around a broken rule with a bad delimiter", async ()
     );
 });
 
+test("leaves a Datalog rule after an unclosed argument list that pairs across the next rule", async () => {
+    // Broken(1, pairs with the closer of Q(3,4), so recovery cannot split Q out.
+    const source = lines(
+        "def d() = #{",
+        "    A(1,2).",
+        "    Broken(1,",
+        "    Q(3,4).",
+        "}",
+        "",
+    );
+    assert.equal(
+        await recover(source),
+        lines(
+            "def d() = #{",
+            "    A(1, 2).",
+            "    Broken(1,",
+            "    Q(3,4).",
+            "}",
+            "",
+        ),
+    );
+});
+
+test("formats Datalog rules after an unclosed opener that does not pair across them", async () => {
+    const source = lines(
+        "def d() = #{",
+        "    A(1,2).",
+        "    Broken(",
+        "    Q(3,4).",
+        "    R(5,6).",
+        "}",
+        "",
+    );
+    assert.equal(
+        await recover(source),
+        lines(
+            "def d() = #{",
+            "    A(1, 2).",
+            "    Broken(",
+            "    Q(3, 4).",
+            "    R(5, 6).",
+            "}",
+            "",
+        ),
+    );
+});
+
+test("formats struct fields after an unclosed opener in a field type", async () => {
+    const source = lines(
+        "struct S {",
+        "    a:Int32,",
+        "    bad:(",
+        "    c:Bool,",
+        "    d:String",
+        "}",
+        "",
+    );
+    assert.equal(
+        await recover(source),
+        lines(
+            "struct S {",
+            "    a: Int32,",
+            "    bad:(",
+            "    c: Bool,",
+            "    d: String",
+            "}",
+            "",
+        ),
+    );
+});
+
 test("rejects a nonconforming recovery wrapper and propagates unexpected formatter errors", async () => {
     const source = lines("mod Demo {", "    def first():Int32=1", "    def broken():Int32=(,)", "}");
     for (const wrapper of [
