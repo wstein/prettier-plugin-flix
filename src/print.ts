@@ -486,12 +486,31 @@ export class Printer {
         return width + 2 * seps.length;
     }
 
-    private alignmentGroups<T>(items: T[], first: (item: T) => TerminalNode | null): T[][] {
+    // Blank lines and own-line comments end an alignment group. When the
+    // previous entry and its separator both end with a line comment, the
+    // separator's comment prints on its own line (see separatorTok), so split
+    // the group on the first pass the same way the second pass will.
+    private alignmentGroups<T>(
+        items: T[],
+        first: (item: T) => TerminalNode | null,
+        seps?: TerminalNode[],
+        last?: (item: T) => TerminalNode | null,
+    ): T[][] {
         const groups: T[][] = [];
         let group: T[] = [];
-        for (const item of items) {
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
             const token = first(item);
-            if (group.length && (this.blankBefore(token) || (token && this.info(token)?.lead.some((comment) => comment.nl > 0)))) {
+            const prevSep = seps && i > 0 ? seps[i - 1] : null;
+            const prevLast = last && i > 0 ? last(items[i - 1]) : null;
+            const sepOwnLine = prevSep !== null && prevLast !== null &&
+                this.hasLineTrail(prevSep) && this.hasLineTrail(prevLast);
+            const splitBefore = group.length > 0 && (
+                this.blankBefore(token) ||
+                (token !== null && (this.info(token)?.lead.some((comment) => comment.nl > 0) ?? false)) ||
+                sepOwnLine
+            );
+            if (splitBefore) {
                 groups.push(group);
                 group = [];
             }
@@ -658,7 +677,14 @@ export class Printer {
             !split.seps.some((t) => this.hasComment(t, true));
         let offset = 0;
         let aligned = false;
-        const groups = mayAlign ? this.alignmentGroups(items, (it) => it[0] ? firstTerm(it[0]) : null) : [items];
+        const groups = mayAlign
+            ? this.alignmentGroups(
+                items,
+                (it) => it[0] ? firstTerm(it[0]) : null,
+                split.seps,
+                (it) => it.length > 0 ? lastTerm(it[it.length - 1]) : null,
+            )
+            : [items];
         // Syntax decides whether a final brace-closed argument can hug. A
         // trailing lambda also needs room on the line where the call starts.
         const lastItem = items[items.length - 1];
