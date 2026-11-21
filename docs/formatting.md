@@ -56,8 +56,11 @@ error. Keep one `flix` parser and `.flix` language entry for every pin.
 ## Supported print widths
 
 The plugin guarantees idempotence for `printWidth` of 40 or more: a second
-formatting run changes nothing. Below 40 columns the layout is best effort.
-The review sweeps also run below 40; failures there are tracked as edge cases.
+formatting run changes nothing. Known exceptions are listed in
+`test/known-idempotence-failures.json`; a failure listed there stays known
+until it is fixed. Below 40 columns the layout is best effort.
+The review sweeps run at widths 40 to 160 by default; `--widths` adds narrower
+ones. Failures below 40 are tracked as edge cases.
 
 ## Calls and function signatures
 
