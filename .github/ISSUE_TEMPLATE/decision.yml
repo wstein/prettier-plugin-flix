@@ -1,0 +1,27 @@
+name: Decision
+description: An open design or policy question for the owner.
+title: "decision: "
+labels: ["decision"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Issue forms set only the static label `decision`. The triager adds
+        the label `area:*`. See "Issue triage and labels" in docs/development.md.
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+    validations:
+      required: true
+  - type: textarea
+    id: options
+    attributes:
+      label: Options
+      description: List each option with its advantages and disadvantages.
+    validations:
+      required: true
+  - type: textarea
+    id: recommendation
+    attributes:
+      label: Recommendation

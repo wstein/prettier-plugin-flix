@@ -1,0 +1,92 @@
+name: Bug report
+description: A formatter, recovery, Playground, release or tooling defect.
+title: "fix(formatter): "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Issue forms set only the static label `bug`. The triager adds the
+        labels `area:*`, `reach:*` and `class:*` (and `corrupts-program`) from
+        the answers below. See "Issue triage and labels" in docs/development.md.
+        A finding that needs an artificial input or a printWidth below 40 is
+        usually recorded in the collection issue of its class instead.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - formatter
+        - recovery
+        - playground
+        - release-ci
+        - tooling
+        - parser-api
+    validations:
+      required: true
+  - type: dropdown
+    id: reach
+    attributes:
+      label: Reach
+      description: |
+        real: reproduces on real code (standard library, official examples) at printWidth 80 or more.
+        narrow: reproduces on real code only at printWidth 40 to 79.
+        synthetic: needs an artificial input (for example an unusual comment position) or a printWidth below 40.
+      options:
+        - real
+        - narrow
+        - synthetic
+    validations:
+      required: true
+  - type: dropdown
+    id: failure-class
+    attributes:
+      label: Failure class
+      description: Formatter bugs only.
+      options:
+        - comment-kind
+        - measure-leak
+        - alignment
+        - signature-fit
+        - hug
+        - cons-chain
+        - token-boundary
+        - other
+  - type: checkboxes
+    id: corrupts-program
+    attributes:
+      label: Program corruption
+      options:
+        - label: The output does not parse or changes the program (label corrupts-program).
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Input, printWidth and command. For non-idempotent output, give the output of pass 1 and pass 2.
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: Plugin, Prettier, Flix (if relevant) and browser (for web reports).
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Counts with the command that produced them.
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance
+      description: Testable criteria, such as the fixture and width, and the mutation that must fail the new test.

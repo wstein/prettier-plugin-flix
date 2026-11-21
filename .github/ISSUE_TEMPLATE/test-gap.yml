@@ -1,0 +1,39 @@
+name: Test gap
+description: A behavior is fixed or implemented, but no test pins it down.
+title: "test: "
+labels: ["test-gap"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Issue forms set only the static label `test-gap`. The triager adds the
+        label `area:*`. See "Issue triage and labels" in docs/development.md.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - formatter
+        - recovery
+        - playground
+        - release-ci
+        - tooling
+        - parser-api
+    validations:
+      required: true
+  - type: textarea
+    id: gap
+    attributes:
+      label: Surviving mutation or untested branch
+      description: Describe the mutation or branch with file:line.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed test
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance
+      description: Testable criteria, such as the fixture and width, and the mutation that must fail the new test.
