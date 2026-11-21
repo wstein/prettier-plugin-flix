@@ -45,7 +45,11 @@ for (const [title, original, glued, spaced] of tightTokenCases) {
         // Compare raw classes: cons :: may loosen under Rule A, but a glued comment still
         // changes the lexer class when space is inserted beside the operator.
         assert.deepEqual(programProblems(tight, loose, { terminators: false }), ["whitespace-sensitive token classes differ"], "adding space changes the token class");
-        assert.deepEqual(programProblems(loose, tight, { terminators: false }), ["whitespace-sensitive token classes differ"], "gluing the comment changes the token class");
+        const gluedProblems = programProblems(loose, tight, { terminators: false });
+        assert.ok(gluedProblems.includes("whitespace-sensitive token classes differ"), "gluing the comment changes the token class");
+        if (title.includes("cons")) {
+            assert.ok(gluedProblems.includes("cons :: tightened from spaced to tight"), "tightening a spaced cons is rejected");
+        }
     });
 }
 
@@ -71,4 +75,20 @@ test("fixture mutation: overlooking one spaced cons operator", async () => {
     assert.notEqual(mutated, good, "mutation must change the fixture");
     assert.equal(await fmt(input.code, options), good);
     assert.notEqual(await fmt(input.code, options), mutated);
+});
+
+test("program check: loosening a tight cons chain is accepted", () => {
+    const before = fingerprint("def f(): List[Int32] = 1::2::Nil\n");
+    const after = fingerprint("def f(): List[Int32] = 1 :: 2 :: Nil\n");
+    assert.deepEqual(before.errors, []);
+    assert.deepEqual(after.errors, []);
+    assert.deepEqual(programProblems(before, after), []);
+});
+
+test("program check: tightening a spaced cons chain is rejected", () => {
+    const before = fingerprint("def f(): List[Int32] = 1 :: 2 :: Nil\n");
+    const after = fingerprint("def f(): List[Int32] = 1::2::Nil\n");
+    assert.deepEqual(before.errors, []);
+    assert.deepEqual(after.errors, []);
+    assert.match(programProblems(before, after).join("\n"), /cons :: tightened from spaced to tight/);
 });
