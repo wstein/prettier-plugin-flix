@@ -1,6 +1,6 @@
 // Review sweeps: the checks a reviewer would otherwise rebuild by hand. Run `npm run review:sweep -- --help`.
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { pathToFileURL, fileURLToPath } from "node:url";
@@ -77,18 +77,27 @@ function parseArgs(argv) {
         else if (!o.command) o.command = a;
         else o.paths.push(a);
     }
-    o.every = Math.max(1, Number(o.every) || 1);
-    o.max = Math.max(1, Number(o.max) || 40);
+    for (const k of ["every", "max"]) {
+        const n = Number(o[k]);
+        if (!Number.isInteger(n) || n < 1) throw new Error(`--${k} expects a positive integer: ${o[k]}`);
+        o[k] = n;
+    }
     return o;
 }
 
-const parseWidths = (text, fallback) => (text ? text.split(",").map((w) => Number(w.trim())).filter((w) => Number.isInteger(w) && w > 0) : fallback);
+const parseWidths = (text, fallback) => {
+    if (!text) return fallback;
+    const widths = text.split(",").map((w) => Number(w.trim()));
+    if (widths.some((w) => !Number.isInteger(w) || w <= 0)) throw new Error(`--widths expects positive integers: ${text}`);
+    return widths;
+};
 const format = (text, width) => prettierFormat(text, { parser: "flix", plugins: [plugin], printWidth: width });
 
 function gatherInputs(o) {
     const extra = [...o.paths, ...(process.env.FLIX_STDLIB_DIR ? [process.env.FLIX_STDLIB_DIR] : [])];
     const inputs = [...(o.repo ? repoInputs(testDir) : []), ...loadInputs(extra, { base: root })];
     const named = o.only ? inputs.filter((i) => i.name.includes(o.only)) : inputs;
+    if (named.length === 0) throw new Error("no inputs (check --only, --no-repo and the paths)");
     if (!o.shard) return named;
     const m = /^(\d+)\/(\d+)$/.exec(o.shard);
     if (!m || Number(m[1]) < 1 || Number(m[1]) > Number(m[2])) throw new Error("--shard expects k/n with 1 <= k <= n");
@@ -191,7 +200,14 @@ async function sites(o) {
 function buildBase(ref) {
     const sha = execFileSync("git", ["-C", root, "rev-parse", "--verify", `${ref}^{commit}`], { encoding: "utf8" }).trim();
     const dir = join(tmpdir(), `prettier-plugin-flix-sweep-${sha.slice(0, 12)}`);
-    if (existsSync(join(dir, "dist", "index.js"))) return { dir, sha };
+    if (existsSync(dir)) {
+        // A fixed name in a shared temporary directory: use it only when it is this user's private directory.
+        const st = lstatSync(dir);
+        const mine = st.isDirectory() && (process.getuid === undefined || (st.uid === process.getuid() && (st.mode & 0o077) === 0));
+        if (!mine) throw new Error(`${dir} is not a private directory of this user; remove it or set TMPDIR`);
+        if (existsSync(join(dir, "dist", "index.js"))) return { dir, sha };
+        rmSync(dir, { recursive: true, force: true }); // an incomplete build
+    }
     const work = mkdtempSync(join(tmpdir(), "prettier-plugin-flix-sweep-build-"));
     try {
         const archive = execFileSync("git", ["-C", root, "archive", "--format=tar", sha], { maxBuffer: 1 << 30 });

@@ -2,7 +2,7 @@
 // comment site or one width, reconciling failures with a list of known failures, minimizing an input,
 // and diffing outputs. Nothing here formats on its own: callers pass `format(text, width)`.
 import { readdirSync, readFileSync, statSync } from "node:fs";
-import { join, relative, resolve } from "node:path";
+import { dirname, join, relative, resolve } from "node:path";
 import { findFixtures, loadFixture } from "../test/fixture.mjs";
 import { COMMENT_MARKERS, commentSites, fingerprint, programProblems, withCommentAt } from "../test/lib.mjs";
 
@@ -39,7 +39,7 @@ export function loadInputs(paths, { base = process.cwd(), fixtures = true } = {}
     for (const path of paths) {
         for (const file of collectFiles(path, { fixtures })) {
             const rel = relative(resolve(base), resolve(file)).split("\\").join("/");
-            const name = rel.startsWith("..") ? file : rel;
+            const name = rel.startsWith("..") ? relative(dirname(resolve(path)), resolve(file)).split("\\").join("/") : rel;
             if (file.endsWith(".md")) {
                 const fx = loadFixture(file);
                 if (fx.meta.status !== "error") inputs.push({ name, source: fx.input.code });
@@ -135,10 +135,13 @@ const entryKey = (e) => [e.file, e.width, e.form ?? "plain", e.token ?? "-"].joi
 export function parseKnown(text, where = "known failures") {
     const data = JSON.parse(text);
     if (!data || !Array.isArray(data.failures)) throw new Error(`${where}: expected an object with a "failures" array`);
+    const keys = new Set();
     for (const e of data.failures) {
         for (const k of ["file", "width", "kind", "issue"]) if (e[k] === undefined) throw new Error(`${where}: entry without "${k}": ${JSON.stringify(e)}`);
         if (!KNOWN_KINDS.includes(e.kind)) throw new Error(`${where}: kind must be one of ${KNOWN_KINDS.join(", ")}: ${JSON.stringify(e)}`);
         if (!/^#\d+$/.test(String(e.issue))) throw new Error(`${where}: issue must look like #123: ${JSON.stringify(e)}`);
+        if (keys.has(entryKey(e))) throw new Error(`${where}: duplicate entry: ${JSON.stringify(e)}`);
+        keys.add(entryKey(e));
     }
     return data.failures;
 }
