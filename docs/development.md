@@ -4,6 +4,9 @@
 
 ## Build from source
 
+Use Node.js 22 or newer. The published package declares `"engines": { "node": ">=22" }`,
+matching CI and the release publish job.
+
 Install the locked dependencies and generate the parser before formatting:
 
 ```sh
