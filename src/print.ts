@@ -1564,6 +1564,9 @@ export class Printer {
             return group([first, indent(ops.map((_, i) => tightLink(i)))]);
         }
         if (chainTight) {
+            // Both forms print every operand. The second print must still see the own-line
+            // comments that the first print took, or the form that is chosen loses them.
+            const consumedBefore = new Set(this.consumed);
             const tightFlat: Doc = [first, ...ops.map((_, i) => {
                 const op = ops[i];
                 const operand = operands[i + 1];
@@ -1574,7 +1577,10 @@ export class Printer {
                     this.print(operand),
                 ];
             })];
+            const consumedByTight = this.consumed;
+            this.consumed = consumedBefore;
             const spaced = group([first, indent(ops.map((_, i) => spacedLink(i)))]);
+            for (const index of consumedByTight) this.consumed.add(index);
             // A forced break inside an operand ends the fit check at that line, so the rest
             // of a tight chain could pass the width: treat such a chain as not fitting.
             if (willBreak(tightFlat)) return spaced;
