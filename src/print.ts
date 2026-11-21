@@ -1424,18 +1424,11 @@ export class Printer {
         if (!body) return 0;
         const first = firstTerm(body);
         if (!first || first.symbol.line !== arrow.symbol.line) return 0;
-        const last = lastTerm(body);
-        // An own-line comment after the first body token means the rest of the body
-        // does not share the `=` line in pass 2 (`= match` / `// own` / `c { ... }`).
-        if (last) {
-            for (let index = first.symbol.tokenIndex + 1; index <= last.symbol.tokenIndex; index++) {
-                if (this.root.info.get(index)?.lead.some((comment) => comment.nl > 0)) return 0;
-            }
-        }
         const fork = this.forkPrinter();
         const printed = fork.print(body);
         // Count only bodies that placeBody keeps on the `=` line in every pass; a body
         // that may move below `=` is gone from that line in pass 2.
+        const last = lastTerm(body);
         if ((!last || ttype(last) !== L.RBRACE) && !willBreak(printed)) return 0;
         const printWidth = Math.max(1, this.printWidth - this.declarationIndent(n));
         const formatted = doc.printer.printDocToString(printed, {
@@ -1443,7 +1436,16 @@ export class Printer {
             tabWidth: this.tabWidth,
         }).formatted;
         const firstLine = formatted.split("\n")[0] ?? "";
-        return firstLine.length > 0 ? 1 + util.getStringWidth(firstLine) : 0;
+        if (firstLine.length === 0) return 0;
+        // Space before `=` plus the hugged first line. When that line is only the first
+        // body token and the rest breaks away (e.g. `= match` then an own-line comment),
+        // the doc fit still counts the gap before the break (#201) — same as the
+        // own-line lead gap on `=` itself.
+        let width = 1 + util.getStringWidth(firstLine);
+        if (firstLine === first.getText() && formatted.startsWith(firstLine + "\n")) {
+            width += util.getStringWidth(" ");
+        }
+        return width;
     }
 
     private printWithClause(n: ParserRuleContext): Doc {

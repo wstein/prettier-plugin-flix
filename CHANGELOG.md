@@ -26,7 +26,8 @@ User-facing changes to Prettier Plugin for Flix. Plugin releases have their own 
   set to the return type ([#92](https://github.com/wstein/prettier-plugin-flix/issues/92)).
   Count lead comments on `=` (and the gap before an own-line comment); count
   a hugged body only when `placeBody` keeps it on the `=` line across passes,
-  and skip it when an own-line comment follows the first body token.
+  including the gap when that first line is only the first body token before
+  an own-line break ([#201](https://github.com/wstein/prettier-plugin-flix/issues/201)).
 - Skip match-arm arrow alignment when padding would wrap a compact body onto
   the next line ([#154](https://github.com/wstein/prettier-plugin-flix/issues/154)).
 - Keep map, record and match alignment stable when a block comment leads a
