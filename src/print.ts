@@ -1205,33 +1205,13 @@ export class Printer {
     }
 
     private alignMatchGroup(rules: Node[], layoutId: symbol): Doc[] {
-        const hasTrailingBlockComment = rules.some((rule) => {
-            const first = firstTerm(rule)!.symbol.tokenIndex;
-            const last = lastTerm(rule)!.symbol.tokenIndex;
-            for (let index = first; index <= last; index++) {
-                if (this.root.info.get(index)?.trail.some((comment) => !comment.isLine)) return true;
-            }
-            return false;
-        });
-        // Soft trail breaks apply to the measurement only: the rows that are printed keep the
-        // line break after a block comment that ends its line.
-        const buildRows = () => rules.map((rule) => {
+        // Build printed rows only. Soft-trail re-measure for trailing block comments was
+        // removed: on current main it never changed fixture or comment-site output (#178).
+        const rows = rules.map((rule) => {
             this.ls(rule);
             const leading = this.takeLeadingMatchArmComments(firstTerm(rule));
             return { leading, ...this.eqBodyDocs(rule as ParserRuleContext) };
         });
-        let measured: ReturnType<typeof buildRows> | undefined;
-        if (hasTrailingBlockComment) {
-            const consumedBefore = new Set(this.consumed);
-            this.softTrailBreaks++;
-            try {
-                measured = buildRows();
-            } finally {
-                this.softTrailBreaks--;
-                this.consumed = consumedBefore;
-            }
-        }
-        const rows = buildRows();
         const options = { printWidth: this.printWidth, tabWidth: this.tabWidth };
         const measure = (value: Doc): number => {
             const { formatted } = doc.printer.printDocToString(value, options);
@@ -1247,7 +1227,7 @@ export class Printer {
             return doc.printer.printDocToString([head, gap, tail], inContext).formatted
                 .startsWith(doc.printer.printDocToString(head, options).formatted);
         };
-        const widths = (measured ?? rows).map((row) => (staysFlat(row, this.rowIndent(row.arrow)) ? measure(row.head) : Infinity));
+        const widths = rows.map((row) => (staysFlat(row, this.rowIndent(row.arrow)) ? measure(row.head) : Infinity));
         const column = Math.max(...widths);
         if (!Number.isFinite(column) || widths.every((width) => width === column)) {
             return rows.map(({ leading, head, gap, tail }) => [leading, head, gap, tail]);

@@ -21,6 +21,8 @@ User-facing changes to Prettier Plugin for Flix. Plugin releases have their own 
 
 ### Fixes
 
+- Drop the unused soft-trail re-measure when aligning match arms: measuring
+  printed rows only matches the previous output ([#178](https://github.com/wstein/prettier-plugin-flix/issues/178)).
 - Keep map, record and match alignment stable when a block comment leads a
   map key, record field or match `case`, and do not break a list only
   because a block comment ends its source line before a `,` or `;`, so
