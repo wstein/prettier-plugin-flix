@@ -1,0 +1,1715 @@
+{
+  "schemaVersion": 1,
+  "command": "idempotence",
+  "createdAt": "2026-11-21T00:00:00.000Z",
+  "formatter": {
+    "revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "dirty": false
+  },
+  "corpus": {
+    "revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "inputCount": 2
+  },
+  "config": {
+    "widths": [
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58,
+      59,
+      60,
+      61,
+      62,
+      63,
+      64,
+      65,
+      66,
+      67,
+      68,
+      69,
+      70,
+      71,
+      72,
+      73,
+      74,
+      75,
+      76,
+      77,
+      78,
+      79,
+      80,
+      81,
+      82,
+      83,
+      84,
+      85,
+      86,
+      87,
+      88,
+      89,
+      90,
+      91,
+      92,
+      93,
+      94,
+      95,
+      96,
+      97,
+      98,
+      99,
+      111,
+      112,
+      113,
+      114,
+      115,
+      116,
+      117,
+      118,
+      119,
+      120,
+      121,
+      122,
+      123,
+      124,
+      125,
+      126,
+      127,
+      128,
+      129,
+      130,
+      131,
+      132,
+      133,
+      134,
+      135,
+      136,
+      137,
+      138,
+      139,
+      140,
+      141,
+      142,
+      143,
+      144,
+      145,
+      146,
+      147,
+      148,
+      149,
+      150,
+      151,
+      152,
+      153,
+      154,
+      155,
+      156,
+      157,
+      158,
+      159,
+      160
+    ],
+    "every": null,
+    "shard": null,
+    "base": null,
+    "only": null,
+    "repo": true,
+    "seed": null
+  },
+  "cases": [
+    {
+      "id": "equals-own-line|111|plain|-",
+      "file": "equals-own-line",
+      "width": 111,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|112|plain|-",
+      "file": "equals-own-line",
+      "width": 112,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|113|plain|-",
+      "file": "equals-own-line",
+      "width": 113,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|114|plain|-",
+      "file": "equals-own-line",
+      "width": 114,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|115|plain|-",
+      "file": "equals-own-line",
+      "width": 115,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|116|plain|-",
+      "file": "equals-own-line",
+      "width": 116,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|117|plain|-",
+      "file": "equals-own-line",
+      "width": 117,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|118|plain|-",
+      "file": "equals-own-line",
+      "width": 118,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|119|plain|-",
+      "file": "equals-own-line",
+      "width": 119,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|120|plain|-",
+      "file": "equals-own-line",
+      "width": 120,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|121|plain|-",
+      "file": "equals-own-line",
+      "width": 121,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|122|plain|-",
+      "file": "equals-own-line",
+      "width": 122,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|123|plain|-",
+      "file": "equals-own-line",
+      "width": 123,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|124|plain|-",
+      "file": "equals-own-line",
+      "width": 124,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|125|plain|-",
+      "file": "equals-own-line",
+      "width": 125,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|126|plain|-",
+      "file": "equals-own-line",
+      "width": 126,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|127|plain|-",
+      "file": "equals-own-line",
+      "width": 127,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|128|plain|-",
+      "file": "equals-own-line",
+      "width": 128,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|129|plain|-",
+      "file": "equals-own-line",
+      "width": 129,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|130|plain|-",
+      "file": "equals-own-line",
+      "width": 130,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|131|plain|-",
+      "file": "equals-own-line",
+      "width": 131,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|132|plain|-",
+      "file": "equals-own-line",
+      "width": 132,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|133|plain|-",
+      "file": "equals-own-line",
+      "width": 133,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|134|plain|-",
+      "file": "equals-own-line",
+      "width": 134,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|135|plain|-",
+      "file": "equals-own-line",
+      "width": 135,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|136|plain|-",
+      "file": "equals-own-line",
+      "width": 136,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|137|plain|-",
+      "file": "equals-own-line",
+      "width": 137,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|138|plain|-",
+      "file": "equals-own-line",
+      "width": 138,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|139|plain|-",
+      "file": "equals-own-line",
+      "width": 139,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|140|plain|-",
+      "file": "equals-own-line",
+      "width": 140,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|141|plain|-",
+      "file": "equals-own-line",
+      "width": 141,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|142|plain|-",
+      "file": "equals-own-line",
+      "width": 142,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|143|plain|-",
+      "file": "equals-own-line",
+      "width": 143,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|144|plain|-",
+      "file": "equals-own-line",
+      "width": 144,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|145|plain|-",
+      "file": "equals-own-line",
+      "width": 145,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|146|plain|-",
+      "file": "equals-own-line",
+      "width": 146,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|147|plain|-",
+      "file": "equals-own-line",
+      "width": 147,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|148|plain|-",
+      "file": "equals-own-line",
+      "width": 148,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|149|plain|-",
+      "file": "equals-own-line",
+      "width": 149,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|150|plain|-",
+      "file": "equals-own-line",
+      "width": 150,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|151|plain|-",
+      "file": "equals-own-line",
+      "width": 151,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|152|plain|-",
+      "file": "equals-own-line",
+      "width": 152,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|153|plain|-",
+      "file": "equals-own-line",
+      "width": 153,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|154|plain|-",
+      "file": "equals-own-line",
+      "width": 154,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|155|plain|-",
+      "file": "equals-own-line",
+      "width": 155,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|156|plain|-",
+      "file": "equals-own-line",
+      "width": 156,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|157|plain|-",
+      "file": "equals-own-line",
+      "width": 157,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|158|plain|-",
+      "file": "equals-own-line",
+      "width": 158,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|159|plain|-",
+      "file": "equals-own-line",
+      "width": 159,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|160|plain|-",
+      "file": "equals-own-line",
+      "width": 160,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|20|plain|-",
+      "file": "equals-own-line",
+      "width": 20,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|21|plain|-",
+      "file": "equals-own-line",
+      "width": 21,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|22|plain|-",
+      "file": "equals-own-line",
+      "width": 22,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|23|plain|-",
+      "file": "equals-own-line",
+      "width": 23,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|24|plain|-",
+      "file": "equals-own-line",
+      "width": 24,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|25|plain|-",
+      "file": "equals-own-line",
+      "width": 25,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|26|plain|-",
+      "file": "equals-own-line",
+      "width": 26,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|27|plain|-",
+      "file": "equals-own-line",
+      "width": 27,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|28|plain|-",
+      "file": "equals-own-line",
+      "width": 28,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|29|plain|-",
+      "file": "equals-own-line",
+      "width": 29,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|30|plain|-",
+      "file": "equals-own-line",
+      "width": 30,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|31|plain|-",
+      "file": "equals-own-line",
+      "width": 31,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|32|plain|-",
+      "file": "equals-own-line",
+      "width": 32,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|33|plain|-",
+      "file": "equals-own-line",
+      "width": 33,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|34|plain|-",
+      "file": "equals-own-line",
+      "width": 34,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|35|plain|-",
+      "file": "equals-own-line",
+      "width": 35,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|36|plain|-",
+      "file": "equals-own-line",
+      "width": 36,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|37|plain|-",
+      "file": "equals-own-line",
+      "width": 37,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|38|plain|-",
+      "file": "equals-own-line",
+      "width": 38,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|39|plain|-",
+      "file": "equals-own-line",
+      "width": 39,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|40|plain|-",
+      "file": "equals-own-line",
+      "width": 40,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|41|plain|-",
+      "file": "equals-own-line",
+      "width": 41,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|42|plain|-",
+      "file": "equals-own-line",
+      "width": 42,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|43|plain|-",
+      "file": "equals-own-line",
+      "width": 43,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|44|plain|-",
+      "file": "equals-own-line",
+      "width": 44,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|45|plain|-",
+      "file": "equals-own-line",
+      "width": 45,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|46|plain|-",
+      "file": "equals-own-line",
+      "width": 46,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|47|plain|-",
+      "file": "equals-own-line",
+      "width": 47,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|48|plain|-",
+      "file": "equals-own-line",
+      "width": 48,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|49|plain|-",
+      "file": "equals-own-line",
+      "width": 49,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|50|plain|-",
+      "file": "equals-own-line",
+      "width": 50,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|51|plain|-",
+      "file": "equals-own-line",
+      "width": 51,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|52|plain|-",
+      "file": "equals-own-line",
+      "width": 52,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|53|plain|-",
+      "file": "equals-own-line",
+      "width": 53,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|54|plain|-",
+      "file": "equals-own-line",
+      "width": 54,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|55|plain|-",
+      "file": "equals-own-line",
+      "width": 55,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|56|plain|-",
+      "file": "equals-own-line",
+      "width": 56,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|57|plain|-",
+      "file": "equals-own-line",
+      "width": 57,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|58|plain|-",
+      "file": "equals-own-line",
+      "width": 58,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|59|plain|-",
+      "file": "equals-own-line",
+      "width": 59,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|60|plain|-",
+      "file": "equals-own-line",
+      "width": 60,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|61|plain|-",
+      "file": "equals-own-line",
+      "width": 61,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|62|plain|-",
+      "file": "equals-own-line",
+      "width": 62,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|63|plain|-",
+      "file": "equals-own-line",
+      "width": 63,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|64|plain|-",
+      "file": "equals-own-line",
+      "width": 64,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|65|plain|-",
+      "file": "equals-own-line",
+      "width": 65,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|66|plain|-",
+      "file": "equals-own-line",
+      "width": 66,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|67|plain|-",
+      "file": "equals-own-line",
+      "width": 67,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|68|plain|-",
+      "file": "equals-own-line",
+      "width": 68,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|69|plain|-",
+      "file": "equals-own-line",
+      "width": 69,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|70|plain|-",
+      "file": "equals-own-line",
+      "width": 70,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|71|plain|-",
+      "file": "equals-own-line",
+      "width": 71,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|72|plain|-",
+      "file": "equals-own-line",
+      "width": 72,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|73|plain|-",
+      "file": "equals-own-line",
+      "width": 73,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|74|plain|-",
+      "file": "equals-own-line",
+      "width": 74,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|75|plain|-",
+      "file": "equals-own-line",
+      "width": 75,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|76|plain|-",
+      "file": "equals-own-line",
+      "width": 76,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|77|plain|-",
+      "file": "equals-own-line",
+      "width": 77,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|78|plain|-",
+      "file": "equals-own-line",
+      "width": 78,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|79|plain|-",
+      "file": "equals-own-line",
+      "width": 79,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|80|plain|-",
+      "file": "equals-own-line",
+      "width": 80,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|81|plain|-",
+      "file": "equals-own-line",
+      "width": 81,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|82|plain|-",
+      "file": "equals-own-line",
+      "width": 82,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|83|plain|-",
+      "file": "equals-own-line",
+      "width": 83,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|84|plain|-",
+      "file": "equals-own-line",
+      "width": 84,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|85|plain|-",
+      "file": "equals-own-line",
+      "width": 85,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|86|plain|-",
+      "file": "equals-own-line",
+      "width": 86,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|87|plain|-",
+      "file": "equals-own-line",
+      "width": 87,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|88|plain|-",
+      "file": "equals-own-line",
+      "width": 88,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|89|plain|-",
+      "file": "equals-own-line",
+      "width": 89,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|90|plain|-",
+      "file": "equals-own-line",
+      "width": 90,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|91|plain|-",
+      "file": "equals-own-line",
+      "width": 91,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|92|plain|-",
+      "file": "equals-own-line",
+      "width": 92,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|93|plain|-",
+      "file": "equals-own-line",
+      "width": 93,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|94|plain|-",
+      "file": "equals-own-line",
+      "width": 94,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|95|plain|-",
+      "file": "equals-own-line",
+      "width": 95,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|96|plain|-",
+      "file": "equals-own-line",
+      "width": 96,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|97|plain|-",
+      "file": "equals-own-line",
+      "width": 97,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|98|plain|-",
+      "file": "equals-own-line",
+      "width": 98,
+      "status": "pass"
+    },
+    {
+      "id": "equals-own-line|99|plain|-",
+      "file": "equals-own-line",
+      "width": 99,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|111|plain|-",
+      "file": "hug-match-own-line",
+      "width": 111,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|112|plain|-",
+      "file": "hug-match-own-line",
+      "width": 112,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|113|plain|-",
+      "file": "hug-match-own-line",
+      "width": 113,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|114|plain|-",
+      "file": "hug-match-own-line",
+      "width": 114,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|115|plain|-",
+      "file": "hug-match-own-line",
+      "width": 115,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|116|plain|-",
+      "file": "hug-match-own-line",
+      "width": 116,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|117|plain|-",
+      "file": "hug-match-own-line",
+      "width": 117,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|118|plain|-",
+      "file": "hug-match-own-line",
+      "width": 118,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|119|plain|-",
+      "file": "hug-match-own-line",
+      "width": 119,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|120|plain|-",
+      "file": "hug-match-own-line",
+      "width": 120,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|121|plain|-",
+      "file": "hug-match-own-line",
+      "width": 121,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|122|plain|-",
+      "file": "hug-match-own-line",
+      "width": 122,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|123|plain|-",
+      "file": "hug-match-own-line",
+      "width": 123,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|124|plain|-",
+      "file": "hug-match-own-line",
+      "width": 124,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|125|plain|-",
+      "file": "hug-match-own-line",
+      "width": 125,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|126|plain|-",
+      "file": "hug-match-own-line",
+      "width": 126,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|127|plain|-",
+      "file": "hug-match-own-line",
+      "width": 127,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|128|plain|-",
+      "file": "hug-match-own-line",
+      "width": 128,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|129|plain|-",
+      "file": "hug-match-own-line",
+      "width": 129,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|130|plain|-",
+      "file": "hug-match-own-line",
+      "width": 130,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|131|plain|-",
+      "file": "hug-match-own-line",
+      "width": 131,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|132|plain|-",
+      "file": "hug-match-own-line",
+      "width": 132,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|133|plain|-",
+      "file": "hug-match-own-line",
+      "width": 133,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|134|plain|-",
+      "file": "hug-match-own-line",
+      "width": 134,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|135|plain|-",
+      "file": "hug-match-own-line",
+      "width": 135,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|136|plain|-",
+      "file": "hug-match-own-line",
+      "width": 136,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|137|plain|-",
+      "file": "hug-match-own-line",
+      "width": 137,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|138|plain|-",
+      "file": "hug-match-own-line",
+      "width": 138,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|139|plain|-",
+      "file": "hug-match-own-line",
+      "width": 139,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|140|plain|-",
+      "file": "hug-match-own-line",
+      "width": 140,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|141|plain|-",
+      "file": "hug-match-own-line",
+      "width": 141,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|142|plain|-",
+      "file": "hug-match-own-line",
+      "width": 142,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|143|plain|-",
+      "file": "hug-match-own-line",
+      "width": 143,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|144|plain|-",
+      "file": "hug-match-own-line",
+      "width": 144,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|145|plain|-",
+      "file": "hug-match-own-line",
+      "width": 145,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|146|plain|-",
+      "file": "hug-match-own-line",
+      "width": 146,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|147|plain|-",
+      "file": "hug-match-own-line",
+      "width": 147,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|148|plain|-",
+      "file": "hug-match-own-line",
+      "width": 148,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|149|plain|-",
+      "file": "hug-match-own-line",
+      "width": 149,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|150|plain|-",
+      "file": "hug-match-own-line",
+      "width": 150,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|151|plain|-",
+      "file": "hug-match-own-line",
+      "width": 151,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|152|plain|-",
+      "file": "hug-match-own-line",
+      "width": 152,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|153|plain|-",
+      "file": "hug-match-own-line",
+      "width": 153,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|154|plain|-",
+      "file": "hug-match-own-line",
+      "width": 154,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|155|plain|-",
+      "file": "hug-match-own-line",
+      "width": 155,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|156|plain|-",
+      "file": "hug-match-own-line",
+      "width": 156,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|157|plain|-",
+      "file": "hug-match-own-line",
+      "width": 157,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|158|plain|-",
+      "file": "hug-match-own-line",
+      "width": 158,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|159|plain|-",
+      "file": "hug-match-own-line",
+      "width": 159,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|160|plain|-",
+      "file": "hug-match-own-line",
+      "width": 160,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|20|plain|-",
+      "file": "hug-match-own-line",
+      "width": 20,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|21|plain|-",
+      "file": "hug-match-own-line",
+      "width": 21,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|22|plain|-",
+      "file": "hug-match-own-line",
+      "width": 22,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|23|plain|-",
+      "file": "hug-match-own-line",
+      "width": 23,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|24|plain|-",
+      "file": "hug-match-own-line",
+      "width": 24,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|25|plain|-",
+      "file": "hug-match-own-line",
+      "width": 25,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|26|plain|-",
+      "file": "hug-match-own-line",
+      "width": 26,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|27|plain|-",
+      "file": "hug-match-own-line",
+      "width": 27,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|28|plain|-",
+      "file": "hug-match-own-line",
+      "width": 28,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|29|plain|-",
+      "file": "hug-match-own-line",
+      "width": 29,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|30|plain|-",
+      "file": "hug-match-own-line",
+      "width": 30,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|31|plain|-",
+      "file": "hug-match-own-line",
+      "width": 31,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|32|plain|-",
+      "file": "hug-match-own-line",
+      "width": 32,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|33|plain|-",
+      "file": "hug-match-own-line",
+      "width": 33,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|34|plain|-",
+      "file": "hug-match-own-line",
+      "width": 34,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|35|plain|-",
+      "file": "hug-match-own-line",
+      "width": 35,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|36|plain|-",
+      "file": "hug-match-own-line",
+      "width": 36,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|37|plain|-",
+      "file": "hug-match-own-line",
+      "width": 37,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|38|plain|-",
+      "file": "hug-match-own-line",
+      "width": 38,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|39|plain|-",
+      "file": "hug-match-own-line",
+      "width": 39,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|40|plain|-",
+      "file": "hug-match-own-line",
+      "width": 40,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|41|plain|-",
+      "file": "hug-match-own-line",
+      "width": 41,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|42|plain|-",
+      "file": "hug-match-own-line",
+      "width": 42,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|43|plain|-",
+      "file": "hug-match-own-line",
+      "width": 43,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|44|plain|-",
+      "file": "hug-match-own-line",
+      "width": 44,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|45|plain|-",
+      "file": "hug-match-own-line",
+      "width": 45,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|46|plain|-",
+      "file": "hug-match-own-line",
+      "width": 46,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|47|plain|-",
+      "file": "hug-match-own-line",
+      "width": 47,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|48|plain|-",
+      "file": "hug-match-own-line",
+      "width": 48,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|49|plain|-",
+      "file": "hug-match-own-line",
+      "width": 49,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|50|plain|-",
+      "file": "hug-match-own-line",
+      "width": 50,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|51|plain|-",
+      "file": "hug-match-own-line",
+      "width": 51,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|52|plain|-",
+      "file": "hug-match-own-line",
+      "width": 52,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|53|plain|-",
+      "file": "hug-match-own-line",
+      "width": 53,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|54|plain|-",
+      "file": "hug-match-own-line",
+      "width": 54,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|55|plain|-",
+      "file": "hug-match-own-line",
+      "width": 55,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|56|plain|-",
+      "file": "hug-match-own-line",
+      "width": 56,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|57|plain|-",
+      "file": "hug-match-own-line",
+      "width": 57,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|58|plain|-",
+      "file": "hug-match-own-line",
+      "width": 58,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|59|plain|-",
+      "file": "hug-match-own-line",
+      "width": 59,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|60|plain|-",
+      "file": "hug-match-own-line",
+      "width": 60,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|61|plain|-",
+      "file": "hug-match-own-line",
+      "width": 61,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|62|plain|-",
+      "file": "hug-match-own-line",
+      "width": 62,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|63|plain|-",
+      "file": "hug-match-own-line",
+      "width": 63,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|64|plain|-",
+      "file": "hug-match-own-line",
+      "width": 64,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|65|plain|-",
+      "file": "hug-match-own-line",
+      "width": 65,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|66|plain|-",
+      "file": "hug-match-own-line",
+      "width": 66,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|67|plain|-",
+      "file": "hug-match-own-line",
+      "width": 67,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|68|plain|-",
+      "file": "hug-match-own-line",
+      "width": 68,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|69|plain|-",
+      "file": "hug-match-own-line",
+      "width": 69,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|70|plain|-",
+      "file": "hug-match-own-line",
+      "width": 70,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|71|plain|-",
+      "file": "hug-match-own-line",
+      "width": 71,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|72|plain|-",
+      "file": "hug-match-own-line",
+      "width": 72,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|73|plain|-",
+      "file": "hug-match-own-line",
+      "width": 73,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|74|plain|-",
+      "file": "hug-match-own-line",
+      "width": 74,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|75|plain|-",
+      "file": "hug-match-own-line",
+      "width": 75,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|76|plain|-",
+      "file": "hug-match-own-line",
+      "width": 76,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|77|plain|-",
+      "file": "hug-match-own-line",
+      "width": 77,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|78|plain|-",
+      "file": "hug-match-own-line",
+      "width": 78,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|79|plain|-",
+      "file": "hug-match-own-line",
+      "width": 79,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|80|plain|-",
+      "file": "hug-match-own-line",
+      "width": 80,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|81|plain|-",
+      "file": "hug-match-own-line",
+      "width": 81,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|82|plain|-",
+      "file": "hug-match-own-line",
+      "width": 82,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|83|plain|-",
+      "file": "hug-match-own-line",
+      "width": 83,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|84|plain|-",
+      "file": "hug-match-own-line",
+      "width": 84,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|85|plain|-",
+      "file": "hug-match-own-line",
+      "width": 85,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|86|plain|-",
+      "file": "hug-match-own-line",
+      "width": 86,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|87|plain|-",
+      "file": "hug-match-own-line",
+      "width": 87,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|88|plain|-",
+      "file": "hug-match-own-line",
+      "width": 88,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|89|plain|-",
+      "file": "hug-match-own-line",
+      "width": 89,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|90|plain|-",
+      "file": "hug-match-own-line",
+      "width": 90,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|91|plain|-",
+      "file": "hug-match-own-line",
+      "width": 91,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|92|plain|-",
+      "file": "hug-match-own-line",
+      "width": 92,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|93|plain|-",
+      "file": "hug-match-own-line",
+      "width": 93,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|94|plain|-",
+      "file": "hug-match-own-line",
+      "width": 94,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|95|plain|-",
+      "file": "hug-match-own-line",
+      "width": 95,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|96|plain|-",
+      "file": "hug-match-own-line",
+      "width": 96,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|97|plain|-",
+      "file": "hug-match-own-line",
+      "width": 97,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|98|plain|-",
+      "file": "hug-match-own-line",
+      "width": 98,
+      "status": "pass"
+    },
+    {
+      "id": "hug-match-own-line|99|plain|-",
+      "file": "hug-match-own-line",
+      "width": 99,
+      "status": "pass"
+    }
+  ]
+}

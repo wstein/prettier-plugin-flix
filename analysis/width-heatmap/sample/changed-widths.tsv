@@ -1,0 +1,4 @@
+file	from	to	widths
+equals-own-line	pass	fail	30,35
+hug-match-own-line	pass	fail	30,35
+hug-match-own-line	pass	skipped	50
