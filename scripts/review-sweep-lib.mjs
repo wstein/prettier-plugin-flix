@@ -187,21 +187,29 @@ export function mergePlans(...plans) {
     });
 }
 
-/** Runs a comment-site plan on one input; returns `{ failures, checked, skipped }` with `checked` as a Set of entry keys. */
+/** Runs a comment-site plan on one input; returns `{ failures, checked, skipped, cases }` with `checked` as a Set of entry keys. */
 export async function runSitePlan(format, { name, source }, plan) {
     const failures = [];
+    const cases = [];
     const checked = new Set();
     let skipped = 0;
     for (const { token, form, width } of plan) {
         const r = await checkSite(format, source, token, form, width);
+        const base = { file: name, width, form, token };
         if (r.skipped) {
             skipped++;
+            cases.push({ ...base, status: "skipped", reason: "variant does not parse" });
             continue;
         }
-        checked.add(entryKey({ file: name, width, form, token }));
-        if (r.kind) failures.push({ file: name, width, form, token, kind: r.kind, detail: r.detail, context: r.context, input: r.variant, output: r.output, second: r.second });
+        checked.add(entryKey(base));
+        if (r.kind) {
+            failures.push({ ...base, kind: r.kind, detail: r.detail, context: r.context, input: r.variant, output: r.output, second: r.second });
+            cases.push({ ...base, status: "fail", kind: r.kind, reason: r.detail });
+        } else {
+            cases.push({ ...base, status: "pass" });
+        }
     }
-    return { failures, checked, skipped };
+    return { failures, checked, skipped, cases };
 }
 
 /**
@@ -323,7 +331,7 @@ export const describeNotRun = (e) => `listed site not run: ${e.file} width=${e.w
 /** Parses `review:sweep` argv into options. Throws on unknown flags or invalid --every/--max. */
 export function parseSweepArgs(argv) {
     const o = { paths: [], every: 1, max: 40, repo: true };
-    const takes = new Set(["--known", "--every", "--widths", "--base", "--only", "--json", "--max", "--shard"]);
+    const takes = new Set(["--known", "--every", "--widths", "--base", "--only", "--json", "--export", "--max", "--shard", "--seed"]);
     for (let i = 0; i < argv.length; i++) {
         const a = argv[i];
         if (a === "--help" || a === "-h") o.help = true;
@@ -336,6 +344,7 @@ export function parseSweepArgs(argv) {
         else o.paths.push(a);
     }
     for (const k of ["every", "max"]) o[k] = parsePositiveInt(k, o[k]);
+    if (o.seed !== undefined) o.seed = parsePositiveInt("seed", o.seed);
     return o;
 }
 

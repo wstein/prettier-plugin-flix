@@ -34,6 +34,7 @@
     "format:checked": "node scripts/format-checked.mjs",
     "test:flix-format": "node scripts/flix-format-references.mjs",
     "review:sweep": "node scripts/review-sweep.mjs",
+    "review:summary": "node scripts/review-summary.mjs",
     "review:pairs": "node scripts/comment-pairs.mjs",
     "review:kinds": "node scripts/comment-kinds-report.mjs",
     "test:update": "npm run build && UPDATE_FIXTURES=1 node --test test/fixtures.test.mjs",

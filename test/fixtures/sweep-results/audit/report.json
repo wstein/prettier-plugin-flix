@@ -1,0 +1,33 @@
+{
+  "revisions": {
+    "book": "booksha",
+    "website": "websitesha"
+  },
+  "totals": {
+    "unchanged": 10,
+    "layout-change": 2,
+    "needs-context": 1
+  },
+  "cases": [
+    {
+      "case_name": "book.example-one",
+      "file": "book/src/one.md",
+      "status": "layout-change",
+      "changeKind": "wrapping",
+      "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "case_name": "website.example-two",
+      "file": "website/src/two.js",
+      "status": "layout-change",
+      "changeKind": "spacing",
+      "digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "approval": "Accepted indentation of the pipeline."
+    },
+    {
+      "case_name": "book.skip",
+      "file": "book/src/skip.md",
+      "status": "unchanged"
+    }
+  ]
+}

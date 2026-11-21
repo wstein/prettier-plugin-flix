@@ -17,6 +17,8 @@ on:
       - "scripts/audit-flix-examples.mjs"
       - "scripts/docs-example-findings.mjs"
       - "scripts/extract-flix-examples.mjs"
+      - "scripts/review-summary.mjs"
+      - "scripts/sweep-results.mjs"
       - "docs/official-example-assessments.json"
       - "docs/official-example-reviews.json"
       - "test/official-docs-baseline.tsv"
@@ -68,11 +70,19 @@ jobs:
             args+=(--reviews docs/official-example-reviews.json --review-baseline "$RUNNER_TEMP/base-baseline.tsv")
           fi
           npm run test:docs-examples -- upstream-book upstream-website official-examples-audit "${args[@]}"
-      - name: Publish drift summary
+      - name: Publish review summary
         if: ${{ !cancelled() }}
         run: |
+          # Retains the audit step's exit status: this step only writes the job summary.
+          npm run review:summary -- --audit official-examples-audit --out "$RUNNER_TEMP/review-summary.md"
+          cat "$RUNNER_TEMP/review-summary.md" >> "$GITHUB_STEP_SUMMARY"
           if [ -f official-examples-audit/summary.md ]; then
-            cat official-examples-audit/summary.md >> "$GITHUB_STEP_SUMMARY"
+            {
+              echo ""
+              echo "---"
+              echo ""
+              cat official-examples-audit/summary.md
+            } >> "$GITHUB_STEP_SUMMARY"
           fi
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}

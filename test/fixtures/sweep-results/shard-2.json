@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "command": "idempotence",
+  "createdAt": "2026-11-21T00:00:01.000Z",
+  "formatter": {
+    "revision": "cccccccccccccccccccccccccccccccccccccccc"
+  },
+  "corpus": {
+    "revision": "cccccccccccccccccccccccccccccccccccccccc",
+    "inputCount": 1,
+    "fingerprint": "shard-corpus"
+  },
+  "config": {
+    "widths": [40, 80],
+    "every": null,
+    "shard": "2/2",
+    "base": null,
+    "only": null,
+    "repo": true,
+    "seed": null
+  },
+  "cases": [
+    {
+      "id": "b.flix|40|plain|-",
+      "file": "b.flix",
+      "width": 40,
+      "status": "pass"
+    },
+    {
+      "id": "b.flix|80|plain|-",
+      "file": "b.flix",
+      "width": 80,
+      "status": "pass"
+    }
+  ]
+}

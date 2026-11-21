@@ -33,6 +33,7 @@ import {
     selectShard,
     sitesExitCode,
 } from "./review-sweep-lib.mjs";
+import { buildResultDocument, corpusFingerprint, makeCase } from "./sweep-results.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const testDir = join(root, "test");
@@ -65,7 +66,9 @@ Options
   --only <text>     only inputs whose name contains <text>
   --shard <k/n>     only every n-th input, starting at the k-th (1-based): run shards in parallel processes
   --no-repo         skip the repository's own inputs, use only the extra paths
-  --json <file>     write the failures (or the differences) as JSON
+  --json <file>     write the failures (or the differences) as JSON (unchanged interface)
+  --export <file>   write a versioned result document with one outcome per planned case (see docs/development.md)
+  --seed <N>        record a seed in the export (sweeps themselves are deterministic without it)
   --max <N>         print at most N failures or hunks per command (default 40)
   --help            this text
 
@@ -73,11 +76,53 @@ Build first with npm run build: the sweeps run the plugin in dist/. Every comman
 
 const format = (text, width) => prettierFormat(text, { parser: "flix", plugins: [plugin], printWidth: width });
 
+function gitRevision() {
+    try {
+        return execFileSync("git", ["-C", root, "rev-parse", "HEAD"], { encoding: "utf8" }).trim();
+    } catch {
+        return "unknown";
+    }
+}
+
+function gitDirty() {
+    try {
+        return execFileSync("git", ["-C", root, "status", "--porcelain"], { encoding: "utf8" }).trim().length > 0;
+    } catch {
+        return false;
+    }
+}
+
 function gatherInputs(o) {
     const extra = [...o.paths, ...(process.env.FLIX_STDLIB_DIR ? [process.env.FLIX_STDLIB_DIR] : [])];
     const inputs = [...(o.repo ? repoInputs(testDir) : []), ...loadInputs(extra, { base: root })];
     const named = o.only ? inputs.filter((i) => i.name.includes(o.only)) : inputs;
     return selectShard(requireInputs(named), o.shard);
+}
+
+function writeExport(path, { command, widths, inputs, o, cases, baseSha }) {
+    const doc = buildResultDocument({
+        command,
+        formatter: { revision: gitRevision(), dirty: gitDirty() },
+        corpus: {
+            revision: gitRevision(),
+            inputCount: inputs.length,
+            paths: o.paths,
+            fingerprint: corpusFingerprint(inputs.map((i) => i.name)),
+        },
+        config: {
+            widths,
+            every: command === "sites" ? o.every : null,
+            shard: o.shard ?? null,
+            base: baseSha ?? o.base ?? null,
+            only: o.only ?? null,
+            repo: o.repo,
+            seed: o.seed ?? null,
+            known: o.known ?? null,
+        },
+        cases: cases.map((c) => makeCase(c)),
+    });
+    writeFileSync(path, `${JSON.stringify(doc, null, 2)}\n`);
+    return `; exported ${path} (${doc.cases.length} cases)`;
 }
 
 function loadKnown(o, fallbackName) {
@@ -101,6 +146,7 @@ async function idempotence(o) {
     const inputs = gatherInputs(o);
     const known = loadKnown(o, "known-idempotence-failures.json");
     const failures = [];
+    const cases = [];
     const checked = new Set();
     let runs = 0;
     let skipped = 0;
@@ -108,13 +154,21 @@ async function idempotence(o) {
         const before = fingerprint(input.source);
         if (before.errors.length > 0) {
             skipped++;
+            for (const width of widths) {
+                cases.push({ file: input.name, width, status: "skipped", reason: "input does not parse" });
+            }
             continue;
         }
         for (const width of widths) {
             runs++;
             const r = await checkFormat(format, input.source, width, before);
             checked.add([input.name, width, "plain", "-"].join("|"));
-            if (r) failures.push({ file: input.name, width, kind: r.kind, detail: r.detail, source: input.source, output: r.output, second: r.second });
+            if (r) {
+                failures.push({ file: input.name, width, kind: r.kind, detail: r.detail, source: input.source, output: r.output, second: r.second });
+                cases.push({ file: input.name, width, status: "fail", kind: r.kind, reason: r.detail });
+            } else {
+                cases.push({ file: input.name, width, status: "pass" });
+            }
         }
     }
     const { unknown, fixed, messages } = reconcile(known.filter((e) => inputs.some((i) => i.name === e.file)), failures, checked);
@@ -135,7 +189,8 @@ async function idempotence(o) {
     }
     for (const m of messages.filter((m) => m.startsWith("known failure now passes"))) console.log(`  ${m}`);
     const written = o.json ? writeJson(o.json, failures.map(({ source, output, second, ...rest }) => rest)) : "";
-    console.log(`idempotence finished in ${seconds(Date.now() - started)}${written}`);
+    const exported = o.export ? writeExport(o.export, { command: "idempotence", widths, inputs, o, cases }) : "";
+    console.log(`idempotence finished in ${seconds(Date.now() - started)}${written}${exported}`);
     return unknown.length + fixed.length > 0 ? 1 : 0;
 }
 
@@ -145,14 +200,21 @@ async function sites(o) {
     const inputs = gatherInputs(o);
     const known = loadKnown(o, "known-comment-site-failures.json");
     const failures = [];
+    const cases = [];
     const checked = new Set();
     let runs = 0;
     let skipped = 0;
     for (const input of inputs) {
-        if (fingerprint(input.source).errors.length > 0) continue;
+        if (fingerprint(input.source).errors.length > 0) {
+            for (const width of widths) {
+                cases.push({ file: input.name, width, status: "skipped", reason: "input does not parse" });
+            }
+            continue;
+        }
         const plan = mergePlans(planSites(input.source, { every: o.every, forms: COMMENT_FORMS, widths }), knownPlan(known, input.name));
         const r = await runSitePlan(format, input, plan);
         failures.push(...r.failures);
+        cases.push(...r.cases);
         r.checked.forEach((k) => checked.add(k));
         runs += r.checked.size;
         skipped += r.skipped;
@@ -170,7 +232,8 @@ async function sites(o) {
     const notRun = listedNotRun(known.filter((e) => names.has(e.file)), checked);
     for (const e of notRun.slice(0, o.max)) console.log(`  ${describeNotRun(e)}`);
     const written = o.json ? writeJson(o.json, failures.map(({ input, output, second, ...rest }) => rest)) : "";
-    console.log(`sites finished in ${seconds(Date.now() - started)}${written}`);
+    const exported = o.export ? writeExport(o.export, { command: "sites", widths, inputs, o, cases }) : "";
+    console.log(`sites finished in ${seconds(Date.now() - started)}${written}${exported}`);
     return sitesExitCode({ unknown, fixed, notRun });
 }
 
@@ -218,20 +281,28 @@ async function regression(o) {
         }
     };
     const diffs = [];
+    const cases = [];
     let runs = 0;
     for (const input of inputs) {
         for (const width of widths) {
             runs++;
             const a = await safe(baseFormat, input.source, width);
             const b = await safe(format, input.source, width);
-            if (a !== b) diffs.push({ file: input.name, width, hunks: lineDiff(a, b) });
+            if (a !== b) {
+                const hunks = lineDiff(a, b);
+                diffs.push({ file: input.name, width, hunks });
+                cases.push({ file: input.name, width, status: "fail", kind: "layout-differ", reason: `${hunks.length} hunks` });
+            } else {
+                cases.push({ file: input.name, width, status: "pass" });
+            }
         }
     }
     console.log(`regression against ${o.base} (${sha.slice(0, 12)}): ${runs} runs at widths ${widths.join(", ")}, ${diffs.length} differ in ${new Set(diffs.map((d) => d.file)).size} files`);
     for (const d of diffs.slice(0, o.max)) console.log(`\n  ${d.file} width ${d.width}: ${d.hunks.length} hunks\n${indent(renderHunks(d.hunks, { limit: 5 }))}`);
     if (diffs.length > o.max) console.log(`  ... ${diffs.length - o.max} more differing runs (use --max)`);
     const written = o.json ? writeJson(o.json, diffs.map((d) => ({ file: d.file, width: d.width, hunks: d.hunks.length }))) : "";
-    console.log(`regression finished in ${seconds(Date.now() - started)}${written}`);
+    const exported = o.export ? writeExport(o.export, { command: "regression", widths, inputs, o, cases, baseSha: sha }) : "";
+    console.log(`regression finished in ${seconds(Date.now() - started)}${written}${exported}`);
     return 0;
 }
 
