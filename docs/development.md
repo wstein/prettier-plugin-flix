@@ -245,6 +245,22 @@ The Official Flix examples workflow appends the **audit (layout)** section to th
 links the run artifact. It does not fail the job if the summary step errors. Sweep new/fixed counts appear
 when you pass `--base` / `--candidate` exports (local command above, or a future sweep workflow).
 
+## Width heatmap (optional R)
+
+`analysis/width-heatmap/` plots before-and-after sweep exports across print widths (fixture or repro on
+the vertical axis, width on the horizontal axis, one panel per formatter revision). Pass, fail, skipped,
+and missing cells are distinct. The first example is the two [#201](https://github.com/wstein/prettier-plugin-flix/issues/201)
+repros at widths 20–160.
+
+R and ggplot2 are optional and are **not** a dependency of the published plugin or of `npm test`. A Node
+fallback writes the same sample SVG and a `changed-widths.tsv` table. See
+[analysis/width-heatmap/README.md](../analysis/width-heatmap/README.md) for the collect and render commands.
+
+```sh
+node analysis/width-heatmap/build-sample.mjs
+# with R: Rscript analysis/width-heatmap/plot-width-heatmap.R --base …/base.json --candidate …/candidate.json --out out/heatmap.svg
+```
+
 
 ## Issue triage and labels
 
