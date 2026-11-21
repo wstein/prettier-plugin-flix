@@ -36,7 +36,14 @@ test("resolveFlixVersion rejects unsupported exact versions", () => {
     assert.throws(() => resolveFlixVersion(""), /Unsupported flixVersion ""\. Supported: 0\.80\.0\./);
     assert.throws(() => resolveFlixVersion("v0.80.0"), /Unsupported flixVersion "v0\.80\.0"\. Supported: 0\.80\.0\./);
     assert.throws(() => resolveFlixVersion("V0.80.0"), /Unsupported flixVersion "V0\.80\.0"\. Supported: 0\.80\.0\./);
-    assert.throws(() => resolveFlixVersion(0.8), /flixVersion must be an exact Flix compiler version string/);
+    assert.throws(
+        () => resolveFlixVersion(" 0.80.0 "),
+        /Unsupported flixVersion " 0\.80\.0 "\. Supported: 0\.80\.0\./,
+    );
+    assert.throws(
+        () => resolveFlixVersion(0.8),
+        /flixVersion must be an exact Flix compiler version string \(supported: 0\.80\.0\)\./,
+    );
 });
 
 test("parseFlix and the Prettier parser hand-off accept only supported versions", () => {
