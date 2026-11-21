@@ -59,7 +59,7 @@ pub def palette(): {
     x = String,
     color = String
 } = {
-    x = "red",
+    x     = "red",
     color = "blue" + "-green"
 }
 

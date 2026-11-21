@@ -1,5 +1,5 @@
 import type { AstPath, Doc, Options, Parser, Plugin, Printer, SupportLanguage } from "prettier";
-import { layoutSource } from "./comment-layout.js";
+import { alignmentIndents, layoutSource } from "./comment-layout.js";
 import { parseFlix, type FlixRoot } from "./parse.js";
 import { Printer as FlixPrinter } from "./print.js";
 
@@ -30,8 +30,14 @@ const flixAstPrinter: Printer<FlixRoot> = {
     // token stream, so Prettier's own comment attachment is not used.
     print(path: AstPath<FlixRoot>, options: Options): Doc {
         const { printWidth = defaultOptions.printWidth, tabWidth = defaultOptions.tabWidth, useTabs = false } = options;
-        const value = new FlixPrinter(path.node, printWidth, tabWidth).printRoot();
-        return layoutSource(path.node, value, { printWidth, tabWidth, useTabs });
+        const settings = { printWidth, tabWidth, useTabs };
+        const printer = new FlixPrinter(path.node, printWidth, tabWidth);
+        let value = printer.printRoot();
+        if (printer.hasAlignmentCandidates) {
+            const indents = alignmentIndents(path.node, value, settings);
+            if (indents.size) value = new FlixPrinter(path.node, printWidth, tabWidth, indents).printRoot();
+        }
+        return layoutSource(path.node, value, settings);
     },
 };
 

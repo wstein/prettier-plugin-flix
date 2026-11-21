@@ -109,6 +109,7 @@ const CALL_LIKE = new Set([
 ]);
 
 export class Printer {
+    hasAlignmentCandidates = false;
     private flat = 0;
     private consumed = new Set<number>();
     /** Tokens that start a line in the output, so own-line comments need no extra line break. */
@@ -119,6 +120,7 @@ export class Printer {
         private root: FlixRoot,
         private printWidth: number,
         private tabWidth: number,
+        private alignmentIndent?: ReadonlyMap<number, number>,
     ) {}
 
     // ------------------------------------------------------------------ tokens
@@ -481,13 +483,13 @@ export class Printer {
         const shortest = rows.reduce((min, row) => Math.min(min, row.leftWidth), column);
         const padding = column - shortest;
         if (padding > 8) return;
-        const measured = rows.map(({ end, delimiter, rightWidth }, i) => ({
-            end,
-            width: column + this.src(delimiter).length + 2 + rightWidth + (seps[i] ? 1 : 0),
-        }));
-        // Each row needs room for the code plus two levels of indentation.
-        if (measured.some(({ width }) => width + 2 * this.tabWidth > this.printWidth)) return;
         if (padding === 0) return;
+        this.hasAlignmentCandidates = true;
+        const measured = rows.map(({ delimiter, rightWidth }, i) =>
+            column + this.src(delimiter).length + 2 + rightWidth + (seps[i] ? 1 : 0) +
+            this.rowIndent(delimiter),
+        );
+        if (measured.some((width) => width > this.printWidth)) return;
 
         return rows.map(({ left, delimiter, right, leftWidth }) => [
             this.print(this.ls(left)),
@@ -496,6 +498,10 @@ export class Printer {
             " ",
             this.print(right),
         ]);
+    }
+
+    private rowIndent(delimiter: TerminalNode): number {
+        return this.alignmentIndent?.get(delimiter.symbol.tokenIndex) ?? 2 * this.tabWidth;
     }
 
     private printListItem(item: Node[], parentKind: string): Doc {
@@ -1047,11 +1053,13 @@ export class Printer {
         }
         // A multiline body can start below its arrow. If every arm would
         // otherwise fit, don't introduce a wrap just to align the arrows.
-        const armWidths = rows.map(({ head, gap, tail }) => measure([head, gap, tail]) + 2 * this.tabWidth);
+        this.hasAlignmentCandidates = true;
+        const indents = rows.map(({ arrow }) => this.rowIndent(arrow));
+        const armWidths = rows.map(({ head, gap, tail }, i) => measure([head, gap, tail]) + indents[i]);
         const allStayCompact = armWidths.every((width, i) => width + column - widths[i] <= this.printWidth);
         const hasWrappedArm = armWidths.some((width) => width > this.printWidth);
         const modestPadding = widths.every((width) => column - width <= 16);
-        const fits = column + " =>".length + 2 * this.tabWidth <= this.printWidth &&
+        const fits = column + " =>".length + Math.max(...indents) <= this.printWidth &&
             rows.every(({ gap }) => gap === " ") && (allStayCompact || (hasWrappedArm && modestPadding));
         return rows.map(({ leading, head, gap, tail }, i) => [
             leading,
@@ -1083,7 +1091,7 @@ export class Printer {
         return [head, gap, tail];
     }
 
-    private eqBodyDocs(n: ParserRuleContext): { head: Doc; gap: Doc; tail: Doc } {
+    private eqBodyDocs(n: ParserRuleContext): { head: Doc; gap: Doc; tail: Doc; arrow: TerminalNode } {
         const cs = kids(n);
         const k = kind(n);
         const ai = cs.findIndex((c) => isTerm(c) && BODY_ARROWS.has(ttype(c)));
@@ -1091,7 +1099,7 @@ export class Printer {
         const headLast = ai > 0 ? lastTerm(cs[ai - 1]) : null;
         const head = k === "DefDeclaration" ? this.printDefinitionHead(n, cs, ai) : this.seq(cs.slice(0, ai), k);
         const gap = this.after(headLast, " ", true);
-        return { head, gap, tail: [this.tok(arrow), this.printEqBodyTail(cs, ai, k, arrow)] };
+        return { head, gap, arrow, tail: [this.tok(arrow), this.printEqBodyTail(cs, ai, k, arrow)] };
     }
 
     private printDefinitionHead(n: ParserRuleContext, children: Node[], arrowIndex: number): Doc {
