@@ -120,6 +120,7 @@ def wait(rx: Receiver[Int32], n: Int32, tx: Sender[List[Int32]]): Unit
 [Effect set with comment before `=`](../test/fixtures/declarations/signature-effect-set-equals-block-comment.md) ·
 [Effect set with own-line comment before `=`](../test/fixtures/declarations/signature-effect-set-own-line-before-equals.md) ·
 [Effect set with call body](../test/fixtures/declarations/signature-effect-set-call-body.md) ·
+[Effect set with `match` and own-line comment](../test/fixtures/declarations/signature-effect-set-match-own-line.md) ·
 [Schema with comment before `=`](../test/fixtures/declarations/schema-equals-block-comment.md)
 
 Keep short function types on one line. When an arrow chain wraps, leave

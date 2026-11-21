@@ -32,3 +32,18 @@ def wait(
 // own
 = 1
 ```
+
+```flix printWidth=23
+def wait(
+    rx: Receiver[
+        Int32
+    ],
+    n: Int32,
+    tx: Sender[
+        List[Int32]
+    ]
+): Unit
+    \ { Chan, NonDet }
+// own
+= 1
+```

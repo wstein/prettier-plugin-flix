@@ -1424,11 +1424,18 @@ export class Printer {
         if (!body) return 0;
         const first = firstTerm(body);
         if (!first || first.symbol.line !== arrow.symbol.line) return 0;
+        const last = lastTerm(body);
+        // An own-line comment after the first body token means the rest of the body
+        // does not share the `=` line in pass 2 (`= match` / `// own` / `c { ... }`).
+        if (last) {
+            for (let index = first.symbol.tokenIndex + 1; index <= last.symbol.tokenIndex; index++) {
+                if (this.root.info.get(index)?.lead.some((comment) => comment.nl > 0)) return 0;
+            }
+        }
         const fork = this.forkPrinter();
         const printed = fork.print(body);
         // Count only bodies that placeBody keeps on the `=` line in every pass; a body
         // that may move below `=` is gone from that line in pass 2.
-        const last = lastTerm(body);
         if ((!last || ttype(last) !== L.RBRACE) && !willBreak(printed)) return 0;
         const printWidth = Math.max(1, this.printWidth - this.declarationIndent(n));
         const formatted = doc.printer.printDocToString(printed, {
