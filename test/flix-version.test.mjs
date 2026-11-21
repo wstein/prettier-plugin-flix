@@ -61,9 +61,13 @@ test("Prettier option flixVersion is registered and formats with 0.80.0", async 
 });
 
 test("Prettier rejects an unsupported flixVersion choice", async () => {
+    // Prettier may color choice names in CI; strip ANSI before matching.
     await assert.rejects(
         () => format(sample, { parser: "flix", plugins: ["./dist/index.js"], flixVersion: "0.79.0" }),
-        /Invalid flixVersion value\. Expected "0\.80\.0", but received "0\.79\.0"/,
+        (err) => {
+            const message = String(err?.message ?? err).replace(/\u001b\[[0-9;]*m/g, "");
+            return /Invalid flixVersion value\. Expected "0\.80\.0", but received "0\.79\.0"/.test(message);
+        },
     );
 });
 
