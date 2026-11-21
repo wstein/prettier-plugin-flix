@@ -1226,7 +1226,23 @@ export class Printer {
                 separator ? this.after(end, this.after(separator, line)) : "",
             ];
         });
-        return [this.print(keyword), group(indent([this.after(lastTerm(keyword), line), rows]))];
+        const body = group(indent([this.after(lastTerm(keyword), line), rows]));
+        // When the return type is a wrapping arrow chain, indent constraints one
+        // more level so they do not line up with the continued parameter types.
+        return [this.print(keyword), this.withFollowsArrowReturn(n) ? indent(body) : body];
+    }
+
+    /** True when this `with` clause follows a function type in a signature. */
+    private withFollowsArrowReturn(n: ParserRuleContext): boolean {
+        const parent = n.parent as Node | null;
+        if (!parent) return false;
+        const siblings = kids(parent);
+        const index = siblings.indexOf(n);
+        if (index <= 0) return false;
+        let typeNode: Node = siblings[index - 1];
+        if (kind(typeNode) === "TypeAndEffect") typeNode = kids(typeNode)[0];
+        if (kind(typeNode) === "EffectAnnotatedType") typeNode = kids(typeNode)[0];
+        return kind(typeNode) === "ArrowType";
     }
 
     private declarationIndent(n: ParserRuleContext): number {
