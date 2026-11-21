@@ -32,6 +32,7 @@
     "coverage:syntax": "node scripts/syntax-coverage.mjs",
     "format:checked": "node scripts/format-checked.mjs",
     "test:flix-format": "node scripts/flix-format-references.mjs",
+    "review:sweep": "node scripts/review-sweep.mjs",
     "test:update": "npm run build && UPDATE_FIXTURES=1 node --test test/fixtures.test.mjs",
     "test:docs-examples": "npm run build && node scripts/audit-flix-examples.mjs"
   },
