@@ -7,7 +7,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { COMMENT_FORMS, withCommentAt } from "./lib.mjs";
-import { checkFormat, checkSite, describeNotRun, knownPlan, lineDiff, listedNotRun, loadInputs, mergePlans, minimize, parseKnown, parsePositiveInt, parseWidths, planSites, reconcile, renderHunks, runSitePlan, selectShard } from "../scripts/review-sweep-lib.mjs";
+import { checkFormat, checkSite, describeNotRun, isPrivateOwnedDir, knownPlan, lineDiff, listedNotRun, loadInputs, mergePlans, minimize, parseKnown, parsePositiveInt, parseSweepArgs, parseWidths, planSites, reconcile, renderHunks, requireInputs, runSitePlan, selectShard, sitesExitCode } from "../scripts/review-sweep-lib.mjs";
 
 const src = "def f(): Int32 = a.b + 1\n";
 
@@ -164,4 +164,34 @@ test("listedNotRun: a known site that was not checked is reported", () => {
     assert.deepEqual(listedNotRun(known, new Set([key(entry())])), []);
     assert.equal(listedNotRun(known, new Set()).length, 1);
     assert.match(describeNotRun(entry()), /listed site not run: a\.md width=60 form=block token=7/);
+});
+
+test("parseSweepArgs: validates options the CLI used to drop", () => {
+    assert.equal(parseSweepArgs(["sites", "--every", "6"]).every, 6);
+    assert.equal(parseSweepArgs(["sites"]).command, "sites");
+    assert.deepEqual(parseSweepArgs(["idempotence", "lib"]).paths, ["lib"]);
+    assert.throws(() => parseSweepArgs(["sites", "--every", "abc"]), /positive integer/);
+    assert.throws(() => parseSweepArgs(["sites", "--max", "0"]), /positive integer/);
+    assert.throws(() => parseSweepArgs(["sites", "--weird"]), /unknown option/);
+    assert.throws(() => parseSweepArgs(["sites", "--every"]), /needs a value/);
+});
+
+test("requireInputs: rejects an empty set (vacuous green)", () => {
+    assert.deepEqual(requireInputs([{ name: "a" }]), [{ name: "a" }]);
+    assert.throws(() => requireInputs([]), /no inputs/);
+});
+
+test("isPrivateOwnedDir: accepts only own 0700 directories", () => {
+    const uid = process.getuid?.() ?? 1000;
+    assert.equal(isPrivateOwnedDir({ isDirectory: () => true, uid, mode: 0o40700 }, () => uid), true);
+    assert.equal(isPrivateOwnedDir({ isDirectory: () => true, uid, mode: 0o40755 }, () => uid), false);
+    assert.equal(isPrivateOwnedDir({ isDirectory: () => true, uid: uid + 1, mode: 0o40700 }, () => uid), false);
+    assert.equal(isPrivateOwnedDir({ isDirectory: () => false, uid, mode: 0o40700 }, () => uid), false);
+});
+
+test("sitesExitCode: unknown, fixed, or listed-not-run all fail the run", () => {
+    assert.equal(sitesExitCode({ unknown: [], fixed: [], notRun: [] }), 0);
+    assert.equal(sitesExitCode({ unknown: [{}], fixed: [], notRun: [] }), 1);
+    assert.equal(sitesExitCode({ unknown: [], fixed: [{}], notRun: [] }), 1);
+    assert.equal(sitesExitCode({ unknown: [], fixed: [], notRun: [{}] }), 1);
 });

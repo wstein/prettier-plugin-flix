@@ -13,6 +13,7 @@ import {
     SITE_WIDTHS,
     checkFormat,
     describeNotRun,
+    isPrivateOwnedDir,
     knownPlan,
     lineDiff,
     listedNotRun,
@@ -20,15 +21,17 @@ import {
     mergePlans,
     minimize,
     parseKnown,
-    parsePositiveInt,
+    parseSweepArgs,
     parseWidths,
     planSites,
     reconcile,
     renderHunks,
     repoInputs,
+    requireInputs,
     runSitePlan,
     seconds,
     selectShard,
+    sitesExitCode,
 } from "./review-sweep-lib.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -68,32 +71,13 @@ Options
 
 Build first with npm run build: the sweeps run the plugin in dist/. Every command prints its run time.`;
 
-function parseArgs(argv) {
-    const o = { paths: [], every: 1, max: 40, repo: true };
-    const takes = new Set(["--known", "--every", "--widths", "--base", "--only", "--json", "--max", "--shard"]);
-    for (let i = 0; i < argv.length; i++) {
-        const a = argv[i];
-        if (a === "--help" || a === "-h") o.help = true;
-        else if (a === "--no-repo") o.repo = false;
-        else if (takes.has(a)) {
-            if (i + 1 >= argv.length) throw new Error(`${a} needs a value`);
-            o[a.slice(2)] = argv[++i];
-        } else if (a.startsWith("--")) throw new Error(`unknown option ${a}`);
-        else if (!o.command) o.command = a;
-        else o.paths.push(a);
-    }
-    for (const k of ["every", "max"]) o[k] = parsePositiveInt(k, o[k]);
-    return o;
-}
-
 const format = (text, width) => prettierFormat(text, { parser: "flix", plugins: [plugin], printWidth: width });
 
 function gatherInputs(o) {
     const extra = [...o.paths, ...(process.env.FLIX_STDLIB_DIR ? [process.env.FLIX_STDLIB_DIR] : [])];
     const inputs = [...(o.repo ? repoInputs(testDir) : []), ...loadInputs(extra, { base: root })];
     const named = o.only ? inputs.filter((i) => i.name.includes(o.only)) : inputs;
-    if (named.length === 0) throw new Error("no inputs (check --only, --no-repo and the paths)");
-    return selectShard(named, o.shard);
+    return selectShard(requireInputs(named), o.shard);
 }
 
 function loadKnown(o, fallbackName) {
@@ -187,7 +171,7 @@ async function sites(o) {
     for (const e of notRun.slice(0, o.max)) console.log(`  ${describeNotRun(e)}`);
     const written = o.json ? writeJson(o.json, failures.map(({ input, output, second, ...rest }) => rest)) : "";
     console.log(`sites finished in ${seconds(Date.now() - started)}${written}`);
-    return unknown.length + fixed.length + notRun.length > 0 ? 1 : 0;
+    return sitesExitCode({ unknown, fixed, notRun });
 }
 
 /** Builds the plugin of `ref` in the system temporary directory (once per commit) and returns its directory. */
@@ -197,8 +181,7 @@ function buildBase(ref) {
     if (existsSync(dir)) {
         // A fixed name in a shared temporary directory: use it only when it is this user's private directory.
         const st = lstatSync(dir);
-        const mine = st.isDirectory() && (process.getuid === undefined || (st.uid === process.getuid() && (st.mode & 0o077) === 0));
-        if (!mine) throw new Error(`${dir} is not a private directory of this user; remove it or set TMPDIR`);
+        if (!isPrivateOwnedDir(st)) throw new Error(`${dir} is not a private directory of this user; remove it or set TMPDIR`);
         if (existsSync(join(dir, "dist", "index.js"))) return { dir, sha };
         rmSync(dir, { recursive: true, force: true }); // an incomplete build
     }
@@ -260,7 +243,7 @@ function writeJson(path, data) {
 }
 
 async function main() {
-    const o = parseArgs(process.argv.slice(2));
+    const o = parseSweepArgs(process.argv.slice(2));
     if (o.help || !o.command) {
         console.log(HELP);
         return o.help ? 0 : 2;

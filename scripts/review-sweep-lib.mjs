@@ -319,3 +319,41 @@ export function listedNotRun(known, checked) {
 
 /** Message for a listed site that was not run. */
 export const describeNotRun = (e) => `listed site not run: ${e.file} width=${e.width} form=${e.form} token=${e.token} (issue ${e.issue})`;
+
+/** Parses `review:sweep` argv into options. Throws on unknown flags or invalid --every/--max. */
+export function parseSweepArgs(argv) {
+    const o = { paths: [], every: 1, max: 40, repo: true };
+    const takes = new Set(["--known", "--every", "--widths", "--base", "--only", "--json", "--max", "--shard"]);
+    for (let i = 0; i < argv.length; i++) {
+        const a = argv[i];
+        if (a === "--help" || a === "-h") o.help = true;
+        else if (a === "--no-repo") o.repo = false;
+        else if (takes.has(a)) {
+            if (i + 1 >= argv.length) throw new Error(`${a} needs a value`);
+            o[a.slice(2)] = argv[++i];
+        } else if (a.startsWith("--")) throw new Error(`unknown option ${a}`);
+        else if (!o.command) o.command = a;
+        else o.paths.push(a);
+    }
+    for (const k of ["every", "max"]) o[k] = parsePositiveInt(k, o[k]);
+    return o;
+}
+
+/** Throws when the filtered input list is empty (vacuous green run). */
+export function requireInputs(inputs, { only, repo } = {}) {
+    if (inputs.length === 0) throw new Error("no inputs (check --only, --no-repo and the paths)");
+    return inputs;
+}
+
+/**
+ * True when `st` is a directory owned by this user with no group/other bits
+ * (mkdtemp mode). Used before importing a fixed-name cache under TMPDIR.
+ */
+export function isPrivateOwnedDir(st, getuid = process.getuid) {
+    return st.isDirectory() && (getuid === undefined || (st.uid === getuid() && (st.mode & 0o077) === 0));
+}
+
+/** Exit code for the sites command: any unknown, fixed, or not-run listed site is failure. */
+export function sitesExitCode({ unknown = [], fixed = [], notRun = [] }) {
+    return unknown.length + fixed.length + notRun.length > 0 ? 1 : 0;
+}
