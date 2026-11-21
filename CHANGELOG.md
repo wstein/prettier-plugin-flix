@@ -4,6 +4,10 @@ User-facing changes to Prettier Plugin for Flix. Plugin releases have their own 
 
 ## [Unreleased]
 
+### Compatibility
+
+- Declare `"engines": { "node": ">=22" }` so installers match CI and release publishing.
+
 ## [0.1.3] - 2026-11-20
 
 Tested with Flix 0.80.0 and Prettier 3.10.1.

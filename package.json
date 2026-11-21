@@ -29,6 +29,9 @@
     "test:update": "npm run build && UPDATE_FIXTURES=1 node --test test/fixtures.test.mjs",
     "test:docs-examples": "npm run build && node scripts/audit-flix-examples.mjs"
   },
+  "engines": {
+    "node": ">=22"
+  },
   "peerDependencies": {
     "prettier": "^3.0.0"
   },
