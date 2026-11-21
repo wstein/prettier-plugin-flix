@@ -150,10 +150,17 @@ export function compareBaseline(previous, current) {
     };
 }
 
-async function audit(book, website, output, reviewsPath, baselinePath) {
+export function unreviewedLayouts(cases, drift) {
+    const changed = drift && new Set([...drift.added, ...drift.changed]);
+    return cases.filter((item) => item.status === "layout-change" && !item.approval &&
+        (!changed || changed.has(item.case_name)));
+}
+
+async function audit(book, website, output, reviewsPath, baselinePath, reviewBaselinePath) {
     const reviews = reviewsPath ? JSON.parse(await readFile(reviewsPath, "utf8")) : {};
     const previous = baselinePath ? await readFile(baselinePath, "utf8") : undefined;
     if (!reviews || typeof reviews !== "object" || Array.isArray(reviews)) throw new Error("Expected an object keyed by case name in the review file");
+    const reviewBaseline = reviewBaselinePath ? await readFile(reviewBaselinePath, "utf8") : undefined;
     const inventory = await extractExamples(book, website);
     const { examples, revisions } = inventory;
     await mkdir(output);
@@ -170,7 +177,7 @@ async function audit(book, website, output, reviewsPath, baselinePath) {
         const { input, formatted, ...outcome } = result;
         const approval = approvalFor(result, Object.hasOwn(reviews, example.case_name) ? reviews[example.case_name] : undefined);
         totals[outcome.status] = (totals[outcome.status] ?? 0) + 1;
-        if (outcome.status === "invariant-failure" || (reviewsPath && outcome.status === "layout-change" && !approval)) failed = true;
+        if (outcome.status === "invariant-failure") failed = true;
         const hasDiff = input !== undefined && formatted !== undefined && input !== formatted;
         if (hasDiff) {
             const filename = example.case_name + ".flix";
@@ -192,6 +199,9 @@ async function audit(book, website, output, reviewsPath, baselinePath) {
     const baseline = [baselineHeader, ...baselineRows.sort(), ""].join("\n");
     const drift = previous === undefined ? undefined : compareBaseline(previous, baseline);
     if (drift && Object.values(drift).some((names) => names.length)) failed = true;
+    const reviewDrift = reviewBaseline === undefined ? undefined : compareBaseline(reviewBaseline, baseline);
+    const missing = reviewsPath ? unreviewedLayouts(cases, reviewDrift) : [];
+    if (missing.length) failed = true;
     const explained = cases.filter((item) => item.explanation).length;
     const summary = ["# Official Flix examples", "", ...Object.entries(totals).map(([key, count]) => `- ${key} · ${count}`),
         `- automatically explained · ${explained}`, ""];
@@ -201,6 +211,10 @@ async function audit(book, website, output, reviewsPath, baselinePath) {
             summary.push(`- ${type} · ${names.length}`, ...names.slice(0, 20).map((name) => `  - \`${name}\``));
         }
         summary.push("", "See `drift.json` in the audit artifact for the full list.", "");
+    }
+    if (missing.length) {
+        summary.push("## Layout changes requiring a review reason", "",
+            ...missing.map(({ case_name, digest }) => `- \`${case_name}\` · \`${digest}\``), "");
     }
     const { stdout: diff } = await exec("git", [
         "diff", "--no-index", "--no-ext-diff", "--no-color", "--no-renames", "--src-prefix=a/", "--dst-prefix=b/", "--", "before", "after",
@@ -223,6 +237,7 @@ async function audit(book, website, output, reviewsPath, baselinePath) {
     ]);
     console.log(JSON.stringify(totals, null, 2));
     if (reviewsPath) {
+        for (const item of missing) console.error(`Missing layout review: ${item.case_name} ${item.digest}`);
         console.log(`Reviewed layout changes: ${cases.filter((item) => item.approval).length}/${totals["layout-change"] ?? 0}`);
     }
     if (drift) console.log(`Baseline drift: ${drift.added.length} added, ${drift.removed.length} removed, ${drift.changed.length} changed`);
@@ -233,12 +248,12 @@ async function audit(book, website, output, reviewsPath, baselinePath) {
 if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url) {
     try {
         const { positionals, values } = parseArgs({
-            allowPositionals: true, options: { reviews: { type: "string" }, baseline: { type: "string" } },
+            allowPositionals: true, options: { reviews: { type: "string" }, baseline: { type: "string" }, "review-baseline": { type: "string" } },
         });
-        if (positionals.length !== 3) {
-            throw new Error("Usage: npm run test:docs-examples -- <book> <flix.dev> <new-report-directory> [--reviews reviews.json] [--baseline baseline.tsv]");
+        if (positionals.length !== 3 || (values["review-baseline"] && !values.reviews)) {
+            throw new Error("Usage: npm run test:docs-examples -- <book> <flix.dev> <new-report-directory> [--reviews reviews.json] [--baseline baseline.tsv] [--review-baseline base-branch.tsv]");
         }
-        process.exitCode = await audit(...positionals.map((path) => resolve(path)), values.reviews, values.baseline);
+        process.exitCode = await audit(...positionals.map((path) => resolve(path)), values.reviews, values.baseline, values["review-baseline"]);
     } catch (error) {
         console.error(error.message);
         process.exitCode = 2;
