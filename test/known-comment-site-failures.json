@@ -1,472 +1,139 @@
 {
- "failures": [
-  {
-   "file": "fixtures/datalog/fixpoint-list-wrap.md",
-   "width": 40,
-   "form": "block",
-   "token": 153,
-   "kind": "unparsable",
-   "issue": "#134",
-   "context": " ScheduledSegmentForWeekdays/ /* note */ 1, AdditionalWeeken"
-  },
-  {
-   "file": "fixtures/datalog/fixpoint-list-wrap.md",
-   "width": 40,
-   "form": "block",
-   "token": 158,
-   "kind": "unparsable",
-   "issue": "#134",
-   "context": "/1, AdditionalWeekendSegment/ /* note */ 1;\n    ()\n\ndef comp"
-  },
-  {
-   "file": "fixtures/datalog/fixpoint-list-wrap.md",
-   "width": 40,
-   "form": "block",
-   "token": 192,
-   "kind": "unparsable",
-   "issue": "#134",
-   "context": "p = inject Vector#{1} into A/ /* note */ 1;\n    let _ = solv"
-  },
-  {
-   "file": "fixtures/datalog/fixpoint-list-wrap.md",
-   "width": 40,
-   "form": "block",
-   "token": 272,
-   "kind": "unparsable",
-   "issue": "#134",
-   "context": "e last source\n        into A/ /* note */ 1, B/1;\n    let q ="
-  },
-  {
-   "file": "fixtures/datalog/fixpoint-list-wrap.md",
-   "width": 40,
-   "form": "block",
-   "token": 277,
-   "kind": "unparsable",
-   "issue": "#134",
-   "context": "t source\n        into A/1, B/ /* note */ 1;\n    let q = inje"
-  },
-  {
-   "file": "fixtures/datalog/fixpoint-list-wrap.md",
-   "width": 40,
-   "form": "block",
-   "token": 299,
-   "kind": "unparsable",
-   "issue": "#134",
-   "context": "/ before into\n        into A/ /* note */ 1;\n    let aVeryLon"
-  },
-  {
-   "file": "fixtures/datalog/fixpoint-list-wrap.md",
-   "width": 60,
-   "form": "block",
-   "token": 153,
-   "kind": "unparsable",
-   "issue": "#134",
-   "context": " ScheduledSegmentForWeekdays/ /* note */ 1, AdditionalWeeken"
-  },
-  {
-   "file": "fixtures/datalog/fixpoint-list-wrap.md",
-   "width": 60,
-   "form": "block",
-   "token": 158,
-   "kind": "unparsable",
-   "issue": "#134",
-   "context": "/1, AdditionalWeekendSegment/ /* note */ 1;\n    ()\n\ndef comp"
-  },
-  {
-   "file": "fixtures/datalog/fixpoint-list-wrap.md",
-   "width": 60,
-   "form": "block",
-   "token": 192,
-   "kind": "unparsable",
-   "issue": "#134",
-   "context": "p = inject Vector#{1} into A/ /* note */ 1;\n    let _ = solv"
-  },
-  {
-   "file": "fixtures/datalog/fixpoint-list-wrap.md",
-   "width": 60,
-   "form": "block",
-   "token": 272,
-   "kind": "unparsable",
-   "issue": "#134",
-   "context": "e last source\n        into A/ /* note */ 1, B/1;\n    let q ="
-  },
-  {
-   "file": "fixtures/datalog/fixpoint-list-wrap.md",
-   "width": 60,
-   "form": "block",
-   "token": 277,
-   "kind": "unparsable",
-   "issue": "#134",
-   "context": "t source\n        into A/1, B/ /* note */ 1;\n    let q = inje"
-  },
-  {
-   "file": "fixtures/datalog/fixpoint-list-wrap.md",
-   "width": 60,
-   "form": "block",
-   "token": 299,
-   "kind": "unparsable",
-   "issue": "#134",
-   "context": "/ before into\n        into A/ /* note */ 1;\n    let aVeryLon"
-  },
-  {
-   "file": "fixtures/datalog/fixpoint-list-wrap.md",
-   "width": 100,
-   "form": "block",
-   "token": 153,
-   "kind": "unparsable",
-   "issue": "#134",
-   "context": " ScheduledSegmentForWeekdays/ /* note */ 1, AdditionalWeeken"
-  },
-  {
-   "file": "fixtures/datalog/fixpoint-list-wrap.md",
-   "width": 100,
-   "form": "block",
-   "token": 158,
-   "kind": "unparsable",
-   "issue": "#134",
-   "context": "/1, AdditionalWeekendSegment/ /* note */ 1;\n    ()\n\ndef comp"
-  },
-  {
-   "file": "fixtures/datalog/fixpoint-list-wrap.md",
-   "width": 100,
-   "form": "block",
-   "token": 192,
-   "kind": "unparsable",
-   "issue": "#134",
-   "context": "p = inject Vector#{1} into A/ /* note */ 1;\n    let _ = solv"
-  },
-  {
-   "file": "fixtures/datalog/fixpoint-list-wrap.md",
-   "width": 100,
-   "form": "block",
-   "token": 272,
-   "kind": "unparsable",
-   "issue": "#134",
-   "context": "e last source\n        into A/ /* note */ 1, B/1;\n    let q ="
-  },
-  {
-   "file": "fixtures/datalog/fixpoint-list-wrap.md",
-   "width": 100,
-   "form": "block",
-   "token": 277,
-   "kind": "unparsable",
-   "issue": "#134",
-   "context": "t source\n        into A/1, B/ /* note */ 1;\n    let q = inje"
-  },
-  {
-   "file": "fixtures/datalog/fixpoint-list-wrap.md",
-   "width": 100,
-   "form": "block",
-   "token": 299,
-   "kind": "unparsable",
-   "issue": "#134",
-   "context": "/ before into\n        into A/ /* note */ 1;\n    let aVeryLon"
-  },
-  {
-   "file": "fixtures/datalog/inject-facts.md",
-   "width": 40,
-   "form": "block",
-   "token": 36,
-   "kind": "unparsable",
-   "issue": "#134",
-   "context": "t Vector#{18,25,40} into Age/ /* note */ 1;\nquery facts sele"
-  },
-  {
-   "file": "fixtures/datalog/inject-facts.md",
-   "width": 60,
-   "form": "block",
-   "token": 36,
-   "kind": "unparsable",
-   "issue": "#134",
-   "context": "t Vector#{18,25,40} into Age/ /* note */ 1;\nquery facts sele"
-  },
-  {
-   "file": "fixtures/datalog/inject-facts.md",
-   "width": 100,
-   "form": "block",
-   "token": 36,
-   "kind": "unparsable",
-   "issue": "#134",
-   "context": "t Vector#{18,25,40} into Age/ /* note */ 1;\nquery facts sele"
-  },
-  {
-   "file": "fixtures/datalog/transit.md",
-   "width": 40,
-   "form": "block",
-   "token": 123,
-   "kind": "unparsable",
-   "issue": "#134",
-   "context": "ect timetable() into Segment/ /* note */ 3;\nlet rules=#{\n// "
-  },
-  {
-   "file": "fixtures/datalog/transit.md",
-   "width": 40,
-   "form": "block",
-   "token": 166,
-   "kind": "not-idempotent",
-   "issue": "#137",
-   "context": "st),if(minutes<=maxLegMinutes /* note */ ).\n};\nquery facts,r"
-  },
-  {
-   "file": "fixtures/datalog/transit.md",
-   "width": 60,
-   "form": "block",
-   "token": 123,
-   "kind": "unparsable",
-   "issue": "#134",
-   "context": "ect timetable() into Segment/ /* note */ 3;\nlet rules=#{\n// "
-  },
-  {
-   "file": "fixtures/datalog/transit.md",
-   "width": 100,
-   "form": "block",
-   "token": 123,
-   "kind": "unparsable",
-   "issue": "#134",
-   "context": "ect timetable() into Segment/ /* note */ 3;\nlet rules=#{\n// "
-  },
-  {
-   "file": "fixtures/declarations/checkout.md",
-   "width": 40,
-   "form": "block",
-   "token": 30,
-   "kind": "not-idempotent",
-   "issue": "#137",
-   "context": "et shipping=if(subtotal>=5000 /* note */ ) 0 else 599;\nsubto"
-  },
-  {
-   "file": "fixtures/declarations/checkout.md",
-   "width": 40,
-   "form": "block",
-   "token": 192,
-   "kind": "not-idempotent",
-   "issue": "#137",
-   "context": "\",Checkout.receipt(\"Jo\",1000) /* note */ )\n"
-  },
-  {
-   "file": "fixtures/declarations/long-function-types.md",
-   "width": 60,
-   "form": "block",
-   "token": 75,
-   "kind": "not-idempotent",
-   "issue": "#135",
-   "context": "> IntermediateTransferStation /* note */ ) -> EstimatedTrave"
-  },
-  {
-   "file": "fixtures/declarations/row-type-tails.md",
-   "width": 40,
-   "form": "block",
-   "token": 133,
-   "kind": "not-idempotent",
-   "issue": "#136",
-   "context": " CommentedRow[r: RecordRow] = /* note */  (name = String, de"
-  },
-  {
-   "file": "fixtures/declarations/row-type-tails.md",
-   "width": 60,
-   "form": "block",
-   "token": 305,
-   "kind": "not-idempotent",
-   "issue": "#136",
-   "context": "iningFieldsOfTheStopRecordRow /* note */ )\n\ntype alias OverR"
-  },
-  {
-   "file": "fixtures/expressions/align-map-entries.md",
-   "width": 40,
-   "form": "block",
-   "token": 57,
-   "kind": "not-idempotent",
-   "issue": "#137",
-   "context": "(): Map[Int32, Int32] = Map#{ /* note */ 1=>2,200=>3,4000=>4"
-  },
-  {
-   "file": "fixtures/expressions/align-map-entries.md",
-   "width": 40,
-   "form": "block",
-   "token": 61,
-   "kind": "not-idempotent",
-   "issue": "#137",
-   "context": "ap[Int32, Int32] = Map#{1=>2, /* note */ 200=>3,4000=>4}\n"
-  },
-  {
-   "file": "fixtures/expressions/align-map-entries.md",
-   "width": 40,
-   "form": "block",
-   "token": 65,
-   "kind": "not-idempotent",
-   "issue": "#137",
-   "context": "2, Int32] = Map#{1=>2,200=>3, /* note */ 4000=>4}\n"
-  },
-  {
-   "file": "fixtures/expressions/align-map-entries.md",
-   "width": 60,
-   "form": "block",
-   "token": 57,
-   "kind": "not-idempotent",
-   "issue": "#137",
-   "context": "(): Map[Int32, Int32] = Map#{ /* note */ 1=>2,200=>3,4000=>4"
-  },
-  {
-   "file": "fixtures/expressions/align-map-entries.md",
-   "width": 60,
-   "form": "block",
-   "token": 61,
-   "kind": "not-idempotent",
-   "issue": "#137",
-   "context": "ap[Int32, Int32] = Map#{1=>2, /* note */ 200=>3,4000=>4}\n"
-  },
-  {
-   "file": "fixtures/expressions/align-map-entries.md",
-   "width": 60,
-   "form": "block",
-   "token": 65,
-   "kind": "not-idempotent",
-   "issue": "#137",
-   "context": "2, Int32] = Map#{1=>2,200=>3, /* note */ 4000=>4}\n"
-  },
-  {
-   "file": "fixtures/expressions/align-tuple-literals.md",
-   "width": 40,
-   "form": "block",
-   "token": 390,
-   "kind": "not-idempotent",
-   "issue": "#137",
-   "context": "(String, Vector[Int32], Bool) /* note */ ] = Vector#{\n    (\""
-  },
-  {
-   "file": "fixtures/expressions/align-tuple-rows.md",
-   "width": 40,
-   "form": "block",
-   "token": 125,
-   "kind": "not-idempotent",
-   "issue": "#137",
-   "context": " inRegion(r:Region[a]):Array[ /* note */ (String,Int32),a] \\"
-  },
-  {
-   "file": "fixtures/expressions/applicative-for.md",
-   "width": 40,
-   "form": "block",
-   "token": 58,
-   "kind": "not-idempotent",
-   "issue": "#137",
-   "context": "dation[String, (Int32, Int32) /* note */ ]);\n        (c, d) "
-  },
-  {
-   "file": "fixtures/expressions/let-and-match.md",
-   "width": 40,
-   "form": "block",
-   "token": 32,
-   "kind": "not-idempotent",
-   "issue": "#137",
-   "context": "Int32 = {let y = 1;\nmatch x { /* note */ case Some(v) => v+y"
-  },
-  {
-   "file": "fixtures/expressions/let-and-match.md",
-   "width": 60,
-   "form": "block",
-   "token": 32,
-   "kind": "not-idempotent",
-   "issue": "#137",
-   "context": "Int32 = {let y = 1;\nmatch x { /* note */ case Some(v) => v+y"
-  },
-  {
-   "file": "fixtures/expressions/let-and-match.md",
-   "width": 100,
-   "form": "block",
-   "token": 32,
-   "kind": "not-idempotent",
-   "issue": "#137",
-   "context": "Int32 = {let y = 1;\nmatch x { /* note */ case Some(v) => v+y"
-  },
-  {
-   "file": "fixtures/expressions/list-append.md",
-   "width": 40,
-   "form": "block",
-   "token": 12,
-   "kind": "not-idempotent",
-   "issue": "#137",
-   "context": "ef concatenate():List[Int32]= /* note */ (1::2::Nil):::(3::4"
-  },
-  {
-   "file": "fixtures/expressions/map-entries.md",
-   "width": 40,
-   "form": "block",
-   "token": 69,
-   "kind": "not-idempotent",
-   "issue": "#137",
-   "context": "rue(run m[3] == 4 with handle /* note */ )\n"
-  },
-  {
-   "file": "fixtures/expressions/restrictable-choose.md",
-   "width": 60,
-   "form": "block",
-   "token": 28,
-   "kind": "not-idempotent",
-   "issue": "#137",
-   "context": "<Expr.Not, Expr.Cst>]): Expr[ /* note */ (s rvand <Expr.Not>"
-  },
-  {
-   "file": "fixtures/expressions/run-with-base-directory.md",
-   "width": 40,
-   "form": "block",
-   "token": 99,
-   "kind": "not-idempotent",
-   "issue": "#137",
-   "context": "                 case Err(err /* note */ ) => println(\"Write"
-  },
-  {
-   "file": "fixtures/expressions/run-with-base-directory.md",
-   "width": 40,
-   "form": "block",
-   "token": 118,
-   "kind": "not-idempotent",
-   "issue": "#137",
-   "context": "                    case Ok(_ /* note */ ) =>\n              "
-  },
-  {
-   "file": "fixtures/expressions/run-with-base-directory.md",
-   "width": 40,
-   "form": "block",
-   "token": 140,
-   "kind": "not-idempotent",
-   "issue": "#137",
-   "context": "              case Ok(content /* note */ ) => println(\"Read:"
-  },
-  {
-   "file": "fixtures/expressions/run-with-base-directory.md",
-   "width": 40,
-   "form": "block",
-   "token": 159,
-   "kind": "not-idempotent",
-   "issue": "#137",
-   "context": "                 case Err(err /* note */ )    => println(\"Re"
-  },
-  {
-   "file": "fixtures/expressions/unchecked-effect-cast.md",
-   "width": 40,
-   "form": "block",
-   "token": 38,
-   "kind": "not-idempotent",
-   "issue": "#137",
-   "context": "t(f(%%ARRAY_NEW%%(rc, 'A', 8) /* note */ ) as _ \\ {});\n    ("
-  },
-  {
-   "file": "fixtures/expressions/unchecked-effect-cast.md",
-   "width": 60,
-   "form": "block",
-   "token": 48,
-   "kind": "not-idempotent",
-   "issue": "#137",
-   "context": "_NEW%%(rc, 'A', 8)) as _ \\ {} /* note */ );\n    ()\n}\n"
-  },
-  {
-   "file": "fixtures/whitespace/comma-separators.md",
-   "width": 60,
-   "form": "block",
-   "token": 55,
-   "kind": "not-idempotent",
-   "issue": "#137",
-   "context": "g(s -> String.length(s)>0,xs) /* note */ )\n"
-  }
- ]
+  "failures": [
+    {
+      "file": "fixtures/expressions/align-map-entries.md",
+      "width": 40,
+      "form": "block",
+      "token": 57,
+      "kind": "not-idempotent",
+      "issue": "#137",
+      "context": "(): Map[Int32, Int32] = Map#{ /* note */ 1=>2,200=>3,4000=>4"
+    },
+    {
+      "file": "fixtures/expressions/align-map-entries.md",
+      "width": 40,
+      "form": "block",
+      "token": 61,
+      "kind": "not-idempotent",
+      "issue": "#137",
+      "context": "ap[Int32, Int32] = Map#{1=>2, /* note */ 200=>3,4000=>4}\n"
+    },
+    {
+      "file": "fixtures/expressions/align-map-entries.md",
+      "width": 40,
+      "form": "block",
+      "token": 65,
+      "kind": "not-idempotent",
+      "issue": "#137",
+      "context": "2, Int32] = Map#{1=>2,200=>3, /* note */ 4000=>4}\n"
+    },
+    {
+      "file": "fixtures/expressions/align-map-entries.md",
+      "width": 60,
+      "form": "block",
+      "token": 57,
+      "kind": "not-idempotent",
+      "issue": "#137",
+      "context": "(): Map[Int32, Int32] = Map#{ /* note */ 1=>2,200=>3,4000=>4"
+    },
+    {
+      "file": "fixtures/expressions/align-map-entries.md",
+      "width": 60,
+      "form": "block",
+      "token": 61,
+      "kind": "not-idempotent",
+      "issue": "#137",
+      "context": "ap[Int32, Int32] = Map#{1=>2, /* note */ 200=>3,4000=>4}\n"
+    },
+    {
+      "file": "fixtures/expressions/align-map-entries.md",
+      "width": 60,
+      "form": "block",
+      "token": 65,
+      "kind": "not-idempotent",
+      "issue": "#137",
+      "context": "2, Int32] = Map#{1=>2,200=>3, /* note */ 4000=>4}\n"
+    },
+    {
+      "file": "fixtures/expressions/let-and-match.md",
+      "width": 40,
+      "form": "block",
+      "token": 32,
+      "kind": "not-idempotent",
+      "issue": "#137",
+      "context": "Int32 = {let y = 1;\nmatch x { /* note */ case Some(v) => v+y"
+    },
+    {
+      "file": "fixtures/expressions/let-and-match.md",
+      "width": 60,
+      "form": "block",
+      "token": 32,
+      "kind": "not-idempotent",
+      "issue": "#137",
+      "context": "Int32 = {let y = 1;\nmatch x { /* note */ case Some(v) => v+y"
+    },
+    {
+      "file": "fixtures/expressions/let-and-match.md",
+      "width": 100,
+      "form": "block",
+      "token": 32,
+      "kind": "not-idempotent",
+      "issue": "#137",
+      "context": "Int32 = {let y = 1;\nmatch x { /* note */ case Some(v) => v+y"
+    },
+    {
+      "file": "fixtures/expressions/align-map-comment.md",
+      "width": 40,
+      "form": "line",
+      "token": 79,
+      "kind": "not-idempotent",
+      "issue": "#93",
+      "context": "\"batch\"      =>2,\n\"export\"=>1 // note\n, // Exports are expen"
+    },
+    {
+      "file": "fixtures/expressions/align-map-comment.md",
+      "width": 60,
+      "form": "line",
+      "token": 79,
+      "kind": "not-idempotent",
+      "issue": "#93",
+      "context": "\"batch\"      =>2,\n\"export\"=>1 // note\n, // Exports are expen"
+    },
+    {
+      "file": "fixtures/expressions/align-map-comment.md",
+      "width": 100,
+      "form": "line",
+      "token": 79,
+      "kind": "not-idempotent",
+      "issue": "#93",
+      "context": "\"batch\"      =>2,\n\"export\"=>1 // note\n, // Exports are expen"
+    },
+    {
+      "file": "fixtures/expressions/align-record-fields.md",
+      "width": 40,
+      "form": "line",
+      "token": 37,
+      "kind": "not-idempotent",
+      "issue": "#93",
+      "context": "ring, active = Bool} = {\nid=7 // note\n, // Assigned by the s"
+    },
+    {
+      "file": "fixtures/expressions/align-record-fields.md",
+      "width": 60,
+      "form": "line",
+      "token": 37,
+      "kind": "not-idempotent",
+      "issue": "#93",
+      "context": "ring, active = Bool} = {\nid=7 // note\n, // Assigned by the s"
+    },
+    {
+      "file": "fixtures/expressions/align-record-fields.md",
+      "width": 100,
+      "form": "line",
+      "token": 37,
+      "kind": "not-idempotent",
+      "issue": "#93",
+      "context": "ring, active = Bool} = {\nid=7 // note\n, // Assigned by the s"
+    }
+  ]
 }
