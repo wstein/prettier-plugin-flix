@@ -51,7 +51,17 @@ require the checks from the latest push, and disallow force-pushes:
 - `build` (workflow Fixture documentation)
 
 The workflow YAML sets `concurrency` and job `timeout-minutes` for those
-checks; enabling the ruleset itself is a repository settings step.
+checks; enabling and tightening the ruleset itself is a repository admin
+settings step (agents cannot change it).
+
+Current ruleset `Protect main` (#109): keep required checks, add
+`Fixture documentation / build`, set `strict_required_status_checks_policy`
+so only the latest push counts, and keep force-push and deletion blocked.
+Approvals stay at zero for solo maintainership, but treat a human
+`CLEAR` review comment (or equivalent) as the merge gate: do not mark Ready
+or merge while a `FINDINGS` review is open or while CI is red. Ready and
+merge without that gate have already slipped through agent-driven flow; the
+ruleset is the only control that does not depend on agents.
 
 Run the same coverage check locally with Node.js 22:
 
