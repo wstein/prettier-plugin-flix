@@ -155,8 +155,11 @@ the width, the comment form and token index (comment sites), the kind (`unparsab
   with `listed site not run`.
 - Removing a known entry still leaves `npm test` green for sites outside the sample ([#162](https://github.com/wstein/prettier-plugin-flix/issues/162)).
   Before dropping entries, run the full `sites` sweep (three `--shard k/3` processes).
-  Pull requests that touch `test/known-comment-site-failures.json` also run that
-  full sweep in CI (`Comment sites full sweep`).
+  Pull requests that touch that list, `test/comment-sites.test.mjs`,
+  `test/lib.mjs`, `test/fixtures/**`, `src/**`, `scripts/review-sweep.mjs`,
+  `scripts/review-sweep-lib.mjs` or the workflow file also run that full sweep
+  in CI (`Comment sites full sweep`, three shards, 8 to 14 minutes each on
+  GitHub runners). It is not a required check, so a red run does not block merge.
 - Entries are matched by token index. After a fixture input changes, regenerate the affected entries:
   run `npm run review:sweep -- sites --json out.json` and copy the failures that belong to an open issue.
 
