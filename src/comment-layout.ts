@@ -38,6 +38,17 @@ function indentation(text: string): string {
     return /^[ \t]*/.exec(text)![0];
 }
 
+/** Map alignment separators to the indentation of their rendered lines. */
+export function alignmentIndents(root: FlixRoot, value: Doc, options: LayoutOptions): Map<number, number> {
+    const { formatted } = doc.printer.printDocToString(value, options);
+    const separators = (text: string) => lex(text).filter((token) => token.type === L.EQUAL || token.type === L.ARROW_THICK_R);
+    const input = separators(root.text);
+    const output = separators(formatted);
+    if (!sameTokens(input, output, true)) return new Map();
+    const lines = formatted.split("\n");
+    return new Map(input.map((token, i) => [token.tokenIndex, width(indentation(lines[output[i].line - 1]), options.tabWidth)]));
+}
+
 /** Locate printed definition separators using the source parse tree and code-token order. */
 function printedDefinitionEquals(root: FlixRoot, tokens: Token[]): Set<Token> {
     const input: Token[] = [];
