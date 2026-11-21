@@ -96,8 +96,8 @@ const EQ_BODY = new Set([
 ]);
 const BODY_ARROWS = new Set([L.EQUAL, L.ARROW_THICK_R, L.ARROW_WS]);
 const BINARY = new Set([
-    "UserOpExpr", "AngledPlusExpr", "MultExpr", "AddExpr", "ConsExpr", "CompareExpr", "EqualityExpr",
-    "AndExpr", "OrExpr",
+    "UserOpExpr", "AngledPlusExpr", "MultExpr", "AddExpr", "ConsExpr", "ConsPattern",
+    "CompareExpr", "EqualityExpr", "AndExpr", "OrExpr",
 ]);
 /** Own-separator nodes: they emit their trailing space or newline themselves. */
 const SELF_SPACED = new Set(["DeclPrefix", "AnnotationList", "ModifierList"]);
@@ -1369,7 +1369,7 @@ export class Printer {
 
     private printBinary(n: ParserRuleContext): Doc {
         const k = kind(n);
-        const rightAssoc = k === "ConsExpr";
+        const rightAssoc = k === "ConsExpr" || k === "ConsPattern";
         const operands: Node[] = [];
         const ops: Node[] = [];
         const isPipe = (operator: Node): boolean =>
@@ -1390,6 +1390,7 @@ export class Printer {
         };
         collect(n);
         const leading = this.takeLeadingOwnLineComments(firstTerm(operands[0]));
+        if (rightAssoc) return [leading, this.printConsExprOrPattern(operands, ops)];
         if (isPipe(ops[0])) {
             const first = this.print(operands[0]);
             const breakPoint = this.flat > 0 ? " " : line;
@@ -1406,21 +1407,11 @@ export class Printer {
         }
 
         const links = ops.map((op, i) => {
-            const tightCons = isTerm(op) && ttype(op) === L.COLON_COLON_TIGHT;
-            // Multiline list constructors follow the leading :: style in the Flix examples.
-            const leadingCons = rightAssoc && isTerm(op) && ttype(op) === L.COLON_COLON;
             const breakPoint = this.flat > 0 ? " " : line;
             const operand = operands[i + 1];
-            const firstOperand = leadingCons ? firstTerm(operand) : null;
-            const hasOwnLineCommentBefore = leadingCons && (this.info(op)?.lead[0]?.nl ?? 0) > 0;
-            const hasOwnLineCommentAfter = firstOperand !== null && (this.info(firstOperand)?.lead[0]?.nl ?? 0) > 0;
-            const before = hasOwnLineCommentBefore ? hardline : leadingCons ? breakPoint : " ";
-            const after = hasOwnLineCommentAfter ? hardline : leadingCons ? " " : breakPoint;
             return {
-                operator: [
-                    this.after(lastTerm(operands[i]), tightCons ? "" : before), this.print(leadingCons ? this.ls(op) : op),
-                ],
-                after: this.after(lastTerm(op), tightCons ? "" : after),
+                operator: [this.after(lastTerm(operands[i]), " "), this.print(op)],
+                after: this.after(lastTerm(op), breakPoint),
                 operand: this.print(this.ls(operand)),
             };
         });
@@ -1453,6 +1444,117 @@ export class Printer {
             group([head[0], continuation(head.slice(1))]),
             continuation(tail.map(([before, ...parts]) => [before, group(parts)])),
         ])];
+    }
+
+    /** True when the operator is list cons `::` (tight or spaced), not append `:::`. */
+    private isConsColonColon(op: Node): boolean {
+        return isTerm(op) && (ttype(op) === L.COLON_COLON || ttype(op) === L.COLON_COLON_TIGHT);
+    }
+
+    /**
+     * ConsExpr/ConsPattern may mix `::` (cons) and `:::` (append). Only maximal `::` runs follow
+     * Rule A; `:::` stays spaced with a trailing break.
+     */
+    private printConsExprOrPattern(operands: Node[], ops: Node[]): Doc {
+        if (ops.every((op) => this.isConsColonColon(op))) return this.printConsChain(operands, ops);
+
+        const breakPoint = this.flat > 0 ? " " : line;
+        const parts: Doc[] = [];
+        let start = 0;
+        for (let i = 0; i <= ops.length; i++) {
+            const op = i < ops.length ? ops[i] : null;
+            const append = op !== null && isTerm(op) && ttype(op) === L.COLON_COLON_COLON;
+            if (!append && i < ops.length) continue;
+            const segOperands = operands.slice(start, i + 1);
+            const segOps = ops.slice(start, i);
+            parts.push(segOps.length === 0
+                ? this.print(this.ls(operands[start]))
+                : this.printConsChain(segOperands, segOps));
+            if (append && op !== null) {
+                parts.push(
+                    this.after(lastTerm(operands[i]), " "),
+                    this.print(op),
+                    this.after(lastTerm(op), breakPoint),
+                );
+                start = i + 1;
+            }
+        }
+        return group([parts[0], indent(parts.slice(1))]);
+    }
+
+    /**
+     * Cons chains (`::` in expressions and patterns): a chain stays tight only when every
+     * operator is tight and the chain fits; otherwise the whole chain is spaced. A `::` with a
+     * glued comment keeps its tight class.
+     */
+    private printConsChain(operands: Node[], ops: Node[]): Doc {
+        const first = this.print(operands[0]);
+        const glued = ops.map((op, i) =>
+            isTerm(op) && ttype(op) === L.COLON_COLON_TIGHT && this.consHasGluedComment(op, operands[i + 1]));
+        const chainTight = ops.every((op) => isTerm(op) && ttype(op) === L.COLON_COLON_TIGHT);
+        const forcedBreak = ops.some((op) => isTerm(op) && this.hasLineTrail(op));
+
+        const tightLink = (i: number): Doc => {
+            const op = ops[i];
+            const operand = operands[i + 1];
+            // The enclosing `indent` already positions a break after a glued line comment.
+            return [
+                this.after(lastTerm(operands[i]), ""),
+                this.print(op),
+                this.after(lastTerm(op as TerminalNode), ""),
+                this.print(this.ls(operand)),
+            ];
+        };
+
+        const spacedLink = (i: number): Doc => {
+            if (glued[i]) return tightLink(i);
+            const op = ops[i];
+            const operand = operands[i + 1];
+            const breakPoint = this.flat > 0 ? " " : line;
+            const firstOperand = firstTerm(operand);
+            const hasOwnLineCommentBefore = (this.info(op as TerminalNode)?.lead[0]?.nl ?? 0) > 0;
+            const hasOwnLineCommentAfter = firstOperand !== null && (this.info(firstOperand)?.lead[0]?.nl ?? 0) > 0;
+            const before = hasOwnLineCommentBefore ? hardline : breakPoint;
+            const afterOp = hasOwnLineCommentAfter ? hardline : " ";
+            return [
+                this.after(lastTerm(operands[i]), before),
+                this.print(this.ls(op)),
+                this.after(lastTerm(op as TerminalNode), afterOp),
+                this.print(this.ls(operand)),
+            ];
+        };
+
+        if (chainTight && (forcedBreak || this.flat > 0)) {
+            // A glued line comment forces a break while the chain stays tight; flat mode
+            // also keeps a fully tight chain glued.
+            return group([first, indent(ops.map((_, i) => tightLink(i)))]);
+        }
+        if (chainTight) {
+            const tightFlat: Doc = [first, ...ops.map((_, i) => {
+                const op = ops[i];
+                const operand = operands[i + 1];
+                return [
+                    this.after(lastTerm(operands[i]), ""),
+                    this.print(op),
+                    this.after(lastTerm(op as TerminalNode), ""),
+                    this.print(operand),
+                ];
+            })];
+            return conditionalGroup([
+                tightFlat,
+                group([first, indent(ops.map((_, i) => spacedLink(i)))]),
+            ]);
+        }
+        return group([first, indent(ops.map((_, i) => spacedLink(i)))]);
+    }
+
+    /** True when a tight `::` has a comment with no whitespace between the comment and the operator. */
+    private consHasGluedComment(op: TerminalNode, right: Node): boolean {
+        const info = this.info(op);
+        if (info && (info.trail.length > 0 || info.lead.some((comment) => comment.nl === 0))) return true;
+        const next = firstTerm(right);
+        const lead = next && this.info(next)?.lead;
+        return !!lead && lead.some((comment) => comment.nl === 0);
     }
 
     // ------------------------------------------------------- annotations, strings
