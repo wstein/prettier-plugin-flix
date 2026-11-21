@@ -1127,7 +1127,17 @@ export class Printer {
             const { formatted } = doc.printer.printDocToString(value, options);
             return formatted.includes("\n") ? Infinity : util.getStringWidth(formatted);
         };
-        const widths = rows.map(({ head }) => measure(head));
+        // A tight cons pattern is a conditional group: it can fit alone and still wrap in the arm.
+        // Padding the other arms to its flat width would not survive the next pass.
+        const hasConditionalGroup = (value: Doc): boolean => !!
+            doc.utils.findInDoc(value, (part) => (typeof part === "object" && "expandedStates" in part && !!part.expandedStates) || undefined, false);
+        const staysFlat = ({ head, gap, tail }: { head: Doc; gap: Doc; tail: Doc }, rowIndent: number): boolean => {
+            if (!hasConditionalGroup(head)) return true;
+            const inContext = { ...options, printWidth: this.printWidth - rowIndent };
+            return doc.printer.printDocToString([head, gap, tail], inContext).formatted
+                .startsWith(doc.printer.printDocToString(head, options).formatted);
+        };
+        const widths = rows.map((row) => (staysFlat(row, this.rowIndent(row.arrow)) ? measure(row.head) : Infinity));
         const column = Math.max(...widths);
         if (!Number.isFinite(column) || widths.every((width) => width === column)) {
             return rows.map(({ leading, head, gap, tail }) => [leading, head, gap, tail]);
