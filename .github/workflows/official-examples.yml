@@ -23,6 +23,7 @@ on:
       - "test/lib.mjs"
       - "scripts/generate.mjs"
       - "tsconfig.json"
+      - "test/fixture.mjs"
       - "src/**"
       - "package.json"
       - "package-lock.json"

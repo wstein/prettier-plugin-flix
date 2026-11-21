@@ -4,6 +4,7 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import { explainTrailingCommentAlignment } from "../dist/comment-layout.js";
 import {
@@ -190,4 +191,62 @@ test("docs-examples CLI requires three paths and pairs --review-baseline with --
     assert.match(docsExamplesArgsError(["a", "b"], {}), /Usage:/);
     assert.match(docsExamplesArgsError(["a", "b", "c"], { "review-baseline": "base.tsv" }), /Usage:/);
     assert.equal(docsExamplesArgsError(["a", "b", "c"], { reviews: "r.json", "review-baseline": "base.tsv" }), undefined);
+});
+
+async function gitInit(dir) {
+    await mkdir(dir, { recursive: true });
+    await exec("git", ["-C", dir, "init", "-q"]);
+    await exec("git", ["-C", dir, "config", "user.email", "test@example.com"]);
+    await exec("git", ["-C", dir, "config", "user.name", "Test"]);
+    await exec("git", ["-C", dir, "commit", "--allow-empty", "-qm", "init"]);
+}
+
+test("docs-examples CLI fails when a changed layout diff lacks a review reason", async () => {
+    const root = await mkdtemp(join(tmpdir(), "flix-docs-audit-"));
+    const book = join(root, "book");
+    const website = join(root, "website");
+    const out = join(root, "report");
+    try {
+        await gitInit(book);
+        await gitInit(website);
+        await mkdir(join(book, "src"), { recursive: true });
+        await writeFile(join(book, "src", "SUMMARY.md"), "* [One](one.md)\n* [Two](two.md)\n");
+        await writeFile(join(book, "src", "one.md"), "# One\n\n```flix\ndef one():Int32=1\n```\n");
+        await writeFile(join(book, "src", "two.md"), "# Two\n\n```flix\ndef two():Int32=2\n```\n");
+        await mkdir(join(website, "src/lib"), { recursive: true });
+        await mkdir(join(website, "src/pages"), { recursive: true });
+        await writeFile(join(website, "src/lib/indexExamples.js"), "export const shared = `def site():Int32=3\\n`;\n");
+        await writeFile(
+            join(website, "src/pages/index.astro"),
+            ["---", "const site = `def site():Int32=3\\n`;", "---", "<Feature code={site} />", ""].join("\n"),
+        );
+
+        const reviews = join(root, "reviews.json");
+        const reviewBaseline = join(root, "base.tsv");
+        await writeFile(reviews, "{}\n");
+        // Empty baseline so both layout-changes count as added and need reviews.
+        await writeFile(reviewBaseline, "case\tstatus\tchange\tsha256\n");
+
+        const usage = await exec("node", [
+            "scripts/audit-flix-examples.mjs", book, website, join(root, "unused"),
+            "--review-baseline", reviewBaseline,
+        ], { cwd: join(dirname(fileURLToPath(import.meta.url)), "..") }).then(
+            () => ({ code: 0 }),
+            (error) => error,
+        );
+        assert.equal(usage.code, 2);
+        assert.match(String(usage.stderr), /Usage:/);
+
+        const run = await exec("node", [
+            "scripts/audit-flix-examples.mjs", book, website, out,
+            "--reviews", reviews, "--review-baseline", reviewBaseline,
+        ], { cwd: join(dirname(fileURLToPath(import.meta.url)), "..") }).then(
+            () => ({ code: 0 }),
+            (error) => error,
+        );
+        assert.equal(run.code, 1);
+        assert.match(String(run.stderr), /Missing layout review:/);
+    } finally {
+        await rm(root, { recursive: true, force: true });
+    }
 });
