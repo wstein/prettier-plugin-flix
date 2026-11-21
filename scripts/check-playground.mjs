@@ -14,6 +14,29 @@ const asset = page.match(/\bdata-formatter=(?:"([^"]+)"|([^\s>]+))/);
 assert.ok(asset, "Playground page links to its formatter bundle");
 const { formatFlix, formatFlixPreview } = await import(new URL(`js/${basename(asset[1] ?? asset[2])}`, site));
 
+test("the published worker loads the published formatter and replies to requests", async () => {
+    const workerAsset = page.match(/\bdata-worker=(?:"([^"]+)"|([^\s>]+))/);
+    assert.ok(workerAsset, "Playground page links to its worker");
+    const workerUrl = new URL(`js/${basename(workerAsset[1] ?? workerAsset[2])}`, site);
+    let receive;
+    const reply = Promise.withResolvers();
+    globalThis.self = {
+        location: { href: workerUrl.href },
+        addEventListener: (name, listener) => {
+            assert.equal(name, "message");
+            receive = listener;
+        },
+        postMessage: reply.resolve,
+    };
+    try {
+        await import(workerUrl);
+        await receive({ data: { id: 7, asset: basename(asset[1] ?? asset[2]), source: "def worker():Int32=7", options: {} } });
+        assert.deepEqual(await reply.promise, { id: 7, output: "def worker(): Int32 = 7\n" });
+    } finally {
+        delete globalThis.self;
+    }
+});
+
 test("the formatting reference publishes highlighted examples and links to catalog fixtures", async () => {
     const [source, guide, home] = await Promise.all([
         readFile(new URL("../docs/formatting.md", import.meta.url), "utf8"),
