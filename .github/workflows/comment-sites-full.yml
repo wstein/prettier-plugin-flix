@@ -4,6 +4,10 @@ on:
     paths:
       - "test/known-comment-site-failures.json"
       - "test/comment-sites.test.mjs"
+      - "test/lib.mjs"
+      - "test/fixtures/**"
+      - "src/**"
+      - "scripts/review-sweep.mjs"
       - "scripts/review-sweep-lib.mjs"
       - ".github/workflows/comment-sites-full.yml"
   workflow_dispatch:
@@ -14,8 +18,8 @@ concurrency:
   group: comment-sites-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# When the known-failure list or the sampler changes, run every site so removing
-# an entry cannot hide a still-failing site from CI (#162).
+# When the known-failure list, sampler, fixtures, or formatter sources change,
+# run every site so a still-failing site cannot hide from the npm-test sample (#162).
 jobs:
   sites:
     runs-on: ubuntu-latest
