@@ -131,17 +131,20 @@ export function commentSites(text) {
     return sites;
 }
 
-/** Insert a line comment after the selected token, with no gap for tight punctuation. */
-export function withLineCommentAfter(text, { tokenIndex, glued }) {
+/** Insert a line or block comment after the selected token; tight dots and :: glue it. */
+export function withLineCommentAfter(text, { tokenIndex, glued, style = "line" }) {
     const lexer = new FlixLexer(CharStream.fromString(text));
     lexer.removeErrorListeners();
     const stream = new CommonTokenStream(lexer);
     stream.fill();
+    const comment = style === "block"
+        ? (glued ? "/* note */" : " /* note */ ")
+        : (glued ? "// note\n" : " // note\n");
     let out = "";
     for (const t of stream.getTokens()) {
         if (t.type === FlixLexer.EOF) break;
         out += t.text;
-        if (t.tokenIndex === tokenIndex) out += glued ? "// note\n" : " // note\n";
+        if (t.tokenIndex === tokenIndex) out += comment;
     }
     return out;
 }
