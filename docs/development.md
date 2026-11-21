@@ -54,14 +54,17 @@ The workflow YAML sets `concurrency` and job `timeout-minutes` for those
 checks; enabling and tightening the ruleset itself is a repository admin
 settings step (agents cannot change it).
 
-Current ruleset `Protect main` (#109): keep required checks, add
-`Fixture documentation / build`, set `strict_required_status_checks_policy`
-so only the latest push counts, and keep force-push and deletion blocked.
-Approvals stay at zero for solo maintainership, but treat a human
-`CLEAR` review comment (or equivalent) as the merge gate: do not mark Ready
-or merge while a `FINDINGS` review is open or while CI is red. Ready and
-merge without that gate have already slipped through agent-driven flow; the
-ruleset is the only control that does not depend on agents.
+Current ruleset `Protect main` (#109) applies to `refs/heads/main`, has no
+bypass actors and blocks deletion, force-push and merge commits (linear
+history, rebase merge only). It has no required status check rule, so `test`
+and `build` are not enforced yet. Approvals are set to zero, so the ruleset
+does not enforce review. The workflows Flix standard library compilation and
+Official Flix examples run only for certain paths and are not required checks.
+
+Merge gate (repository rule, not enforced by the ruleset): do not mark a pull
+request Ready or merge it without a `Review: CLEAR head=<SHA>` comment from an
+independent reviewer on the exact head, and not while a `FINDINGS` review is
+open or CI is red. Agents never merge; the owner does.
 
 Run the same coverage check locally with Node.js 22:
 
