@@ -163,7 +163,7 @@ Issue forms in `.github/ISSUE_TEMPLATE/` set one static type label. The triager 
 | Group | Labels |
 | --- | --- |
 | Type | `bug`, `enhancement`, `documentation`, `test-gap`, `ci`, `decision`, `epic` |
-| Area | `area:formatter`, `area:recovery`, `area:playground`, `area:release-ci`, `area:tooling`, `area:parser-api` |
+| Area | `area:formatter`, `area:recovery`, `area:playground`, `area:release-ci`, `area:tooling`, `area:parser-api`, `area:analysis` |
 | Class (formatter) | `class:comment-kind`, `class:measure-leak`, `class:alignment`, `class:signature-fit`, `class:hug`, `class:cons-chain`, `class:token-boundary` |
 | Reach | `reach:real`, `reach:narrow`, `reach:synthetic` |
 | Output | `corrupts-program`: the output does not parse or changes the program |
@@ -175,8 +175,21 @@ Reach says where a finding shows up:
 - `reach:synthetic`: needs an artificial input (for example an unusual comment position) or a `printWidth` below 40.
 
 **Triage rule.** A finding with `reach:synthetic` does not get its own issue. Record it as a line in the checklist of
-the collection issue of its class (label `epic`). Exceptions: a finding with `corrupts-program` and every finding
+the epic of its class (label `epic`). Exceptions: a finding with `corrupts-program` and every finding
 with `reach:real` or `reach:narrow` get their own issue.
+
+Existing epics:
+
+| Epic | Collects |
+| --- | --- |
+| [#211](https://github.com/wstein/prettier-plugin-flix/issues/211) | `class:comment-kind` |
+| [#212](https://github.com/wstein/prettier-plugin-flix/issues/212) | `class:signature-fit` |
+| [#213](https://github.com/wstein/prettier-plugin-flix/issues/213) | `class:measure-leak` and `class:hug` |
+| [#214](https://github.com/wstein/prettier-plugin-flix/issues/214) | test hardening (`test-gap`) |
+| [#215](https://github.com/wstein/prettier-plugin-flix/issues/215) | decisions for the owner (`decision`) |
+
+The classes `class:alignment`, `class:cons-chain` and `class:token-boundary` have no epic yet. Create the epic when
+the first open line for that class exists.
 
 **Review labels on pull requests.**
 
@@ -199,8 +212,23 @@ review of the new head exists.
 - a false statement in documentation or text that has consequences;
 - a test without effect, or a surviving mutation of the new logic.
 
-A failure only below `printWidth` 40 is `reach:synthetic`. It does not block and goes into the collection issue of its
+A failure only below `printWidth` 40 is `reach:synthetic`. It does not block and goes into the epic of its
 class.
+
+### Epics
+
+A line in an epic checklist has the form
+`- [ ] <short description> (width, form, fixture path, reach)`.
+
+- **Definition of done.** Every line has a fixture that records the width and the form, or a known-failure entry
+  that names the epic. An epic closes when every line is done or moved to the section "Outside the guarantee (printWidth
+  below 40)" of the epic. A batch is accepted when `npm test` passes, the comment-site sweep passes, the standard library is idempotent
+  at the eight widths of `review:sweep idempotence` (set `FLIX_STDLIB_DIR`), and a mutation of the new logic fails a
+  test. A pair test over the comment sites is planned and not part of the acceptance yet.
+- **Rhythm.** Work on an epic starts when it has at least 5 open lines or before a release. A finding with
+  `reach:real`, `reach:narrow` or `corrupts-program` has its own issue and is worked on at once.
+- **Size.** One epic per pull request, at most 5 lines per pull request. Tests and fixtures go in the first commit and
+  the fixes follow in later commits.
 
 ## Test sources
 

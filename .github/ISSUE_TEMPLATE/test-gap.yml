@@ -19,6 +19,7 @@ body:
         - release-ci
         - tooling
         - parser-api
+        - analysis
     validations:
       required: true
   - type: textarea

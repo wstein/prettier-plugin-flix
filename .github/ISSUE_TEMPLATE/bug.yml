@@ -10,7 +10,7 @@ body:
         labels `area:*`, `reach:*` and `class:*` (and `corrupts-program`) from
         the answers below. See "Issue triage and labels" in docs/development.md.
         A finding that needs an artificial input or a printWidth below 40 is
-        usually recorded in the collection issue of its class instead.
+        usually recorded in the epic of its class instead.
   - type: dropdown
     id: area
     attributes:
@@ -22,6 +22,7 @@ body:
         - release-ci
         - tooling
         - parser-api
+        - analysis
     validations:
       required: true
   - type: dropdown
