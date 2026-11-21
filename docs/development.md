@@ -104,6 +104,39 @@ npm run docs:test:browser
 To use a local Chromium binary, set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH`.
 The test starts its own loopback server at the same URL prefix as Pages.
 
+## Review sweeps
+
+`npm run review:sweep -- <command>` runs the sweeps a reviewer would otherwise rebuild by hand. It runs
+the plugin in `dist/` (run `npm run build` first) and needs no packages beyond the repository's own.
+Every command prints its run time. `--help` lists the options.
+
+| Command | What it does | Time (fixtures, one process) |
+| --- | --- | --- |
+| `idempotence` | Formats `test/*.flix` and every fixture input at widths 40, 50, 60, 70, 80, 100, 120 and 160, twice. Prints each failing file and width with the smallest input and the first and second output as a diff. | about 5 s |
+| `sites` | Inserts a comment at each token (`// note`, `/* note */`, or `// own` on its own line) and formats at widths 40, 60 and 100. `--every N` checks every Nth site (default 1, all of them). | about 25 s with `--every 6`; all sites: about 15 minutes in one process, 8 minutes as three parallel `--shard k/3` processes |
+| `regression --base <git-ref>` | Builds the plugin of the ref in the system temporary directory (from `git archive`; the working tree stays as it is) and compares its output with the current build at widths 40, 60, 80, 100 and 120. Prints the number of differences per file and width and the diff hunks. Always exits 0. | about 5 s |
+| `all --base <git-ref>` | The three in turn. | |
+
+Pass directories or files after the command, or set `FLIX_STDLIB_DIR`, to sweep more inputs, for example
+the Flix standard library (`idempotence`, 243 files at eight widths: about 7 minutes). The sources are only read. The repository's own inputs stay in the run;
+`--no-repo` leaves them out. `--shard k/n` splits the inputs over parallel processes, `--json <file>`
+writes the failures.
+
+The comment-site test (`test/comment-sites.test.mjs`) uses the same code on a sample: every sixth site
+and every tight `.` or `::`, with the form and width changing from site to site. `COMMENT_SITES_EVERY=1`
+checks every site in every form and width.
+
+Known failures live in `test/known-comment-site-failures.json` (comment sites) and
+`test/known-idempotence-failures.json` (idempotence sweep). An entry names the file (relative to `test/`),
+the width, the comment form and token index (comment sites), the kind (`unparsable` or
+`not-idempotent`) and the issue (`#123`). The sweep and the test treat the list as follows:
+
+- A failure that is not listed fails the run.
+- A listed failure must keep failing in the listed way. When a fix makes it pass, the run fails with
+  `known failure now passes: remove it from the list (issue #123)`. Remove the entry in the fix.
+- Entries are matched by token index. After a fixture input changes, regenerate the affected entries:
+  run `npm run review:sweep -- sites --json out.json` and copy the failures that belong to an open issue.
+
 ## Test sources
 
 | Source | How | Needs expected output? |
