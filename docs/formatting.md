@@ -186,10 +186,14 @@ def countSmallValues(
         |> List.length
 ```
 
-A wrapped cons chain with spaced `::` starts each continuation with the
-operator. Tight `::` stays glued in cons expressions and patterns, including
-next to comments. The same applies to the package qualifier in a `use`.
-[Fixture](../test/fixtures/whitespace/package-qualifier-tight-comments.md)
+A cons chain is the longest run of operands joined by `::` in an expression
+or pattern (`:::` is list append and stays spaced). The chain stays tight only
+when every `::` is tight and the whole chain fits; otherwise it is printed
+fully spaced, and a tight chain that does not fit wraps with a leading `::` on
+each continuation. A `::` with a glued comment keeps its tight class. Package
+qualifiers in a `use` always stay tight and never wrap.
+[Cons spacing](../test/fixtures/expressions/cons-chain-spacing.md) ·
+[Tight comments](../test/fixtures/whitespace/package-qualifier-tight-comments.md)
 
 String concatenation has its own rule. When it fits, `+ "\n" +` stays with the
 preceding text so the separator is easy to associate with that line.
@@ -503,10 +507,11 @@ reviewed differences against the official examples.
   characters on both sides. A line comment that immediately follows a dot
   stays attached, with the name on the next line. A long method chain can
   wrap inside an argument list. A chain of argument-free calls may exceed
-  the configured width. A chain of tight `::` cons operators has no break
-  point either, so it may also exceed the width.
+  the configured width. Cons `::` may loosen from tight to spaced when a
+  chain wraps or was mixed; `use` path qualifiers must stay tight.
   [Method chain fixture](../test/fixtures/expressions/long-method-chain.md) ·
   [Comments beside dots](../test/fixtures/whitespace/tight-dot-comments.md) ·
+  [Cons spacing](../test/fixtures/expressions/cons-chain-spacing.md) ·
   [Tight cons comments](../test/fixtures/whitespace/package-qualifier-tight-comments.md)
 - Put `// prettier-ignore` on its own line before a declaration to preserve
   that declaration's source text. The rest of the file is formatted normally.

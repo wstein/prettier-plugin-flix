@@ -2,11 +2,12 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { loadFixture } from "./fixture.mjs";
-import { fingerprint, programProblems } from "./lib.mjs";
+import { fingerprint, fmt, programProblems } from "./lib.mjs";
 
 const cases = [
     ["field-access arrow becomes a lambda", "comments/tight-arrow-line-comment", "s->//", "s-> //", /whitespace-sensitive token classes differ/],
     ["spaces split a package qualifier", "whitespace/package-qualifier", "Name::Very", "Name :: Very", /output does not parse/],
+    ["spaces split a use-path qualifier", "expressions/cons-chain-spacing", "Foo::Bar", "Foo :: Bar", /output does not parse/],
     ["Datalog terminator loses required whitespace", "datalog/constraint-set", ". Edge", ".Edge", /Datalog constraint/],
     ["literal value changes", "datalog/constraint-set", "1, 2", "9, 2", /tokens differ/],
     ["a comment is deleted", "comments/tight-arrow-line-comment", "// keep", "", /comments differ/],
@@ -41,7 +42,33 @@ for (const [title, original, glued, spaced] of tightTokenCases) {
         const loose = fingerprint(original.replace(glued, spaced));
         assert.deepEqual(tight.errors, []);
         assert.deepEqual(loose.errors, []);
-        assert.deepEqual(programProblems(tight, loose), ["whitespace-sensitive token classes differ"], "adding space changes the token class");
-        assert.deepEqual(programProblems(loose, tight), ["whitespace-sensitive token classes differ"], "gluing the comment changes the token class");
+        // Compare raw classes: cons :: may loosen under Rule A, but a glued comment still
+        // changes the lexer class when space is inserted beside the operator.
+        assert.deepEqual(programProblems(tight, loose, { terminators: false }), ["whitespace-sensitive token classes differ"], "adding space changes the token class");
+        assert.deepEqual(programProblems(loose, tight, { terminators: false }), ["whitespace-sensitive token classes differ"], "gluing the comment changes the token class");
     });
 }
+
+const consPath = fileURLToPath(new URL("./fixtures/expressions/cons-chain-spacing.md", import.meta.url));
+
+test("fixture mutation: spacing a fitting tight cons chain", async () => {
+    const { input, outputs } = loadFixture(consPath);
+    const options = outputs[0].options;
+    const good = await fmt(input.code, options);
+    assert.match(good, /def tightFits\(\): List\[Int32\] = 1::2::Nil/);
+    const mutated = good.replace("def tightFits(): List[Int32] = 1::2::Nil", "def tightFits(): List[Int32] = 1 :: 2 :: Nil");
+    assert.notEqual(mutated, good, "mutation must change the fixture");
+    assert.equal(await fmt(input.code, options), good);
+    assert.notEqual(await fmt(input.code, options), mutated);
+});
+
+test("fixture mutation: overlooking one spaced cons operator", async () => {
+    const { input, outputs } = loadFixture(consPath);
+    const options = outputs[0].options;
+    const good = await fmt(input.code, options);
+    assert.match(good, /def mixed\(\): List\[Int32\] = 1 :: 2 :: Nil/);
+    const mutated = good.replace("def mixed(): List[Int32] = 1 :: 2 :: Nil", "def mixed(): List[Int32] = 1::2 :: Nil");
+    assert.notEqual(mutated, good, "mutation must change the fixture");
+    assert.equal(await fmt(input.code, options), good);
+    assert.notEqual(await fmt(input.code, options), mutated);
+});

@@ -10,6 +10,10 @@ User-facing changes to Prettier Plugin for Flix. Plugin releases have their own 
 - Indent a wrapped `with` constraint list one level deeper than the body,
   members, or continued arrow parameters. Existing Flix files with wrapped
   trait constraints may reformat on upgrade.
+- Normalize cons `::` chains in expressions and patterns: a chain stays tight
+  only when every operator is tight and the chain fits; otherwise the chain is
+  fully spaced, and a tight chain that does not fit wraps. Existing files may
+  re-space or wrap long or mixed cons chains. `use` path `::` stays tight.
 - Preserve source blank lines between declarations, including after import and use statements. Collapse multiple blank lines to one.
 - Wrap long function types at arrows, long trait constraints between entries, and long record and schema row tails before the pipe.
 - Preserve vertical Datalog rules and wrap long query, solve, and inject lists between clauses or entries.

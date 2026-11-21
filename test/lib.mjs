@@ -28,10 +28,19 @@ export function fingerprint(text) {
     const comments = stream.getTokens().filter((t) => t.channel >= 2).map((t) => t.text.trim());
     const shape = (n) => (n.children ? `${n.constructor.name}(${n.children.map(shape).join(",")})` : "t");
     const constraintEnds = new Map();
+    const consOps = new Set();
     const walk = (n) => {
         if (n.constructor.name === "DatalogConstraintContext") {
             const { symbol } = n.children[n.children.length - 1];
             constraintEnds.set(symbol.tokenIndex, FlixLexer.symbolicNames[symbol.type]);
+        }
+        if (n.constructor.name === "ConsExprContext" || n.constructor.name === "ConsPatternContext") {
+            for (const child of n.children ?? []) {
+                const type = child.symbol?.type;
+                if (type === FlixLexer.COLON_COLON || type === FlixLexer.COLON_COLON_TIGHT) {
+                    consOps.add(child.symbol.tokenIndex);
+                }
+            }
         }
         (n.children ?? []).forEach(walk);
     };
@@ -40,7 +49,13 @@ export function fingerprint(text) {
     const sensitive = stream.getTokens().filter((t) => classified.has(t.type));
     const classes = sensitive.map((t) => FlixLexer.symbolicNames[t.type]);
     // Only parsed Datalog terminators may be normalized from DOT to DOT_WS.
-    const programClasses = sensitive.map((t, i) => constraintEnds.has(t.tokenIndex) ? "DatalogTerminator" : classes[i]);
+    // Cons `::` in expressions and patterns may loosen ColonColonTight to ColonColon;
+    // `use` path qualifiers must keep their exact class.
+    const programClasses = sensitive.map((t, i) => {
+        if (constraintEnds.has(t.tokenIndex)) return "DatalogTerminator";
+        if (consOps.has(t.tokenIndex)) return "ConsColonColon";
+        return classes[i];
+    });
     return { errors, tokens, comments, classes, programClasses, constraintEnds: [...constraintEnds.values()], shape: shape(tree) };
 }
 
