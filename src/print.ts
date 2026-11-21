@@ -117,6 +117,12 @@ export class Printer {
     private handlerArgumentOpeners = new Set<number>();
     /** First token of the match-arm guard being printed; its operator chain indents one level deeper than the body. */
     private matchGuardStart: TerminalNode | null = null;
+    /**
+     * When positive, single-statement blocks use soft lines even if the source
+     * spanned lines. Used to measure a trailing-lambda hug the same way before
+     * and after the first pass rewrote a one-line body onto several lines.
+     */
+    private relaxSourceBreaks = 0;
 
     constructor(
         private root: FlixRoot,
@@ -667,9 +673,21 @@ export class Printer {
             !(items.length > 1 && matchCallback) &&
             !items.slice(0, -1).some((it) => it.length > 0 && lastTerm(it[it.length - 1]) !== null && ttype(lastTerm(it[it.length - 1])!) === L.RBRACE) &&
             !docs.slice(0, -1).some(willBreak);
-        const hugged: Doc | undefined = huggable
-            ? [openDoc, this.joinWithSeps(docs, sepDocs, sepDocs.map(() => " ")), closeDoc]
-            : undefined;
+        let hugged: Doc | undefined;
+        if (huggable) {
+            let hugDocs = docs;
+            // Remeasure a trailing lambda without source-mirrored block breaks so
+            // the hug choice matches a later pass over the rewritten body.
+            if (finalArgument && kind(finalArgument) === "LambdaExpr") {
+                this.relaxSourceBreaks++;
+                try {
+                    hugDocs = [...docs.slice(0, -1), this.printListItem(lastItem, parentKind)];
+                } finally {
+                    this.relaxSourceBreaks--;
+                }
+            }
+            hugged = [openDoc, this.joinWithSeps(hugDocs, sepDocs, sepDocs.map(() => " ")), closeDoc];
+        }
         if (hugged && (!finalArgument || kind(finalArgument) !== "LambdaExpr" || !groupList)) {
             return [hugged, closeTrail];
         }
@@ -833,7 +851,7 @@ export class Printer {
         body.push(...comments.flatMap((c) => (stmt || body.length > 0 ? [hardline, c] : [c])));
         const vertical =
             comments.length > 0 ||
-            open.symbol.line !== close.symbol.line ||
+            (this.relaxSourceBreaks === 0 && open.symbol.line !== close.symbol.line) ||
             (stmt !== null && this.isMultiStatement(stmt));
         // The closing brace's trailing comment follows the group: inside it, its forced line break
         // would expand a block that otherwise fits on one line.
