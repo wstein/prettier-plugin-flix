@@ -12,8 +12,10 @@ import {
     REGRESSION_WIDTHS,
     SITE_WIDTHS,
     checkFormat,
+    describeNotRun,
     knownPlan,
     lineDiff,
+    listedNotRun,
     loadInputs,
     mergePlans,
     minimize,
@@ -181,9 +183,11 @@ async function sites(o) {
         perFile[key] = (perFile[key] ?? 0) + 1;
     }
     for (const [key, n] of Object.entries(perFile).sort().slice(0, o.max)) console.log(`  ${n} x ${key}`);
+    const notRun = listedNotRun(known.filter((e) => names.has(e.file)), checked);
+    for (const e of notRun.slice(0, o.max)) console.log(`  ${describeNotRun(e)}`);
     const written = o.json ? writeJson(o.json, failures.map(({ input, output, second, ...rest }) => rest)) : "";
     console.log(`sites finished in ${seconds(Date.now() - started)}${written}`);
-    return unknown.length + fixed.length > 0 ? 1 : 0;
+    return unknown.length + fixed.length + notRun.length > 0 ? 1 : 0;
 }
 
 /** Builds the plugin of `ref` in the system temporary directory (once per commit) and returns its directory. */

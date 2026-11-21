@@ -129,7 +129,7 @@ export function planSites(source, { every = 1, forms, widths }) {
 
 /** Identity of a failure or a known entry. */
 export const failureKey = (e) => [e.file, e.width, e.form ?? "plain", e.token ?? "-", e.kind].join("|");
-const entryKey = (e) => [e.file, e.width, e.form ?? "plain", e.token ?? "-"].join("|");
+export const entryKey = (e) => [e.file, e.width, e.form ?? "plain", e.token ?? "-"].join("|");
 
 /** Reads a known-failures file: `{ "failures": [ { file, width, form, token, kind, issue, context } ] }`. */
 export function parseKnown(text, where = "known failures") {
@@ -311,3 +311,11 @@ export function selectShard(items, shard) {
     if (!m || Number(m[1]) < 1 || Number(m[1]) > Number(m[2])) throw new Error("--shard expects k/n with 1 <= k <= n");
     return items.filter((_, i) => i % Number(m[2]) === Number(m[1]) - 1);
 }
+
+/** Known comment-site entries whose combination was never run (skipped or not planned). */
+export function listedNotRun(known, checked) {
+    return known.filter((e) => e.form !== undefined && e.token !== undefined && !checked.has(entryKey(e)));
+}
+
+/** Message for a listed site that was not run. */
+export const describeNotRun = (e) => `listed site not run: ${e.file} width=${e.width} form=${e.form} token=${e.token} (issue ${e.issue})`;

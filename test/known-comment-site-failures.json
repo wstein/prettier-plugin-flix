@@ -134,6 +134,15 @@
       "kind": "not-idempotent",
       "issue": "#165",
       "context": "ring, active = Bool} = {\nid=7 // note\n, // Assigned by the s"
+    },
+    {
+      "file": "fixtures/expressions/hug-source-vertical-block.md",
+      "width": 60,
+      "form": "block",
+      "token": 305,
+      "kind": "not-idempotent",
+      "issue": "#180",
+      "context": "min(_, _, _, _, size, _, _, _ /* note */ ) -> {\n            "
     }
   ]
 }
