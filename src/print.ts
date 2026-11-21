@@ -1105,20 +1105,25 @@ export class Printer {
             }
             return false;
         });
-        // Apply the adjusted fit rule only when a trailing block comment can
-        // affect it. Other match bodies keep their source-mirrored breaks.
-        const soften = Number(hasTrailingBlockComment);
-        this.softTrailBreaks += soften;
-        let rows: { leading: Doc[]; head: Doc; gap: Doc; tail: Doc; arrow: TerminalNode }[];
-        try {
-            rows = rules.map((rule) => {
-                this.ls(rule);
-                const leading = this.takeLeadingOwnLineComments(firstTerm(rule));
-                return { leading, ...this.eqBodyDocs(rule as ParserRuleContext) };
-            });
-        } finally {
-            this.softTrailBreaks -= soften;
+        // Soft trail breaks apply to the measurement only: the rows that are printed keep the
+        // line break after a block comment that ends its line.
+        const buildRows = () => rules.map((rule) => {
+            this.ls(rule);
+            const leading = this.takeLeadingOwnLineComments(firstTerm(rule));
+            return { leading, ...this.eqBodyDocs(rule as ParserRuleContext) };
+        });
+        let measured: ReturnType<typeof buildRows> | undefined;
+        if (hasTrailingBlockComment) {
+            const consumedBefore = new Set(this.consumed);
+            this.softTrailBreaks++;
+            try {
+                measured = buildRows();
+            } finally {
+                this.softTrailBreaks--;
+                this.consumed = consumedBefore;
+            }
         }
+        const rows = buildRows();
         const options = { printWidth: this.printWidth, tabWidth: this.tabWidth };
         const measure = (value: Doc): number => {
             const { formatted } = doc.printer.printDocToString(value, options);
@@ -1134,7 +1139,7 @@ export class Printer {
             return doc.printer.printDocToString([head, gap, tail], inContext).formatted
                 .startsWith(doc.printer.printDocToString(head, options).formatted);
         };
-        const widths = rows.map((row) => (staysFlat(row, this.rowIndent(row.arrow)) ? measure(row.head) : Infinity));
+        const widths = (measured ?? rows).map((row) => (staysFlat(row, this.rowIndent(row.arrow)) ? measure(row.head) : Infinity));
         const column = Math.max(...widths);
         if (!Number.isFinite(column) || widths.every((width) => width === column)) {
             return rows.map(({ leading, head, gap, tail }) => [leading, head, gap, tail]);

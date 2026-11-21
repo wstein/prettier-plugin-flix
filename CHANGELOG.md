@@ -27,6 +27,7 @@ User-facing changes to Prettier Plugin for Flix. Plugin releases have their own 
 - Keep signature breaks stable when record parameters wrap.
 - Keep a space between an arity slash and a block comment, so `A/ /* c */ 1` no longer prints as the unparsable `A//* c */ 1`.
 - Keep layouts stable across passes for block comments in function types, row tails, declaration heads and calls, and for trailing lambdas in pipeline steps. Indent the continuation after a line comment glued to an access dot or a tight `::`. Files with block comments at line ends may reflow once.
+- Soften trailing block-comment breaks in match arms only while measuring arrow alignment, so a block comment that ends its line after `=>` stays broken across passes.
 - Keep single-statement blocks that the source wrote on several lines vertical inside a trailing lambda that hugs its call, such as `xs |> List.map(x -> {` with the body on its own line. A trailing lambda whose first line fits hugs its call on the first pass, as it did on the second.
 - After a mismatched or unclosed delimiter, still format valid sibling definitions and Datalog rules, and clear the Playground preview when recovery cannot format.
 
