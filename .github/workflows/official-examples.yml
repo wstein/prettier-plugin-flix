@@ -20,6 +20,7 @@ on:
       - "docs/official-example-assessments.json"
       - "docs/official-example-reviews.json"
       - "test/official-docs-baseline.tsv"
+      - "test/fixture.mjs"
       - "test/lib.mjs"
       - "scripts/generate.mjs"
       - "tsconfig.json"
