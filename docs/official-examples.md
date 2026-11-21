@@ -87,6 +87,21 @@ The audit exits with status 1 for an invariant failure, or for an unapproved
 or changed layout candidate in review mode. It still writes the report.
 Cases awaiting context remain visible in either mode.
 
+### Require review reasons in pull requests
+
+CI compares the generated audit baseline with the pull request base. Each added
+or changed layout diff needs an entry in
+[official-example-reviews.json](official-example-reviews.json), keyed by case
+name, with its current `digest` and a `reason` describing why the formatting is
+appropriate. Find both the name and digest in the audit summary. Review the
+before and after files before recording the reason and updating the baseline.
+Existing layouts can retain their current baseline entries.
+
+To reproduce this check locally, pass `--reviews docs/official-example-reviews.json`
+and `--review-baseline /path/to/base-branch.tsv` alongside the normal baseline
+argument. The base branch file can be obtained with
+`git show origin/main:test/official-docs-baseline.tsv`.
+
 ### Record reviewed transformations
 
 Each reviewed example in [the assessments](official-example-assessments.json)
