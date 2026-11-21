@@ -1,6 +1,6 @@
 name: Bug report
 description: A formatter, recovery, Playground, release or tooling defect.
-title: "fix(formatter): "
+title: "fix: "
 labels: ["bug"]
 body:
   - type: markdown
@@ -62,15 +62,21 @@ body:
     id: summary
     attributes:
       label: Summary
+      description: What happened?
     validations:
       required: true
   - type: textarea
     id: reproduction
     attributes:
       label: Reproduction
-      description: Input, printWidth and command. For non-idempotent output, give the output of pass 1 and pass 2.
+      description: Include the smallest Flix snippet or Playground link that reproduces the problem, the printWidth and the command. For non-idempotent output, give the output of pass 1 and pass 2.
     validations:
       required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: For formatter reports, the expected and the actual output and any relevant Prettier options.
   - type: input
     id: versions
     attributes:
