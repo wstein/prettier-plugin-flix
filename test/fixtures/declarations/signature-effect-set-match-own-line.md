@@ -1,6 +1,6 @@
 ---
-title: "Skip the hugged-body trailer when an own-line comment follows `match`"
-description: "When `= match` is followed by an own-line comment before the scrutinee, pass 2 does not keep the rest of the body on the signature line (#201). Width 30 must stay idempotent."
+title: "Count the gap after `match` when an own-line comment follows"
+description: "When `= match` is followed by an own-line comment before the scrutinee, the hugged-body trailer still reserves the gap before that break (#201). Width 30 must stay idempotent."
 group: "Calls and function signatures"
 flix: "0.80"
 options: { printWidth: 30 }
