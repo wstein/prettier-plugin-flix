@@ -123,6 +123,12 @@ export class Printer {
      * and after the first pass rewrote a one-line body onto several lines.
      */
     private relaxSourceBreaks = 0;
+    /**
+     * When positive, a trailing block comment that ends its source line does
+     * not force a hard break. Match-arm alignment measures with this set so a
+     * comment that moved to a line end is not treated differently on pass two.
+     */
+    private softTrailBreaks = 0;
 
     constructor(
         private root: FlixRoot,
@@ -236,7 +242,8 @@ export class Printer {
 
     /** A `//` comment (or a block comment that ends its line) ends the line: whatever follows the token must start a new line. */
     private hasLineTrail(t: TerminalNode): boolean {
-        return !!this.info(t)?.trail.some((c) => c.isLine || c.nlNext > 0);
+        return !!this.info(t)?.trail.some((c) =>
+            c.isLine || (this.softTrailBreaks === 0 && c.nlNext > 0));
     }
 
     /**
@@ -1076,11 +1083,21 @@ export class Printer {
     }
 
     private alignMatchGroup(rules: Node[], layoutId: symbol): Doc[] {
-        const rows = rules.map((rule) => {
-            this.ls(rule);
-            const leading = this.takeLeadingOwnLineComments(firstTerm(rule));
-            return { leading, ...this.eqBodyDocs(rule as ParserRuleContext) };
-        });
+        // Soften source-mirrored breaks so a trailing block comment that ends a
+        // line after the first pass is measured like the inline form.
+        this.relaxSourceBreaks++;
+        this.softTrailBreaks++;
+        let rows: { leading: Doc[]; head: Doc; gap: Doc; tail: Doc }[];
+        try {
+            rows = rules.map((rule) => {
+                this.ls(rule);
+                const leading = this.takeLeadingOwnLineComments(firstTerm(rule));
+                return { leading, ...this.eqBodyDocs(rule as ParserRuleContext) };
+            });
+        } finally {
+            this.softTrailBreaks--;
+            this.relaxSourceBreaks--;
+        }
         const options = { printWidth: this.printWidth, tabWidth: this.tabWidth };
         const measure = (value: Doc): number => {
             const { formatted } = doc.printer.printDocToString(value, options);
