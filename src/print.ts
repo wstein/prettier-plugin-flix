@@ -1109,7 +1109,6 @@ export class Printer {
         // Apply the adjusted fit rule only when a trailing block comment can
         // affect it. Other match bodies keep their source-mirrored breaks.
         const soften = Number(hasTrailingBlockComment);
-        this.relaxSourceBreaks += soften;
         this.softTrailBreaks += soften;
         let rows: { leading: Doc[]; head: Doc; gap: Doc; tail: Doc; arrow: TerminalNode }[];
         try {
@@ -1120,7 +1119,6 @@ export class Printer {
             });
         } finally {
             this.softTrailBreaks -= soften;
-            this.relaxSourceBreaks -= soften;
         }
         const options = { printWidth: this.printWidth, tabWidth: this.tabWidth };
         const measure = (value: Doc): number => {
