@@ -285,3 +285,29 @@ export function renderHunks(hunks, { limit = Infinity } = {}) {
 
 /** Seconds with one decimal, for the run time lines. */
 export const seconds = (ms) => `${(ms / 1000).toFixed(1)} s`;
+
+/** Parses `--widths a,b` or returns `fallback` when unset. Rejects non-positive integers. */
+export function parseWidths(text, fallback) {
+    if (!text) return fallback;
+    const widths = text.split(",").map((w) => Number(w.trim()));
+    if (widths.some((w) => !Number.isInteger(w) || w <= 0)) throw new Error(`--widths expects positive integers: ${text}`);
+    return widths;
+}
+
+/** Parses a positive integer CLI option such as `--every` or `--max`. */
+export function parsePositiveInt(name, value) {
+    const n = Number(value);
+    if (!Number.isInteger(n) || n < 1) throw new Error(`--${name} expects a positive integer: ${value}`);
+    return n;
+}
+
+/**
+ * Selects shard `k` of `n` from `items` (1-based k). `shard` looks like `k/n`.
+ * Without `shard`, returns `items` unchanged.
+ */
+export function selectShard(items, shard) {
+    if (!shard) return items;
+    const m = /^(\d+)\/(\d+)$/.exec(shard);
+    if (!m || Number(m[1]) < 1 || Number(m[1]) > Number(m[2])) throw new Error("--shard expects k/n with 1 <= k <= n");
+    return items.filter((_, i) => i % Number(m[2]) === Number(m[1]) - 1);
+}
