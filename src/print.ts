@@ -243,7 +243,16 @@ export class Printer {
     /** A `//` comment (or a block comment that ends its line) ends the line: whatever follows the token must start a new line. */
     private hasLineTrail(t: TerminalNode): boolean {
         return !!this.info(t)?.trail.some((c) =>
-            c.isLine || (this.softTrailBreaks === 0 && c.nlNext > 0));
+            c.isLine || (c.nlNext > 0 && (this.softTrailBreaks === 0 || this.nextHasOwnLineComment(t))));
+    }
+
+    /**
+     * Soft trail breaks apply to the measurement only: a block comment that ends its line still
+     * forces the break when an own-line comment follows, so that comment stays on its own line.
+     */
+    private nextHasOwnLineComment(t: TerminalNode): boolean {
+        const next = nextTerm(t);
+        return next !== null && (this.info(next)?.lead.length ?? 0) > 0;
     }
 
     /**
