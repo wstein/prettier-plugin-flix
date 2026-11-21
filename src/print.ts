@@ -702,9 +702,12 @@ export class Printer {
             !pad && comments.length === 0 && !commentAtBoundary && sepType === L.COMMA && lastTok !== null && ttype(lastTok) === L.RBRACE &&
             !items.slice(0, -1).some((it) => it.length > 0 && lastTerm(it[it.length - 1]) !== null && ttype(lastTerm(it[it.length - 1])!) === L.RBRACE);
         const canRelaxLambda = hugCandidate && finalArgument && kind(finalArgument) === "LambdaExpr";
-        // The hug alternative that breaks the lambda's blocks is built from a copy that has not
-        // yet taken the comments, so both alternatives see the same comments and line starts.
+        // Hug alternatives are built from copies that have not yet taken the comments, so
+        // both alternatives see the same comments and line starts as the broken form.
         const blockPrinter = canRelaxLambda ? this.forkForVerticalBlocks() : undefined;
+        // Soften EOL block-comment trails while measuring hug fit, matching the first pass
+        // where the comment still shares its line with the following token.
+        const hugMeasurePrinter = canRelaxLambda ? this.forkForHugMeasure() : undefined;
         const docs = groups.flatMap((rows) => {
             const formatted = mayAlign ? this.alignEntries(rows, split.seps.slice(offset, offset + rows.length), layoutId) : undefined;
             offset += rows.length;
@@ -727,10 +730,18 @@ export class Printer {
         let hugged: Doc | undefined;
         let huggedBroken: Doc | undefined;
         if (huggable) {
-            hugged = [openDoc, this.joinWithSeps(docs, sepDocs, sepDocs.map(() => " ")), closeDoc];
-            if (blockPrinter) {
-                const brokenDocs = [...docs.slice(0, -1), blockPrinter.printListItem(lastItem, parentKind)];
-                huggedBroken = [openDoc, this.joinWithSeps(brokenDocs, sepDocs, sepDocs.map(() => " ")), closeDoc];
+            if (hugMeasurePrinter) {
+                // Remeasure the lambda without EOL block-comment hardlines so the
+                // hug choice matches the first pass (and the same call without the comment).
+                const hugDocs = [...docs.slice(0, -1), hugMeasurePrinter.printListItem(lastItem, parentKind)];
+                hugged = [openDoc, this.joinWithSeps(hugDocs, sepDocs, sepDocs.map(() => " ")), closeDoc];
+                if (blockPrinter) {
+                    blockPrinter.softTrailBreaks = this.softTrailBreaks + 1;
+                    const brokenDocs = [...docs.slice(0, -1), blockPrinter.printListItem(lastItem, parentKind)];
+                    huggedBroken = [openDoc, this.joinWithSeps(brokenDocs, sepDocs, sepDocs.map(() => " ")), closeDoc];
+                }
+            } else {
+                hugged = [openDoc, this.joinWithSeps(docs, sepDocs, sepDocs.map(() => " ")), closeDoc];
             }
         }
         if (hugged && (!finalArgument || kind(finalArgument) !== "LambdaExpr" || !groupList)) {
@@ -763,14 +774,27 @@ export class Printer {
         ];
     }
 
-    private forkForVerticalBlocks(): Printer {
+    private forkPrinter(): Printer {
         const printer = new Printer(this.root, this.printWidth, this.tabWidth, this.alignmentIndent);
         printer.flat = this.flat;
-        printer.forceVerticalBlocks = this.forceVerticalBlocks + 1;
+        printer.forceVerticalBlocks = this.forceVerticalBlocks;
         printer.softTrailBreaks = this.softTrailBreaks;
         printer.consumed = new Set(this.consumed);
         printer.lineStart = new Set(this.lineStart);
         printer.handlerArgumentOpeners = new Set(this.handlerArgumentOpeners);
+        return printer;
+    }
+
+    private forkForVerticalBlocks(): Printer {
+        const printer = this.forkPrinter();
+        printer.forceVerticalBlocks = this.forceVerticalBlocks + 1;
+        return printer;
+    }
+
+    /** Like a normal print fork, but EOL block comments do not force a line trail. */
+    private forkForHugMeasure(): Printer {
+        const printer = this.forkPrinter();
+        printer.softTrailBreaks = this.softTrailBreaks + 1;
         return printer;
     }
 
