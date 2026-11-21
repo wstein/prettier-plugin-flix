@@ -32,7 +32,7 @@ pub def labels(): Map[
     String,
     Int32
 ] = Map#{
-    "🚲" => 1,
+    "🚲"    => 1,
     "train" => 22
 }
 
