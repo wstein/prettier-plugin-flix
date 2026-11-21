@@ -1555,10 +1555,11 @@ export class Printer {
                     this.print(operand),
                 ];
             })];
-            return conditionalGroup([
-                tightFlat,
-                group([first, indent(ops.map((_, i) => spacedLink(i)))]),
-            ]);
+            const spaced = group([first, indent(ops.map((_, i) => spacedLink(i)))]);
+            // A forced break inside an operand ends the fit check at that line, so the rest
+            // of a tight chain could pass the width: treat such a chain as not fitting.
+            if (willBreak(tightFlat)) return spaced;
+            return conditionalGroup([tightFlat, spaced]);
         }
         return group([first, indent(ops.map((_, i) => spacedLink(i)))]);
     }

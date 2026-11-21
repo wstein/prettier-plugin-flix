@@ -26,6 +26,11 @@ def gluedComment(): List[Int32] = 1/* head */::/* tail */2::Nil
 
 def appendBesideCons(): List[Int32] = (1::2::Nil) ::: (3::4::Nil)
 
+def fs(): List[Int32 -> Int32] = (x -> {
+    let y = x + 1;
+    y * 2
+})::(firstIncrementFunction)::(secondIncrementFunction)::(thirdIncrementFunction)::Nil
+
 def headOf(xs: List[Int32]): Int32 = match xs {
     case x::y::_ => x
     case Nil => 0
@@ -53,6 +58,15 @@ def breakBeside(): List[Int32] = 1 :: 2 :: Nil
 def gluedComment(): List[Int32] = 1/* head */::/* tail */2::Nil
 
 def appendBesideCons(): List[Int32] = (1::2::Nil) ::: (3::4::Nil)
+
+def fs(): List[Int32 -> Int32] = (x -> {
+    let y = x + 1;
+    y * 2
+})
+    :: (firstIncrementFunction)
+    :: (secondIncrementFunction)
+    :: (thirdIncrementFunction)
+    :: Nil
 
 def headOf(xs: List[Int32]): Int32 = match xs {
     case x::y::_ => x
@@ -91,6 +105,15 @@ def gluedComment(): List[Int32] =
 
 def appendBesideCons(): List[Int32] =
     (1::2::Nil) ::: (3::4::Nil)
+
+def fs(): List[Int32 -> Int32] = (x -> {
+    let y = x + 1;
+    y * 2
+})
+    :: (firstIncrementFunction)
+    :: (secondIncrementFunction)
+    :: (thirdIncrementFunction)
+    :: Nil
 
 def headOf(
     xs: List[Int32]
