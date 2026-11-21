@@ -1345,8 +1345,13 @@ export class Printer {
         const type = typeIndex < 0 ? undefined : kids(head[typeIndex])[0];
         const schema = type && kind(type) === "SimpleType" ? kids(type)[0] : undefined;
         const arrow = children[arrowIndex] as TerminalNode;
-        const equalsTrailer = util.getStringWidth(" =");
-        const huggedBodyTrailer = this.signatureHuggedBodyTrailerWidth(n, arrow, children[arrowIndex + 1]);
+        // Reserve lead comments on `=` plus ` = body…`, not only ` =`, so a block
+        // comment between the effect set and `=` matches pass 2 (#92). When `=` is
+        // after an own-line comment, nothing of that suffix shares the signature line.
+        const equalsTrailer = this.signatureEqualsTrailerWidth(arrow);
+        const huggedBodyTrailer = equalsTrailer === 0
+            ? 0
+            : this.signatureHuggedBodyTrailerWidth(n, arrow, children[arrowIndex + 1]);
         if (!schema || kind(schema) !== "SchemaType") {
             return this.printSignature(n, head, equalsTrailer, huggedBodyTrailer);
         }
@@ -1389,6 +1394,21 @@ export class Printer {
             align(column, [hardline, join(hardline, rows.slice(1))]),
             " ", close, ...withSuffix,
         ];
+    }
+
+    /**
+     * Width of the gap, lead comments on `=`, and `=` that share the signature's
+     * last line. Own-line leads before `=` leave no same-line trailer.
+     */
+    private signatureEqualsTrailerWidth(arrow: TerminalNode): number {
+        const info = this.info(arrow);
+        if (!info?.lead.length) return util.getStringWidth(" =");
+        let suffix = " ";
+        for (const comment of info.lead) {
+            if (comment.nl > 0) return 0;
+            suffix += comment.text + " ";
+        }
+        return util.getStringWidth(suffix + "=");
     }
 
     /**

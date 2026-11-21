@@ -96,7 +96,9 @@ as the effect annotation or a `with` constraint when that keeps a short type
 together. A short body can stay after the `=` on a continuation line. When
 that combination is too wide, the body can start on its own indented line.
 A break before a braced effect set must still leave room for `=` and a hugged
-body on that continuation; otherwise the set stays with the return type.
+body on that continuation; otherwise the set stays with the return type. A
+block comment between the set and `=` counts toward that same trailer width.
+When `=` follows an own-line comment, that trailer is not reserved.
 
 **Before**
 
@@ -114,7 +116,9 @@ def wait(rx: Receiver[Int32], n: Int32, tx: Sender[List[Int32]]): Unit
 
 [Call fixture](../test/fixtures/expressions/wrap-arguments.md) ·
 [Signature fixture](../test/fixtures/declarations/signature-boundaries.md) ·
-[Effect set with region body](../test/fixtures/declarations/signature-effect-set-with-region.md)
+[Effect set with region body](../test/fixtures/declarations/signature-effect-set-with-region.md) ·
+[Effect set with comment before `=`](../test/fixtures/declarations/signature-effect-set-equals-block-comment.md) ·
+[Effect set with own-line comment before `=`](../test/fixtures/declarations/signature-effect-set-own-line-before-equals.md)
 
 Keep short function types on one line. When an arrow chain wraps, leave
 each `->` after its parameter type, align the continued parameter types,
