@@ -6,7 +6,7 @@ import { dirname, join } from "node:path";
 import test from "node:test";
 import { promisify } from "node:util";
 import { explainTrailingCommentAlignment } from "../dist/comment-layout.js";
-import { approvalFor, auditExample, changeKind, compareBaseline } from "../scripts/audit-flix-examples.mjs";
+import { approvalFor, auditExample, changeKind, compareBaseline, unreviewedLayouts } from "../scripts/audit-flix-examples.mjs";
 import { renderFindings, reviewedTransformations } from "../scripts/docs-example-findings.mjs";
 import { extractExamples, markdownBlocks } from "../scripts/extract-flix-examples.mjs";
 
@@ -163,4 +163,18 @@ test("shows inline diffs and escapes source code in the HTML overview", () => {
     assert.match(html, /<span class="removed">-&lt;script&gt;<\/span>/);
     assert.match(html, /<summary>book\.general\.example\.test<\/summary>/);
     assert.match(markdown, /@@ -1 \+1 @@\n-<script>\n\+    <script>/);
+});
+
+
+test("pull request audit requires reasons only for added or changed layout diffs", () => {
+    const cases = [
+        { case_name: "old", status: "layout-change" },
+        { case_name: "new", status: "layout-change" },
+        { case_name: "changed", status: "layout-change" },
+        { case_name: "approved", status: "layout-change", approval: "Keeps the import group together." },
+        { case_name: "clean", status: "unchanged" },
+    ];
+    const drift = { added: ["new", "clean"], changed: ["changed", "approved"], removed: ["gone"] };
+    assert.deepEqual(unreviewedLayouts(cases, drift).map((item) => item.case_name), ["new", "changed"]);
+    assert.deepEqual(unreviewedLayouts(cases).map((item) => item.case_name), ["old", "new", "changed"]);
 });
