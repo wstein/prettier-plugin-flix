@@ -156,6 +156,18 @@ export function unreviewedLayouts(cases, drift) {
         (!changed || changed.has(item.case_name)));
 }
 
+/** Fail the audit when new or changed layout diffs lack a review reason. */
+export function withMissingReviews(failed, missing) {
+    return failed || missing.length > 0;
+}
+
+export function docsExamplesArgsError(positionals, values) {
+    if (positionals.length !== 3 || (values["review-baseline"] && !values.reviews)) {
+        return "Usage: npm run test:docs-examples -- <book> <flix.dev> <new-report-directory> [--reviews reviews.json] [--baseline baseline.tsv] [--review-baseline base-branch.tsv]";
+    }
+    return undefined;
+}
+
 async function audit(book, website, output, reviewsPath, baselinePath, reviewBaselinePath) {
     const reviews = reviewsPath ? JSON.parse(await readFile(reviewsPath, "utf8")) : {};
     const previous = baselinePath ? await readFile(baselinePath, "utf8") : undefined;
@@ -201,7 +213,7 @@ async function audit(book, website, output, reviewsPath, baselinePath, reviewBas
     if (drift && Object.values(drift).some((names) => names.length)) failed = true;
     const reviewDrift = reviewBaseline === undefined ? undefined : compareBaseline(reviewBaseline, baseline);
     const missing = reviewsPath ? unreviewedLayouts(cases, reviewDrift) : [];
-    if (missing.length) failed = true;
+    failed = withMissingReviews(failed, missing);
     const explained = cases.filter((item) => item.explanation).length;
     const summary = ["# Official Flix examples", "", ...Object.entries(totals).map(([key, count]) => `- ${key} · ${count}`),
         `- automatically explained · ${explained}`, ""];
@@ -250,9 +262,8 @@ if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.m
         const { positionals, values } = parseArgs({
             allowPositionals: true, options: { reviews: { type: "string" }, baseline: { type: "string" }, "review-baseline": { type: "string" } },
         });
-        if (positionals.length !== 3 || (values["review-baseline"] && !values.reviews)) {
-            throw new Error("Usage: npm run test:docs-examples -- <book> <flix.dev> <new-report-directory> [--reviews reviews.json] [--baseline baseline.tsv] [--review-baseline base-branch.tsv]");
-        }
+        const usage = docsExamplesArgsError(positionals, values);
+        if (usage) throw new Error(usage);
         process.exitCode = await audit(...positionals.map((path) => resolve(path)), values.reviews, values.baseline, values["review-baseline"]);
     } catch (error) {
         console.error(error.message);
