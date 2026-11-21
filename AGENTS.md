@@ -104,13 +104,14 @@ blocking finding are in
 - One pull request has one topic and at most one scope: formatter, or
   workflow and documentation, or tooling. Two topics are two pull requests. Do
   not combine several issues in one pull request. A pull request may join
-  several scopes when its changes check each other, for example a workflow and
-  the formatter code that its paths cover. It then needs one review per scope,
-  and the PR text states why it is an exception.
+  two scopes at most when each scope checks the other, for example a workflow
+  and the formatter code that its paths cover. The PR text names what each scope
+  checks in the other and why the PR is an exception. Each scope gets its own
+  independent review.
 - A blocking finding is defined in
   [Issue triage and labels](docs/development.md#issue-triage-and-labels).
-  A `reach:synthetic` finding does not block. It is a line in the collection
-  issue (label `epic`) of its class, not an issue of its own.
+  A `reach:synthetic` finding does not block. It is a line in the epic
+  (label `epic`) of its class, not an issue of its own.
 - Triage issues by type, area, class and reach.
 - Reviewer rules: wait the full quiet period (head, base branch and `main`
   unchanged for 10 minutes, then post), check the head immediately before
@@ -134,8 +135,9 @@ blocking finding are in
 ## Write commits and changelog entries
 
 - Use scoped Conventional Commits for commit subjects, which land on `main`
-  through a rebase merge, and for PR titles. Write `type(scope): imperative summary`, with a
-  scope such as `formatter`, `parser`, `playground`, `catalog`, or `release`.
+  through a rebase merge, and for PR titles. Write
+  `type(scope): imperative summary`, with a scope such as `formatter`,
+  `parser`, `playground`, `catalog`, or `release`.
   Use `feat`, `fix`, `perf`, `docs`, `test`, `refactor`, `build`, `ci`, or
   `chore` according to the change.
 - Describe the user-visible result in the subject. Add an optional

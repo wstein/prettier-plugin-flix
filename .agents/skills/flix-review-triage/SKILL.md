@@ -19,8 +19,8 @@ mechanical work.
 ## Before the review
 
 1. Read the PR text, the diff and the linked issues. Record the head SHA and
-   the SHA of the base branch (`origin/main`, or the parent branch of a
-   stacked PR; `<base>` below).
+   the SHA of the base branch (`<base>`: `main`, or the name of the parent
+   branch of a stacked PR; written without `origin/`).
 2. Wait until the head, the base branch and `main` have been unchanged for 10
    minutes. Post only after the wait is over.
 3. Check free memory before the heavy runs below.
@@ -79,7 +79,11 @@ and block), nested forms and tight `.` or `::` chains.
    set the reach as defined in
    [Issue triage and labels](../../../docs/development.md#issue-triage-and-labels).
 3. Follow the triage rule there for what becomes an issue of its own and what
-   becomes a line in a collection issue.
+   becomes a line in an epic: #211 (`class:comment-kind`), #212
+   (`class:signature-fit`), #213 (`class:measure-leak`, `class:hug`), #214
+   (test hardening) and #215 (decisions). Definition of done, rhythm and size
+   of an epic are in
+   [Epics](../../../docs/development.md#epics).
 4. Check open and closed issues for a duplicate before creating an issue.
 5. Set type, area, class and reach labels as described in the development
    guide.
