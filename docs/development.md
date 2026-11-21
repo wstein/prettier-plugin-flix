@@ -190,7 +190,8 @@ versions. Promote the reviewed entries from **Unreleased** in
 [CHANGELOG.md](../CHANGELOG.md) as part of the version and lockfile update.
 
 After the release commit lands on `main`, create a GitHub draft release with
-the reviewed notes and set its target to that commit's full SHA. Run
+the reviewed notes and set its target to that commit's full SHA. The workflow
+checks for an Unreleased heading and notes under the version being built. Run
 **Publish plugin release** from the Actions tab on `main` with the same SHA in
 `source_commit`. The workflow requires an existing draft with release notes
 targeting that SHA. Before packing it re-runs the advertised gates

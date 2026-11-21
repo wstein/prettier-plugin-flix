@@ -4,10 +4,28 @@ User-facing changes to Prettier Plugin for Flix. Plugin releases have their own 
 
 ## [Unreleased]
 
+### Formatting changes
+
+- Preserve source blank lines between declarations, including after import and use statements. Collapse multiple blank lines to one.
+- Wrap long function types at arrows, long trait constraints between entries, and long record and schema row tails before the pipe.
+- Preserve vertical Datalog rules and wrap long query, solve, and inject lists between clauses or entries.
+- Wrap oversized calls with trailing lambdas while keeping the call head and lambda together when they fit.
+
+### Fixes
+
+- Preserve token boundaries beside comments around access dots, double colons, and cons operators.
+- Account for actual indentation when aligning nested map entries, record fields, and match arms.
+
+### Playground and verification
+
+- Report formatter timeouts separately from load failures and retry on the next edit. Associate syntax and line-width errors with their controls and give diff rows accessible line labels.
+- Pin the weekly upstream Flix corpus. Require a review reason for each new or changed official example layout diff in a pull request.
+
 ### Compatibility
 
 - Declare `"engines": { "node": ">=22" }` so installers match CI and release publishing.
 - Ship TypeScript declarations for the plugin default export and `recoverFormatting`.
+
 
 ## [0.1.3] - 2026-11-20
 
@@ -81,7 +99,7 @@ First independently versioned plugin release. Tested with Flix 0.80.0 and Pretti
 [0.1.0]: https://github.com/wstein/prettier-plugin-flix/releases/tag/v0.1.0
 [release-010]: https://github.com/wstein/prettier-plugin-flix/releases/tag/v0.1.0
 [release-011]: https://github.com/wstein/prettier-plugin-flix/releases/tag/v0.1.1
-[npm]: https://www.npmjs.com/package/prettier-plugin-flix/v/0.1.2
+[npm]: https://www.npmjs.com/package/prettier-plugin-flix
 [sibling-alignment]: https://github.com/wstein/prettier-plugin-flix/commit/da2c4d1
 [catalog-search]: https://github.com/wstein/prettier-plugin-flix/commit/faccacd
 [catalog-chapters]: https://github.com/wstein/prettier-plugin-flix/pull/73
