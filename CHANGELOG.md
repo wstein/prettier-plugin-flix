@@ -21,10 +21,11 @@ User-facing changes to Prettier Plugin for Flix. Plugin releases have their own 
 
 ### Fixes
 
-- Keep map and match arrow alignment stable when a block comment leads a
-  map key or match `case`, and do not break a call only because a block
-  comment ends its source line before a comma, so those layouts stay
-  idempotent ([#137](https://github.com/wstein/prettier-plugin-flix/issues/137)).
+- Keep map, record and match alignment stable when a block comment leads a
+  map key, record field or match `case`, and do not break a list only
+  because a block comment ends its source line before a `,` or `;`, so
+  those layouts stay idempotent ([#137](https://github.com/wstein/prettier-plugin-flix/issues/137),
+  [#187](https://github.com/wstein/prettier-plugin-flix/issues/187)).
 - Keep map and record arrow/`=` alignment stable when a line comment sits
   before a separator that also carries a line comment, so the first format
   already matches the second.

@@ -286,11 +286,11 @@ column. A blank line or standalone comment starts a new group. When an
 entry and the following separator both end with a line comment, the
 separator's comment becomes that standalone boundary on the first format
 as well, so alignment stays stable across passes. An inline block comment
-that leads a later map entry is treated as that same kind of boundary, and
-a block comment that leads a map key or match `case` stays outside the
-measured head, so arrow padding does not change between passes. The
-formatter places the separator one space after the longest single-line
-head.
+that leads a later map entry, record field or match `case` is treated as
+that same kind of boundary, and a block comment that leads a map key,
+record field or match `case` stays outside the measured head, so the
+padding does not change between passes. The formatter places the
+separator one space after the longest single-line head.
 
 Map arrows and record equals signs align in eligible multiline literals
 with short, simple keys and values.
@@ -318,7 +318,8 @@ Compact collections stay inline.
 [Literal types in tuple rows](../test/fixtures/expressions/align-tuple-literals.md) ·
 [Map block comments](../test/fixtures/expressions/align-map-block-comment.md) ·
 [Match leading block comment](../test/fixtures/expressions/match-leading-block-comment.md) ·
-[Call block comment before comma](../test/fixtures/comments/call-eol-block-before-comma.md)
+[Align after line comment with block lead](../test/fixtures/expressions/align-after-line-comment-block-lead.md) ·
+[List block comment before separator](../test/fixtures/comments/call-eol-block-before-comma.md)
 
 Match arms and handler clauses can share a separator column even when a
 body spans multiple lines. Handler clauses use the configured width to

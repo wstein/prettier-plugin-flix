@@ -209,9 +209,6 @@ export class Printer {
      */
     private takeLeadingMatchArmComments(t: TerminalNode | null): Doc[] {
         if (!t) return [];
-        const info = this.info(t);
-        if (!info?.lead.length || this.consumed.has(t.symbol.tokenIndex)) return [];
-        if (info.lead[0].nl === 0 && info.lead.every((c) => c.isLine)) return [];
         const leading = this.tokenLeadingDoc(t);
         this.consumed.add(t.symbol.tokenIndex);
         return leading;
