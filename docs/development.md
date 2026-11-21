@@ -136,6 +136,8 @@ the width, the comment form and token index (comment sites), the kind (`unparsab
   `npm run review:sweep -- sites` (three `--shard k/3` processes) and state the result in the PR.
 - A listed failure must keep failing in the listed way. When a fix makes it pass, the run fails with
   `known failure now passes: remove it from the list (issue #123)`. Remove the entry in the fix.
+- A listed comment-site entry that was not run (not planned, or its variant no longer parses) fails
+  with `listed site not run`.
 - Entries are matched by token index. After a fixture input changes, regenerate the affected entries:
   run `npm run review:sweep -- sites --json out.json` and copy the failures that belong to an open issue.
 

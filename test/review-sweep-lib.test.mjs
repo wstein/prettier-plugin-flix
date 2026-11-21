@@ -7,7 +7,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { COMMENT_FORMS, withCommentAt } from "./lib.mjs";
-import { checkFormat, checkSite, knownPlan, lineDiff, loadInputs, mergePlans, minimize, parseKnown, parsePositiveInt, parseWidths, planSites, reconcile, renderHunks, runSitePlan, selectShard } from "../scripts/review-sweep-lib.mjs";
+import { checkFormat, checkSite, describeNotRun, knownPlan, lineDiff, listedNotRun, loadInputs, mergePlans, minimize, parseKnown, parsePositiveInt, parseWidths, planSites, reconcile, renderHunks, runSitePlan, selectShard } from "../scripts/review-sweep-lib.mjs";
 
 const src = "def f(): Int32 = a.b + 1\n";
 
@@ -157,4 +157,11 @@ test("loadInputs: names files outside the repo relative to the parent of the giv
     } finally {
         rmSync(root, { recursive: true, force: true });
     }
+});
+
+test("listedNotRun: a known site that was not checked is reported", () => {
+    const known = [entry()];
+    assert.deepEqual(listedNotRun(known, new Set([key(entry())])), []);
+    assert.equal(listedNotRun(known, new Set()).length, 1);
+    assert.match(describeNotRun(entry()), /listed site not run: a\.md width=60 form=block token=7/);
 });

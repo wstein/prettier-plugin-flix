@@ -18,7 +18,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { COMMENT_FORMS, fmt } from "./lib.mjs";
-import { SITE_WIDTHS, knownPlan, mergePlans, parseKnown, planSites, reconcile, repoInputs, runSitePlan } from "../scripts/review-sweep-lib.mjs";
+import { SITE_WIDTHS, describeNotRun, knownPlan, listedNotRun, mergePlans, parseKnown, planSites, reconcile, repoInputs, runSitePlan } from "../scripts/review-sweep-lib.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const every = Math.max(1, Number(process.env.COMMENT_SITES_EVERY ?? 6) || 6);
@@ -32,7 +32,9 @@ for (const input of inputs) {
         const { failures, checked } = await runSitePlan(format, input, plan);
         const mine = known.filter((e) => e.file === input.name);
         const { messages } = reconcile(mine, failures, checked);
-        assert.deepEqual(messages, [], `${messages.length} problems at ${checked.size} comment sites`);
+        // A listed site that was not run (not planned, or its variant no longer parses) is never judged.
+        const notRun = listedNotRun(mine, checked).map(describeNotRun);
+        assert.deepEqual([...messages, ...notRun], [], `${messages.length + notRun.length} problems at ${checked.size} comment sites`);
     });
 }
 
