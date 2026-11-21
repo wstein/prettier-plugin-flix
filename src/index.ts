@@ -9,7 +9,7 @@ export const languages: SupportLanguage[] = [
         parsers: ["flix"],
         extensions: [".flix"],
         vscodeLanguageIds: ["flix"],
-        linguistLanguageId: 0,
+        linguistLanguageId: 800935960,
     },
 ];
 
