@@ -21,6 +21,8 @@ on:
       - "docs/official-example-reviews.json"
       - "test/official-docs-baseline.tsv"
       - "test/lib.mjs"
+      - "scripts/generate.mjs"
+      - "tsconfig.json"
       - "src/**"
       - "package.json"
       - "package-lock.json"
@@ -31,6 +33,7 @@ permissions:
 jobs:
   audit:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
