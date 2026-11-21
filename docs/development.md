@@ -165,7 +165,7 @@ the width, the comment form and token index (comment sites), the kind (`unparsab
   Pull requests that touch that list, `test/comment-sites.test.mjs`,
   `test/lib.mjs`, `test/fixtures/**`, `src/**`, `scripts/review-sweep.mjs`,
   `scripts/review-sweep-lib.mjs` or the workflow file also run that full sweep
-  in CI (`Comment sites full sweep`, three shards, 8 to 14 minutes each on
+  in CI (`Comment sites full sweep`, three shards, 8 to 18 minutes each on
   GitHub runners). It is not a required check, so a red run does not block merge.
 - Entries are matched by token index. After a fixture input changes, regenerate the affected entries:
   run `npm run review:sweep -- sites --json out.json` and copy the failures that belong to an open issue.
