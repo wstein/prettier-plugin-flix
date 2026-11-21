@@ -133,11 +133,13 @@ test("formats Datalog rules around a broken rule with a bad delimiter", async ()
 
 test("leaves a Datalog rule after an unclosed argument list that pairs across the next rule", async () => {
     // Broken(1, pairs with the closer of Q(3,4), so recovery cannot split Q out.
+    // R(5,6) after that slice still formats.
     const source = lines(
         "def d() = #{",
         "    A(1,2).",
         "    Broken(1,",
         "    Q(3,4).",
+        "    R(5,6).",
         "}",
         "",
     );
@@ -148,6 +150,7 @@ test("leaves a Datalog rule after an unclosed argument list that pairs across th
             "    A(1, 2).",
             "    Broken(1,",
             "    Q(3,4).",
+            "    R(5, 6).",
             "}",
             "",
         ),
