@@ -10,8 +10,14 @@ import {
     type Recognizer,
     type Token,
 } from "antlr4ng";
+import { grammarIdForVersion, resolveFlixVersion, type FlixVersion } from "./flix-version.js";
 import { FlixLexer } from "./generated/FlixLexer.js";
 import { DeclarationContext, FlixParser } from "./generated/FlixParser.js";
+
+/** Optional parse settings. `flixVersion` selects which pinned grammar to use. */
+export type ParseFlixOptions = {
+    flixVersion?: string;
+};
 
 /** A `//`, `///` or block comment captured from the hidden channels. */
 export interface Comment {
@@ -150,7 +156,16 @@ function buildTokenInfo(tokens: Token[]): Map<number, TokenInfo> {
     return info;
 }
 
-export function parseFlix(text: string): FlixRoot {
+/**
+ * Parse Flix source with the grammar for `flixVersion` (default 0.80.0).
+ * Only one grammar is shipped today; `grammarIdForVersion` is the hook for a
+ * future second pin.
+ */
+export function parseFlix(text: string, options: ParseFlixOptions = {}): FlixRoot {
+    const version: FlixVersion = resolveFlixVersion(options.flixVersion);
+    // Reserved for multi-grammar loading; the only id today is flix-0.80.0.
+    void grammarIdForVersion(version);
+
     let firstError: FlixSyntaxError | null = null;
     const listener = new (class extends BaseErrorListener {
         override syntaxError<S extends Token, T extends object>(
