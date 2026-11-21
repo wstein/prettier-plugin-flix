@@ -1252,16 +1252,22 @@ export class Printer {
         if (!Number.isFinite(column) || widths.every((width) => width === column)) {
             return rows.map(({ leading, head, gap, tail }) => [leading, head, gap, tail]);
         }
-        // A multiline body can start below its arrow. If every arm would
-        // otherwise fit, don't introduce a wrap just to align the arrows.
+        // A multiline body can start below its arrow. Align only when every arm
+        // that is still compact stays compact after padding; otherwise a short
+        // body would wrap solely to align arrows (#154).
         this.hasAlignmentCandidates = true;
         const indents = rows.map(({ arrow }) => this.rowIndent(arrow));
         const armWidths = rows.map(({ head, gap, tail }, i) => measure([head, gap, tail]) + indents[i]);
-        const allStayCompact = armWidths.every((width, i) => width + column - widths[i] <= this.printWidth);
-        const hasWrappedArm = armWidths.some((width) => width > this.printWidth);
+        const compactArmsStay = armWidths.every((width, i) =>
+            !Number.isFinite(width) || width > this.printWidth ||
+            width + column - widths[i] <= this.printWidth);
+        const hasWrappedArm = armWidths.some((width) => !Number.isFinite(width) || width > this.printWidth);
         const modestPadding = widths.every((width) => column - width <= 16);
+        // Align when padded compact arms still fit. If another arm already wraps,
+        // also keep padding modest so a short body is not stretched across the line.
         const fits = column + " =>".length + Math.max(...indents) <= this.printWidth &&
-            rows.every(({ gap }) => gap === " ") && (allStayCompact || (hasWrappedArm && modestPadding));
+            rows.every(({ gap }) => gap === " ") && compactArmsStay &&
+            (!hasWrappedArm || modestPadding);
         return rows.map(({ leading, head, gap, tail }, i) => [
             leading,
             head,
@@ -1338,7 +1344,12 @@ export class Printer {
         const typeIndex = head.findIndex((child) => kind(child) === "TypeAndEffect");
         const type = typeIndex < 0 ? undefined : kids(head[typeIndex])[0];
         const schema = type && kind(type) === "SimpleType" ? kids(type)[0] : undefined;
-        if (!schema || kind(schema) !== "SchemaType") return this.printSignature(n, head, " =");
+        const arrow = children[arrowIndex] as TerminalNode;
+        const equalsTrailer = util.getStringWidth(" =");
+        const huggedBodyTrailer = this.signatureHuggedBodyTrailerWidth(n, arrow, children[arrowIndex + 1]);
+        if (!schema || kind(schema) !== "SchemaType") {
+            return this.printSignature(n, head, equalsTrailer, huggedBodyTrailer);
+        }
         const parts = kids(schema);
         const { items, seps } = this.splitOn(parts.slice(1, -1), L.COMMA);
         const first = firstTerm(n)!;
@@ -1365,11 +1376,9 @@ export class Printer {
         const lastRowSuffix = render([" ", close, ...withSuffix]);
         if ([prefixText, ...rowTexts, lastRowSuffix].some((text) => text.includes("\n"))) return ordinary;
 
-        const body = firstTerm(children[arrowIndex + 1]);
-        const bodyOpener = body && ttype(body) === L.HASH_LBRACE ? " #{" : "";
         const column = util.getStringWidth(prefixText);
         const available = this.printWidth - this.declarationIndent(n) - column;
-        const endWidth = util.getStringWidth(lastRowSuffix + " =" + bodyOpener);
+        const endWidth = util.getStringWidth(lastRowSuffix) + equalsTrailer + huggedBodyTrailer;
         const widths = rowTexts.map(util.getStringWidth);
         const compactWidth = widths.reduce((sum, width) => sum + width, rows.length - 1) + endWidth;
         if (compactWidth <= available || widths.some((width, i) =>
@@ -1380,6 +1389,29 @@ export class Printer {
             align(column, [hardline, join(hardline, rows.slice(1))]),
             " ", close, ...withSuffix,
         ];
+    }
+
+    /**
+     * Extra width after ` =` when the body already shares that line in the source.
+     * Counted only for effect-annotated signatures so a break before an effect set
+     * leaves room for the hugged body (#92).
+     */
+    private signatureHuggedBodyTrailerWidth(
+        n: ParserRuleContext,
+        arrow: TerminalNode,
+        body: Node | undefined,
+    ): number {
+        if (!body) return 0;
+        const first = firstTerm(body);
+        if (!first || first.symbol.line !== arrow.symbol.line) return 0;
+        const fork = this.forkPrinter();
+        const printWidth = Math.max(1, this.printWidth - this.declarationIndent(n));
+        const formatted = doc.printer.printDocToString(fork.print(body), {
+            printWidth,
+            tabWidth: this.tabWidth,
+        }).formatted;
+        const firstLine = formatted.split("\n")[0] ?? "";
+        return firstLine.length > 0 ? 1 + util.getStringWidth(firstLine) : 0;
     }
 
     private printWithClause(n: ParserRuleContext): Doc {
@@ -1411,7 +1443,12 @@ export class Printer {
         return indentation;
     }
 
-    private printSignature(n: ParserRuleContext, children: Node[], suffix = ""): Doc {
+    private printSignature(
+        n: ParserRuleContext,
+        children: Node[],
+        equalsTrailer = 0,
+        huggedBodyTrailer = 0,
+    ): Doc {
         const parentKind = kind(n);
         const typeIndex = children.findIndex((child) => kind(child) === "TypeAndEffect");
         if (this.flat > 0 || typeIndex < 0) return this.seq(children, parentKind);
@@ -1435,21 +1472,29 @@ export class Printer {
         parts.push(...clauses.map((clause) => this.print(clause)));
         const ordinary: Doc = [prefix, " ", join(" ", parts)];
 
+        // Count a hugged body only for braced effect sets: a too-tight break before
+        // `\ { … }` wraps the set once `= region …` shares the line, and pass 2 joins
+        // instead (#92). Simple effects like `\ a` keep the old ` =`-only trailer.
+        const effectOpen = hasEffect ? firstTerm(effect) : null;
+        const bracedEffect = effectOpen !== null &&
+            (ttype(effectOpen) === L.LBRACE || ttype(effectOpen) === L.HASH_LBRACE);
+        const trailerWidth = equalsTrailer + (bracedEffect ? huggedBodyTrailer : 0);
         const width = this.printWidth - this.declarationIndent(n);
         const options = { printWidth: Math.max(1, width), tabWidth: this.tabWidth };
         const render = (value: Doc): string => doc.printer.printDocToString(value, options).formatted;
         const rows = parts.map(render);
         if (rows.some((row) => row.includes("\n"))) return ordinary;
         const prefixWidth = util.getStringWidth(render(prefix).split("\n").at(-1)!);
-        if (prefixWidth + 1 + util.getStringWidth(rows.join(" ") + suffix) <= width) return ordinary;
+        if (prefixWidth + 1 + util.getStringWidth(rows.join(" ")) + trailerWidth <= width) return ordinary;
 
         // Prefer breaking at the outer clause, then the effect, then the result
-        // type. Keep individual parts compact if they fit on the continuation.
+        // type. Keep individual parts compact if they fit on the continuation with
+        // the `=` trailer (and hugged body) that shares that line.
         for (let i = parts.length - 1; i >= 0; i--) {
             const left = i === 0 ? "" : " " + rows.slice(0, i).join(" ");
-            const right = rows.slice(i).join(" ") + suffix;
+            const right = rows.slice(i).join(" ");
             if (prefixWidth + util.getStringWidth(left) > width ||
-                this.tabWidth + util.getStringWidth(right) > width) continue;
+                this.tabWidth + util.getStringWidth(right) + trailerWidth > width) continue;
             return [prefix, i === 0 ? "" : [" ", join(" ", parts.slice(0, i))], indent([hardline, join(" ", parts.slice(i))])];
         }
         return ordinary;

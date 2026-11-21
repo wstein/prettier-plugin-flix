@@ -31,6 +31,10 @@ test("release drafts use the stable tag on the first-parent history and read cha
     git("tag", "v0.1.1-rc.1");
     commit("fix(formatter): internal subject", "Changelog: Keep comments on the preceding argument.");
     commit("fix(api): update import", "BREAKING CHANGE: Use the default export.\nChangelog: Update the plugin import.");
+    commit(
+        "fix(formatter): misplaced trailer still drafts",
+        "Body paragraph that keeps Changelog out of the trailer block.\nChangelog: Keep a misplaced Changelog line in the draft.",
+    );
     commit("test(formatter): add fixtures");
     commit("Legacy change");
 
@@ -38,9 +42,10 @@ test("release drafts use the stable tag on the first-parent history and read cha
     assert.match(output, /Draft from v0\.1\.0/);
     assert.match(output, /## Breaking changes\n\n- Update the plugin import\. — Use the default export\./);
     assert.match(output, /## Features\n\n- add second feature/);
-    assert.match(output, /## Fixes\n\n- Keep comments on the preceding argument\./);
+    assert.match(output, /## Fixes\n\n- Keep a misplaced Changelog line in the draft\./);
+    assert.match(output, /## Fixes\n\n[\s\S]*- Keep comments on the preceding argument\./);
     assert.match(output, /## Other changes to review\n\n- Legacy change/);
-    assert.doesNotMatch(output, /first feature|internal subject|add fixtures|another branch/);
+    assert.doesNotMatch(output, /first feature|internal subject|add fixtures|another branch|misplaced trailer still drafts/);
 
     git("tag", "v0.1.1");
     assert.match(draft(), /No changelog entries found/);

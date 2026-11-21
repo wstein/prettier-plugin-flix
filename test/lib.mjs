@@ -78,6 +78,15 @@ export function programProblems(before, after, { terminators = true } = {}) {
     if (before.shape !== after.shape) problems.push("parse-tree shape differs");
     const classKey = terminators ? "programClasses" : "classes";
     if (!same(before[classKey], after[classKey])) problems.push("whitespace-sensitive token classes differ");
+    // Cons chains may loosen ColonColonTight to ColonColon, never the reverse (#176).
+    if (before.classes.length === after.classes.length) {
+        for (let i = 0; i < before.classes.length; i++) {
+            if (before.classes[i] === "COLON_COLON" && after.classes[i] === "COLON_COLON_TIGHT") {
+                problems.push("cons :: tightened from spaced to tight");
+                break;
+            }
+        }
+    }
     // Only formatter output must satisfy this: an input may legitimately end a constraint with a bare dot.
     if (terminators && !after.constraintEnds.every((t) => t === "DOT_WS")) problems.push(`Datalog constraint not ended by a dot followed by whitespace (${after.constraintEnds})`);
     return problems;

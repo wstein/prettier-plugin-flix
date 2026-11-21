@@ -11,7 +11,8 @@
 // Failures that are known and not yet fixed are listed in known-comment-site-failures.json. A listed
 // site is checked on every run and must keep failing in the listed way; once a fix makes it pass the
 // test asks for the entry to be removed. Any other failure at a sampled site fails the test; a site
-// outside the sample is only checked while it is listed, so removing an entry needs the full sweep.
+// outside the sample is only checked while it is listed, so removing an entry needs the full sweep
+// (`npm run review:sweep -- sites`, also CI workflow Comment sites full sweep when the list changes).
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
