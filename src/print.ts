@@ -303,7 +303,12 @@ export class Printer {
             if (ta === L.BACKTICK) return this.isOpeningBacktick(a) ? "" : " ";
             if (tb === L.BACKTICK) return this.isOpeningBacktick(b) ? " " : "";
         }
-        if (parentKind === "PredicateAndArity" && (ta === L.SLASH || tb === L.SLASH)) return "";
+        if (parentKind === "PredicateAndArity" && (ta === L.SLASH || tb === L.SLASH)) {
+            // A leading `/*` or `//` glued after `/` would start a line comment.
+            const lead = this.info(b)?.lead[0];
+            if (ta === L.SLASH && lead && lead.nl === 0 && lead.text.startsWith("/")) return " ";
+            return "";
+        }
         if (parentKind === "CaseSetType" && (ta === L.ANGLE_L || tb === L.ANGLE_R)) return "";
         if (parentKind === "PrimaryPattern" && ta === L.MINUS) return "";
         return " ";
