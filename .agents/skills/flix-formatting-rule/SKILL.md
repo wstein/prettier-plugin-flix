@@ -43,3 +43,6 @@ case in `test/fixtures/`.
 - Report the chosen rule with a compact before-and-after example and the
   widths tested. Link the regression fixture and call out any remaining
   cases that still differ from the intended layout.
+- Run the standard library idempotence sweep and mutate each new condition
+  before requesting a review. The
+  [review triage skill](../flix-review-triage/SKILL.md) lists the commands.

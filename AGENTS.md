@@ -41,6 +41,20 @@ for the fixture-to-review workflow.
 - Review each affected fixture when using `npm run test:update`. Update the
   style guide and its fixture references when an intentional change affects
   a documented rule.
+- Measurement does not change the output. Measuring functions return widths,
+  never docs. Decide in pass 1 as pass 2 will see it: the comment kind changes
+  during formatting. Add no mode fields to the printer. Every new measuring
+  site needs a fixture that fails without it, and so does every new condition.
+- Idempotence on the Flix standard library is a required check for formatter
+  pull requests: set `FLIX_STDLIB_DIR` and run
+  `npm run review:sweep -- idempotence --no-repo` (eight widths, three
+  `--shard k/3` processes, `node --max-old-space-size=1100`). The result is
+  0 new failures against `main`. A CI job for this is planned.
+- For changes in `src/`, also run the comment-site sweep (the workflow
+  Comment sites full sweep runs it in CI once the workflow is on `main`) and,
+  after PR #196 lands, `scripts/comment-pairs.mjs`.
+- Mutate each new branch of logic. A surviving mutation of the new logic is a
+  finding. See the [review triage skill](.agents/skills/flix-review-triage/SKILL.md).
 
 ## Change the Playground or fixture site
 
@@ -76,6 +90,43 @@ for browser checks.
   to compile both the original and the Prettier-formatted sources with
   `--Xlib nix`. See [the development guide](docs/development.md#compile-the-formatted-standard-library)
   for the local command and exact-tag workflow input.
+
+## Work with pull requests and reviews
+
+Use the [review triage skill](.agents/skills/flix-review-triage/SKILL.md) for
+reviews and issue triage. The labels, reach levels and the definition of a
+blocking finding are in
+[Issue triage and labels](docs/development.md#issue-triage-and-labels).
+
+- Open every pull request as a draft with a named blocker. Only a helper sets
+  Ready, after a CLEAR review of the exact head. Do not push to a branch with an
+  open review without stating in the PR which findings the push addresses.
+- One pull request has one topic and at most one scope: formatter, or
+  workflow and documentation, or tooling. Two topics are two pull requests. Do
+  not combine several issues in one pull request.
+- A blocking finding is defined in
+  [Issue triage and labels](docs/development.md#issue-triage-and-labels).
+  A `reach:synthetic` finding does not block. It is a line in the collection
+  issue (label `epic`) of its class, not an issue of its own.
+- Triage issues by type, area, class and reach.
+- Reviewer rules: wait the full quiet period (head and `main` unchanged for 10
+  minutes, not in parallel with posting), check the head immediately before
+  posting, write nothing outside the scratch folder (no `/tmp`), do not use
+  `git -c user.*`, `pkill` or `pgrep -f`, and check free memory before heavy
+  runs. A delta review checks only the diff since the last review. After a merge
+  without CLEAR, post a follow-up review as a normal COMMENT review on the
+  merged head.
+- A CLEAR carries over when the patch-id of `src/` and `test/fixtures` is
+  unchanged and CI is green (a pure rebase). Post a comment that states the
+  carry-over. After CLEAR, add no commits except a rebase or a fix for review
+  findings.
+- Review labels are `review:clear`, `review:nits`, `review:blocking` and
+  `review:findings`. The helper sets them, not the reviewer. A new head clears
+  all of them until a review of that head exists.
+- Use rebase only, never a merge commit. The ruleset `Protect main` requires
+  linear history and rebase merge. A branch holds no merge commit. Use "Update
+  branch" only as a rebase. Rebase another agent's branch only with explicit
+  approval and `--force-with-lease=<ref>:<SHA>`.
 
 ## Write commits and changelog entries
 
