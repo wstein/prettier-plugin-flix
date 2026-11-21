@@ -6,7 +6,10 @@ import { dirname, join } from "node:path";
 import test from "node:test";
 import { promisify } from "node:util";
 import { explainTrailingCommentAlignment } from "../dist/comment-layout.js";
-import { approvalFor, auditExample, changeKind, compareBaseline, unreviewedLayouts } from "../scripts/audit-flix-examples.mjs";
+import {
+    approvalFor, auditExample, changeKind, compareBaseline, docsExamplesArgsError, unreviewedLayouts,
+    withMissingReviews,
+} from "../scripts/audit-flix-examples.mjs";
 import { renderFindings, reviewedTransformations } from "../scripts/docs-example-findings.mjs";
 import { extractExamples, markdownBlocks } from "../scripts/extract-flix-examples.mjs";
 
@@ -177,4 +180,14 @@ test("pull request audit requires reasons only for added or changed layout diffs
     const drift = { added: ["new", "clean"], changed: ["changed", "approved"], removed: ["gone"] };
     assert.deepEqual(unreviewedLayouts(cases, drift).map((item) => item.case_name), ["new", "changed"]);
     assert.deepEqual(unreviewedLayouts(cases).map((item) => item.case_name), ["old", "new", "changed"]);
+    assert.equal(withMissingReviews(false, unreviewedLayouts(cases, drift)), true);
+    assert.equal(withMissingReviews(false, []), false);
+    assert.equal(withMissingReviews(true, []), true);
+});
+
+test("docs-examples CLI requires three paths and pairs --review-baseline with --reviews", () => {
+    assert.equal(docsExamplesArgsError(["a", "b", "c"], {}), undefined);
+    assert.match(docsExamplesArgsError(["a", "b"], {}), /Usage:/);
+    assert.match(docsExamplesArgsError(["a", "b", "c"], { "review-baseline": "base.tsv" }), /Usage:/);
+    assert.equal(docsExamplesArgsError(["a", "b", "c"], { reviews: "r.json", "review-baseline": "base.tsv" }), undefined);
 });
