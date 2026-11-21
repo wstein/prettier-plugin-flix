@@ -1102,7 +1102,7 @@ export class Printer {
         const soften = Number(hasTrailingBlockComment);
         this.relaxSourceBreaks += soften;
         this.softTrailBreaks += soften;
-        let rows: { leading: Doc[]; head: Doc; gap: Doc; tail: Doc }[];
+        let rows: { leading: Doc[]; head: Doc; gap: Doc; tail: Doc; arrow: TerminalNode }[];
         try {
             rows = rules.map((rule) => {
                 this.ls(rule);
