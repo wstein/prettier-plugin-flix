@@ -138,6 +138,8 @@ the width, the comment form and token index (comment sites), the kind (`unparsab
   `known failure now passes: remove it from the list (issue #123)`. Remove the entry in the fix.
 - A listed comment-site entry that was not run (not planned, or its variant no longer parses) fails
   with `listed site not run`.
+- Removing a known entry still leaves `npm test` green for sites outside the sample ([#162](https://github.com/wstein/prettier-plugin-flix/issues/162)).
+  Before dropping entries, run the full `sites` sweep (three `--shard k/3` processes).
 - Entries are matched by token index. After a fixture input changes, regenerate the affected entries:
   run `npm run review:sweep -- sites --json out.json` and copy the failures that belong to an open issue.
 
