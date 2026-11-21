@@ -53,6 +53,12 @@ Only `0.80.0` is registered today. A later release can add another pin when
 Flix introduces a syntax-changing version; until then unsupported values
 error. Keep one `flix` parser and `.flix` language entry for every pin.
 
+## Supported print widths
+
+The plugin guarantees idempotence for `printWidth` of 40 or more: a second
+formatting run changes nothing. Below 40 columns the layout is best effort.
+The review sweeps also run below 40; failures there are tracked as edge cases.
+
 ## Calls and function signatures
 
 Keep short calls and expressions compact. When an ordinary list of call

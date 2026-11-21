@@ -46,6 +46,7 @@ User-facing changes to Prettier Plugin for Flix. Plugin releases have their own 
 
 - Report formatter timeouts separately from load failures and retry on the next edit. Associate syntax and line-width errors with their controls and give diff rows accessible line labels.
 - Pin the weekly upstream Flix corpus. Require a review reason for each new or changed official example layout diff in a pull request.
+- Guarantee idempotence for `printWidth` of 40 or more; below 40 the layout is best effort.
 
 ### Compatibility
 
