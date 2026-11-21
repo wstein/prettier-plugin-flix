@@ -31,6 +31,8 @@ def headOr(l: List[Int32]): Int32 = match l {
         _ => head
     case Nil => 0
 }
+
+def longTight(): List[Int32] = 1000000::2000000::3000000::4000000::5000000::6000000::7000000::8000000::Nil
 ```
 
 ## Output
@@ -62,6 +64,9 @@ def headOr(l: List[Int32]): Int32 = match l {
         _ => head
     case Nil => 0
 }
+
+def longTight(): List[Int32] =
+    1000000::2000000::3000000::4000000::5000000::6000000::7000000::8000000::Nil
 ```
 
 ```flix printWidth=35
@@ -101,4 +106,7 @@ def headOr(
         _ => head
     case Nil => 0
 }
+
+def longTight(): List[Int32] =
+    1000000::2000000::3000000::4000000::5000000::6000000::7000000::8000000::Nil
 ```

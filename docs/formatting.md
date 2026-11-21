@@ -351,8 +351,9 @@ def next(xs: List[Int32]): Int32 = match xs {
 Record updates, open record types, record patterns, and record-row aliases
 keep their `| …` tail with the last field when they fit on one line. Start
 the tail on a new line at the field indentation when the line would exceed
-the width or a line comment ends the last field. A comment attached to the
-pipe keeps its existing layout.
+the width or a line comment ends the last field. When a comment is attached
+to the pipe, the tail stays on the line of the last field, even beyond the
+width.
 [Record update fixture](../test/fixtures/expressions/record-update-tail.md) ·
 [Record type and pattern fixture](../test/fixtures/expressions/record-type-pattern-tails.md) ·
 [Row type fixture](../test/fixtures/declarations/row-type-tails.md)
@@ -468,8 +469,9 @@ A multiline return schema can align its predicates beneath the first one
 when the remaining signature fits. In schema types and schema-row aliases,
 keep the final predicate and its `| …` tail together when they fit. Start
 the tail on a new line at the predicate indentation when the line would
-exceed the width or a line comment ends the final predicate. A comment
-attached to the pipe keeps its existing layout.
+exceed the width or a line comment ends the final predicate. When a comment
+is attached to the pipe, the tail stays on the line of the last predicate,
+even beyond the width.
 [Row type fixture](../test/fixtures/declarations/row-type-tails.md)
 
 When the source places every predicate of a multi-predicate body on its own
@@ -502,9 +504,11 @@ reviewed differences against the official examples.
   characters on both sides. A line comment that immediately follows a dot
   stays attached, with the name on the next line. A long method chain can
   wrap inside an argument list. A chain of argument-free calls may exceed
-  the configured width.
+  the configured width. A chain of tight `::` cons operators has no break
+  point either, so it may also exceed the width.
   [Method chain fixture](../test/fixtures/expressions/long-method-chain.md) ·
-  [Comments beside dots](../test/fixtures/whitespace/tight-dot-comments.md)
+  [Comments beside dots](../test/fixtures/whitespace/tight-dot-comments.md) ·
+  [Tight cons comments](../test/fixtures/whitespace/package-qualifier-tight-comments.md)
 - Put `// prettier-ignore` on its own line before a declaration to preserve
   that declaration's source text. The rest of the file is formatted normally.
   The declaration still needs to parse. [Fixture](../test/fixtures/comments/prettier-ignore.md)
