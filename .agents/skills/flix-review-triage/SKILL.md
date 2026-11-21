@@ -12,16 +12,19 @@ The idempotence guarantee is in
 [Supported print widths](../../../docs/formatting.md#supported-print-widths).
 The sweeps are described in
 [Review sweeps](../../../docs/development.md#review-sweeps). Write results only
-into the scratch folder, never into `/tmp`.
+into the scratch folder (a folder outside the repository for working copies and
+logs), never into `/tmp`. A helper is a cheap subagent or a script that does
+mechanical work.
 
 ## Before the review
 
 1. Read the PR text, the diff and the linked issues. Record the head SHA and
-   the SHA of `origin/main`.
-2. Wait until the head and `main` have been unchanged for 10 minutes. Do not
-   wait in parallel with posting.
+   the SHA of the base branch (`origin/main`, or the parent branch of a
+   stacked PR; `<base>` below).
+2. Wait until the head, the base branch and `main` have been unchanged for 10
+   minutes. Post only after the wait is over.
 3. Check free memory before the heavy runs below.
-4. Compute the patch-id: `git diff origin/main...HEAD | git patch-id --stable`.
+4. Compute the patch-id: `git diff origin/<base>...HEAD | git patch-id --stable`.
    The first field is the `patch-id` of the header line.
 
 ## Checklist for a formatter review
@@ -34,19 +37,18 @@ Mark a check that did not run as "not run".
 | Tests | `npm test` | all pass |
 | Syntax coverage | `npm run coverage:syntax -- --check` | exit 0 |
 | Docs | `npm run docs:build` | exit 0 |
-| Idempotence | `npm run review:sweep -- idempotence` | 0 failures not in the known list |
-| Comment sites | `npm run review:sweep -- sites --every 6` | 0 failures not in the known list |
-| Regression | `npm run review:sweep -- regression --base origin/main` | every difference is intended and explained |
+| Idempotence | `npm run build`, then `npm run review:sweep -- idempotence` | 0 failures not in the known list |
+| Comment sites | `npm run review:sweep -- sites --shard k/3` for k = 1, 2, 3 (full sweep for `src/` changes; `--every 6` otherwise) | 0 failures not in the known list |
+| Regression | `npm run review:sweep -- regression --base origin/<base>` | every difference is intended and explained |
 | Standard library idempotence | `FLIX_STDLIB_DIR=<stdlib> node --max-old-space-size=1100 scripts/review-sweep.mjs idempotence --no-repo --shard k/3` for k = 1, 2, 3 | 0 new failures against `main` |
 | Standard library regression | base against head at `printWidth` 80 and 100 | differences are intended |
 | Compiler check | `bash scripts/check-flix-stdlib.sh <flix.jar> v0.80.0` | the formatted library compiles |
-| Official examples | audit of the 599 examples, see [flix-docs-audit](../flix-docs-audit/SKILL.md) | no new failure; changed layouts have a reason |
+| Official examples | audit of the official examples from the Flix book and website, see [flix-docs-audit](../flix-docs-audit/SKILL.md) | no new failure; changed layouts have a reason |
 | Mutations | at least 12 mutations of the new logic | every mutation fails a test |
 
 Run the standard library idempotence on `main` as well. A failure counts as
-new when it does not appear on `main`. For `src/` changes, run the full
-`sites` sweep (three `--shard k/3` processes) when the PR removes known
-entries, and `scripts/comment-pairs.mjs` after PR #196 lands.
+new when it does not appear on `main`. For `src/` changes, also run
+`scripts/comment-pairs.mjs` after PR #196 lands.
 
 ### Mutations
 
@@ -73,19 +75,17 @@ and block), nested forms and tight `.` or `::` chains.
 ## Determine the reach of a finding
 
 1. Reproduce the finding with the smallest input.
-2. Find the same shape in real code (standard library, official examples):
-   - reproduces at printWidth 80 or more: `reach:real`;
-   - reproduces only at 40 to 79: `reach:narrow`;
-   - needs an artificial input or a width below 40: `reach:synthetic`.
-3. A finding with `reach:synthetic` becomes a line in the checklist of the
-   collection issue (label `epic`) of its class. Create no issue of its own.
-   `corrupts-program`, `reach:real` and `reach:narrow` get their own issue.
+2. Find the same shape in real code (standard library, official examples) and
+   set the reach as defined in
+   [Issue triage and labels](../../../docs/development.md#issue-triage-and-labels).
+3. Follow the triage rule there for what becomes an issue of its own and what
+   becomes a line in a collection issue.
 4. Check open and closed issues for a duplicate before creating an issue.
 5. Set type, area, class and reach labels as described in the development
    guide.
 
 A finding blocks when it is one of the blocking findings in the development
-guide. Synthetic findings do not block.
+guide.
 
 ## Review comment
 
@@ -95,11 +95,11 @@ no markdown:
 
 ```text
 Review: CLEAR head=<SHA> patch-id=<40 hex> pr=<n>
-base=main <SHA> (checked)
+base=<base branch> <SHA> (checked)
 ```
 
 Use `FINDINGS` instead of `CLEAR` when at least one finding is open. The second
-line names the `main` SHA that the review used. List each finding with its
+line names the base branch and the SHA that the review used. List each finding with its
 reach, the smallest input and the width. List the checks with command and
 number. Check the head immediately before posting; post nothing for a stale
 head. A helper sets the review labels, not the reviewer.

@@ -103,14 +103,17 @@ blocking finding are in
   open review without stating in the PR which findings the push addresses.
 - One pull request has one topic and at most one scope: formatter, or
   workflow and documentation, or tooling. Two topics are two pull requests. Do
-  not combine several issues in one pull request.
+  not combine several issues in one pull request. A pull request may join
+  several scopes when its changes check each other, for example a workflow and
+  the formatter code that its paths cover. It then needs one review per scope,
+  and the PR text states why it is an exception.
 - A blocking finding is defined in
   [Issue triage and labels](docs/development.md#issue-triage-and-labels).
   A `reach:synthetic` finding does not block. It is a line in the collection
   issue (label `epic`) of its class, not an issue of its own.
 - Triage issues by type, area, class and reach.
-- Reviewer rules: wait the full quiet period (head and `main` unchanged for 10
-  minutes, not in parallel with posting), check the head immediately before
+- Reviewer rules: wait the full quiet period (head, base branch and `main`
+  unchanged for 10 minutes, then post), check the head immediately before
   posting, write nothing outside the scratch folder (no `/tmp`), do not use
   `git -c user.*`, `pkill` or `pgrep -f`, and check free memory before heavy
   runs. A delta review checks only the diff since the last review. After a merge
@@ -125,13 +128,13 @@ blocking finding are in
   all of them until a review of that head exists.
 - Use rebase only, never a merge commit. The ruleset `Protect main` requires
   linear history and rebase merge. A branch holds no merge commit. Use "Update
-  branch" only as a rebase. Rebase another agent's branch only with explicit
-  approval and `--force-with-lease=<ref>:<SHA>`.
+  branch" only as a rebase. Rebase another agent's branch only with the owner's
+  explicit approval and `--force-with-lease=<ref>:<SHA>`.
 
 ## Write commits and changelog entries
 
-- Use scoped Conventional Commits for commit subjects and PR titles that
-  become squash-merge subjects. Write `type(scope): imperative summary`, with a
+- Use scoped Conventional Commits for commit subjects, which land on `main`
+  through a rebase merge, and for PR titles. Write `type(scope): imperative summary`, with a
   scope such as `formatter`, `parser`, `playground`, `catalog`, or `release`.
   Use `feat`, `fix`, `perf`, `docs`, `test`, `refactor`, `build`, `ci`, or
   `chore` according to the change.

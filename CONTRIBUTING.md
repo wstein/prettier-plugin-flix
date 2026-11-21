@@ -20,6 +20,6 @@ npm run coverage:syntax -- --check
 
 See the [formatting style](docs/formatting.md) for the layouts the plugin aims to produce.
 
-Use a scoped Conventional Commit subject for your commits and PR title, such as `fix(formatter): preserve indented argument comments`. If the subject needs more context for release notes, add a `Changelog:` trailer to the commit message. For a squash merge, include the trailer in the final commit message. See the [commit and changelog guidance](AGENTS.md#write-commits-and-changelog-entries) for examples.
+Use a scoped Conventional Commit subject for your commits and PR title, such as `fix(formatter): preserve indented argument comments`. If the subject needs more context for release notes, add a `Changelog:` trailer to the commit message. For a rebase merge, include the trailer on the commit that carries the change. See the [commit and changelog guidance](AGENTS.md#write-commits-and-changelog-entries) for examples.
 
 Follow the [code of conduct](CODE_OF_CONDUCT.md) when participating.
