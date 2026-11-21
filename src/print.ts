@@ -654,6 +654,26 @@ export class Printer {
         let offset = 0;
         let aligned = false;
         const groups = mayAlign ? this.alignmentGroups(items, (it) => it[0] ? firstTerm(it[0]) : null) : [items];
+        // Syntax decides whether a final brace-closed argument can hug. A
+        // trailing lambda also needs room on the line where the call starts.
+        const lastItem = items[items.length - 1];
+        const lastTok = lastItem.length > 0 ? lastTerm(lastItem[lastItem.length - 1]) : null;
+        const finalArgument = lastItem[0] && kind(lastItem[0]) === "Argument" ? kids(lastItem[0])[0] : undefined;
+        // A comment at any boundary (opener, separator, first or last token of an argument) needs the
+        // line break or space the group layout provides; hugging would move it past the call.
+        const boundaryTokens = [
+            open,
+            ...split.seps,
+            ...items.flatMap((it) => (it.length > 0 ? [firstTerm(it[0]), lastTerm(it[it.length - 1])] : [])),
+        ];
+        const commentAtBoundary = boundaryTokens.some((t) => t !== null && this.hasComment(t));
+        const hugCandidate =
+            !pad && comments.length === 0 && !commentAtBoundary && sepType === L.COMMA && lastTok !== null && ttype(lastTok) === L.RBRACE &&
+            !items.slice(0, -1).some((it) => it.length > 0 && lastTerm(it[it.length - 1]) !== null && ttype(lastTerm(it[it.length - 1])!) === L.RBRACE);
+        const canRelaxLambda = hugCandidate && finalArgument && kind(finalArgument) === "LambdaExpr";
+        // Both alternatives must see the same leading comments and line starts.
+        // The ordinary list owns updates to the enclosing printer's state.
+        const hugPrinter = canRelaxLambda ? this.forkForLambdaHug() : undefined;
         const docs = groups.flatMap((rows) => {
             const formatted = mayAlign ? this.alignEntries(rows, split.seps.slice(offset, offset + rows.length), layoutId) : undefined;
             offset += rows.length;
@@ -670,39 +690,14 @@ export class Printer {
                 ? hardline : this.flat > 0 ? " " : line;
         });
 
-        // Syntax decides whether a final brace-closed argument can hug. A
-        // trailing lambda also needs room on the line where the call starts.
-        const lastItem = items[items.length - 1];
-        const lastTok = lastItem.length > 0 ? lastTerm(lastItem[lastItem.length - 1]) : null;
-        const finalArgument = lastItem[0] && kind(lastItem[0]) === "Argument" ? kids(lastItem[0])[0] : undefined;
-        const matchCallback = finalArgument && kind(finalArgument) === "LambdaExpr" &&
-            kind(kids(finalArgument).at(-1)!) === "MatchExpr" && willBreak(docs[docs.length - 1]);
-        // A comment at any boundary (opener, separator, first or last token of an argument) needs the
-        // line break or space the group layout provides; hugging would move it past the call.
-        const boundaryTokens = [
-            open,
-            ...split.seps,
-            ...items.flatMap((it) => (it.length > 0 ? [firstTerm(it[0]), lastTerm(it[it.length - 1])] : [])),
-        ];
-        const commentAtBoundary = boundaryTokens.some((t) => t !== null && this.hasComment(t));
-        const huggable =
-            !pad && comments.length === 0 && !commentAtBoundary && sepType === L.COMMA && lastTok !== null && ttype(lastTok) === L.RBRACE &&
-            !(items.length > 1 && matchCallback) &&
-            !items.slice(0, -1).some((it) => it.length > 0 && lastTerm(it[it.length - 1]) !== null && ttype(lastTerm(it[it.length - 1])!) === L.RBRACE) &&
-            !docs.slice(0, -1).some(willBreak);
+        const matchCallback = canRelaxLambda && kind(kids(finalArgument).at(-1)!) === "MatchExpr" &&
+            willBreak(docs[docs.length - 1]);
+        const huggable = hugCandidate && !(items.length > 1 && matchCallback) && !docs.slice(0, -1).some(willBreak);
         let hugged: Doc | undefined;
         if (huggable) {
-            let hugDocs = docs;
-            // Remeasure a trailing lambda without source-mirrored block breaks so
-            // the hug choice matches a later pass over the rewritten body.
-            if (finalArgument && kind(finalArgument) === "LambdaExpr") {
-                this.relaxSourceBreaks++;
-                try {
-                    hugDocs = [...docs.slice(0, -1), this.printListItem(lastItem, parentKind)];
-                } finally {
-                    this.relaxSourceBreaks--;
-                }
-            }
+            const hugDocs = hugPrinter
+                ? [...docs.slice(0, -1), hugPrinter.printListItem(lastItem, parentKind)]
+                : docs;
             hugged = [openDoc, this.joinWithSeps(hugDocs, sepDocs, sepDocs.map(() => " ")), closeDoc];
         }
         if (hugged && (!finalArgument || kind(finalArgument) !== "LambdaExpr" || !groupList)) {
@@ -733,6 +728,17 @@ export class Printer {
             groupList ? group(contents, { id: layoutId, shouldBreak: forceBreak || comments.length > 0 }) : contents,
             closeTrail,
         ];
+    }
+
+    private forkForLambdaHug(): Printer {
+        const printer = new Printer(this.root, this.printWidth, this.tabWidth);
+        printer.flat = this.flat;
+        printer.relaxSourceBreaks = this.relaxSourceBreaks + 1;
+        printer.softTrailBreaks = this.softTrailBreaks;
+        printer.consumed = new Set(this.consumed);
+        printer.lineStart = new Set(this.lineStart);
+        printer.handlerArgumentOpeners = new Set(this.handlerArgumentOpeners);
+        return printer;
     }
 
     // ------------------------------------------------------------- dispatch
@@ -1083,10 +1089,19 @@ export class Printer {
     }
 
     private alignMatchGroup(rules: Node[], layoutId: symbol): Doc[] {
-        // Soften source-mirrored breaks so a trailing block comment that ends a
-        // line after the first pass is measured like the inline form.
-        this.relaxSourceBreaks++;
-        this.softTrailBreaks++;
+        const hasTrailingBlockComment = rules.some((rule) => {
+            const first = firstTerm(rule)!.symbol.tokenIndex;
+            const last = lastTerm(rule)!.symbol.tokenIndex;
+            for (let index = first; index <= last; index++) {
+                if (this.root.info.get(index)?.trail.some((comment) => !comment.isLine)) return true;
+            }
+            return false;
+        });
+        // Apply the adjusted fit rule only when a trailing block comment can
+        // affect it. Other match bodies keep their source-mirrored breaks.
+        const soften = Number(hasTrailingBlockComment);
+        this.relaxSourceBreaks += soften;
+        this.softTrailBreaks += soften;
         let rows: { leading: Doc[]; head: Doc; gap: Doc; tail: Doc }[];
         try {
             rows = rules.map((rule) => {
@@ -1095,8 +1110,8 @@ export class Printer {
                 return { leading, ...this.eqBodyDocs(rule as ParserRuleContext) };
             });
         } finally {
-            this.softTrailBreaks--;
-            this.relaxSourceBreaks--;
+            this.softTrailBreaks -= soften;
+            this.relaxSourceBreaks -= soften;
         }
         const options = { printWidth: this.printWidth, tabWidth: this.tabWidth };
         const measure = (value: Doc): number => {
