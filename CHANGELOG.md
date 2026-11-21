@@ -6,6 +6,7 @@ User-facing changes to Prettier Plugin for Flix. Plugin releases have their own 
 
 ### Formatting changes
 
+- Indent a wrapped match-arm guard one level deeper than the arm body.
 - Preserve source blank lines between declarations, including after import and use statements. Collapse multiple blank lines to one.
 - Wrap long function types at arrows, long trait constraints between entries, and long record and schema row tails before the pipe.
 - Preserve vertical Datalog rules and wrap long query, solve, and inject lists between clauses or entries.

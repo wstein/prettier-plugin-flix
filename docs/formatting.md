@@ -309,8 +309,10 @@ OCamlFormat's `break-cases` option offers a comparison between margin-driven
 wrapping and vertical branches.
 Flix can keep a short arm body after `=>` and indent a longer body beneath it.
 Keep a guarded pattern and its `=>` together when they fit, as in Rust's
-match style. A guard that does not fit wraps at an operator and continues at
-the body indent; Rust instead breaks before `if` and uses a block body.
+match style. A guard that does not fit wraps at an operator, including
+mixed `+` / `==` chains, and continues one level deeper than the arm body,
+so the continuation stays apart from the statement under `=>`. Rust instead
+breaks before `if` and uses a block body.
 [Rust Style Guide](https://doc.rust-lang.org/style-guide/expressions.html#match)
 [OCamlFormat options](https://github.com/ocaml-ppx/ocamlformat/blob/main/doc/manpage_ocamlformat.mld)
 
@@ -336,6 +338,7 @@ def next(xs: List[Int32]): Int32 = match xs {
 
 [Match fixture](../test/fixtures/expressions/mixed-match-bodies.md) ·
 [Guarded match fixture](../test/fixtures/expressions/guarded-match-wrap-boundary.md) ·
+[Mixed-operator guard](../test/fixtures/expressions/guarded-match-mixed-operators.md) ·
 [Handler clauses and group boundaries](../test/fixtures/expressions/align-handler-clauses.md) ·
 [Map alignment](../test/fixtures/expressions/align-map-entries.md) ·
 [Record alignment](../test/fixtures/expressions/align-record-fields.md)
@@ -484,7 +487,10 @@ reviewed differences against the official examples.
 - The CLI reports a syntax error with its line and column. The Playground
   can also format independently parseable declarations, Datalog rules and
   constructor or field entries around an error. The preview preserves the
-  original text where it cannot determine a complete unit.
+  original text where it cannot determine a complete unit. An unclosed
+  `(` that later pairs with a closer on a following Datalog rule, such as
+  `Broken(1,` before `Q(3,4).`, keeps that next rule in the same recovery
+  slice. That rule stays unformatted; the other complete rules still format.
 - Flix assigns meaning to whitespace around certain tokens. Field access
   `s->field`, dots in `a.b` and package qualifiers in `use Pkg::Name` stay
   together. Flix 0.80.0 requires method and qualifier dots to touch the
