@@ -1,6 +1,6 @@
 ---
 title: Block comment on a match-lambda arrow inside a trailing lambda
-description: "An end-of-line block comment after match-lambda -> keeps its break when the trailing lambda hugs the call."
+description: "An end-of-line block comment after a match-lambda arrow or a match scrutinee keeps its break when the trailing lambda hugs the call."
 group: "Pipelines and calls"
 flix: "0.80"
 options: { printWidth: 80 }
@@ -10,9 +10,16 @@ options: { printWidth: 80 }
 
 ```flix
 def f(l: List[Int32]): List[Int32] =
-    l |> List.map(match x -> /* c */
+    l |> List.mapWithIndex(i -> match y -> /* c */
     {
-        x + 1
+        i + y
+    })
+
+def g(l: List[Int32]): List[Int32] =
+    l |> List.map(x -> match x /* c */
+    {
+        case 0 => 0
+        case _ => x + 1
     })
 ```
 
@@ -21,8 +28,16 @@ def f(l: List[Int32]): List[Int32] =
 ```flix
 def f(l: List[Int32]): List[Int32] =
     l
-        |> List.map(match x -> /* c */
+        |> List.mapWithIndex(i -> match y -> /* c */
         {
-            x + 1
+            i + y
+        })
+
+def g(l: List[Int32]): List[Int32] =
+    l
+        |> List.map(x -> match x /* c */
+        {
+            case 0 => 0
+            case _ => x + 1
         })
 ```
