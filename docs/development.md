@@ -156,6 +156,52 @@ the width, the comment form and token index (comment sites), the kind (`unparsab
 - Entries are matched by token index. After a fixture input changes, regenerate the affected entries:
   run `npm run review:sweep -- sites --json out.json` and copy the failures that belong to an open issue.
 
+## Issue triage and labels
+
+Issue forms in `.github/ISSUE_TEMPLATE/` set one static type label. The triager adds the other labels.
+
+| Group | Labels |
+| --- | --- |
+| Type | `bug`, `enhancement`, `documentation`, `test-gap`, `ci`, `decision`, `epic` |
+| Area | `area:formatter`, `area:recovery`, `area:playground`, `area:release-ci`, `area:tooling`, `area:parser-api` |
+| Class (formatter) | `class:comment-kind`, `class:measure-leak`, `class:alignment`, `class:signature-fit`, `class:hug`, `class:cons-chain`, `class:token-boundary` |
+| Reach | `reach:real`, `reach:narrow`, `reach:synthetic` |
+| Output | `corrupts-program`: the output does not parse or changes the program |
+
+Reach says where a finding shows up:
+
+- `reach:real`: reproduces on real code (standard library, official examples) at `printWidth` 80 or more.
+- `reach:narrow`: reproduces on real code only at `printWidth` 40 to 79.
+- `reach:synthetic`: needs an artificial input (for example an unusual comment position) or a `printWidth` below 40.
+
+**Triage rule.** A finding with `reach:synthetic` does not get its own issue. Record it as a line in the checklist of
+the collection issue of its class (label `epic`). Exceptions: a finding with `corrupts-program` and every finding
+with `reach:real` or `reach:narrow` get their own issue.
+
+**Review labels on pull requests.**
+
+| Label | Meaning |
+| --- | --- |
+| `review:clear` | The independent review of the exact head is CLEAR. |
+| `review:nits` | CLEAR, with open nits recorded in issues. |
+| `review:blocking` | At least one blocking finding. |
+| `review:findings` | The review names at least one finding. |
+
+`review:blocking` and `review:clear` exclude each other. When the head changes, remove all review labels until a
+review of the new head exists.
+
+**Blocking findings.** The plugin guarantees idempotence for `printWidth` of 40 or more (see
+[Supported print widths](formatting.md#supported-print-widths)). A finding blocks a pull request when it is one of:
+
+- not idempotent at `printWidth` 40 or more;
+- a changed program or output that does not parse;
+- a regression against `main` at `printWidth` 40 or more;
+- a false statement in documentation or text that has consequences;
+- a test without effect, or a surviving mutation of the new logic.
+
+A failure only below `printWidth` 40 is `reach:synthetic`. It does not block and goes into the collection issue of its
+class.
+
 ## Test sources
 
 | Source | How | Needs expected output? |
