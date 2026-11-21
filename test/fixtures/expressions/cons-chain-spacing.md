@@ -36,6 +36,11 @@ def headOf(xs: List[Int32]): Int32 = match xs {
     case Nil => 0
 }
 
+def mixedHead(xs: List[Int32]): Int32 = match xs {
+    case x::y :: _ => x + y
+    case _ => 0
+}
+
 def imported(): Int32 = 1
 ```
 
@@ -71,6 +76,11 @@ def fs(): List[Int32 -> Int32] = (x -> {
 def headOf(xs: List[Int32]): Int32 = match xs {
     case x::y::_ => x
     case Nil     => 0
+}
+
+def mixedHead(xs: List[Int32]): Int32 = match xs {
+    case x :: y :: _ => x + y
+    case _           => 0
 }
 
 def imported(): Int32 = 1
@@ -120,6 +130,13 @@ def headOf(
 ): Int32 = match xs {
     case x::y::_ => x
     case Nil     => 0
+}
+
+def mixedHead(
+    xs: List[Int32]
+): Int32 = match xs {
+    case x :: y :: _ => x + y
+    case _           => 0
 }
 
 def imported(): Int32 = 1
