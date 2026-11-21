@@ -259,7 +259,9 @@ test("diff, copy, invalid width and unrecoverable input stay in sync", async ({ 
     await expect(diff.getByText("Removed line 1:", { exact: true })).toHaveCount(1);
     await expect(diff.getByText("Added line 1:", { exact: true })).toHaveCount(1);
     await width.fill("0");
+    await expect(width).toHaveAttribute("aria-invalid", "true");
     await expect(width).toHaveAccessibleErrorMessage(/whole number/);
+    await expect(input).not.toHaveAttribute("aria-invalid", "true");
     await expect(copy).toBeDisabled();
     await width.fill("100");
     await expect(width).not.toHaveAttribute("aria-invalid");

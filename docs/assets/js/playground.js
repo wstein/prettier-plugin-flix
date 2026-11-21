@@ -77,6 +77,7 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
         if (invalidWidth) {
             printWidth.setAttribute("aria-invalid", "true");
             printWidth.setAttribute("aria-errormessage", status.id);
+            input.markError();
             showStatus("Enter a whole number greater than zero for line width.", true);
             return;
         }
@@ -90,6 +91,11 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
         }, (data) => {
             if (id !== revision) return;
             if (data.failure) {
+                // Drop the previous snapshot so Formatted and Diff are not stale.
+                preview = undefined;
+                replaceCode(output.view, input.view.state.doc.toString());
+                highlighter?.apply(output.view);
+                refreshDiff();
                 showStatus(data.failure === "timeout"
                     ? "Formatting timed out. Edit to try again."
                     : "The formatter could not load. Edit to try again.", true);
