@@ -123,6 +123,9 @@ export function perturbWhitespace(text, seed) {
     return out;
 }
 
+/** Tokens a comment is glued to: a space after a tight `.` or `::` would change the token class. */
+const TIGHT_TYPES = new Set([FlixLexer.DOT, FlixLexer.COLON_COLON_TIGHT]);
+
 /**
  * A comment site is a default-channel token outside a string. Tight dots and double colons
  * use a glued comment to exercise their original token classes.
@@ -133,14 +136,13 @@ export function commentSites(text) {
     const stream = new CommonTokenStream(lexer);
     stream.fill();
     const stringTypes = new Set([FlixLexer.STRING_START, FlixLexer.STRING_END, FlixLexer.STRING_CONTENT, FlixLexer.INTERPOLATION_START, FlixLexer.INTERPOLATION_END, FlixLexer.DEBUG_INTERPOLATOR]);
-    const tightTypes = new Set([FlixLexer.DOT, FlixLexer.COLON_COLON_TIGHT]);
     const sites = [];
     let depth = 0;
     for (const t of stream.getTokens()) {
         if (t.channel !== 0 || t.type === FlixLexer.EOF) continue;
         if (t.type === FlixLexer.STRING_START) depth++;
         const inString = depth > 0 || stringTypes.has(t.type);
-        if (!inString) sites.push({ tokenIndex: t.tokenIndex, glued: tightTypes.has(t.type) });
+        if (!inString) sites.push({ tokenIndex: t.tokenIndex, glued: TIGHT_TYPES.has(t.type) });
         if (t.type === FlixLexer.STRING_END) depth--;
     }
     return sites;
@@ -160,6 +162,38 @@ export function withLineCommentAfter(text, { tokenIndex, glued, style = "line" }
         if (t.type === FlixLexer.EOF) break;
         out += t.text;
         if (t.tokenIndex === tokenIndex) out += comment;
+    }
+    return out;
+}
+
+/** Where a comment can go and how it is written: after a token, as a line comment, a block comment, or on its own line before it. */
+export const COMMENT_FORMS = ["line", "block", "own"];
+
+/** The comment text each form inserts, as it appears in the source. */
+export const COMMENT_MARKERS = { line: "// note", block: "/* note */", own: "// own" };
+
+/**
+ * `text` with a comment of the given form at the token `tokenIndex`:
+ * - `line`: `// note` and a line break after the token (glued to a tight `.` or `::`),
+ * - `block`: `/* note *\/` after the token (glued the same way, else surrounded by spaces),
+ * - `own`: `// own` on its own line before the token.
+ */
+export function withCommentAt(text, tokenIndex, form) {
+    if (!COMMENT_FORMS.includes(form)) throw new Error(`unknown comment form ${form}`);
+    const lexer = new FlixLexer(CharStream.fromString(text));
+    lexer.removeErrorListeners();
+    const stream = new CommonTokenStream(lexer);
+    stream.fill();
+    let out = "";
+    for (const t of stream.getTokens()) {
+        if (t.type === FlixLexer.EOF) break;
+        if (form === "own" && t.tokenIndex === tokenIndex) out += "\n// own\n";
+        out += t.text;
+        if (t.tokenIndex === tokenIndex) {
+            const glued = TIGHT_TYPES.has(t.type);
+            if (form === "line") out += glued ? "// note\n" : " // note\n";
+            if (form === "block") out += glued ? "/* note */" : " /* note */ ";
+        }
     }
     return out;
 }
