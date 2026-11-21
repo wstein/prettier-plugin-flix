@@ -1,0 +1,7 @@
+{
+ "failures": [
+  { "file": "fixtures/comments/caret-markers.md", "width": 60, "kind": "not-idempotent", "issue": "#93", "context": "first + secondArgument under a caret marker comment" },
+  { "file": "fixtures/comments/caret-markers.md", "width": 70, "kind": "not-idempotent", "issue": "#93", "context": "first + secondArgument under a caret marker comment" },
+  { "file": "fixtures/declarations/signature-boundaries.md", "width": 50, "kind": "not-idempotent", "issue": "#92", "context": "printSignature: nested record parameter, return type and effect after }):" }
+ ]
+}
