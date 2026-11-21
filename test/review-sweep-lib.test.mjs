@@ -3,8 +3,11 @@
 // shrinking an input and diffing outputs. Small inputs and stub formatters; no sweep runs here.
 import test from "node:test";
 import assert from "node:assert/strict";
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
 import { COMMENT_FORMS, withCommentAt } from "./lib.mjs";
-import { checkFormat, checkSite, knownPlan, lineDiff, mergePlans, minimize, parseKnown, planSites, reconcile, renderHunks, runSitePlan } from "../scripts/review-sweep-lib.mjs";
+import { checkFormat, checkSite, knownPlan, lineDiff, loadInputs, mergePlans, minimize, parseKnown, parsePositiveInt, parseWidths, planSites, reconcile, renderHunks, runSitePlan, selectShard } from "../scripts/review-sweep-lib.mjs";
 
 const src = "def f(): Int32 = a.b + 1\n";
 
@@ -122,4 +125,36 @@ test("parseKnown: rejects duplicate entry keys", () => {
         () => parseKnown(JSON.stringify({ failures: [entry(), entry({ kind: "unparsable", issue: "#2" })] })),
         /duplicate entry/,
     );
+});
+
+test("parseWidths / parsePositiveInt: reject invalid CLI values", () => {
+    assert.deepEqual(parseWidths(undefined, [40, 60]), [40, 60]);
+    assert.deepEqual(parseWidths("40, 80", [1]), [40, 80]);
+    assert.throws(() => parseWidths("4O", [40]), /positive integers/);
+    assert.throws(() => parseWidths("0,40", [40]), /positive integers/);
+    assert.equal(parsePositiveInt("every", "6"), 6);
+    assert.throws(() => parsePositiveInt("every", "abc"), /positive integer/);
+    assert.throws(() => parsePositiveInt("max", "0"), /positive integer/);
+});
+
+test("selectShard: k/n partitions; rejects a bad shard", () => {
+    const items = ["a", "b", "c", "d"];
+    assert.deepEqual(selectShard(items, undefined), items);
+    assert.deepEqual(selectShard(items, "1/2"), ["a", "c"]);
+    assert.deepEqual(selectShard(items, "2/2"), ["b", "d"]);
+    assert.throws(() => selectShard(items, "0/2"), /k\/n/);
+    assert.throws(() => selectShard(items, "3/2"), /k\/n/);
+    assert.throws(() => selectShard(items, "x"), /k\/n/);
+});
+
+test("loadInputs: names files outside the repo relative to the parent of the given path", () => {
+    const root = mkdtempSync(join(tmpdir(), "sweep-name-"));
+    const lib = join(root, "library");
+    mkdirSync(lib);
+    writeFileSync(join(lib, "MutDeque.flix"), "def f(): Int32 = 1\n");
+    try {
+        assert.deepEqual(loadInputs([lib], { base: process.cwd(), fixtures: false }).map((i) => i.name), ["library/MutDeque.flix"]);
+    } finally {
+        rmSync(root, { recursive: true, force: true });
+    }
 });
