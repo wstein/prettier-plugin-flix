@@ -1,1 +1,10 @@
-{}
+{
+  "book.additional-information.for-llms.reach-a-dependency-through-its-mount": {
+    "digest": "1bca4080f6deb38c3d1bc32e23933082b983b87ef4ce263f59bcd799f4d84eb2",
+    "reason": "Keep the import and declaration adjacent, as in the book. The comment still follows the import with the standard two-space gap."
+  },
+  "book.library-effects.filesystem.backup": {
+    "digest": "8b215807221235ca8e7529a2553fedc0c8f4a3e4005a2f01101c59c775f7a161",
+    "reason": "Use the actual indentation of each match to place its arrows. The long message in the inner match starts below the arrow so the indented line fits."
+  }
+}
