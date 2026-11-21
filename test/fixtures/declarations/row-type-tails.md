@@ -27,6 +27,8 @@ type alias CompactSchema[r: SchemaRow] = #(Stop(String) | r)
 type alias EdgeRow[remainingFieldsOfTheStopRecordRow: RecordRow] = (name = String, platform = Int32 | remainingFieldsOfTheStopRecordRow)
 
 type alias OverRow[remainingFieldsOfTheStopRecordRows: RecordRow] = (name = String, platform = Int32 | remainingFieldsOfTheStopRecordRows)
+
+type alias NotedEdgeRow[remainingFieldsOfTheStopRecordRow: RecordRow] = (name = String, platform = Int32 | remainingFieldsOfTheStopRecordRow /* note */)
 ```
 
 ## Output
@@ -103,6 +105,15 @@ type alias OverRow[
         platform = Int32
         | remainingFieldsOfTheStopRecordRows
     )
+
+type alias NotedEdgeRow[
+    remainingFieldsOfTheStopRecordRow: RecordRow
+] =
+    (
+        name = String,
+        platform = Int32
+        | remainingFieldsOfTheStopRecordRow /* note */
+    )
 ```
 
 ```flix printWidth=80
@@ -154,6 +165,12 @@ type alias EdgeRow[remainingFieldsOfTheStopRecordRow: RecordRow] =
 
 type alias OverRow[remainingFieldsOfTheStopRecordRows: RecordRow] =
     (name = String, platform = Int32 | remainingFieldsOfTheStopRecordRows)
+
+type alias NotedEdgeRow[remainingFieldsOfTheStopRecordRow: RecordRow] =
+    (
+        name = String,
+        platform = Int32 | remainingFieldsOfTheStopRecordRow /* note */
+    )
 ```
 
 ```flix printWidth=100
@@ -197,4 +214,7 @@ type alias EdgeRow[remainingFieldsOfTheStopRecordRow: RecordRow] =
 
 type alias OverRow[remainingFieldsOfTheStopRecordRows: RecordRow] =
     (name = String, platform = Int32 | remainingFieldsOfTheStopRecordRows)
+
+type alias NotedEdgeRow[remainingFieldsOfTheStopRecordRow: RecordRow] =
+    (name = String, platform = Int32 | remainingFieldsOfTheStopRecordRow /* note */)
 ```
