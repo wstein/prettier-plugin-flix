@@ -66,13 +66,16 @@ Run this against a file in your project.
 npx prettier src/Main.flix
 npx prettier --check src/Main.flix
 npx prettier --write src/Main.flix
-npx prettier --flix-version 0.80.0 src/Main.flix
+npx prettier --plugin prettier-plugin-flix --flix-version 0.80.0 src/Main.flix
 ```
 
 The first command previews the result in your terminal. `--check` reports
-formatting differences, and `--write` saves the result. The Flix style uses
-four spaces per indent and a target width of 100 columns. Set `printWidth`
-in your Prettier configuration to adjust the width.
+formatting differences, and `--write` saves the result. Pass `--plugin
+prettier-plugin-flix` with `--flix-version` on the CLI so Prettier registers
+the flag before it loads plugins from `.prettierrc.json`; without `--plugin`,
+Prettier 3 warns that `--flix-version` is unknown and still applies the value.
+The Flix style uses four spaces per indent and a target width of 100 columns.
+Set `printWidth` in your Prettier configuration to adjust the width.
 
 ## Learn more
 

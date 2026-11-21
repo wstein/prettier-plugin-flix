@@ -23,7 +23,7 @@ function supportedList(): string {
 
 /** Resolve a Prettier `flixVersion` value to a supported exact version. */
 export function resolveFlixVersion(value: unknown): FlixVersion {
-    if (value === undefined || value === null || value === "") return DEFAULT_FLIX_VERSION;
+    if (value === undefined || value === null) return DEFAULT_FLIX_VERSION;
     if (typeof value !== "string") {
         throw new Error(
             `flixVersion must be an exact Flix compiler version string (supported: ${supportedList()}).`,
