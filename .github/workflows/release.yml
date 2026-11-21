@@ -79,7 +79,6 @@ jobs:
       - name: Verify reviewed changelog notes
         run: node scripts/check-release-changelog.mjs
       - run: npm ci
-      - run: npm run build
       - run: npm run test:coverage
       - run: npm run coverage:syntax -- --check
       - name: Install Hugo
