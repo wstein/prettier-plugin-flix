@@ -1521,6 +1521,10 @@ export class Printer {
      */
     private printConsChain(operands: Node[], ops: Node[]): Doc {
         const first = this.print(operands[0]);
+        // A chain that opens a match-arm guard wraps one level deeper than the arm body.
+        const continuation = this.matchGuardStart !== null && firstTerm(operands[0]) === this.matchGuardStart
+            ? (value: Doc) => indent(indent(value))
+            : indent;
         const glued = ops.map((op, i) =>
             isTerm(op) && ttype(op) === L.COLON_COLON_TIGHT && this.consHasGluedComment(op, operands[i + 1]));
         const chainTight = ops.every((op) => isTerm(op) && ttype(op) === L.COLON_COLON_TIGHT);
@@ -1559,7 +1563,7 @@ export class Printer {
         if (chainTight && (forcedBreak || this.flat > 0)) {
             // A glued line comment forces a break while the chain stays tight; flat mode
             // also keeps a fully tight chain glued.
-            return group([first, indent(ops.map((_, i) => tightLink(i)))]);
+            return group([first, continuation(ops.map((_, i) => tightLink(i)))]);
         }
         if (chainTight) {
             // Both forms print every operand. The second print must still see the own-line
@@ -1577,14 +1581,14 @@ export class Printer {
             })];
             const consumedByTight = this.consumed;
             this.consumed = consumedBefore;
-            const spaced = group([first, indent(ops.map((_, i) => spacedLink(i)))]);
+            const spaced = group([first, continuation(ops.map((_, i) => spacedLink(i)))]);
             for (const index of consumedByTight) this.consumed.add(index);
             // A forced break inside an operand ends the fit check at that line, so the rest
             // of a tight chain could pass the width: treat such a chain as not fitting.
             if (willBreak(tightFlat)) return spaced;
             return conditionalGroup([tightFlat, spaced]);
         }
-        return group([first, indent(ops.map((_, i) => spacedLink(i)))]);
+        return group([first, continuation(ops.map((_, i) => spacedLink(i)))]);
     }
 
     /** True when a tight `::` has a comment with no whitespace between the comment and the operator. */
