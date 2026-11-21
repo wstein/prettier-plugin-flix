@@ -76,6 +76,8 @@ jobs:
             exit 1
           fi
           printf 'version=%s\n' "$version" >> "$GITHUB_OUTPUT"
+      - name: Verify reviewed changelog notes
+        run: node scripts/check-release-changelog.mjs
       - run: npm ci
       - run: npm run build
       - run: npm run test:coverage
