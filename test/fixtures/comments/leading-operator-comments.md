@@ -14,6 +14,10 @@ def total(a: Int32, b: Int32): Int32 =
 def both(a: Bool, b: Bool): Bool =
     // Both inputs must be true.
     a and b
+
+def lines(a: String, b: String): String =
+    // Join the lines.
+    a + "\n" + b
 ```
 
 ## Output
@@ -26,4 +30,8 @@ def total(a: Int32, b: Int32): Int32 =
 def both(a: Bool, b: Bool): Bool =
     // Both inputs must be true.
     a and b
+
+def lines(a: String, b: String): String =
+    // Join the lines.
+    a + "\n" + b
 ```
