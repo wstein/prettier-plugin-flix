@@ -24,10 +24,9 @@ User-facing changes to Prettier Plugin for Flix. Plugin releases have their own 
 - Keep map and record arrow/`=` alignment stable when a line comment sits
   before a separator that also carries a line comment, so the first format
   already matches the second.
-- Measure trailing-lambda hugs without treating an end-of-line block comment
-  in the lambda head as a forced break, so the hug choice matches a later pass
-  and the same call without the comment, while match-arm and lambda bodies keep
-  those breaks when the soft docs are printed.
+- Soften end-of-line block comments only in a hugged trailing-lambda head
+  (parameters and match-lambda pattern) when choosing whether to hug, so the
+  choice matches a later pass; arrows and ordinary bodies keep those breaks.
 - Preserve token boundaries beside comments around access dots, double colons, and cons operators.
 - Account for actual indentation when aligning nested map entries, record fields, and match arms.
 - Keep leading own-line comments from forcing a binary or operator chain to wrap, and keep caret-marker layouts idempotent.
