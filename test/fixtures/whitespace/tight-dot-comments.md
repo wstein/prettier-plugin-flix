@@ -36,12 +36,12 @@ mod Tools {
 
 def method(s: String): String = {
     let result = s.trim().// keep the method dot tight
-    toLowerCase();  // keep this separate comment
+        toLowerCase();  // keep this separate comment
     result
 }
 
 def qualified(): Int32 = Tools.// keep the qualifier dot tight
-value()
+    value()
 
 def blockComment(s: String): String = s.trim()./* keep */toLowerCase()
 
@@ -57,12 +57,12 @@ mod Tools {
 
 def method(s: String): String = {
     let result = s.trim().// keep the method dot tight
-    toLowerCase();  // keep this separate comment
+        toLowerCase();  // keep this separate comment
     result
 }
 
 def qualified(): Int32 = Tools.// keep the qualifier dot tight
-value()
+    value()
 
 def blockComment(s: String): String =
     s.trim()./* keep */toLowerCase()

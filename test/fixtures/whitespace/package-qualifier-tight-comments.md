@@ -25,6 +25,12 @@ def headOrZero(xs:List[Int32]):Int32=match xs {
     case x/* head */::/* tail */_ => x
     case Nil => 0
 }
+
+def headOr(l: List[Int32]): Int32 = match l {
+    case head::// rest
+        _ => head
+    case Nil => 0
+}
 ```
 
 ## Output
@@ -34,8 +40,8 @@ use Foo/* before */::Bar.before
 use Foo::/* after */Bar.after
 use Foo::Bar.spaced  // ordinary use
 use Foo::// keep glued
-// keep this line too
-Bar.next
+    // keep this line too
+    Bar.next
 
 def imported(): Int32 = before() + after() + spaced() + next()
 
@@ -50,6 +56,12 @@ def headOrZero(xs: List[Int32]): Int32 = match xs {
     case x/* head */::/* tail */_ => x
     case Nil                      => 0
 }
+
+def headOr(l: List[Int32]): Int32 = match l {
+    case head::// rest
+        _ => head
+    case Nil => 0
+}
 ```
 
 ```flix printWidth=35
@@ -57,8 +69,8 @@ use Foo/* before */::Bar.before
 use Foo::/* after */Bar.after
 use Foo::Bar.spaced  // ordinary use
 use Foo::// keep glued
-// keep this line too
-Bar.next
+    // keep this line too
+    Bar.next
 
 def imported(): Int32 =
     before() +
@@ -79,6 +91,14 @@ def headOrZero(
 ): Int32 = match xs {
     case x/* head */::/* tail */_ =>
         x
+    case Nil => 0
+}
+
+def headOr(
+    l: List[Int32]
+): Int32 = match l {
+    case head::// rest
+        _ => head
     case Nil => 0
 }
 ```
