@@ -115,6 +115,8 @@ export class Printer {
     /** Tokens that start a line in the output, so own-line comments need no extra line break. */
     private lineStart = new Set<number>();
     private handlerArgumentOpeners = new Set<number>();
+    /** When positive, single-statement blocks stay vertical. Used to measure a lambda hug that breaks its block. */
+    private forceVerticalBlocks = 0;
     /** First token of the match-arm guard being printed; its operator chain indents one level deeper than the body. */
     private matchGuardStart: TerminalNode | null = null;
     /**
@@ -674,6 +676,9 @@ export class Printer {
             !pad && comments.length === 0 && !commentAtBoundary && sepType === L.COMMA && lastTok !== null && ttype(lastTok) === L.RBRACE &&
             !items.slice(0, -1).some((it) => it.length > 0 && lastTerm(it[it.length - 1]) !== null && ttype(lastTerm(it[it.length - 1])!) === L.RBRACE);
         const canRelaxLambda = hugCandidate && finalArgument && kind(finalArgument) === "LambdaExpr";
+        // The hug alternative that breaks the lambda's blocks is built from a copy that has not
+        // yet taken the comments, so both alternatives see the same comments and line starts.
+        const blockPrinter = canRelaxLambda ? this.forkForVerticalBlocks() : undefined;
         const docs = groups.flatMap((rows) => {
             const formatted = mayAlign ? this.alignEntries(rows, split.seps.slice(offset, offset + rows.length), layoutId) : undefined;
             offset += rows.length;
@@ -694,8 +699,13 @@ export class Printer {
             willBreak(docs[docs.length - 1]);
         const huggable = hugCandidate && !(items.length > 1 && matchCallback) && !docs.slice(0, -1).some(willBreak);
         let hugged: Doc | undefined;
+        let huggedBroken: Doc | undefined;
         if (huggable) {
             hugged = [openDoc, this.joinWithSeps(docs, sepDocs, sepDocs.map(() => " ")), closeDoc];
+            if (blockPrinter) {
+                const brokenDocs = [...docs.slice(0, -1), blockPrinter.printListItem(lastItem, parentKind)];
+                huggedBroken = [openDoc, this.joinWithSeps(brokenDocs, sepDocs, sepDocs.map(() => " ")), closeDoc];
+            }
         }
         if (hugged && (!finalArgument || kind(finalArgument) !== "LambdaExpr" || !groupList)) {
             return [hugged, closeTrail];
@@ -719,12 +729,23 @@ export class Printer {
             // A conditional group's alternatives do not propagate forced
             // breaks. Preserve the enclosing layout of a multiline callback.
             const propagateBreak = willBreak(hugged) ? breakParent : "";
-            return [conditionalGroup([hugged, group(hugged, { shouldBreak: true }), contents], { id: layoutId }), propagateBreak, closeTrail];
+            return [conditionalGroup(huggedBroken ? [hugged, huggedBroken, contents] : [hugged, contents], { id: layoutId }), propagateBreak, closeTrail];
         }
         return [
             groupList ? group(contents, { id: layoutId, shouldBreak: forceBreak || comments.length > 0 }) : contents,
             closeTrail,
         ];
+    }
+
+    private forkForVerticalBlocks(): Printer {
+        const printer = new Printer(this.root, this.printWidth, this.tabWidth, this.alignmentIndent);
+        printer.flat = this.flat;
+        printer.forceVerticalBlocks = this.forceVerticalBlocks + 1;
+        printer.softTrailBreaks = this.softTrailBreaks;
+        printer.consumed = new Set(this.consumed);
+        printer.lineStart = new Set(this.lineStart);
+        printer.handlerArgumentOpeners = new Set(this.handlerArgumentOpeners);
+        return printer;
     }
 
     // ------------------------------------------------------------- dispatch
@@ -860,6 +881,7 @@ export class Printer {
         body.push(...comments.flatMap((c) => (stmt || body.length > 0 ? [hardline, c] : [c])));
         const vertical =
             comments.length > 0 ||
+            this.forceVerticalBlocks > 0 ||
             open.symbol.line !== close.symbol.line ||
             (stmt !== null && this.isMultiStatement(stmt));
         // The closing brace's trailing comment follows the group: inside it, its forced line break
