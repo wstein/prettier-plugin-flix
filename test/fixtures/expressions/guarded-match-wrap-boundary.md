@@ -1,6 +1,6 @@
 ---
 title: Keep a guarded match arm together at the width boundary
-description: "The case pattern and guard fit exactly at 59 columns. At 58 columns the guard wraps. The body starts below the arrow at both widths."
+description: "The case pattern and guard fit exactly at 59 columns. At 58 columns the guard wraps one level deeper than the arm body. The body starts below the arrow at both widths."
 flix: "0.80"
 options: { printWidth: 59 }
 ---
@@ -40,7 +40,7 @@ def fare(
     eligibleForDiscount: Bool
 ): String = match routeServed {
     case true if stationOpen and
-        lastConnectionAvailable =>
+            lastConnectionAvailable =>
         if (eligibleForDiscount)
             "discounted"
         else

@@ -115,6 +115,8 @@ export class Printer {
     /** Tokens that start a line in the output, so own-line comments need no extra line break. */
     private lineStart = new Set<number>();
     private handlerArgumentOpeners = new Set<number>();
+    /** First token of the match-arm guard being printed; its operator chain indents one level deeper than the body. */
+    private matchGuardStart: TerminalNode | null = null;
 
     constructor(
         private root: FlixRoot,
@@ -1097,9 +1099,29 @@ export class Printer {
         const ai = cs.findIndex((c) => isTerm(c) && BODY_ARROWS.has(ttype(c)));
         const arrow = cs[ai] as TerminalNode;
         const headLast = ai > 0 ? lastTerm(cs[ai - 1]) : null;
-        const head = k === "DefDeclaration" ? this.printDefinitionHead(n, cs, ai) : this.seq(cs.slice(0, ai), k);
+        const head = k === "DefDeclaration" ? this.printDefinitionHead(n, cs, ai) :
+            k === "MatchRule" ? this.printMatchRuleHead(cs, ai) : this.seq(cs.slice(0, ai), k);
         const gap = this.after(headLast, " ", true);
         return { head, gap, arrow, tail: [this.tok(arrow), this.printEqBodyTail(cs, ai, k, arrow)] };
+    }
+
+    /** `case pattern if guard` with deeper wrap indent for the guard's own operator chain. */
+    private printMatchRuleHead(children: Node[], arrowIndex: number): Doc {
+        const head = children.slice(0, arrowIndex);
+        const ifIndex = head.findIndex((child) => isTerm(child) && ttype(child) === L.IF);
+        if (ifIndex < 0 || ifIndex === head.length - 1) return this.seq(head, "MatchRule");
+        const prefix = this.seq(head.slice(0, ifIndex + 1), "MatchRule");
+        const guard = head[ifIndex + 1];
+        const afterIf = this.after(lastTerm(head[ifIndex]), " ");
+        const outer = this.matchGuardStart;
+        this.matchGuardStart = firstTerm(guard);
+        try {
+            // Do not mark the guard as a line start: an own-line comment after `if`
+            // must keep its break (ls would glue it onto the `if` line).
+            return [prefix, afterIf, this.print(guard)];
+        } finally {
+            this.matchGuardStart = outer;
+        }
     }
 
     private printDefinitionHead(n: ParserRuleContext, children: Node[], arrowIndex: number): Doc {
@@ -1319,7 +1341,10 @@ export class Printer {
                 this.after(lastTerm(op), " "),
                 this.print(operands[i + 1]),
             ]);
-            return [leading, group([first, indent(steps)])];
+            const pipeContinuation = this.matchGuardStart !== null && firstTerm(n) === this.matchGuardStart
+                ? (value: Doc) => indent(indent(value))
+                : indent;
+            return [leading, group([first, pipeContinuation(steps)])];
         }
 
         const links = ops.map((op, i) => {
@@ -1342,8 +1367,13 @@ export class Printer {
             };
         });
         const first = this.print(operands[0]);
+        // Match-arm guards wrap one level deeper than the arm body so the
+        // continuation stays visually separate from the statement under `=>`.
+        const continuation = this.matchGuardStart !== null && firstTerm(n) === this.matchGuardStart
+            ? (value: Doc) => indent(indent(value))
+            : indent;
         if (k !== "AddExpr" || !ops.every((op) => isTerm(op) && ttype(op) === L.PLUS)) {
-            return [leading, group([first, indent(links.map(({ operator, after, operand }) => [operator, after, operand]))])];
+            return [leading, group([first, continuation(links.map(({ operator, after, operand }) => [operator, after, operand]))])];
         }
 
         // A newline literal acts as a separator. Keep it with the preceding text when that
@@ -1360,10 +1390,10 @@ export class Printer {
             else segment.push(after, operand);
         }
         const [head, ...tail] = segments;
-        if (tail.length === 0) return [leading, group([first, indent(head.slice(1))])];
+        if (tail.length === 0) return [leading, group([first, continuation(head.slice(1))])];
         return [leading, group([
-            group([head[0], indent(head.slice(1))]),
-            indent(tail.map(([before, ...parts]) => [before, group(parts)])),
+            group([head[0], continuation(head.slice(1))]),
+            continuation(tail.map(([before, ...parts]) => [before, group(parts)])),
         ])];
     }
 
