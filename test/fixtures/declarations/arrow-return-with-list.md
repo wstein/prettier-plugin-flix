@@ -1,6 +1,6 @@
 ---
 title: "Separate a wrapped with list from a wrapped function return type"
-description: "When both the arrow return and the with list wrap, indent constraints one level deeper than the arrow parameters."
+description: "When both the arrow return and the with list wrap, the deeper with-list indent keeps constraints below the arrow parameters."
 group: "Types and constraints"
 flix: "0.80"
 options: { printWidth: 80 }

@@ -146,13 +146,12 @@ still wrap if that constraint alone needs more room. A line comment after a
 comma stays with the preceding constraint.
 
 Like `where` clauses in the Rust guide, a wrapped list puts each constraint
-on its own block-indented line. Unlike Rust, `with` stays at the end of the
-signature line, the list has no trailing comma, and the `=` or `{` follows
-the last constraint.
-
-When the return type is a function type that also wraps, indent the
-constraints one level deeper than the continued arrow parameters so the
-`with` list does not look like more arrow arguments.
+on its own line. Unlike Rust, `with` stays at the end of the signature line,
+the list has no trailing comma, and the `=` or `{` follows the last
+constraint. Wrapped constraints are indented one level deeper than the body
+or members so they do not share a column with the code that follows. The same
+deeper indent separates a wrapped `with` list from a wrapped function return
+type: constraints sit one level deeper than the continued arrow parameters.
 [Rust Style Guide](https://doc.rust-lang.org/style-guide/items.html#where-clauses) ·
 [Trait constraint fixture](../test/fixtures/declarations/trait-constraint-lists.md) ·
 [Arrow return with list fixture](../test/fixtures/declarations/arrow-return-with-list.md)

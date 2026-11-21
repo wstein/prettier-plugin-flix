@@ -36,38 +36,38 @@ pub def render[a: Type, b: Type, c: Type, d: Type] (
     third: c,
     fourth: d
 ): String with
-    ToString[a],
-    ToString[b],
-    ToString[c],
-    ToString[d] =
+        ToString[a],
+        ToString[b],
+        ToString[c],
+        ToString[d] =
     ToString.toString(first) +
         ToString.toString(second) +
         ToString.toString(third) +
         ToString.toString(fourth)
 
 pub def same[a: Type] (first: a, second: a): Bool with
-    Eq[a],  // equality comes first
-    ToString[a] =
+        Eq[a],  // equality comes first
+        ToString[a] =
     if (first == second)
         ToString.toString(first) != ""
     else
         false
 
 pub def tagged[a: Type] (first: a): String with  // both constraints
-    ToString[a],
-    Hash[a] = ToString.toString(first)
+        ToString[a],
+        Hash[a] = ToString.toString(first)
 
 pub def notes[a: Type] (first: a, second: a): String with
-    // shown first
-    ToString[a],  // before the comma
-    // after the comma
-    Hash[a] =
+        // shown first
+        ToString[a],  // before the comma
+        // after the comma
+        Hash[a] =
     ToString.toString(first) + ToString.toString(second)
 
 pub trait ValueFormat[a: Type] with
-    ToString[a],
-    Eq[a],
-    Hash[a] {}
+        ToString[a],
+        Eq[a],
+        Hash[a] {}
 ```
 
 ```flix printWidth=100
@@ -79,18 +79,18 @@ pub def render[a: Type, b: Type, c: Type, d: Type] (first: a, second: b, third: 
         ToString.toString(fourth)
 
 pub def same[a: Type] (first: a, second: a): Bool with
-    Eq[a],  // equality comes first
-    ToString[a] = if (first == second) ToString.toString(first) != "" else false
+        Eq[a],  // equality comes first
+        ToString[a] = if (first == second) ToString.toString(first) != "" else false
 
 pub def tagged[a: Type] (first: a): String with  // both constraints
-    ToString[a],
-    Hash[a] = ToString.toString(first)
+        ToString[a],
+        Hash[a] = ToString.toString(first)
 
 pub def notes[a: Type] (first: a, second: a): String with
-    // shown first
-    ToString[a],  // before the comma
-    // after the comma
-    Hash[a] = ToString.toString(first) + ToString.toString(second)
+        // shown first
+        ToString[a],  // before the comma
+        // after the comma
+        Hash[a] = ToString.toString(first) + ToString.toString(second)
 
 pub trait ValueFormat[a: Type] with ToString[a], Eq[a], Hash[a] {}
 ```
@@ -100,18 +100,18 @@ pub def render[a: Type, b: Type, c: Type, d: Type] (first: a, second: b, third: 
     ToString.toString(first) + ToString.toString(second) + ToString.toString(third) + ToString.toString(fourth)
 
 pub def same[a: Type] (first: a, second: a): Bool with
-    Eq[a],  // equality comes first
-    ToString[a] = if (first == second) ToString.toString(first) != "" else false
+        Eq[a],  // equality comes first
+        ToString[a] = if (first == second) ToString.toString(first) != "" else false
 
 pub def tagged[a: Type] (first: a): String with  // both constraints
-    ToString[a],
-    Hash[a] = ToString.toString(first)
+        ToString[a],
+        Hash[a] = ToString.toString(first)
 
 pub def notes[a: Type] (first: a, second: a): String with
-    // shown first
-    ToString[a],  // before the comma
-    // after the comma
-    Hash[a] = ToString.toString(first) + ToString.toString(second)
+        // shown first
+        ToString[a],  // before the comma
+        // after the comma
+        Hash[a] = ToString.toString(first) + ToString.toString(second)
 
 pub trait ValueFormat[a: Type] with ToString[a], Eq[a], Hash[a] {}
 ```
