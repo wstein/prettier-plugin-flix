@@ -202,6 +202,21 @@ export class Printer {
         return leading;
     }
 
+    /**
+     * Leading comments before a match arm, including an inline block comment that is
+     * still on the opener's line in the input. Those leave the measured head so arm
+     * alignment matches the pass where the comment is already on its own line (#137).
+     */
+    private takeLeadingMatchArmComments(t: TerminalNode | null): Doc[] {
+        if (!t) return [];
+        const info = this.info(t);
+        if (!info?.lead.length || this.consumed.has(t.symbol.tokenIndex)) return [];
+        if (info.lead[0].nl === 0 && info.lead.every((c) => c.isLine)) return [];
+        const leading = this.tokenLeadingDoc(t);
+        this.consumed.add(t.symbol.tokenIndex);
+        return leading;
+    }
+
     /** The token with its leading comments, without trailing comments. */
     private tokCore(t: TerminalNode): Doc {
         return [...this.tokenLeadingDoc(t), this.src(t)];
@@ -236,10 +251,16 @@ export class Printer {
         return info ? this.trailDoc(info, gap) : "";
     }
 
-    /** A `//` comment (or a block comment that ends its line) ends the line: whatever follows the token must start a new line. */
+    /**
+     * A `//` comment (or a block comment that ends its line) ends the line: whatever follows
+     * the token must start a new line. Soft trail breaks apply to measurement only. A source
+     * newline between a block comment and a list separator is ignored: formatted output puts
+     * the comment and comma on one line, and forcing a break here is not idempotent (#137).
+     */
     private hasLineTrail(t: TerminalNode): boolean {
         return !!this.info(t)?.trail.some((c) =>
-            c.isLine || (c.nlNext > 0 && (this.softTrailBreaks === 0 || this.nextHasOwnLineComment(t))));
+            c.isLine || (c.nlNext > 0 && !this.nextIsListSep(t) &&
+                (this.softTrailBreaks === 0 || this.nextHasOwnLineComment(t))));
     }
 
     /**
@@ -249,6 +270,14 @@ export class Printer {
     private nextHasOwnLineComment(t: TerminalNode): boolean {
         const next = nextTerm(t);
         return next !== null && (this.info(next)?.lead.length ?? 0) > 0;
+    }
+
+    /** True when the next token is `,` or `;` (argument / collection separators). */
+    private nextIsListSep(t: TerminalNode): boolean {
+        const next = nextTerm(t);
+        if (next === null) return false;
+        const type = ttype(next);
+        return type === L.COMMA || type === L.SEMI;
     }
 
     /**
@@ -440,15 +469,18 @@ export class Printer {
         return docs.flatMap((d, i) => (i < docs.length - 1 ? [d, seps[i], afters[i]] : [d]));
     }
 
-    private hasComment(t: TerminalNode, ignoreTrailing = false, ignoreOwnLine = false): boolean {
+    private hasComment(t: TerminalNode, ignoreTrailing = false, ignoreLead = false): boolean {
         const info = this.info(t);
-        return !!info && (info.lead.some((comment) => !ignoreOwnLine || comment.nl === 0) ||
+        return !!info && ((!ignoreLead && info.lead.length > 0) ||
             (!ignoreTrailing && info.trail.length > 0));
     }
 
     /** Measure atoms and supported single-line map or record values. */
     private inlineWidth(n: Node, rowEnd: TerminalNode | null = null, extra?: "list" | "add",
         rowStart?: TerminalNode | null): number | undefined {
+        // Leading comments on the row start sit before the measured column (map keys,
+        // string atoms). Ignore them so an inline `/* c */` before the key on pass 1
+        // matches the own-line lead after the opener wraps on pass 2 (#137).
         if (isTerm(n)) return this.hasComment(n, n === rowEnd, n === rowStart) ? undefined : util.getStringWidth(this.src(n));
         const cs = kids(n);
         if (cs.length === 1) return this.inlineWidth(cs[0], rowEnd, extra, rowStart);
@@ -486,10 +518,12 @@ export class Printer {
         return width + 2 * seps.length;
     }
 
-    // Blank lines and own-line comments end an alignment group. When the
-    // previous entry and its separator both end with a line comment, the
-    // separator's comment prints on its own line (see separatorTok), so split
-    // the group on the first pass the same way the second pass will.
+    // Blank lines and leading comments end an alignment group. An inline block
+    // lead before a later entry becomes own-line after the list wraps, so treat
+    // it like an own-line lead on pass 1 (#137). When the previous entry and its
+    // separator both end with a line comment, the separator's comment prints on
+    // its own line (see separatorTok), so split the group on the first pass the
+    // same way the second pass will.
     private alignmentGroups<T>(
         items: T[],
         first: (item: T) => TerminalNode | null,
@@ -505,9 +539,10 @@ export class Printer {
             const prevLast = last && i > 0 ? last(items[i - 1]) : null;
             const sepOwnLine = prevSep !== null && prevLast !== null &&
                 this.hasLineTrail(prevSep) && this.hasLineTrail(prevLast);
+            const lead = token !== null ? this.info(token)?.lead : undefined;
             const splitBefore = group.length > 0 && (
                 this.blankBefore(token) ||
-                (token !== null && (this.info(token)?.lead.some((comment) => comment.nl > 0) ?? false)) ||
+                (lead?.some((comment) => comment.nl > 0 || !comment.isLine) ?? false) ||
                 sepOwnLine
             );
             if (splitBefore) {
@@ -1185,7 +1220,7 @@ export class Printer {
         // line break after a block comment that ends its line.
         const buildRows = () => rules.map((rule) => {
             this.ls(rule);
-            const leading = this.takeLeadingOwnLineComments(firstTerm(rule));
+            const leading = this.takeLeadingMatchArmComments(firstTerm(rule));
             return { leading, ...this.eqBodyDocs(rule as ParserRuleContext) };
         });
         let measured: ReturnType<typeof buildRows> | undefined;
