@@ -78,6 +78,7 @@ jobs:
           printf 'version=%s\n' "$version" >> "$GITHUB_OUTPUT"
       - run: git config --global url."https://github.com/".insteadOf ssh://git@github.com/
       - run: npm ci
+      - run: npm run build
       - run: npm run test:coverage
       - run: npm run coverage:syntax -- --check
       - name: Install Hugo
@@ -214,6 +215,8 @@ jobs:
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org
+      # Trusted Publishing (OIDC) needs npm >= 11.5.1; Node 22 bundles npm 10.x.
+      - run: npm install -g npm@11.6.2
       - name: Publish the verified tarball to npm
         env:
           PACKAGE_VERSION: ${{ needs.package.outputs.version }}

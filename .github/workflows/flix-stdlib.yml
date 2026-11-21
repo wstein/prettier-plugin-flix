@@ -21,15 +21,8 @@ on:
   workflow_dispatch:
     inputs:
       flix_tag:
-        description: Exact Flix release tag (default v0.80.0).
+        description: Exact Flix release tag (default v0.80.0). Blank/schedule uses the latest release.
         type: string
-        default: v0.80.0
-  workflow_call:
-    inputs:
-      flix_tag:
-        description: Exact Flix release tag used when packaging a release.
-        type: string
-        required: false
         default: v0.80.0
 
 permissions:
@@ -37,7 +30,7 @@ permissions:
 
 concurrency:
   group: flix-stdlib-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   compile:
@@ -60,13 +53,16 @@ jobs:
         id: compiler
         env:
           GH_TOKEN: ${{ github.token }}
-          REQUESTED_TAG: ${{ inputs.flix_tag || 'v0.80.0' }}
+          REQUESTED_TAG: ${{ github.event_name == 'schedule' && 'latest' || inputs.flix_tag || 'v0.80.0' }}
         run: |
-          if [[ ! "$REQUESTED_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          if [[ "$REQUESTED_TAG" == latest ]]; then
+            release=$(gh api repos/flix/flix/releases/latest)
+          elif [[ "$REQUESTED_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            release=$(gh api "repos/flix/flix/releases/tags/$REQUESTED_TAG")
+          else
             echo "Expected a Flix release tag such as v0.80.0." >&2
             exit 1
           fi
-          release=$(gh api "repos/flix/flix/releases/tags/$REQUESTED_TAG")
           tag=$(jq -er '.tag_name' <<< "$release")
           jar="$RUNNER_TEMP/flix.jar"
           gh release download "$tag" --repo flix/flix --pattern flix.jar --output "$jar"

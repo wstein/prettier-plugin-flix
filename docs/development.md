@@ -43,8 +43,8 @@ branch coverage. The Pages workflow publishes the measured percentages on
 Require these status checks on `main` (ruleset or classic branch protection),
 require the checks from the latest push, and disallow force-pushes:
 
-- `CI / test`
-- `Fixture documentation / build`
+- `test` (workflow CI)
+- `build` (workflow Fixture documentation)
 
 The workflow YAML sets `concurrency` and job `timeout-minutes` for those
 checks; enabling the ruleset itself is a repository settings step.
@@ -129,9 +129,10 @@ The compiler oracle compiles each file in its own throwaway project, as flix/fli
 The **Flix standard library compilation** workflow runs on pull requests and
 `main` pushes that touch formatter sources (`src/**`), weekly on a schedule, and
 on demand. It pins Flix to `v0.80.0` by default; override with `flix_tag` on
-`workflow_dispatch` or when the release workflow calls it. It extracts the
-sources bundled in the release JAR, compiles the original library as a control,
-and compiles a separate copy after Prettier formatting. Both builds use
+`workflow_dispatch`. The weekly schedule uses the latest Flix release. The
+release workflow runs the same steps with its own `flix_tag` input. It extracts
+the sources bundled in the release JAR, compiles the original library as a
+control, and compiles a separate copy after Prettier formatting. Both builds use
 `--Xlib nix`, so they compile the extracted library without also loading the
 copy bundled in the compiler.
 
@@ -193,9 +194,10 @@ targeting that SHA. Before packing it re-runs the advertised gates
 (`test:coverage`, syntax coverage, `docs:build`, Playwright, and the pinned
 Flix standard-library compile), refuses a missing `CHANGELOG.md` version
 heading or a version already on npm, then publishes that one tarball.
-Enable **publish_npm** when npm Trusted Publishing and the `npm` GitHub
-Environment (with protection rules) are configured. The publish job uses
-Node 22, `--provenance`, and `registry.npmjs.org`. Local `npm publish` runs
+Enable **publish_npm** only after the `npm` GitHub Environment exists with
+required reviewers and the npm trusted publisher names this workflow and the
+`npm` environment. The publish job uses Node 22 with npm 11.6.2 (Trusted
+Publishing needs npm >= 11.5.1) and `registry.npmjs.org`. Local `npm publish` runs
 `prepublishOnly` so an empty `dist/` cannot ship. Do not deprecate the
 historical `0.0.0-stage` tag from the release workflow; handle that
 separately if needed.
