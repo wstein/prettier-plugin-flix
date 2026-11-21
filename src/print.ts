@@ -370,11 +370,21 @@ export class Printer {
                 last = lastTerm(ch);
             }
             if (prevTerm && first && !(prevChild && SELF_SPACED.has(kind(prevChild)))) {
-                if (this.hasLineTrail(prevTerm)) out.push(hardline);
-                else {
-                    const g = this.gap(prevTerm, first, parentKind);
-                    if (g) out.push(g);
+                if (this.hasLineTrail(prevTerm)) {
+                    // Match the cons-expression indent after a glued line comment on
+                    // an access dot or a tight `::` (including in patterns). Wrap the
+                    // next piece so own-line comments leading it stay indented too.
+                    const indentContinuation =
+                        (ttype(prevTerm) === L.DOT && isAccessDot(prevTerm)) ||
+                        ttype(prevTerm) === L.COLON_COLON_TIGHT;
+                    out.push(indentContinuation ? indent([hardline, piece]) : [hardline, piece]);
+                    if (last) prevTerm = last;
+                    prevChild = children[i + step - 1];
+                    i += step;
+                    continue;
                 }
+                const g = this.gap(prevTerm, first, parentKind);
+                if (g) out.push(g);
             }
             out.push(piece);
             if (last) prevTerm = last;
