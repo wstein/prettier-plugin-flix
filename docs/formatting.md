@@ -59,8 +59,9 @@ The plugin guarantees idempotence for `printWidth` of 40 or more: a second
 formatting run changes nothing. Known exceptions are listed in
 `test/known-idempotence-failures.json`; a failure listed there stays known
 until it is fixed. Below 40 columns the layout is best effort.
-The review sweeps run at widths 40 to 160 by default; `--widths` adds narrower
-ones. Failures below 40 are tracked as edge cases.
+The review sweeps run at widths 40 to 160 by default; `--widths` replaces the
+default widths, so pass it to check narrower ones. Failures below 40 are tracked
+as edge cases.
 
 ## Calls and function signatures
 
