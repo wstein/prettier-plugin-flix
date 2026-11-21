@@ -10,7 +10,7 @@ const cases = [
     ["Datalog terminator loses required whitespace", "datalog/constraint-set", ". Edge", ".Edge", /Datalog constraint/],
     ["literal value changes", "datalog/constraint-set", "1, 2", "9, 2", /tokens differ/],
     ["a comment is deleted", "comments/tight-arrow-line-comment", "// keep", "", /comments differ/],
-    ["leading binary comment is deleted", "comments/leading-binary-comment", "// note", "", /comments differ/],
+    ["leading operator comment is deleted", "comments/leading-operator-comments", "// Add the inputs.", "", /comments differ/],
     ["signature effect name changes", "declarations/signature-boundaries", "\\ Console", "\\ IO", /tokens differ/],
 ];
 
