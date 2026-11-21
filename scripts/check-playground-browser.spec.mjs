@@ -16,6 +16,7 @@ const contentTypes = {
 
 let server;
 let siteUrl;
+let unavailableFormatter = false;
 
 // Keep the same base path as GitHub Pages so fixture URLs and worker imports
 // exercise the files that will actually be deployed.
@@ -24,6 +25,10 @@ test.beforeAll(async () => {
     server = createServer(async (request, response) => {
         try {
             const path = decodeURIComponent(new URL(request.url, "http://localhost").pathname);
+            if (unavailableFormatter && /\/format-flix\.[a-f0-9]+\.js$/.test(path)) {
+                response.writeHead(404).end();
+                return;
+            }
             const relative = path.slice(basePath.length);
             const file = resolve(siteRoot, relative, ...(path.endsWith("/") ? ["index.html"] : []));
             if (!path.startsWith(basePath) || !file.startsWith(siteRoot + sep)) {
@@ -61,6 +66,7 @@ test("inline search finds both documentation pages and still finds fixtures", as
     const results = search.locator(".site-search-dropdown");
 
     await input.fill("formatting style");
+    await expect(input).toHaveAttribute("aria-expanded", "true");
     const style = results.getByRole("link", { name: /Flix formatting style/ });
     await expect(style).toHaveAttribute("href", basePath + "formatting/");
     await input.press("ArrowDown");
@@ -73,6 +79,7 @@ test("inline search finds both documentation pages and still finds fixtures", as
     await expect(style).toBeVisible();
     await input.press("Escape");
     await expect(results).toBeHidden();
+    await expect(input).toHaveAttribute("aria-expanded", "false");
     await expect(input).toBeFocused();
 
     await input.fill("before and after");
@@ -124,6 +131,7 @@ test("the live preview keeps trailing comments, reports cursor selection, and re
     const preview = page.getByRole("textbox", { name: "Preview" });
     const cursor = page.locator("[data-cursor-position]");
     const status = page.locator("[data-full-playground]").getByRole("status", { includeHidden: true });
+    await expect(page.getByRole("heading", { level: 1, name: "Playground" })).toBeVisible();
     await expect(page.getByLabel("Line width")).toHaveValue("100");
     await expect(page.getByLabel("Example")).toBeEnabled();
     await page.getByLabel("Example").selectOption("strings/itinerary.md");
@@ -141,6 +149,7 @@ test("the live preview keeps trailing comments, reports cursor selection, and re
     await expect(status).toContainText("Partially formatted. Error. Line 3, column 20.");
     await expect(status).toBeVisible();
     await expect(input).toHaveAttribute("aria-invalid", "true");
+    await expect(input).toHaveAccessibleErrorMessage(/Partially formatted/);
     await expect(input.locator(".flix-error-character")).toHaveText(")");
     await expect(preview).toContainText("def first(): Int32 = 1 /* first */");
     await expect(preview).toContainText("def broken():Int32=)");
@@ -223,7 +232,7 @@ for (const override of [undefined, "54"]) {
         if (override !== undefined) await width.fill(override);
         await fixture.getByRole("link", { name: "Open in Playground" }).click();
 
-        await expect(page).toHaveURL(/\/playground\/\?/);
+        await expect(page).toHaveURL(/\/playground\/\?.*#code=/);
         await expect(page.getByLabel("Example")).toBeEnabled();
         await expect(page.getByLabel("Example")).toHaveValue("");
         await expect(page.getByLabel("Line width")).toHaveValue(override ?? "100");
@@ -231,3 +240,69 @@ for (const override of [undefined, "54"]) {
         await expect(page.getByRole("textbox", { name: "Preview" })).toContainText('def smokeText(): String = "Grüße 🚉"');
     });
 }
+
+test("diff, copy, invalid width and unrecoverable input stay in sync", async ({ page, context }) => {
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+    await page.goto(siteUrl + "playground/");
+    const input = page.getByRole("textbox", { name: "Flix input" });
+    const preview = page.getByRole("textbox", { name: "Preview" });
+    const width = page.getByLabel("Line width");
+    const status = page.locator("[data-full-playground]").getByRole("status", { includeHidden: true });
+    const copy = page.getByRole("button", { name: "Copy output" });
+
+    await input.fill("def chosen():Int32=42");
+    await expect(preview).toHaveText("def chosen(): Int32 = 42");
+    await copy.click();
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe("def chosen(): Int32 = 42\n");
+    await page.getByRole("button", { name: "Diff", exact: true }).click();
+    const diff = page.getByRole("region", { name: "Formatting differences" });
+    await expect(diff.getByText("Removed line 1:", { exact: true })).toHaveCount(1);
+    await expect(diff.getByText("Added line 1:", { exact: true })).toHaveCount(1);
+    await width.fill("0");
+    await expect(width).toHaveAccessibleErrorMessage(/whole number/);
+    await expect(copy).toBeDisabled();
+    await width.fill("100");
+    await expect(width).not.toHaveAttribute("aria-invalid");
+    await input.fill("def");
+    await expect(status).toContainText("Error.");
+    await expect(diff).toHaveText("No formatted preview is available.");
+    await page.getByRole("button", { name: "Formatted", exact: true }).click();
+    await expect(preview).toBeEmpty();
+    await page.getByRole("button", { name: "Clear input" }).click();
+    await expect(input).toBeEmpty();
+    await expect(status).toBeEmpty();
+});
+
+for (const failure of ["load", "timeout"]) {
+    test(`the Playground can retry after a formatter ${failure} failure`, async ({ page }) => {
+        const workerAsset = /\/playground-worker\.[a-f0-9]+\.js$/;
+        if (failure === "load") unavailableFormatter = true;
+        else await page.route(workerAsset, (route) => route.fulfill({ contentType: "text/javascript", body: "" }));
+        const status = page.locator("[data-full-playground]").getByRole("status", { includeHidden: true });
+        try {
+            await page.goto(siteUrl + "playground/");
+            await expect(status).toContainText(failure === "load" ? "The formatter could not load" : "Formatting timed out", { timeout: 12000 });
+        } finally {
+            unavailableFormatter = false;
+            if (failure === "timeout") await page.unroute(workerAsset);
+        }
+        await page.getByRole("textbox", { name: "Flix input" }).fill("def retry():Int32=1");
+        await expect(page.getByRole("textbox", { name: "Preview" })).toHaveText("def retry(): Int32 = 1");
+        await expect(status).toBeEmpty();
+    });
+}
+
+test("embedded syntax examples keep separate diagnostics and previews", async ({ page }) => {
+    await page.goto(siteUrl + "errors/");
+    const editors = page.locator("[data-embedded-playground]");
+    const first = editors.first();
+    const second = editors.nth(1);
+    await first.scrollIntoViewIfNeeded();
+    await first.getByRole("textbox", { name: "Flix input" }).fill("def first():Int32=1");
+    await second.scrollIntoViewIfNeeded();
+    const bad = second.getByRole("textbox", { name: "Flix input" });
+    await bad.fill("def");
+    await expect(bad).toHaveAccessibleErrorMessage(/Error/);
+    await expect(first.getByRole("textbox", { name: "Preview" })).toHaveText("def first(): Int32 = 1");
+    await expect(first.getByRole("textbox", { name: "Flix input" })).not.toHaveAttribute("aria-invalid");
+});
