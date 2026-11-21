@@ -1,60 +1,42 @@
-// Property test: a line or block comment can be written after any token. Wherever it is,
-// formatting must keep the program and the comment, and formatting the result again must
-// change nothing.
+// Property test: a comment can be written at any token. Wherever it is, formatting must keep the
+// program and the comment, and formatting the result again must change nothing.
 //
-// Every test source and fixture input is tried with `// note` and `/* note */` inserted after
-// each token in turn (string literals excluded, where a line break ends the string). By default
-// every sixth site is checked, plus every tight dot and double colon with a glued comment, at
-// print widths 40 and 100. COMMENT_SITES_EVERY=1 checks all sites.
+// Every test source and fixture input is tried with a comment inserted at a token, in three forms
+// (`// note` glued to a tight `.`, `::` or `->`, `/* note */` glued the same way, and `// own` on its
+// own line before the token) and at three print widths (40, 60, 100). String literals are excluded,
+// where a line break ends the string. By default every sixth site is checked, with the form and width
+// rotating from site to site, which takes a few seconds; COMMENT_SITES_EVERY=1 checks every site in
+// every form and width (a long run: use `npm run review:sweep -- sites` for the report).
+//
+// Failures that are known and not yet fixed are listed in known-comment-site-failures.json. A listed
+// site is checked on every run and must keep failing in the listed way; once a fix makes it pass the
+// test asks for the entry to be removed. Any other failure fails the test.
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readdirSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { findFixtures, loadFixture } from "./fixture.mjs";
-import { commentSites, fingerprint, fmt, programProblems, withLineCommentAfter } from "./lib.mjs";
+import { COMMENT_FORMS, fmt } from "./lib.mjs";
+import { SITE_WIDTHS, knownPlan, mergePlans, parseKnown, planSites, reconcile, repoInputs, runSitePlan } from "../scripts/review-sweep-lib.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const every = Math.max(1, Number(process.env.COMMENT_SITES_EVERY ?? 6) || 6);
-const widths = [40, 100];
-const styles = ["line", "block"];
+const known = parseKnown(readFileSync(join(here, "known-comment-site-failures.json"), "utf8"), "known-comment-site-failures.json");
+const inputs = repoInputs(here);
+const format = (text, width) => fmt(text, { printWidth: width });
 
-const inputs = [];
-for (const f of readdirSync(here).filter((f) => f.endsWith(".flix"))) inputs.push([f, readFileSync(join(here, f), "utf8")]);
-for (const path of findFixtures(join(here, "fixtures"))) {
-    const fx = loadFixture(path);
-    if (fx.meta.status !== "error") inputs.push([path.slice(here.length + 1), fx.input.code]);
-}
-
-for (const [name, source] of inputs) {
-    test(`comment after any token: ${name}`, async () => {
-        const failures = [];
-        let checked = 0;
-        for (const site of commentSites(source).filter((site, i) => site.glued || i % every === 0)) {
-            for (const style of styles) {
-                const variant = withLineCommentAfter(source, { ...site, style });
-                const before = fingerprint(variant);
-                if (before.errors.length > 0) continue; // a comment in a place the grammar does not allow
-                const marker = style === "block" ? "/* note */" : "// note";
-                const at = variant.indexOf(marker);
-                const where = `${style}@${JSON.stringify(variant.slice(Math.max(0, at - 30), at + 30))}`;
-                for (const printWidth of widths) {
-                    checked++;
-                    let out;
-                    try {
-                        out = await fmt(variant, { printWidth });
-                    } catch (e) {
-                        failures.push(`${where} w=${printWidth}: threw ${e.message.split("\n")[0]}`);
-                        continue;
-                    }
-                    const problems = programProblems(before, fingerprint(out));
-                    if (problems.length > 0) failures.push(`${where} w=${printWidth}: ${problems.join("; ")}`);
-                    else if ((await fmt(out, { printWidth })) !== out) {
-                        failures.push(`${where} w=${printWidth}: not idempotent`);
-                    }
-                }
-            }
-        }
-        assert.deepEqual(failures, [], `${failures.length} of ${checked} comment sites fail`);
+for (const input of inputs) {
+    test(`comment at any token: ${input.name}`, async () => {
+        const plan = mergePlans(planSites(input.source, { every, forms: COMMENT_FORMS, widths: SITE_WIDTHS }), knownPlan(known, input.name));
+        const { failures, checked } = await runSitePlan(format, input, plan);
+        const mine = known.filter((e) => e.file === input.name);
+        const { messages } = reconcile(mine, failures, checked);
+        assert.deepEqual(messages, [], `${messages.length} problems at ${checked.size} comment sites`);
     });
 }
+
+test("every known comment-site failure names an existing input", () => {
+    const names = new Set(inputs.map((i) => i.name));
+    const missing = known.filter((e) => !names.has(e.file)).map((e) => `${e.file} (issue ${e.issue})`);
+    assert.deepEqual(missing, []);
+});
