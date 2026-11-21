@@ -118,12 +118,6 @@ export class Printer {
     /** First token of the match-arm guard being printed; its operator chain indents one level deeper than the body. */
     private matchGuardStart: TerminalNode | null = null;
     /**
-     * When positive, single-statement blocks use soft lines even if the source
-     * spanned lines. Used to measure a trailing-lambda hug the same way before
-     * and after the first pass rewrote a one-line body onto several lines.
-     */
-    private relaxSourceBreaks = 0;
-    /**
      * When positive, a trailing block comment that ends its source line does
      * not force a hard break. Match-arm alignment measures with this set so a
      * comment that moved to a line end is not treated differently on pass two.
@@ -680,9 +674,6 @@ export class Printer {
             !pad && comments.length === 0 && !commentAtBoundary && sepType === L.COMMA && lastTok !== null && ttype(lastTok) === L.RBRACE &&
             !items.slice(0, -1).some((it) => it.length > 0 && lastTerm(it[it.length - 1]) !== null && ttype(lastTerm(it[it.length - 1])!) === L.RBRACE);
         const canRelaxLambda = hugCandidate && finalArgument && kind(finalArgument) === "LambdaExpr";
-        // Both alternatives must see the same leading comments and line starts.
-        // The ordinary list owns updates to the enclosing printer's state.
-        const hugPrinter = canRelaxLambda ? this.forkForLambdaHug() : undefined;
         const docs = groups.flatMap((rows) => {
             const formatted = mayAlign ? this.alignEntries(rows, split.seps.slice(offset, offset + rows.length), layoutId) : undefined;
             offset += rows.length;
@@ -704,10 +695,7 @@ export class Printer {
         const huggable = hugCandidate && !(items.length > 1 && matchCallback) && !docs.slice(0, -1).some(willBreak);
         let hugged: Doc | undefined;
         if (huggable) {
-            const hugDocs = hugPrinter
-                ? [...docs.slice(0, -1), hugPrinter.printListItem(lastItem, parentKind)]
-                : docs;
-            hugged = [openDoc, this.joinWithSeps(hugDocs, sepDocs, sepDocs.map(() => " ")), closeDoc];
+            hugged = [openDoc, this.joinWithSeps(docs, sepDocs, sepDocs.map(() => " ")), closeDoc];
         }
         if (hugged && (!finalArgument || kind(finalArgument) !== "LambdaExpr" || !groupList)) {
             return [hugged, closeTrail];
@@ -731,23 +719,12 @@ export class Printer {
             // A conditional group's alternatives do not propagate forced
             // breaks. Preserve the enclosing layout of a multiline callback.
             const propagateBreak = willBreak(hugged) ? breakParent : "";
-            return [conditionalGroup([hugged, contents], { id: layoutId }), propagateBreak, closeTrail];
+            return [conditionalGroup([hugged, group(hugged, { shouldBreak: true }), contents], { id: layoutId }), propagateBreak, closeTrail];
         }
         return [
             groupList ? group(contents, { id: layoutId, shouldBreak: forceBreak || comments.length > 0 }) : contents,
             closeTrail,
         ];
-    }
-
-    private forkForLambdaHug(): Printer {
-        const printer = new Printer(this.root, this.printWidth, this.tabWidth);
-        printer.flat = this.flat;
-        printer.relaxSourceBreaks = this.relaxSourceBreaks + 1;
-        printer.softTrailBreaks = this.softTrailBreaks;
-        printer.consumed = new Set(this.consumed);
-        printer.lineStart = new Set(this.lineStart);
-        printer.handlerArgumentOpeners = new Set(this.handlerArgumentOpeners);
-        return printer;
     }
 
     // ------------------------------------------------------------- dispatch
@@ -883,7 +860,7 @@ export class Printer {
         body.push(...comments.flatMap((c) => (stmt || body.length > 0 ? [hardline, c] : [c])));
         const vertical =
             comments.length > 0 ||
-            (this.relaxSourceBreaks === 0 && open.symbol.line !== close.symbol.line) ||
+            open.symbol.line !== close.symbol.line ||
             (stmt !== null && this.isMultiStatement(stmt));
         // The closing brace's trailing comment follows the group: inside it, its forced line break
         // would expand a block that otherwise fits on one line.

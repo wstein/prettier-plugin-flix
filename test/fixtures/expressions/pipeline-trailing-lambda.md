@@ -31,11 +31,9 @@ def iterator(
     sb: StringBuilder
 ): Iterator[Char, r1, r1] \ r1 =
     Iterator.range(rc, 0, 10)
-        |> Iterator.map(
-            i -> unsafe IO as r1 {
-                sb.charAt(i)
-            }
-        )
+        |> Iterator.map(i -> unsafe IO as r1 {
+            sb.charAt(i)
+        })
 
 def labels(xs: Vector[Int32]): Vector[Int32] =
     xs
