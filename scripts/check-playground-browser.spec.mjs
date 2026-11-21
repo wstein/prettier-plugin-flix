@@ -264,10 +264,11 @@ test("diff, copy, invalid width and unrecoverable input stay in sync", async ({ 
     await width.fill("100");
     await expect(width).not.toHaveAttribute("aria-invalid");
     await input.fill("def");
-    await expect(status).toContainText("Error.");
+    await expect(status).toContainText("Not formatted. Line 1, column 4. Unexpected end of input.");
     await expect(diff).toHaveText("No formatted preview is available.");
     await page.getByRole("button", { name: "Formatted", exact: true }).click();
-    await expect(preview).toBeEmpty();
+    await expect(preview).toHaveText("def");
+    await expect(copy).toBeEnabled();
     await page.getByRole("button", { name: "Clear input" }).click();
     await expect(input).toBeEmpty();
     await expect(status).toBeEmpty();
@@ -302,7 +303,7 @@ test("embedded syntax examples keep separate diagnostics and previews", async ({
     await second.scrollIntoViewIfNeeded();
     const bad = second.getByRole("textbox", { name: "Flix input" });
     await bad.fill("def");
-    await expect(bad).toHaveAccessibleErrorMessage(/Error/);
+    await expect(bad).toHaveAccessibleErrorMessage(/^Not formatted\. Line 1, column 4\. Unexpected end of input\./);
     await expect(first.getByRole("textbox", { name: "Preview" })).toHaveText("def first(): Int32 = 1");
     await expect(first.getByRole("textbox", { name: "Flix input" })).not.toHaveAttribute("aria-invalid");
 });
