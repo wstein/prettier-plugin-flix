@@ -20,7 +20,8 @@ pub def documentedRetryLimits(): Map[String, Int32] = Map#{
 }
 
 pub def notedRetryLimits(): Map[String, Int32] = Map#{
-"batch"      =>2,
+"batch"      =>2 // first
+,
 "export"=>1 // note
 , // Exports are expensive to retry.
 "sync"=>120 // Sync attempts are cheap.
@@ -43,7 +44,7 @@ pub def documentedRetryLimits(): Map[String, Int32] = Map#{
 }
 
 pub def notedRetryLimits(): Map[String, Int32] = Map#{
-    "batch"  => 2,
+    "batch"  => 2,  // first
     "export" => 1,  // note
     // Exports are expensive to retry.
     "sync" => 120  // Sync attempts are cheap.
@@ -70,7 +71,7 @@ pub def notedRetryLimits(): Map[
     String,
     Int32
 ] = Map#{
-    "batch"  => 2,
+    "batch"  => 2,  // first
     "export" => 1,  // note
     // Exports are expensive to retry.
     "sync" => 120  // Sync attempts are cheap.
