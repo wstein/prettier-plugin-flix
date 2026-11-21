@@ -10,14 +10,20 @@
     "url": "git+https://github.com/wstein/prettier-plugin-flix.git"
   },
   "main": "dist/index.js",
-  "exports": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
   "files": [
     "dist"
   ],
   "scripts": {
     "changelog:draft": "node scripts/changelog-draft.mjs",
     "generate": "node scripts/generate.mjs",
-    "build": "npm run generate && tsc",
+    "build": "npm run generate && tsc && cp types/index.d.ts dist/index.d.ts",
     "prepublishOnly": "npm run build && npm test",
     "test": "npm run build && node --test test/*.test.mjs",
     "test:coverage": "node --test --experimental-test-coverage --test-coverage-include='dist/*.js' --test-coverage-exclude='dist/FlixLexerBase.js' --test-coverage-lines=95 --test-coverage-branches=90 --test-reporter=spec --test-reporter-destination=stdout --test-reporter=lcov --test-reporter-destination=coverage.lcov test/*.test.mjs",
