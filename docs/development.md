@@ -142,7 +142,8 @@ Every command prints its run time. `--help` lists the options.
 Pass directories or files after the command, or set `FLIX_STDLIB_DIR`, to sweep more inputs, for example
 the Flix standard library (`idempotence`, 243 files at eight widths: about 7 minutes). The sources are only read. The repository's own inputs stay in the run;
 `--no-repo` leaves them out. `--shard k/n` splits the inputs over parallel processes, `--json <file>`
-writes the failures.
+writes the failures (unchanged interface). `--export <file>` writes a versioned result document with one
+outcome per planned case; see [Sweep result export](#sweep-result-export).
 
 The comment-site test (`test/comment-sites.test.mjs`) uses the same code on a sample: every sixth site
 and every tight `.` or `::`, with the form and width changing from site to site. `COMMENT_SITES_EVERY=1`
@@ -200,6 +201,39 @@ and in pass 2, and counts every change of kind over the repository inputs (`--si
 `--widths` sets the widths). It exits 0 when every run is idempotent, 1 when one is not and 2 for invalid options, an unreadable path or an error while formatting (the formatter throws);
 `--help` prints the usage and runs nothing. `--every <n>` (default 6) samples the site variants. Both tools call the built plugin in `dist/`; they
 change no formatter code.
+
+## Sweep result export
+
+`--export <file>` writes a versioned JSON document (`schemaVersion: 1`) that other tools can consume
+(R heatmaps, historical queries, the pull-request summary). The existing `--json` failure list stays
+as it is.
+
+| Field | Meaning |
+| --- | --- |
+| `command` | `idempotence`, `sites`, or `regression` |
+| `formatter.revision` | `HEAD` of the plugin that produced the run |
+| `corpus` | Input count, optional paths, and a fingerprint of the input names |
+| `config` | `widths`, `every`, `shard`, `base`, `only`, `repo`, optional `seed` |
+| `cases` | One record per planned case: `id`, `file`, `width`, optional `form`/`token`, `status` (`pass` / `fail` / `skipped`), optional `kind` and `reason` |
+
+Stable case ids use the same key as known-failure entries: `file|width|form|token` (idempotence uses
+`plain` and `-` for the form and token). Skipped cases carry a reason (for example `variant does not parse`).
+
+Merge shard exports and build the review summary locally:
+
+```sh
+npm run review:sweep -- sites --shard 1/3 --export shard-1.json
+npm run review:sweep -- sites --shard 2/3 --export shard-2.json
+npm run review:sweep -- sites --shard 3/3 --export shard-3.json
+npm run review:summary -- --merge shard-1.json shard-2.json shard-3.json --out merged.json
+npm run review:summary -- --base main-sites.json --candidate merged.json --audit official-examples-audit --out summary.md
+```
+
+`npm run review:summary` classifies new failures, fixed failures, and layout-only changes from the
+official-examples audit report. A run with no recorded cases, a missing base export, or an incompatible
+configuration is marked incomplete and never described as green. The Official Flix examples workflow
+appends this summary to the Actions job summary without changing the audit check's exit status.
+
 
 ## Issue triage and labels
 

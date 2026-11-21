@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "command": "sites",
+  "createdAt": "2026-11-21T00:00:00.000Z",
+  "formatter": {
+    "revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "dirty": false
+  },
+  "corpus": {
+    "revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "inputCount": 2,
+    "fingerprint": "base-corpus"
+  },
+  "config": {
+    "widths": [40, 60],
+    "every": 1,
+    "shard": null,
+    "base": null,
+    "only": null,
+    "repo": true,
+    "seed": null
+  },
+  "cases": [
+    {
+      "id": "a.flix|40|line|0",
+      "file": "a.flix",
+      "width": 40,
+      "form": "line",
+      "token": 0,
+      "status": "fail",
+      "kind": "not-idempotent",
+      "reason": "not idempotent"
+    },
+    {
+      "id": "a.flix|60|line|0",
+      "file": "a.flix",
+      "width": 60,
+      "form": "line",
+      "token": 0,
+      "status": "pass"
+    },
+    {
+      "id": "b.flix|40|block|1",
+      "file": "b.flix",
+      "width": 40,
+      "form": "block",
+      "token": 1,
+      "status": "fail",
+      "kind": "unparsable",
+      "reason": "output does not parse"
+    },
+    {
+      "id": "b.flix|60|block|1",
+      "file": "b.flix",
+      "width": 60,
+      "form": "block",
+      "token": 1,
+      "status": "skipped",
+      "reason": "variant does not parse"
+    }
+  ]
+}

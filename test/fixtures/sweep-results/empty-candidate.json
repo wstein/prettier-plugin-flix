@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "command": "sites",
+  "createdAt": "2026-11-21T00:00:00.000Z",
+  "formatter": {
+    "revision": "dddddddddddddddddddddddddddddddddddddddd"
+  },
+  "corpus": {
+    "revision": "dddddddddddddddddddddddddddddddddddddddd",
+    "inputCount": 0
+  },
+  "config": {
+    "widths": [40],
+    "every": 1,
+    "shard": null,
+    "base": null,
+    "only": null,
+    "repo": true,
+    "seed": null
+  },
+  "cases": []
+}

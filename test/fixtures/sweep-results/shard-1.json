@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "command": "idempotence",
+  "createdAt": "2026-11-21T00:00:00.000Z",
+  "formatter": {
+    "revision": "cccccccccccccccccccccccccccccccccccccccc"
+  },
+  "corpus": {
+    "revision": "cccccccccccccccccccccccccccccccccccccccc",
+    "inputCount": 1,
+    "fingerprint": "shard-corpus"
+  },
+  "config": {
+    "widths": [40, 80],
+    "every": null,
+    "shard": "1/2",
+    "base": null,
+    "only": null,
+    "repo": true,
+    "seed": null
+  },
+  "cases": [
+    {
+      "id": "a.flix|40|plain|-",
+      "file": "a.flix",
+      "width": 40,
+      "status": "pass"
+    },
+    {
+      "id": "a.flix|80|plain|-",
+      "file": "a.flix",
+      "width": 80,
+      "status": "fail",
+      "kind": "not-idempotent",
+      "reason": "not idempotent"
+    }
+  ]
+}
