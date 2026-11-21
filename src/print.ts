@@ -92,7 +92,8 @@ const MEMBERS = new Set([
 /** Rules shaped `head (= | =>) body`, laid out with the body hugged or indented. */
 const EQ_BODY = new Set([
     "DefDeclaration", "ValDeclaration", "AliasDeclaration", "AssocTypeDeclaration", "LocalDefExpr",
-    "HandlerRule", "NewBody", "MatchRule", "CatchRule", "SelectRule", "LetExpr", "LambdaExpr",
+    "HandlerRule", "NewBody", "MatchRule", "MatchLambdaExpr", "CatchRule", "SelectRule", "LetExpr",
+    "LambdaExpr",
 ]);
 const BODY_ARROWS = new Set([L.EQUAL, L.ARROW_THICK_R, L.ARROW_WS]);
 const BINARY = new Set([
@@ -705,8 +706,9 @@ export class Printer {
         // Hug alternatives are built from copies that have not yet taken the comments, so
         // both alternatives see the same comments and line starts as the broken form.
         const blockPrinter = canRelaxLambda ? this.forkForVerticalBlocks() : undefined;
-        // Soften EOL block-comment trails while measuring hug fit, matching the first pass
-        // where the comment still shares its line with the following token.
+        // Soften EOL block-comment trails in the lambda head (params / match pattern) so
+        // hug fit matches across passes. Bodies after => / -> clear softTrailBreaks, so
+        // those comments keep their line breaks when the soft docs are printed.
         const hugMeasurePrinter = canRelaxLambda ? this.forkForHugMeasure() : undefined;
         const docs = groups.flatMap((rows) => {
             const formatted = mayAlign ? this.alignEntries(rows, split.seps.slice(offset, offset + rows.length), layoutId) : undefined;
@@ -731,8 +733,6 @@ export class Printer {
         let huggedBroken: Doc | undefined;
         if (huggable) {
             if (hugMeasurePrinter) {
-                // Remeasure the lambda without EOL block-comment hardlines so the
-                // hug choice matches the first pass (and the same call without the comment).
                 const hugDocs = [...docs.slice(0, -1), hugMeasurePrinter.printListItem(lastItem, parentKind)];
                 hugged = [openDoc, this.joinWithSeps(hugDocs, sepDocs, sepDocs.map(() => " ")), closeDoc];
                 if (blockPrinter) {
@@ -791,7 +791,7 @@ export class Printer {
         return printer;
     }
 
-    /** Like a normal print fork, but EOL block comments do not force a line trail. */
+    /** Soften EOL block-comment trails in a lambda head (params / match pattern). */
     private forkForHugMeasure(): Printer {
         const printer = this.forkPrinter();
         printer.softTrailBreaks = this.softTrailBreaks + 1;
@@ -1243,7 +1243,17 @@ export class Printer {
         const head = k === "DefDeclaration" ? this.printDefinitionHead(n, cs, ai) :
             k === "MatchRule" ? this.printMatchRuleHead(cs, ai) : this.seq(cs.slice(0, ai), k);
         const gap = this.after(headLast, " ", true);
-        return { head, gap, arrow, tail: [this.tok(arrow), this.printEqBodyTail(cs, ai, k, arrow)] };
+        // Arrow trail: clear hug soft-trail so `-> /* c */` keeps its break. Nested
+        // MatchLambdaExpr heads still see softTrailBreaks via printEqBodyTail.
+        const soft = this.softTrailBreaks;
+        this.softTrailBreaks = 0;
+        let arrowDoc: Doc;
+        try {
+            arrowDoc = this.tok(arrow);
+        } finally {
+            this.softTrailBreaks = soft;
+        }
+        return { head, gap, arrow, tail: [arrowDoc, this.printEqBodyTail(cs, ai, k, arrow)] };
     }
 
     /** `case pattern if guard` with deeper wrap indent for the guard's own operator chain. */
@@ -1394,7 +1404,23 @@ export class Printer {
         const comma = rest.length > 0 && isTerm(rest[0]) && ttype(rest[0] as TerminalNode) === L.COMMA;
         const tailDoc: Doc = rest.length > 0 ? (comma ? restDoc : [" ", restDoc]) : "";
 
-        if (kind(body) !== "Statement") return [this.placeBody(body, arrow), tailDoc];
+        // Keep hug soft-trail for a nested match-lambda pattern; clear it for ordinary bodies
+        // so EOL block comments after => / -> still force a line break when soft docs print.
+        const place = (expr: Node): Doc => {
+            const bodyKind = kind(expr);
+            if (bodyKind === "MatchLambdaExpr" || bodyKind === "MatchExpr") {
+                return this.placeBody(expr, arrow);
+            }
+            const soft = this.softTrailBreaks;
+            this.softTrailBreaks = 0;
+            try {
+                return this.placeBody(expr, arrow);
+            } finally {
+                this.softTrailBreaks = soft;
+            }
+        };
+
+        if (kind(body) !== "Statement") return [place(body), tailDoc];
 
         const stmt = body as ParserRuleContext;
         const parts = this.statementParts(stmt);
@@ -1402,14 +1428,22 @@ export class Printer {
             // The statement is the remainder of the enclosing block: only its first expression
             // belongs to this binding.
             const first = parts[0];
-            const out: Doc[] = [this.placeBody(first.expr, arrow)];
+            const out: Doc[] = [place(first.expr)];
             if (first.semi) out.push(this.separatorTok(lastTerm(first.expr), first.semi));
             if (parts.length > 1) out.push(hardline, ...this.restSeparator(parts[1].expr), ...this.printParts(parts, 1));
             return [out, tailDoc];
         }
-        if (this.isMultiStatement(stmt)) return [indent([hardline, this.printStatement(stmt)]), tailDoc];
+        if (this.isMultiStatement(stmt)) {
+            const soft = this.softTrailBreaks;
+            this.softTrailBreaks = 0;
+            try {
+                return [indent([hardline, this.printStatement(stmt)]), tailDoc];
+            } finally {
+                this.softTrailBreaks = soft;
+            }
+        }
         const only = parts[0];
-        const out: Doc[] = [this.placeBody(only.expr, arrow)];
+        const out: Doc[] = [place(only.expr)];
         if (only.semi) out.push(this.separatorTok(lastTerm(only.expr), only.semi));
         return [out, tailDoc];
     }
