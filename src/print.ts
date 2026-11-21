@@ -162,7 +162,12 @@ export class Printer {
         return info.trail.map((c) => {
             const comment = this.commentText(c);
             const spacing = gap && c.isLine && !c.text.startsWith("///") ? LINE_COMMENT_GAP : gap;
-            return c.isLine || c.nlNext > 0 ? lineSuffix([spacing, comment]) : [spacing, comment];
+            // Line comments (and their end-of-line placement) stay in a suffix so
+            // they do not affect fit. Block comments always count toward width so
+            // a comment that ends a line after the first pass is measured the same
+            // way when it trailed with code on its right in the input.
+            if (c.isLine) return lineSuffix([spacing, comment]);
+            return [spacing, comment];
         });
     }
 
