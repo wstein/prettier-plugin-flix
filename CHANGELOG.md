@@ -24,6 +24,9 @@ User-facing changes to Prettier Plugin for Flix. Plugin releases have their own 
 - Keep signature effect-set breaks stable when a hugged `=` body would not
   fit on the continuation with the set, so the first pass already joins the
   set to the return type ([#92](https://github.com/wstein/prettier-plugin-flix/issues/92)).
+  Count a lead block comment on `=` in that trailer width, and skip the
+  hugged-body trailer when `=` follows an own-line comment, so both stay
+  idempotent.
 - Skip match-arm arrow alignment when padding would wrap a compact body onto
   the next line ([#154](https://github.com/wstein/prettier-plugin-flix/issues/154)).
 - Keep map, record and match alignment stable when a block comment leads a
