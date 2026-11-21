@@ -1,4 +1,5 @@
 import { CharStream, CommonTokenStream, ParserRuleContext, type Token } from "antlr4ng";
+import { grammarIdForVersion, resolveFlixVersion } from "./flix-version.js";
 import { FlixLexer as L } from "./generated/FlixLexer.js";
 import {
     ConstraintSetContext,
@@ -11,7 +12,14 @@ import {
     UsesOrImportsContext,
 } from "./generated/FlixParser.js";
 
-type Layout = { printWidth: number; tabWidth: number; useTabs: boolean; endOfLine?: "lf" };
+type Layout = {
+    printWidth: number;
+    tabWidth: number;
+    useTabs: boolean;
+    endOfLine?: "lf";
+    /** Exact Flix compiler version; must match the grammar used by `format`. */
+    flixVersion?: string;
+};
 type Format = (source: string, options: Layout) => Promise<string>;
 type Unit = "declaration" | "module" | "datalog" | "enum" | "struct";
 type Slice = { start: number; end: number; unit: Unit; indent: string };
@@ -58,6 +66,8 @@ function matchingDelimiters(tokens: Token[]): Map<number, number> {
 }
 
 function recoverySlices(source: string, layout: Layout): Slice[] {
+    // Same version gate as full formatting; grammar selection hooks in here later.
+    void grammarIdForVersion(resolveFlixVersion(layout.flixVersion));
     const lexer = new L(CharStream.fromString(source));
     lexer.removeErrorListeners();
     const stream = new CommonTokenStream(lexer);

@@ -39,6 +39,20 @@ The standalone Playground opens at 100 columns. Embedded editors default to
 60 columns to fit their narrower panels. The examples below use an
 80-column width unless a different width is shown.
 
+### Flix compiler version
+
+`flixVersion` is an exact Flix compiler version whose grammar the parser uses.
+The CLI flag is `--flix-version`. Omitting the option keeps the current
+default. Supported values:
+
+| `flixVersion` | Grammar |
+| --- | --- |
+| `0.80.0` (default) | Current `@wstein/flix-antlr-grammar` pin |
+
+Only `0.80.0` is registered today. A later release can add another pin when
+Flix introduces a syntax-changing version; until then unsupported values
+error. Keep one `flix` parser and `.flix` language entry for every pin.
+
 ## Calls and function signatures
 
 Keep short calls and expressions compact. When an ordinary list of call

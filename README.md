@@ -51,9 +51,14 @@ Add the plugin to your `.prettierrc.json`.
 
 ```json
 {
-  "plugins": ["prettier-plugin-flix"]
+  "plugins": ["prettier-plugin-flix"],
+  "flixVersion": "0.80.0"
 }
 ```
+
+`flixVersion` selects the exact Flix compiler grammar. Omit it to keep the
+current default (`0.80.0`). Only `0.80.0` is supported today; unsupported
+values fail with a clear error. The CLI flag is `--flix-version`.
 
 Run this against a file in your project.
 
@@ -61,6 +66,7 @@ Run this against a file in your project.
 npx prettier src/Main.flix
 npx prettier --check src/Main.flix
 npx prettier --write src/Main.flix
+npx prettier --flix-version 0.80.0 src/Main.flix
 ```
 
 The first command previews the result in your terminal. `--check` reports
