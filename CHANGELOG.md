@@ -21,6 +21,14 @@ User-facing changes to Prettier Plugin for Flix. Plugin releases have their own 
 
 ### Fixes
 
+- Keep signature effect-set breaks stable when a hugged `=` body would not
+  fit on the continuation with the set, so the first pass already joins the
+  set to the return type ([#92](https://github.com/wstein/prettier-plugin-flix/issues/92)).
+  Count a lead block comment on `=` in that trailer width, and skip the
+  hugged-body trailer when `=` follows an own-line comment, so both stay
+  idempotent.
+- Skip match-arm arrow alignment when padding would wrap a compact body onto
+  the next line ([#154](https://github.com/wstein/prettier-plugin-flix/issues/154)).
 - Keep map, record and match alignment stable when a block comment leads a
   map key, record field or match `case`, and do not break a list only
   because a block comment ends its source line before a `,` or `;`, so
@@ -44,6 +52,16 @@ User-facing changes to Prettier Plugin for Flix. Plugin releases have their own 
 
 ### Playground and verification
 
+- Reject a formatter change that tightens a spaced cons `::` chain in the
+  program-preservation check; loosening tight to spaced stays allowed
+  ([#176](https://github.com/wstein/prettier-plugin-flix/issues/176)).
+- Run a full comment-site sweep in CI when the known-failure list or sampler
+  changes, so removing an exception cannot hide a still-failing site
+  ([#162](https://github.com/wstein/prettier-plugin-flix/issues/162)).
+- Keep a `Changelog:` line from a commit body in the release draft even when
+  it is not a formal git trailer.
+- Document that `Protect main` still needs an admin-enabled required-check
+  rule for `test` and Fixture documentation `build` ([#109](https://github.com/wstein/prettier-plugin-flix/issues/109)).
 - Report formatter timeouts separately from load failures and retry on the next edit. Associate syntax and line-width errors with their controls and give diff rows accessible line labels.
 - Pin the weekly upstream Flix corpus. Require a review reason for each new or changed official example layout diff in a pull request.
 

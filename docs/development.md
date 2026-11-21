@@ -56,10 +56,12 @@ settings step (agents cannot change it).
 
 Current ruleset `Protect main` (#109) applies to `refs/heads/main`, has no
 bypass actors and blocks deletion, force-push and merge commits (linear
-history, rebase merge only). It has no required status check rule, so `test`
-and `build` are not enforced yet. Approvals are set to zero, so the ruleset
-does not enforce review. The workflows Flix standard library compilation and
-Official Flix examples run only for certain paths and are not required checks.
+history, rebase merge only). Approvals are set to zero, so the ruleset does
+not enforce review. Add a required status check rule for `test` (CI) and
+`build` (Fixture documentation) from the latest push so a red check blocks
+merge; that settings change is admin-only. The workflows Flix standard library
+compilation and Official Flix examples run only for certain paths and are not
+required checks.
 
 Merge gate (repository rule, not enforced by the ruleset): do not mark a pull
 request Ready or merge it without a `Review: CLEAR head=<SHA>` comment from an
@@ -153,6 +155,11 @@ the width, the comment form and token index (comment sites), the kind (`unparsab
   with `listed site not run`.
 - Removing a known entry still leaves `npm test` green for sites outside the sample ([#162](https://github.com/wstein/prettier-plugin-flix/issues/162)).
   Before dropping entries, run the full `sites` sweep (three `--shard k/3` processes).
+  Pull requests that touch that list, `test/comment-sites.test.mjs`,
+  `test/lib.mjs`, `test/fixtures/**`, `src/**`, `scripts/review-sweep.mjs`,
+  `scripts/review-sweep-lib.mjs` or the workflow file also run that full sweep
+  in CI (`Comment sites full sweep`, three shards, 8 to 14 minutes each on
+  GitHub runners). It is not a required check, so a red run does not block merge.
 - Entries are matched by token index. After a fixture input changes, regenerate the affected entries:
   run `npm run review:sweep -- sites --json out.json` and copy the failures that belong to an open issue.
 

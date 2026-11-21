@@ -1,0 +1,40 @@
+name: Comment sites full sweep
+on:
+  pull_request:
+    paths:
+      - "test/known-comment-site-failures.json"
+      - "test/comment-sites.test.mjs"
+      - "test/lib.mjs"
+      - "test/fixtures/**"
+      - "src/**"
+      - "scripts/review-sweep.mjs"
+      - "scripts/review-sweep-lib.mjs"
+      - ".github/workflows/comment-sites-full.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+
+concurrency:
+  group: comment-sites-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# When the known-failure list, sampler, fixtures, or formatter sources change,
+# run every site so a still-failing site cannot hide from the npm-test sample (#162).
+jobs:
+  sites:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ["1/3", "2/3", "3/3"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Full comment-site sweep (shard ${{ matrix.shard }})
+        run: npm run review:sweep -- sites --shard ${{ matrix.shard }}

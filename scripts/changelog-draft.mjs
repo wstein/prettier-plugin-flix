@@ -64,7 +64,15 @@ function renderDraft(targetRef, baseRef) {
                 encoding: "utf8",
             })
             : "";
-        const changelogNote = trailers.match(/^Changelog: (.+)$/im)?.[1] || note;
+        // Prefer git trailers; also accept a Changelog line anywhere in the body so a
+        // misplaced trailer still reaches the draft instead of vanishing silently.
+        // Join wrapped lines up to a blank line, another key or an issue reference.
+        const changelogLine = /^Changelog:[ \t]*(\S[^\n]*(?:\n(?![ \t]*\r?$|[\w-]+:|(?:Closes|Fixes|Refs|Resolves) #)[^\n]+)*)/gim;
+        const changelogFromBody = [...message.matchAll(changelogLine)]
+            .map((match) => match[1].replace(/\s*\n\s*/g, " ").trim())
+            .filter(Boolean)
+            .join(" / ");
+        const changelogNote = trailers.match(/^Changelog: (.+)$/im)?.[1] || note || changelogFromBody;
         const migrationNote = trailers.match(/^BREAKING-CHANGE: (.+)$/im)?.[1] || breakingNote;
         const [, type, breaking, summary] = conventionalSubject.exec(subject) ?? [];
         const heading = breaking || migrationNote

@@ -84,6 +84,10 @@ The line width also governs signatures. Prefer breaking at a boundary such
 as the effect annotation or a `with` constraint when that keeps a short type
 together. A short body can stay after the `=` on a continuation line. When
 that combination is too wide, the body can start on its own indented line.
+A break before a braced effect set must still leave room for `=` and a hugged
+body on that continuation; otherwise the set stays with the return type. A
+block comment between the set and `=` counts toward that same trailer width.
+When `=` follows an own-line comment, that trailer is not reserved.
 
 **Before**
 
@@ -100,7 +104,10 @@ def wait(rx: Receiver[Int32], n: Int32, tx: Sender[List[Int32]]): Unit
 ```
 
 [Call fixture](../test/fixtures/expressions/wrap-arguments.md) ·
-[Signature fixture](../test/fixtures/declarations/signature-boundaries.md)
+[Signature fixture](../test/fixtures/declarations/signature-boundaries.md) ·
+[Effect set with region body](../test/fixtures/declarations/signature-effect-set-with-region.md) ·
+[Effect set with comment before `=`](../test/fixtures/declarations/signature-effect-set-equals-block-comment.md) ·
+[Effect set with own-line comment before `=`](../test/fixtures/declarations/signature-effect-set-own-line-before-equals.md)
 
 Keep short function types on one line. When an arrow chain wraps, leave
 each `->` after its parameter type, align the continued parameter types,
@@ -322,8 +329,11 @@ Compact collections stay inline.
 [List block comment before separator](../test/fixtures/comments/call-eol-block-before-comma.md)
 
 Match arms and handler clauses can share a separator column even when a
-body spans multiple lines. Handler clauses use the configured width to
-decide whether the aligned lines fit, including any trailing comment.
+body spans multiple lines. Alignment is skipped when padding would wrap a
+compact arm body that fits without alignment.
+[Short match body](../test/fixtures/expressions/align-match-short-body.md).
+Handler clauses use the configured width to decide whether the aligned
+lines fit, including any trailing comment.
 OCamlFormat's `break-cases` option offers a comparison between margin-driven
 wrapping and vertical branches.
 Flix can keep a short arm body after `=>` and indent a longer body beneath it.
