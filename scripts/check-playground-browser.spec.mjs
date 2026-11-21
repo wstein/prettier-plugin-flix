@@ -261,10 +261,14 @@ test("diff, copy, invalid width and unrecoverable input stay in sync", async ({ 
     await width.fill("0");
     await expect(width).toHaveAttribute("aria-invalid", "true");
     await expect(width).toHaveAccessibleErrorMessage(/whole number/);
-    await expect(input).not.toHaveAttribute("aria-invalid", "true");
     await expect(copy).toBeDisabled();
+    await expect(diff).toHaveText("No formatted preview is available.");
+    await page.getByRole("button", { name: "Formatted", exact: true }).click();
+    await expect(preview).toHaveText("def chosen():Int32=42");
     await width.fill("100");
     await expect(width).not.toHaveAttribute("aria-invalid");
+    await expect(preview).toHaveText("def chosen(): Int32 = 42");
+    await page.getByRole("button", { name: "Diff", exact: true }).click();
     await input.fill("def");
     await expect(status).toContainText("Not formatted. Line 1, column 4. Unexpected end of input.");
     await expect(diff).toHaveText("No formatted preview is available.");
@@ -274,6 +278,42 @@ test("diff, copy, invalid width and unrecoverable input stay in sync", async ({ 
     await page.getByRole("button", { name: "Clear input" }).click();
     await expect(input).toBeEmpty();
     await expect(status).toBeEmpty();
+});
+
+test("a timeout clears the previous preview and diff", async ({ page }) => {
+    await page.addInitScript(() => {
+        const Native = window.Worker;
+        window.dropFormatRequests = false;
+        window.Worker = class extends Native {
+            postMessage(message) {
+                if (!window.dropFormatRequests) super.postMessage(message);
+            }
+        };
+    });
+    await page.goto(siteUrl + "playground/");
+    const input = page.getByRole("textbox", { name: "Flix input" });
+    const preview = page.getByRole("textbox", { name: "Preview" });
+    const status = page.locator("[data-full-playground]").getByRole("status", { includeHidden: true });
+    await input.fill("def first():Int32=1");
+    await expect(preview).toHaveText("def first(): Int32 = 1");
+    await page.getByRole("button", { name: "Diff", exact: true }).click();
+    const diff = page.getByRole("region", { name: "Formatting differences" });
+    await expect(diff).toContainText("def first(): Int32 = 1");
+    await page.evaluate(() => { window.dropFormatRequests = true; });
+    await input.fill("def second():Int32=2");
+    await expect(status).toContainText("Formatting timed out", { timeout: 12000 });
+    await expect(diff).toHaveText("No formatted preview is available.");
+    await page.getByRole("button", { name: "Formatted", exact: true }).click();
+    await expect(preview).toHaveText("def second():Int32=2");
+});
+
+test("a line-width error clears the input diagnostic", async ({ page }) => {
+    await page.goto(siteUrl + "playground/");
+    const input = page.getByRole("textbox", { name: "Flix input" });
+    await input.fill("def");
+    await expect(input).toHaveAttribute("aria-invalid", "true");
+    await page.getByLabel("Line width").fill("0");
+    await expect(input).not.toHaveAttribute("aria-invalid");
 });
 
 for (const failure of ["load", "timeout"]) {

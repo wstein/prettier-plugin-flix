@@ -78,6 +78,11 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
             printWidth.setAttribute("aria-invalid", "true");
             printWidth.setAttribute("aria-errormessage", status.id);
             input.markError();
+            // Drop the previous snapshot so Formatted and Diff are not stale.
+            preview = undefined;
+            replaceCode(output.view, input.view.state.doc.toString());
+            highlighter?.apply(output.view);
+            refreshDiff();
             showStatus("Enter a whole number greater than zero for line width.", true);
             return;
         }

@@ -29,7 +29,6 @@ User-facing changes to Prettier Plugin for Flix. Plugin releases have their own 
 - Declare `"engines": { "node": ">=22" }` so installers match CI and release publishing.
 - Ship TypeScript declarations for the plugin default export and `recoverFormatting`.
 
-
 ## [0.1.3] - 2026-11-20
 
 Tested with Flix 0.80.0 and Prettier 3.10.1.
