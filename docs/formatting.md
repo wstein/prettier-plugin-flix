@@ -282,8 +282,11 @@ parenthesis. Keep `par (` on the binding line when there is room for it.
 ## Alignment
 
 Consecutive items of the same kind in one block can share a separator
-column. A blank line or standalone comment starts a new group. The formatter
-places the separator one space after the longest single-line head.
+column. A blank line or standalone comment starts a new group. When an
+entry and the following separator both end with a line comment, the
+separator's comment becomes that standalone boundary on the first format
+as well, so alignment stays stable across passes. The formatter places
+the separator one space after the longest single-line head.
 
 Map arrows and record equals signs align in eligible multiline literals
 with short, simple keys and values.

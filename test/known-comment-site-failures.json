@@ -82,60 +82,6 @@
       "context": "Int32 = {let y = 1;\nmatch x { /* note */ case Some(v) => v+y"
     },
     {
-      "file": "fixtures/expressions/align-map-comment.md",
-      "width": 40,
-      "form": "line",
-      "token": 79,
-      "kind": "not-idempotent",
-      "issue": "#165",
-      "context": "\"batch\"      =>2,\n\"export\"=>1 // note\n, // Exports are expen"
-    },
-    {
-      "file": "fixtures/expressions/align-map-comment.md",
-      "width": 60,
-      "form": "line",
-      "token": 79,
-      "kind": "not-idempotent",
-      "issue": "#165",
-      "context": "\"batch\"      =>2,\n\"export\"=>1 // note\n, // Exports are expen"
-    },
-    {
-      "file": "fixtures/expressions/align-map-comment.md",
-      "width": 100,
-      "form": "line",
-      "token": 79,
-      "kind": "not-idempotent",
-      "issue": "#165",
-      "context": "\"batch\"      =>2,\n\"export\"=>1 // note\n, // Exports are expen"
-    },
-    {
-      "file": "fixtures/expressions/align-record-fields.md",
-      "width": 40,
-      "form": "line",
-      "token": 37,
-      "kind": "not-idempotent",
-      "issue": "#165",
-      "context": "ring, active = Bool} = {\nid=7 // note\n, // Assigned by the s"
-    },
-    {
-      "file": "fixtures/expressions/align-record-fields.md",
-      "width": 60,
-      "form": "line",
-      "token": 37,
-      "kind": "not-idempotent",
-      "issue": "#165",
-      "context": "ring, active = Bool} = {\nid=7 // note\n, // Assigned by the s"
-    },
-    {
-      "file": "fixtures/expressions/align-record-fields.md",
-      "width": 100,
-      "form": "line",
-      "token": 37,
-      "kind": "not-idempotent",
-      "issue": "#165",
-      "context": "ring, active = Bool} = {\nid=7 // note\n, // Assigned by the s"
-    },
-    {
       "file": "fixtures/expressions/hug-source-vertical-block.md",
       "width": 60,
       "form": "block",

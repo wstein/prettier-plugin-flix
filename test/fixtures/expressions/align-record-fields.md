@@ -1,6 +1,6 @@
 ---
 title: "Align equals signs in multiline record literals"
-description: "Simple fields align their equals signs. A field without a comment separates the adjacent comment groups. Short additive expressions can align. Large gaps between field names keep ordinary spacing."
+description: "Simple fields align their equals signs. A field without a comment separates the adjacent comment groups. A line comment before a separator starts a new alignment group. Short additive expressions can align. Large gaps between field names keep ordinary spacing."
 flix: "0.80"
 ---
 
@@ -9,6 +9,13 @@ flix: "0.80"
 ```flix
 pub def profile(): {id = Int32, name = String, active = Bool} = {
 id=7, // Assigned by the server.
+name="Flix",
+active=true // Active accounts can sign in.
+}
+
+pub def notedProfile(): {id = Int32, name = String, active = Bool} = {
+id=7 // note
+, // Assigned by the server.
 name="Flix",
 active=true // Active accounts can sign in.
 }
@@ -33,6 +40,13 @@ pub def profile(): { id = Int32, name = String, active = Bool } = {
     active = true  // Active accounts can sign in.
 }
 
+pub def notedProfile(): { id = Int32, name = String, active = Bool } = {
+    id = 7,  // note
+    // Assigned by the server.
+    name   = "Flix",
+    active = true  // Active accounts can sign in.
+}
+
 pub def palette(): { x = String, color = String } = {
     x     = "red",
     color = "blue" + "-green"
@@ -51,6 +65,17 @@ pub def profile(): {
     active = Bool
 } = {
     id     = 7,  // Assigned by the server.
+    name   = "Flix",
+    active = true  // Active accounts can sign in.
+}
+
+pub def notedProfile(): {
+    id = Int32,
+    name = String,
+    active = Bool
+} = {
+    id = 7,  // note
+    // Assigned by the server.
     name   = "Flix",
     active = true  // Active accounts can sign in.
 }
