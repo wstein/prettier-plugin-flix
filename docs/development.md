@@ -131,7 +131,9 @@ Known failures live in `test/known-comment-site-failures.json` (comment sites) a
 the width, the comment form and token index (comment sites), the kind (`unparsable` or
 `not-idempotent`) and the issue (`#123`). The sweep and the test treat the list as follows:
 
-- A failure that is not listed fails the run.
+- A failure that is not listed fails the run. The test sees only the sites it samples plus the listed
+  ones, so removing an entry hides that site from `npm test`: before removing entries, run the full
+  `npm run review:sweep -- sites` (three `--shard k/3` processes) and state the result in the PR.
 - A listed failure must keep failing in the listed way. When a fix makes it pass, the run fails with
   `known failure now passes: remove it from the list (issue #123)`. Remove the entry in the fix.
 - Entries are matched by token index. After a fixture input changes, regenerate the affected entries:

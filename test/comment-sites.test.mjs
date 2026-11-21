@@ -2,7 +2,7 @@
 // program and the comment, and formatting the result again must change nothing.
 //
 // Every test source and fixture input is tried with a comment inserted at a token, in three forms
-// (`// note` glued to a tight `.`, `::` or `->`, `/* note */` glued the same way, and `// own` on its
+// (`// note` glued to a tight `.` or `::`, `/* note */` glued the same way, and `// own` on its
 // own line before the token) and at three print widths (40, 60, 100). String literals are excluded,
 // where a line break ends the string. By default every sixth site is checked, with the form and width
 // rotating from site to site, which takes a few seconds; COMMENT_SITES_EVERY=1 checks every site in
@@ -10,7 +10,8 @@
 //
 // Failures that are known and not yet fixed are listed in known-comment-site-failures.json. A listed
 // site is checked on every run and must keep failing in the listed way; once a fix makes it pass the
-// test asks for the entry to be removed. Any other failure fails the test.
+// test asks for the entry to be removed. Any other failure at a sampled site fails the test; a site
+// outside the sample is only checked while it is listed, so removing an entry needs the full sweep.
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";

@@ -4,7 +4,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { COMMENT_FORMS, withCommentAt } from "./lib.mjs";
-import { checkFormat, checkSite, knownPlan, lineDiff, mergePlans, minimize, parseKnown, planSites, reconcile, renderHunks } from "../scripts/review-sweep-lib.mjs";
+import { checkFormat, checkSite, knownPlan, lineDiff, mergePlans, minimize, parseKnown, planSites, reconcile, renderHunks, runSitePlan } from "../scripts/review-sweep-lib.mjs";
 
 const src = "def f(): Int32 = a.b + 1\n";
 
@@ -107,4 +107,19 @@ test("lineDiff: hunks with positions; equal texts give none", () => {
     const two = lineDiff("1\n2\n3\n4\n5", "1\nX\n3\n4\nY\nZ");
     assert.equal(two.length, 2);
     assert.equal(renderHunks(two), "@@ -2,1 +2,1 @@\n-2\n+X\n@@ -5,1 +5,2 @@\n-5\n+Y\n+Z");
+});
+
+test("runSitePlan: records each site it ran, so a listed site that passes is reported", async () => {
+    const { failures, checked } = await runSitePlan(async (t) => t, { name: "a.md", source: src }, [{ token: 0, form: "line", width: 80 }]);
+    assert.deepEqual(failures, []);
+    assert.deepEqual([...checked], ["a.md|80|line|0"]);
+    const listed = [{ file: "a.md", width: 80, form: "line", token: 0, kind: "not-idempotent", issue: "#1" }];
+    assert.equal(reconcile(listed, failures, checked).fixed.length, 1);
+});
+
+test("parseKnown: rejects duplicate entry keys", () => {
+    assert.throws(
+        () => parseKnown(JSON.stringify({ failures: [entry(), entry({ kind: "unparsable", issue: "#2" })] })),
+        /duplicate entry/,
+    );
 });
