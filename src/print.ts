@@ -1259,9 +1259,8 @@ export class Printer {
         const indents = rows.map(({ arrow }) => this.rowIndent(arrow));
         const armWidths = rows.map(({ head, gap, tail }, i) => measure([head, gap, tail]) + indents[i]);
         const compactArmsStay = armWidths.every((width, i) =>
-            !Number.isFinite(width) || width > this.printWidth ||
-            width + column - widths[i] <= this.printWidth);
-        const hasWrappedArm = armWidths.some((width) => !Number.isFinite(width) || width > this.printWidth);
+            width > this.printWidth || width + column - widths[i] <= this.printWidth);
+        const hasWrappedArm = armWidths.some((width) => width > this.printWidth);
         const modestPadding = widths.every((width) => column - width <= 16);
         // Align when padded compact arms still fit. If another arm already wraps,
         // also keep padding modest so a short body is not stretched across the line.
@@ -1345,11 +1344,11 @@ export class Printer {
         const type = typeIndex < 0 ? undefined : kids(head[typeIndex])[0];
         const schema = type && kind(type) === "SimpleType" ? kids(type)[0] : undefined;
         const arrow = children[arrowIndex] as TerminalNode;
-        // Reserve lead comments on `=` plus ` = body…`, not only ` =`, so a block
-        // comment between the effect set and `=` matches pass 2 (#92). When `=` is
-        // after an own-line comment, nothing of that suffix shares the signature line.
+        // Reserve lead comments on `=` plus ` = body...`, not only ` =`, so a block
+        // comment between the effect set and `=` matches pass 2 (#92).
         const equalsTrailer = this.signatureEqualsTrailerWidth(arrow);
-        const huggedBodyTrailer = equalsTrailer === 0
+        const ownLineEquals = this.info(arrow)?.lead.some((comment) => comment.nl > 0) ?? false;
+        const huggedBodyTrailer = ownLineEquals
             ? 0
             : this.signatureHuggedBodyTrailerWidth(n, arrow, children[arrowIndex + 1]);
         if (!schema || kind(schema) !== "SchemaType") {
@@ -1398,14 +1397,15 @@ export class Printer {
 
     /**
      * Width of the gap, lead comments on `=`, and `=` that share the signature's
-     * last line. Own-line leads before `=` leave no same-line trailer.
+     * last line. An own-line lead still reserves the gap before the break.
      */
     private signatureEqualsTrailerWidth(arrow: TerminalNode): number {
         const info = this.info(arrow);
         if (!info?.lead.length) return util.getStringWidth(" =");
         let suffix = " ";
         for (const comment of info.lead) {
-            if (comment.nl > 0) return 0;
+            // The gap before the own-line break still counts in the doc printer's fit.
+            if (comment.nl > 0) return util.getStringWidth(" ");
             suffix += comment.text + " ";
         }
         return util.getStringWidth(suffix + "=");
@@ -1425,8 +1425,13 @@ export class Printer {
         const first = firstTerm(body);
         if (!first || first.symbol.line !== arrow.symbol.line) return 0;
         const fork = this.forkPrinter();
+        const printed = fork.print(body);
+        // Count only bodies that placeBody keeps on the `=` line in every pass; a body
+        // that may move below `=` is gone from that line in pass 2.
+        const last = lastTerm(body);
+        if ((!last || ttype(last) !== L.RBRACE) && !willBreak(printed)) return 0;
         const printWidth = Math.max(1, this.printWidth - this.declarationIndent(n));
-        const formatted = doc.printer.printDocToString(fork.print(body), {
+        const formatted = doc.printer.printDocToString(printed, {
             printWidth,
             tabWidth: this.tabWidth,
         }).formatted;
@@ -1493,7 +1498,7 @@ export class Printer {
         const ordinary: Doc = [prefix, " ", join(" ", parts)];
 
         // Count a hugged body only for braced effect sets: a too-tight break before
-        // `\ { … }` wraps the set once `= region …` shares the line, and pass 2 joins
+        // `\ { ... }` wraps the set once `= region ...` shares the line, and pass 2 joins
         // instead (#92). Simple effects like `\ a` keep the old ` =`-only trailer.
         const effectOpen = hasEffect ? firstTerm(effect) : null;
         const bracedEffect = effectOpen !== null &&

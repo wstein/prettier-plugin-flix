@@ -1,6 +1,6 @@
 ---
 title: "Do not reserve a hugged-body trailer when `=` follows an own-line comment"
-description: "An own-line comment before `=` keeps the equals and body off the signature line, so the effect-set break must not count a same-line body trailer."
+description: "An own-line comment before `=` keeps the equals and body off the signature line; only the gap before that comment is reserved."
 group: "Calls and function signatures"
 flix: "0.80"
 options: { printWidth: 100 }

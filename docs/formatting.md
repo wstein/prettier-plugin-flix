@@ -98,7 +98,7 @@ that combination is too wide, the body can start on its own indented line.
 A break before a braced effect set must still leave room for `=` and a hugged
 body on that continuation; otherwise the set stays with the return type. A
 block comment between the set and `=` counts toward that same trailer width.
-When `=` follows an own-line comment, that trailer is not reserved.
+When `=` follows an own-line comment, only the gap before that comment is reserved.
 
 **Before**
 
@@ -118,7 +118,9 @@ def wait(rx: Receiver[Int32], n: Int32, tx: Sender[List[Int32]]): Unit
 [Signature fixture](../test/fixtures/declarations/signature-boundaries.md) ·
 [Effect set with region body](../test/fixtures/declarations/signature-effect-set-with-region.md) ·
 [Effect set with comment before `=`](../test/fixtures/declarations/signature-effect-set-equals-block-comment.md) ·
-[Effect set with own-line comment before `=`](../test/fixtures/declarations/signature-effect-set-own-line-before-equals.md)
+[Effect set with own-line comment before `=`](../test/fixtures/declarations/signature-effect-set-own-line-before-equals.md) ·
+[Effect set with call body](../test/fixtures/declarations/signature-effect-set-call-body.md) ·
+[Schema with comment before `=`](../test/fixtures/declarations/schema-equals-block-comment.md)
 
 Keep short function types on one line. When an arrow chain wraps, leave
 each `->` after its parameter type, align the continued parameter types,
@@ -342,7 +344,8 @@ Compact collections stay inline.
 Match arms and handler clauses can share a separator column even when a
 body spans multiple lines. Alignment is skipped when padding would wrap a
 compact arm body that fits without alignment.
-[Short match body](../test/fixtures/expressions/align-match-short-body.md).
+[Short match body](../test/fixtures/expressions/align-match-short-body.md) ·
+[Wrapped match arms](../test/fixtures/expressions/align-match-wrapped-arms.md).
 Handler clauses use the configured width to decide whether the aligned
 lines fit, including any trailing comment.
 OCamlFormat's `break-cases` option offers a comparison between margin-driven
