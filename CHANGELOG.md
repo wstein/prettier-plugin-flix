@@ -60,8 +60,8 @@ User-facing changes to Prettier Plugin for Flix. Plugin releases have their own 
 
 - The Playground synchronizes vertical scrolling between the input and
   formatted preview by default. The **Sync scroll** toolbar toggle turns it off.
-- Share Playground repros with a link to their original source. Load full
-  GitHub files pinned to a commit and jump to the referenced lines.
+- Share Playground repros with a link to their original source. Use **Load from
+  GitHub…** to open a file pinned to a commit and jump to the lines in its link.
 - Show the configured line-width guide in Playground input and formatted
   previews, including embedded examples.
 - Reject a formatter change that tightens a spaced cons `::` chain in the

@@ -44,12 +44,13 @@ export function sourceReference(value, lines) {
 }
 
 
-export async function fetchSource(url) {
+export async function fetchSource(url, signal) {
+    const timeout = AbortSignal.timeout(10_000);
     const response = await fetch(url, {
         credentials: "omit",
         redirect: "error",
         referrerPolicy: "no-referrer",
-        signal: AbortSignal.timeout(10_000),
+        signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
     });
     if (!response.ok) throw new Error(`GitHub returned HTTP ${response.status}.`);
     if (!response.body || response.headers.get("content-type")?.startsWith("text/html")) {

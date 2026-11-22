@@ -204,23 +204,25 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
         };
     }
 
-    const sourceForm = playground.querySelector("[data-source-reference]");
-    if (sourceForm) {
+    const sourceDialog = playground.querySelector("[data-source-dialog]");
+    if (sourceDialog) {
+        const sourceForm = sourceDialog.querySelector("[data-source-reference]");
         const original = playground.querySelector("[data-original-source]");
         const sourceStatus = playground.querySelector("[data-source-status]");
-        const loadSource = playground.querySelector("[data-load-source]");
+        const dialogStatus = sourceDialog.querySelector("[data-source-dialog-status]");
         const copySource = playground.querySelector("[data-copy-source]");
         const reproLink = playground.querySelector("[data-repro-link]");
         const urlField = sourceForm.elements.namedItem("sourceUrl");
-        const linesField = sourceForm.elements.namedItem("sourceLines");
+        const removeReference = sourceDialog.querySelector("[data-remove-reference]");
+        const submitButtons = sourceForm.querySelectorAll('button[type="submit"]');
         let reference;
+        let sourceRequest;
 
         function setReference(next) {
             reference = next;
-            urlField.value = next?.sourceUrl ?? "";
-            linesField.value = next?.sourceLines ?? "";
             original.hidden = !next;
-            loadSource.hidden = copySource.hidden = !next?.downloadUrl;
+            removeReference.hidden = !next;
+            copySource.hidden = !next?.downloadUrl;
             sourceStatus.textContent = "";
             reproLink.hidden = true;
             if (next) {
@@ -230,19 +232,26 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
             } else original.removeAttribute("href");
         }
 
+        function setLoading(loading) {
+            urlField.disabled = loading;
+            removeReference.disabled = loading;
+            for (const button of submitButtons) button.disabled = loading;
+        }
+
         setReference(sourceReference(initial?.sourceUrl, initial?.sourceLines));
-        sourceForm.addEventListener("submit", (event) => {
-            event.preventDefault();
-            const next = sourceReference(urlField.value, linesField.value);
-            if (urlField.value && !next) {
-                sourceStatus.textContent = "Enter an HTTPS source URL without credentials.";
-                return;
-            }
-            if (next && linesField.value && !next.sourceLines) {
-                sourceStatus.textContent = "Enter a line number or a range such as 168-172.";
-                return;
-            }
-            setReference(next);
+        playground.querySelector("[data-open-source]").addEventListener("click", () => {
+            urlField.value = reference?.sourceUrl ?? "";
+            dialogStatus.textContent = "";
+            sourceDialog.showModal();
+        });
+        sourceDialog.querySelector("[data-close-source]").addEventListener("click", () => {
+            sourceRequest?.abort();
+            sourceDialog.close();
+        });
+        sourceDialog.addEventListener("cancel", () => sourceRequest?.abort());
+        removeReference.addEventListener("click", () => {
+            setReference(undefined);
+            sourceDialog.close();
         });
 
         async function copyShareLink(draft, label) {
@@ -268,19 +277,39 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
             const { printWidth, flixVersion } = snapshot();
             return copyShareLink({ ...reference, printWidth, flixVersion }, "Source");
         });
-        loadSource.addEventListener("click", async () => {
-            const requested = reference;
-            if (!requested?.downloadUrl) return;
+        sourceForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const url = urlField.value.trim();
+            const requested = sourceReference(url, url === reference?.sourceUrl ? reference.sourceLines : undefined);
+            if (!requested) {
+                dialogStatus.textContent = "Enter an HTTPS source URL without credentials.";
+                return;
+            }
+            if (event.submitter?.value === "attach") {
+                setReference(requested);
+                sourceDialog.close();
+                sourceStatus.textContent = "Source reference attached.";
+                return;
+            }
+            if (!requested.downloadUrl) {
+                dialogStatus.textContent = "Use a GitHub file URL with a full commit SHA.";
+                return;
+            }
+
             const currentDoc = input.view.state.doc;
-            loadSource.disabled = true;
-            sourceStatus.textContent = "Loading source…";
+            const request = new AbortController();
+            sourceRequest = request;
+            setLoading(true);
+            dialogStatus.textContent = "Loading source…";
             try {
-                const source = await fetchSource(requested.downloadUrl);
-                if (reference !== requested) return;
+                const source = await fetchSource(requested.downloadUrl, request.signal);
+                if (!sourceDialog.open || request.signal.aborted) return;
                 if (input.view.state.doc !== currentDoc) {
-                    sourceStatus.textContent = "Input changed while loading. Click Load source to try again.";
+                    dialogStatus.textContent = "Input changed while loading. Click Load to try again.";
                     return;
                 }
+                setReference(requested);
+                sourceDialog.close();
                 select.value = "";
                 replaceCode(input.view, source);
                 queuePreview();
@@ -298,9 +327,12 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
                 input.view.focus();
                 sourceStatus.textContent = "Source loaded.";
             } catch (error) {
-                if (reference === requested) sourceStatus.textContent = `Could not load source. ${error.message}`;
+                if (sourceDialog.open && !request.signal.aborted) {
+                    dialogStatus.textContent = `Could not load source. ${error.message}`;
+                }
             } finally {
-                loadSource.disabled = false;
+                sourceRequest = undefined;
+                setLoading(false);
             }
         });
         select.addEventListener("change", () => setReference(undefined));
