@@ -252,15 +252,16 @@ test("the latest Flix pin also publishes under /flix/<version>/ while root URLs 
     assert.match(versionGuide, /<h1[^>]*>Flix formatting style<\/h1>/);
     assert.match(versionPlayground, /data-flix-version/);
     assert.match(versionPlayground, /<option[^>]*value=(?:"0\.80\.0"|0\.80\.0)[^>]*selected/);
-    // Versioned pages keep navigation inside their catalog.
+    // Versioned pages keep navigation and assets inside their catalog.
     assert.match(versionHome, new RegExp(`/flix/${version.replace(/\./g, "\\.")}/formatting/`));
     assert.match(versionHome, new RegExp(`/flix/${version.replace(/\./g, "\\.")}/playground/`));
     const prefix = `/prettier-plugin-flix/flix/${version}/`;
+    const urlAttributes = /\s(href|src|data-(?:examples|formatter|index|linked-fixtures|worker))\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/g;
     for (const [pageName, html] of [["home", versionHome], ["formatting", versionGuide], ["playground", versionPlayground]]) {
-        for (const [, doubleQuoted, singleQuoted, unquoted] of html.matchAll(/\shref=(?:"([^"]*)"|'([^']*)'|([^\s>]+))/g)) {
-            const href = doubleQuoted ?? singleQuoted ?? unquoted;
-            if (href.startsWith("/") && !href.startsWith("//")) {
-                assert.ok(href.startsWith(prefix), `Versioned ${pageName} links outside its catalog: ${href}`);
+        for (const [, attribute, doubleQuoted, singleQuoted, unquoted] of html.matchAll(urlAttributes)) {
+            const url = doubleQuoted ?? singleQuoted ?? unquoted;
+            if (url.startsWith("/") && !url.startsWith("//")) {
+                assert.ok(url.startsWith(prefix), `Versioned ${pageName} has ${attribute} outside its catalog: ${url}`);
             }
         }
     }
