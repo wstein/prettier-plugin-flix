@@ -99,13 +99,17 @@ pub def edge5(_f: t1 -> t2 -> t3 -> t4 -> t5 -> t):
         Order[t14],
         Order[t15] = _ -> _ -> _ -> Vector.empty()
 
-pub def edge2(_f: t1 -> t2 -> t3 -> t4 -> t5 -> t):
-    Vector[String] -> Vector[String]
-    with Order[t1], Order[t10], Order[t11], Order[t12], Order[t13], Order[t14] =
-    _ -> Vector.empty()
+pub def edge2(_f: t1 -> t2 -> t3 -> t4 -> t5 -> t): Vector[String] ->
+        Vector[String] with
+        Order[t1],
+        Order[t10],
+        Order[t11],
+        Order[t12],
+        Order[t13],
+        Order[t14] = _ -> Vector.empty()
 
-pub def edge3(_f: t1 -> t2 -> t3 -> t4 -> t5 -> t):
-    Vector[String] -> Vector[String] with
+pub def edge3(_f: t1 -> t2 -> t3 -> t4 -> t5 -> t): Vector[String] ->
+        Vector[String] with
         Order[t1],
         Order[t10],
         Order[t11],
@@ -199,8 +203,9 @@ pub def edge5(_f: t1 -> t2 -> t3 -> t4 -> t5 -> t): Vector[
         Order[t14],
         Order[t15] = _ -> _ -> _ -> Vector.empty()
 
-pub def edge2(_f: t1 -> t2 -> t3 -> t4 -> t5 -> t):
-    Vector[String] -> Vector[String] with
+pub def edge2(_f: t1 -> t2 -> t3 -> t4 -> t5 -> t): Vector[
+    String
+] -> Vector[String] with
         Order[t1],
         Order[t10],
         Order[t11],
@@ -208,8 +213,9 @@ pub def edge2(_f: t1 -> t2 -> t3 -> t4 -> t5 -> t):
         Order[t13],
         Order[t14] = _ -> Vector.empty()
 
-pub def edge3(_f: t1 -> t2 -> t3 -> t4 -> t5 -> t):
-    Vector[String] -> Vector[String] with
+pub def edge3(_f: t1 -> t2 -> t3 -> t4 -> t5 -> t): Vector[
+    String
+] -> Vector[String] with
         Order[t1],
         Order[t10],
         Order[t11],
@@ -298,8 +304,8 @@ pub def edge5(_f: t1 -> t2 -> t3 -> t4 -> t5 -> t): Vector[String] ->
         Order[t14],
         Order[t15] = _ -> _ -> _ -> Vector.empty()
 
-pub def edge2(_f: t1 -> t2 -> t3 -> t4 -> t5 -> t):
-    Vector[String] -> Vector[String] with
+pub def edge2(_f: t1 -> t2 -> t3 -> t4 -> t5 -> t): Vector[String] ->
+        Vector[String] with
         Order[t1],
         Order[t10],
         Order[t11],
@@ -307,8 +313,8 @@ pub def edge2(_f: t1 -> t2 -> t3 -> t4 -> t5 -> t):
         Order[t13],
         Order[t14] = _ -> Vector.empty()
 
-pub def edge3(_f: t1 -> t2 -> t3 -> t4 -> t5 -> t):
-    Vector[String] -> Vector[String] with
+pub def edge3(_f: t1 -> t2 -> t3 -> t4 -> t5 -> t): Vector[String] ->
+        Vector[String] with
         Order[t1],
         Order[t10],
         Order[t11],
