@@ -4,6 +4,7 @@ import { createEditor, createFlixHighlighter } from "./playground-editor.js";
 import { readHandoff, writeHandoff } from "./playground-link.js";
 import { playgroundDefaultFlixVersion, playgroundIndentation } from "./playground-options.js";
 import { requestFormat } from "./playground-requests.js";
+import { linkEditorScroll } from "./playground-scroll.js";
 
 let highlighterPromise;
 let nextRequest = 0;
@@ -35,6 +36,7 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
     const diff = playground.querySelector("[data-diff]");
     const formatted = playground.querySelector("[data-output]");
     const previewModes = playground.querySelectorAll("[data-preview-mode]");
+    const scrollToggle = playground.querySelector("[data-sync-scroll]");
 
     let timer;
     let revision = 0;
@@ -45,6 +47,10 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
 
     const input = createEditor(playground.querySelector("[data-input]"), queuePreview, initial?.source, showCursor, status.id);
     const output = createEditor(formatted, undefined, preview?.output);
+    let previewSource = preview ? input.view.state.doc : undefined;
+    const syncFromInput = linkEditorScroll(input.view, output.view, () =>
+        scrollToggle.checked && !formatted.hidden && preview && previewSource === input.view.state.doc);
+    scrollToggle.addEventListener("change", syncFromInput);
     updateColumnGuides();
 
     function updateColumnGuides() {
@@ -146,7 +152,8 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
             }
             showStatus("Partially formatted. Error. " + where + readableDiagnostic(message), true);
         } else if (input.view.contentDOM.hasAttribute("aria-invalid")) input.markError();
-        preview = { source: input.view.state.doc.toString(), output: data.output };
+        previewSource = input.view.state.doc;
+        preview = { source: previewSource.toString(), output: data.output };
         replaceCode(output.view, preview.output);
         highlighter?.apply(output.view);
         refreshDiff();
@@ -166,6 +173,8 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
             for (const mode of previewModes) mode.setAttribute("aria-pressed", String(mode === button));
             diff.hidden = !showDiff;
             formatted.hidden = showDiff;
+            scrollToggle.disabled = showDiff;
+            if (!showDiff) syncFromInput();
             refreshDiff();
         });
     }

@@ -2,6 +2,10 @@ import { Chunk } from "@codemirror/merge";
 import { Text } from "@codemirror/state";
 import { flixTokenStyle } from "./playground-editor.js";
 
+export function buildDiffChunks(before, after) {
+    return Chunk.build(before, after, { scanLimit: 500, timeout: 50 });
+}
+
 export function renderDiff(container, { source, output }, tokenize) {
     if (source === output) {
         const message = document.createElement("p");
@@ -13,7 +17,7 @@ export function renderDiff(container, { source, output }, tokenize) {
 
     const before = Text.of(source.split("\n"));
     const after = Text.of(output.split("\n"));
-    const chunks = Chunk.build(before, after, { scanLimit: 500, timeout: 50 });
+    const chunks = buildDiffChunks(before, after);
     const beforeTokens = tokenize?.(source);
     const afterTokens = tokenize?.(output);
     const listing = document.createElement("pre");
