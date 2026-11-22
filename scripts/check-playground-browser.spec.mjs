@@ -191,7 +191,7 @@ test("sync scroll follows matching code in both directions across formatting cha
     await expect(page.getByLabel("Example")).toBeEnabled();
     const input = page.getByRole("textbox", { name: "Flix input" });
     const preview = page.getByRole("textbox", { name: "Preview" });
-    const toggle = page.getByRole("checkbox", { name: "Sync scroll" });
+    const toggle = page.locator(".playground-toolbar").getByRole("checkbox", { name: "Sync scroll" });
     const status = page.locator("[data-full-playground]").getByRole("status", { includeHidden: true });
     const lines = [
         ...Array.from({ length: 10 }, (_, i) =>
@@ -272,8 +272,8 @@ test("a shared repro keeps its code and original reference without fetching the 
     await page.getByRole("button", { name: "Set source" }).click();
     const original = page.getByRole("link", { name: "Original · Boxable.flix:168–172" });
     await expect(original).toHaveAttribute("href", blob + "#L168-L172");
-    await page.getByRole("button", { name: "Copy repro link" }).click();
-    await expect(page.getByText("Repro link copied.")).toBeVisible();
+    await page.locator(".playground-toolbar").getByRole("button", { name: "Copy Playground link" }).click();
+    await expect(page.getByText("Playground link copied.")).toBeVisible();
     const shared = await page.evaluate(() => navigator.clipboard.readText());
     await page.goto(shared);
     await page.reload();
@@ -299,7 +299,7 @@ test("a source-only link loads a complete pinned file on request and selects its
     const params = new URLSearchParams({ sourceUrl: raw, sourceLines: "168-172", printWidth: "60" });
     await page.goto(siteUrl + "playground/#" + params);
     const input = page.getByRole("textbox", { name: "Flix input" });
-    const load = page.getByRole("button", { name: "Load source" });
+    const load = page.locator(".playground-toolbar").getByRole("button", { name: "Load source" });
     await expect(input).toBeEmpty();
     await expect(page.getByRole("link", { name: "Original · Boxable.flix:168–172" })).toBeVisible();
     expect(requests).toBe(0);

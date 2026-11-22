@@ -262,8 +262,8 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
             }
         }
 
-        playground.querySelector("[data-copy-repro]").addEventListener("click", () =>
-            copyShareLink({ ...snapshot(), ...reference }, "Repro"));
+        playground.querySelector("[data-copy-playground]").addEventListener("click", () =>
+            copyShareLink({ ...snapshot(), ...reference }, "Playground"));
         copySource.addEventListener("click", () => {
             const { printWidth, flixVersion } = snapshot();
             return copyShareLink({ ...reference, printWidth, flixVersion }, "Source");
