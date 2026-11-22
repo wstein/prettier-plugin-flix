@@ -26,6 +26,20 @@
       <a class="playground-handoff" href="{{ . }}">Open in Playground <span aria-hidden="true">↗</span></a>
     </div>{{ end }}
   </div>
+  {{ if .full }}<div class="playground-source">
+    <a data-original-source hidden></a>
+    <button type="button" data-copy-repro>Copy repro link</button>
+    <details>
+      <summary>Source</summary>
+      <form data-source-reference>
+        <label>Source URL <input name="sourceUrl" type="url" placeholder="https://"></label>
+        <label>Source lines <input name="sourceLines" placeholder="168-172"></label>
+        <button type="submit">Set source</button>
+      </form>
+    </details>
+    <span data-source-status aria-live="polite"></span>
+    <input data-repro-link aria-label="Repro link" readonly hidden>
+  </div>{{ end }}
   <div class="playground-panes">
     <section class="playground-pane">
       <h2 id="{{ $prefix }}flix-input-label">Flix input</h2>

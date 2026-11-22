@@ -160,6 +160,21 @@ pre.shiki {
 .playground-toolbar [data-flix-version] { min-width: 5.5rem; max-width: 7rem; }
 .playground-toolbar button { cursor: pointer; color: var(--link); }
 .playground-toolbar button:disabled { cursor: default; opacity: 0.65; }
+.playground-source, .playground-source form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.65rem;
+}
+.playground-source {
+  padding: 0.35rem 0.65rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.85rem;
+}
+.playground-source form { margin-block: 0.3rem; }
+.playground-source input { max-width: 100%; }
+.playground-source [name="sourceLines"] { width: 5rem; }
+.playground-source [data-original-source] { overflow-wrap: anywhere; }
 .playground-links { display: flex; flex-wrap: wrap; gap: 0.25rem 0.65rem; margin-inline-start: auto; }
 .playground-handoff { font-weight: 650; }
 .playground-panes {
