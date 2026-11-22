@@ -57,8 +57,8 @@ Add the plugin to your `.prettierrc.json`.
 ```
 
 `flixVersion` selects the exact Flix compiler grammar. Omit it to keep the
-current default (`0.80.0`). Only `0.80.0` is supported today; unsupported
-values fail with a clear error. The CLI flag is `--flix-version`.
+current default (`0.80.0`). Supported values are `0.79.0` and `0.80.0`;
+unsupported values fail with a clear error. The CLI flag is `--flix-version`.
 
 Run this against a file in your project.
 
