@@ -58,6 +58,8 @@ User-facing changes to Prettier Plugin for Flix. Plugin releases have their own 
 
 ### Playground and verification
 
+- Show the configured line-width guide in Playground input and formatted
+  previews, including embedded examples.
 - Reject a formatter change that tightens a spaced cons `::` chain in the
   program-preservation check; loosening tight to spaced stays allowed
   ([#176](https://github.com/wstein/prettier-plugin-flix/issues/176)).
