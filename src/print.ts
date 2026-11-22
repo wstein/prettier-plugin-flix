@@ -11,7 +11,8 @@ type Node = ParserRuleContext | TerminalNode;
 
 const isTerm = (n: Node | null | undefined): n is TerminalNode => n instanceof TerminalNode;
 const ttype = (t: TerminalNode): number => t.symbol.type;
-const kind = (n: Node): string => (isTerm(n) ? "<token>" : n.constructor.name.replace(/Context$/, ""));
+// Bundlers that pack both grammar trees rename the second `FooContext` to `FooContext2`.
+const kind = (n: Node): string => (isTerm(n) ? "<token>" : n.constructor.name.replace(/Context\d*$/, ""));
 const kids = (n: Node): Node[] => (isTerm(n) ? [] : ((n.children ?? []) as Node[]));
 
 function firstTerm(n: Node): TerminalNode | null {
