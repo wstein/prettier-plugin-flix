@@ -339,6 +339,51 @@ test("sync scroll anchors keep a later declaration aligned after uneven wrapping
     await expect.poll(() => topLine(preview)).toBe(target);
 });
 
+test("sync scroll anchors indented module members after uneven wrapping", async ({ page }) => {
+    await page.setViewportSize({ width: 1450, height: 850 });
+    await page.goto(siteUrl + "playground/");
+    await expect(page.getByLabel("Example")).toBeEnabled();
+    const input = page.getByRole("textbox", { name: "Flix input" });
+    const preview = page.getByRole("textbox", { name: "Preview" });
+    const header = page.locator(".playground-preview-header");
+    const toggle = header.getByRole("checkbox", { name: "Sync scroll" });
+    const width = page.getByLabel("Line width");
+    const status = page.locator("[data-full-playground]").getByRole("status", { includeHidden: true });
+    // Indented `pub def` must count as anchors; otherwise only `mod` pairs and Sync stays 1:1.
+    const body = [
+        ...Array.from({ length: 12 }, (_, i) =>
+            `    pub def prep${i}(): Int32 = { let first = ${i}; let second = 1; first + second }`),
+        "    pub def target(): Int32 = 99",
+        ...Array.from({ length: 40 }, (_, i) => `    pub def after${i}(): Int32 = ${i}`),
+    ];
+    const lines = ["pub mod M {", ...body, "}"];
+    const target = "    pub def target(): Int32 = 99";
+    const targetIndex = lines.indexOf(target);
+    await input.fill(lines.join("\n") + "\n");
+    await width.fill("100");
+    await expect(status).toHaveText("");
+    await expect(toggle).toBeChecked();
+    const topLine = (editor) => editor.evaluate((content) => {
+        const top = content.closest(".cm-scroller").getBoundingClientRect().top;
+        return [...content.querySelectorAll(".cm-line")]
+            .find((line) => line.getBoundingClientRect().bottom > top + 2)?.textContent;
+    });
+    const scrollBeforeLine = (editor, lineIndex) => editor.evaluate((content, index) => {
+        const line = content.querySelector(".cm-line");
+        const padding = parseFloat(getComputedStyle(content).paddingTop);
+        content.closest(".cm-scroller").scrollTop = padding + index * line.getBoundingClientRect().height + 2;
+    }, lineIndex);
+
+    await scrollBeforeLine(input, targetIndex);
+    await expect.poll(() => topLine(input)).toBe(target);
+    await expect.poll(() => topLine(preview)).toBe(target);
+
+    await width.fill("40");
+    await expect(status).toHaveText("");
+    await expect.poll(() => topLine(input)).toBe(target);
+    await expect.poll(() => topLine(preview)).toBe(target);
+});
+
 test("a shared repro keeps its code and original reference without fetching the source", async ({ page, context }) => {
     await context.grantPermissions(["clipboard-read", "clipboard-write"]);
     const raw = "https://raw.githubusercontent.com/flix/flix/fe909c20c7213088b72578a4f97f6e6f05f091ff/main/src/library/Fixpoint3/Boxable.flix";
