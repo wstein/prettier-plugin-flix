@@ -28,7 +28,7 @@
     "prepublishOnly": "npm run build && npm test",
     "test": "npm run build && node --test test/*.test.mjs",
     "test:coverage": "npm run build && node --test --experimental-test-coverage --test-coverage-include='dist/*.{js,mjs}' --test-coverage-exclude='dist/FlixLexerBase.js' --test-coverage-lines=95 --test-coverage-branches=90 --test-reporter=spec --test-reporter-destination=stdout --test-reporter=lcov --test-reporter-destination=coverage.lcov test/*.test.mjs",
-    "docs:build": "npm run build && node scripts/export-fixture-docs.mjs && hugo --source docs --minify && node --test scripts/check-playground.mjs",
+    "docs:build": "npm run build && node scripts/export-fixture-docs.mjs && node scripts/build-docs-site.mjs && node --test scripts/check-playground.mjs",
     "docs:test:browser": "playwright test scripts/check-playground-browser.spec.mjs",
     "coverage:syntax": "node scripts/syntax-coverage.mjs",
     "format:checked": "node scripts/format-checked.mjs",

@@ -10,6 +10,7 @@
     </label>{{ end }}
     <label>Line width <input id="{{ $prefix }}print-width" data-print-width type="number" min="1" step="1" required value="{{ $width }}"></label>
     {{ $flixDefault := site.Data.playground.defaultFlixVersion }}
+    {{ with site.Params.flixDocVersion }}{{ if ne . "" }}{{ $flixDefault = . }}{{ end }}{{ end }}
     <label>Flix version
       <select id="{{ $prefix }}flix-version" data-flix-version aria-label="Flix version">
         {{ range site.Data.playground.supportedFlixVersions }}

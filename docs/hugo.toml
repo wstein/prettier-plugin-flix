@@ -3,6 +3,10 @@ languageCode = "en"
 title = "Prettier Plugin for Flix"
 disableKinds = ["taxonomy", "term", "RSS"]
 
+# Exact Flix pin this catalog build documents. Empty means use playground.json.
+[params]
+flixDocVersion = ""
+
 [build]
 noJSConfigInAssets = true
 
