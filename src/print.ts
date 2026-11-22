@@ -167,19 +167,31 @@ export class Printer {
         return c.isLine && c.text.startsWith("///");
     }
 
+    /** Own-line `//` made only of `-`, `=` or `*` — a section divider, not Flixdoc. */
+    private isDividerComment(c: Comment): boolean {
+        return c.isLine && !c.text.startsWith("///") &&
+            /^\/\/[ \t\-=*]*$/.test(c.text) && /[\-=*]/.test(c.text);
+    }
+
     private leadDoc(info: TokenInfo, closing: boolean, inlineGap = " "): Doc[] {
         const parts: Doc[] = [];
         info.lead.forEach((c, i) => {
-            if (i > 0 && c.nl >= 2) parts.push(hardline);
+            const prev = i > 0 ? info.lead[i - 1] : undefined;
+            // Blank between lead comments when the source had one, or a divider needs air.
+            if (i > 0 && (c.nl >= 2 || this.isDividerComment(c) || (prev !== undefined && this.isDividerComment(prev)))) {
+                parts.push(hardline);
+            }
             parts.push(this.commentText(c));
             parts.push(c.isLine || c.nlNext > 0 ? hardline : inlineGap);
         });
         // Flixdoc stays glued to the declaration (or its leading annotation).
-        // Ordinary `//` headers may keep a blank line before the code.
+        // Dividers always keep a blank below; ordinary `//` headers may keep one.
         const last = info.lead.at(-1);
-        if (info.lead.length > 0 && info.nlAfter >= 2 && !closing && !(last && this.isFlixdoc(last))) {
-            parts.push(hardline);
-        }
+        const blankAfterLead = last !== undefined && (
+            this.isDividerComment(last) ||
+            (info.nlAfter >= 2 && !this.isFlixdoc(last))
+        );
+        if (info.lead.length > 0 && !closing && blankAfterLead) parts.push(hardline);
         return parts;
     }
 
@@ -333,6 +345,8 @@ export class Printer {
     private blankBefore(t: TerminalNode | null): boolean {
         const info = t && this.info(t);
         if (!info) return false;
+        // Section dividers always get a blank above, even when the source was tight.
+        if (info.lead.some((c) => this.isDividerComment(c))) return true;
         return (info.lead.length > 0 ? info.lead[0].nl : info.nlAfter) >= 2;
     }
 
