@@ -353,6 +353,31 @@ test("sync anchors fall back to diff mapping when no declarations match", () => 
     assert.equal(typeof mapSyncedLine(1, before, after), "number");
 });
 
+test("sync anchors match indented module members so Sync does not stay 1:1", () => {
+    // Column-0-only anchors would keep only `mod` and map every later line to itself.
+    const before = Text.of([
+        "pub mod M {",
+        "    pub def early(): Int32 = 1",
+        "    pub def mid(): Int32 = { let first = 1; let second = 2; first + second }",
+        "    pub def late(): Int32 = 3",
+        "}",
+    ]);
+    const after = Text.of([
+        "pub mod M {",
+        "    pub def early(): Int32 = 1",
+        "    pub def mid(): Int32 = {",
+        "        let first = 1;",
+        "        let second = 2;",
+        "        first + second",
+        "    }",
+        "    pub def late(): Int32 = 3",
+        "}",
+    ]);
+    const keys = declarationAnchors(before).map((anchor) => anchor.key);
+    assert.deepEqual(keys, ["mod\0M", "def\0early", "def\0mid", "def\0late"]);
+    assert.equal(mapSyncedLine(3, before, after), 7);
+});
+
 test("the latest Flix pin also publishes under /flix/<version>/ while root URLs stay", async () => {
     const version = "0.80.0";
     const rootGuide = await readFile(new URL("formatting/index.html", site), "utf8");
