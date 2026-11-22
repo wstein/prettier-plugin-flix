@@ -173,9 +173,21 @@ constraint. Wrapped constraints are indented one level deeper than the body
 or members so they do not share a column with the code that follows. The same
 deeper indent separates a wrapped `with` list from a wrapped function return
 type: constraints sit one level deeper than the continued arrow parameters.
+A single-line `with` list that moves to its own continuation line stays in the
+body column, and a body that then starts on the next line sits one level deeper
+than that `with` line. A body on the `with` line stays there, and a signature
+without a body keeps its layout.
+
+```flix
+pub def lookup(m: Map[a, b], k: a): Option[b]
+    with Order[a], ToString[b], Eq[b], Hash[a] =
+        Map.get(k, m)
+```
+
 [Rust Style Guide](https://doc.rust-lang.org/style-guide/items.html#where-clauses) ·
 [Trait constraint fixture](../test/fixtures/declarations/trait-constraint-lists.md) ·
-[Arrow return with list fixture](../test/fixtures/declarations/arrow-return-with-list.md)
+[Arrow return with list fixture](../test/fixtures/declarations/arrow-return-with-list.md) ·
+[Signature boundaries fixture](../test/fixtures/declarations/signature-boundaries.md)
 
 ## Pipelines
 

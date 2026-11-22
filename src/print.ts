@@ -1276,7 +1276,7 @@ export class Printer {
     }
 
     /** Places `body` after `arrow`: hugged on the arrow's line when it spans lines, else wrapped. */
-    private placeBody(body: Node, arrow: TerminalNode): Doc {
+    private placeBody(body: Node, arrow: TerminalNode, deeper = false): Doc {
         const f = firstTerm(body);
         const l = lastTerm(body);
         const sameLine = !!f && f.symbol.line === arrow.symbol.line;
@@ -1288,7 +1288,9 @@ export class Printer {
         }
         const d = this.print(this.ls(body));
         if (sameLine && willBreak(d)) return [this.after(arrow, " ", true), d];
-        return group(indent([this.after(arrow, line), d]));
+        const inner: Doc = [this.after(arrow, line), d];
+        if (deeper) return group(indent(indent(inner)));
+        return group(indent(inner));
     }
 
     /** `head = body`, `case p => body`, `x -> body`; `let` and local `def` own the rest of their block. */
@@ -1303,8 +1305,11 @@ export class Printer {
         const ai = cs.findIndex((c) => isTerm(c) && BODY_ARROWS.has(ttype(c)));
         const arrow = cs[ai] as TerminalNode;
         const headLast = ai > 0 ? lastTerm(cs[ai - 1]) : null;
+        this.deepBody = false;
         const head = k === "DefDeclaration" ? this.printDefinitionHead(n, cs, ai) :
             k === "MatchRule" ? this.printMatchRuleHead(cs, ai) : this.seq(cs.slice(0, ai), k);
+        const deeper = this.deepBody;
+        this.deepBody = false;
         const gap = this.after(headLast, " ", true);
         // Arrow trail: clear hug soft-trail so `-> /* c */` keeps its break. Nested
         // MatchLambdaExpr heads still see softTrailBreaks via printEqBodyTail.
@@ -1316,7 +1321,7 @@ export class Printer {
         } finally {
             this.softTrailBreaks = soft;
         }
-        return { head, gap, arrow, tail: [arrowDoc, this.printEqBodyTail(cs, ai, k, arrow)] };
+        return { head, gap, arrow, tail: [arrowDoc, this.printEqBodyTail(cs, ai, k, arrow, deeper)] };
     }
 
     /** `case pattern if guard` with deeper wrap indent for the guard's own operator chain. */
@@ -1447,6 +1452,8 @@ export class Printer {
         return width;
     }
 
+    private deepBody = false;
+
     private printWithClause(n: ParserRuleContext): Doc {
         const children = kids(n);
         if (this.flat > 0 || children.length < 4) return this.seq(children, kind(n));
@@ -1528,12 +1535,20 @@ export class Printer {
             const right = rows.slice(i).join(" ");
             if (prefixWidth + util.getStringWidth(left) > width ||
                 this.tabWidth + util.getStringWidth(right) + trailerWidth > width) continue;
+            const clauseIndex = i - (hasEffect ? 2 : 1);
+            if (equalsTrailer > 0 && clauseIndex >= 0 && kind(clauses[clauseIndex]) === "WithClause") this.deepBody = true;
             return [prefix, i === 0 ? "" : [" ", join(" ", parts.slice(0, i))], indent([hardline, join(" ", parts.slice(i))])];
         }
         return ordinary;
     }
 
-    private printEqBodyTail(cs: Node[], ai: number, k: string, arrow: TerminalNode): Doc {
+    private printEqBodyTail(
+        cs: Node[],
+        ai: number,
+        k: string,
+        arrow: TerminalNode,
+        deeper = false,
+    ): Doc {
         const body = cs[ai + 1];
         const rest = cs.slice(ai + 2);
         const restDoc = rest.length > 0 ? this.seq(rest, k) : "";
@@ -1543,11 +1558,11 @@ export class Printer {
         // Keep hug soft-trail for a nested match-lambda pattern only; clear it for MatchExpr
         // and other bodies so scrutinee / arm / guard EOL block comments keep their breaks.
         const place = (expr: Node): Doc => {
-            if (kind(expr) === "MatchLambdaExpr") return this.placeBody(expr, arrow);
+            if (kind(expr) === "MatchLambdaExpr") return this.placeBody(expr, arrow, deeper);
             const soft = this.softTrailBreaks;
             this.softTrailBreaks = 0;
             try {
-                return this.placeBody(expr, arrow);
+                return this.placeBody(expr, arrow, deeper);
             } finally {
                 this.softTrailBreaks = soft;
             }
@@ -1570,7 +1585,9 @@ export class Printer {
             const soft = this.softTrailBreaks;
             this.softTrailBreaks = 0;
             try {
-                return [indent([hardline, this.printStatement(stmt)]), tailDoc];
+                const block: Doc = [hardline, this.printStatement(stmt)];
+                if (deeper) return [indent(indent(block)), tailDoc];
+                return [indent(block), tailDoc];
             } finally {
                 this.softTrailBreaks = soft;
             }
