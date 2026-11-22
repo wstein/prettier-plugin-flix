@@ -21,6 +21,10 @@ User-facing changes to Prettier Plugin for Flix. Plugin releases have their own 
 
 ### Fixes
 
+- Recognize ANTLR `*Context` class names when a bundler renames the second
+  grammar's copies to `*Context2`, so the Playground dual-grammar bundle
+  formats instead of falling through to a flat token dump.
+
 - Keep signature effect-set breaks stable when a hugged `=` body would not
   fit on the continuation with the set, so the first pass already joins the
   set to the return type ([#92](https://github.com/wstein/prettier-plugin-flix/issues/92)).
