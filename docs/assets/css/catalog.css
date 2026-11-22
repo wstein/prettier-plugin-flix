@@ -155,7 +155,7 @@ pre.shiki {
   color: inherit;
   font: inherit;
 }
-.playground-toolbar input { width: 3.4rem; }
+.playground-toolbar [data-print-width] { width: 3.4rem; }
 .playground-toolbar select { min-width: 0; max-width: min(16rem, 55vw); }
 .playground-toolbar [data-flix-version] { min-width: 5.5rem; max-width: 7rem; }
 .playground-toolbar button { cursor: pointer; color: var(--link); }
@@ -166,11 +166,8 @@ pre.shiki {
   align-items: center;
   gap: 0.35rem 0.65rem;
 }
-.playground-source {
-  padding: 0.35rem 0.65rem;
-  border-bottom: 1px solid var(--border);
-  font-size: 0.85rem;
-}
+.playground-source, .playground-source details { min-width: 0; max-width: 100%; }
+.playground-toolbar [data-sync-scroll] { margin: 0; }
 .playground-source form { margin-block: 0.3rem; }
 .playground-source input { max-width: 100%; }
 .playground-source [name="sourceLines"] { width: 5rem; }
@@ -257,8 +254,6 @@ pre.shiki {
   background: var(--surface);
 }
 .playground-preview-header h2 { border: 0; }
-.playground-preview-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 0.6rem; }
-.playground-sync-scroll { display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.8rem; }
 .playground-preview-modes { display: flex; gap: 0.2rem; }
 .playground-preview-modes button {
   border: 1px solid transparent;

@@ -25,23 +25,24 @@
       {{ with $.upstreamUrl }}<a href="{{ . }}">Upstream example</a>{{ end }}
       <a class="playground-handoff" href="{{ . }}">Open in Playground <span aria-hidden="true">↗</span></a>
     </div>{{ end }}
+    <label class="playground-sync-scroll"><input type="checkbox" data-sync-scroll> Sync scroll</label>
+    {{ if .full }}<div class="playground-source">
+      <a data-original-source hidden></a>
+      <button type="button" data-load-source hidden>Load source</button>
+      <button type="button" data-copy-source hidden>Copy source link</button>
+      <button type="button" data-copy-playground>Copy Playground link</button>
+      <details>
+        <summary>Source</summary>
+        <form data-source-reference>
+          <label>Source URL <input name="sourceUrl" type="url" placeholder="https://"></label>
+          <label>Source lines <input name="sourceLines" placeholder="168-172"></label>
+          <button type="submit">Set source</button>
+        </form>
+      </details>
+      <span data-source-status aria-live="polite"></span>
+      <input data-repro-link aria-label="Share link" readonly hidden>
+    </div>{{ end }}
   </div>
-  {{ if .full }}<div class="playground-source">
-    <a data-original-source hidden></a>
-    <button type="button" data-load-source hidden>Load source</button>
-    <button type="button" data-copy-source hidden>Copy source link</button>
-    <button type="button" data-copy-repro>Copy repro link</button>
-    <details>
-      <summary>Source</summary>
-      <form data-source-reference>
-        <label>Source URL <input name="sourceUrl" type="url" placeholder="https://"></label>
-        <label>Source lines <input name="sourceLines" placeholder="168-172"></label>
-        <button type="submit">Set source</button>
-      </form>
-    </details>
-    <span data-source-status aria-live="polite"></span>
-    <input data-repro-link aria-label="Repro link" readonly hidden>
-  </div>{{ end }}
   <div class="playground-panes">
     <section class="playground-pane">
       <h2 id="{{ $prefix }}flix-input-label">Flix input</h2>
@@ -50,12 +51,9 @@
     <section class="playground-pane">
       <div class="playground-preview-header">
         <h2 id="{{ $prefix }}flix-output-label">Preview</h2>
-        <div class="playground-preview-controls">
-          <div class="playground-preview-modes" role="group" aria-label="Preview mode">
-            <button type="button" data-preview-mode="formatted" aria-controls="{{ $prefix }}flix-output" aria-pressed="true">Formatted</button>
-            <button type="button" data-preview-mode="diff" aria-controls="{{ $prefix }}flix-diff" aria-pressed="false">Diff</button>
-          </div>
-          <label class="playground-sync-scroll"><input type="checkbox" data-sync-scroll> Sync scroll</label>
+        <div class="playground-preview-modes" role="group" aria-label="Preview mode">
+          <button type="button" data-preview-mode="formatted" aria-controls="{{ $prefix }}flix-output" aria-pressed="true">Formatted</button>
+          <button type="button" data-preview-mode="diff" aria-controls="{{ $prefix }}flix-diff" aria-pressed="false">Diff</button>
         </div>
       </div>
       <div id="{{ $prefix }}flix-output" class="playground-editor" data-output></div>
