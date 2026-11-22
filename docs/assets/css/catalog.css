@@ -8,6 +8,7 @@
   --link: light-dark(#1953a2, #9cc7ff);
   --code-background: light-dark(#fff, #1e1e1e);
   --code-foreground: light-dark(#000, #d4d4d4);
+  --code-column-guide: light-dark(#dce2eb, #434b58);
   --catalog-width: min(104rem, calc(100% - 2 * clamp(1rem, 2vw, 2rem)));
 }
 :root[data-theme="light"] { color-scheme: light; }
@@ -180,7 +181,15 @@ pre.shiki {
 :is(.playground-editor .cm-editor, .playground-diff) { height: clamp(24rem, 61vh, 52rem); }
 .playground-editor, .playground-diff { background: var(--code-background); color: var(--code-foreground); }
 .playground-editor .cm-scroller { font: 0.875rem/1.55 ui-monospace, monospace; }
-.playground-editor .cm-content { padding-block: 0.55rem; }
+.playground-editor { --playground-code-inset: 6px; }
+.playground-editor .cm-line { padding-inline-start: var(--playground-code-inset); }
+.playground-editor .cm-content {
+  padding-block: 0.55rem;
+  background-image: linear-gradient(var(--code-column-guide), var(--code-column-guide));
+  background-repeat: no-repeat;
+  background-size: 1px 100%;
+  background-position: var(--playground-guide-position, -1px) 0;
+}
 .playground-editor .cm-gutters { background: var(--surface); color: var(--foreground); border-color: var(--border); }
 .playground-editor .cm-lineNumbers .cm-gutterElement { min-width: 2.4em; }
 .playground-editor .flix-token, .playground-diff .flix-token {
