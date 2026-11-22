@@ -45,8 +45,12 @@ function runHugo({ destination, baseURL: url, flixDocVersion }) {
             ],
             { stdio: "inherit", cwd: docs, env: process.env },
         );
+        if (result.error) {
+            throw new Error(`Could not start Hugo for ${url}: ${result.error.message}`, { cause: result.error });
+        }
         if (result.status !== 0) {
-            throw new Error(`hugo failed for ${url} (exit ${result.status ?? "signal"})`);
+            const reason = result.signal ? `signal ${result.signal}` : `exit ${result.status}`;
+            throw new Error(`Hugo failed for ${url} (${reason})`);
         }
     } finally {
         rmSync(fragmentPath, { force: true });

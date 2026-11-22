@@ -1,7 +1,7 @@
+/.hugo_build.lock
 /data/fixtures.json
 /data/formattingHighlight.json
-/data/playgroundFixtures.json
 /data/playground.json
-/.hugo_build.lock
-.hugo-flix-version.toml
+/data/playgroundFixtures.json
 /public/
+/.hugo-flix-version.toml

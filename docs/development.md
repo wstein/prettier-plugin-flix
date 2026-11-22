@@ -109,16 +109,18 @@ For layout decisions, prefer the [Flix language documentation](https://doc.flix.
 
 ## Versioned fixture documentation
 
-The Pages site keeps stable root URLs (`/formatting/`, `/playground/`, …) and
+The Pages site keeps stable root URLs such as `/formatting/` and `/playground/` and
 also publishes the same catalog under `/flix/<exact-version>/`, aligned with
 `flixVersion` / [`src/flix-version.ts`](../src/flix-version.ts). `npm run docs:build`
-runs one Hugo build per versioned tree (today: `0.80.0`) plus the root build,
-then merges them into `docs/public` for a single Pages deploy. Each build sets
-`params.flixDocVersion` so embedded editors and the Playground default to that
-pin; search and chapter links use that build’s `baseURL`, so they stay inside the
-version catalog. When another tested pin should get its own tree, add it to
-`scripts/build-docs-site.mjs` and introduce a version switcher; until then root
-URLs remain the primary entry points.
+runs one Hugo build for the root and one for each versioned catalog (currently
+`0.80.0`). It stages the results in the system temporary directory. Once all builds
+succeed, it assembles them in `docs/public` for a single Pages deploy. Each
+build sets `params.flixDocVersion` so embedded editors and the Playground
+default to that pin. Search and chapter links use the build's `baseURL` to
+stay inside the catalog. Each catalog has its own `sitemap.xml`. The root
+sitemap covers the root catalog. Add new tested pins to
+`scripts/build-docs-site.mjs` when they need their own catalog. Root URLs
+serve as the primary entry points until a version switcher is available.
 
 ## Verify the Playground in Chromium
 
