@@ -60,6 +60,22 @@ Add the plugin to your `.prettierrc.json`.
 current default (`0.80.0`). Supported values are `0.79.0` and `0.80.0`;
 unsupported values fail with a clear error. The CLI flag is `--flix-version`.
 
+Projects that pin different Flix compilers in one repository can override the
+version per path:
+
+```json
+{
+  "plugins": ["prettier-plugin-flix"],
+  "flixVersion": "0.80.0",
+  "overrides": [
+    {
+      "files": ["legacy/**/*.flix"],
+      "options": { "flixVersion": "0.79.0" }
+    }
+  ]
+}
+```
+
 Run this against a file in your project.
 
 ```sh
