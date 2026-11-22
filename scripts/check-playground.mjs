@@ -5,7 +5,7 @@ import { basename } from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadFixture, optionsFor } from "../test/fixture.mjs";
 import { readHandoff, writeHandoff } from "../docs/assets/js/playground-link.js";
-import { sourceReference } from "../docs/assets/js/playground-source.js";
+import { fetchSource, sourceReference } from "../docs/assets/js/playground-source.js";
 import { playgroundIndentation } from "../docs/assets/js/playground-options.js";
 import { fingerprint, fmt, programProblems } from "../test/lib.mjs";
 
@@ -242,6 +242,56 @@ test("source metadata round-trips with or without a code snapshot", () => {
     assert.equal(sourceReference("https://github.com@other.invalid/x"), undefined);
     assert.equal(sourceReference("javascript:alert(1)"), undefined);
     assert.equal(sourceReference(sourceUrl, "172-168").sourceLines, undefined);
+});
+
+test("GitHub import rejects ambiguous or unpinned source URLs", () => {
+    const sha = "fe909c20c7213088b72578a4f97f6e6f05f091ff";
+    const raw = "https://raw.githubusercontent.com";
+    const blob = "https://github.com";
+    const file = "main/src/library/Fixpoint3/Boxable.flix";
+    const cases = [
+        [`${raw}/flix/flix/${sha.slice(0, 7)}/${file}`, "short SHA"],
+        [`${blob}/flix/flix/blob/${sha.slice(0, 7)}/${file}`, "short SHA on blob URL"],
+        [`https://example.raw.githubusercontent.com/flix/flix/${sha}/${file}`, "Raw subdomain"],
+        [`https://example.github.com/flix/flix/blob/${sha}/${file}`, "GitHub subdomain"],
+        [`${raw}/flix/flix/${sha}/${file}?ref=main`, "query"],
+        [`${raw}:8443/flix/flix/${sha}/${file}`, "nonstandard port"],
+        [`${raw}/fl%2Fix/flix/${sha}/${file}`, "encoded owner separator"],
+        [`${raw}/flix/flix%2Fmain/${sha}/${file}`, "encoded repository slash"],
+        [`${blob}/flix/flix%5Cmain/blob/${sha}/${file}`, "encoded repository backslash"],
+        [`${raw}/flix/flix/${sha}/main%2FBoxable.flix`, "encoded file slash"],
+        [`${raw}/flix/flix/${sha}/main%5cBoxable.flix`, "encoded file backslash"],
+    ];
+    for (const [url, reason] of cases) {
+        const reference = sourceReference(url);
+        assert.ok(reference, reason + " remains linkable as a reference");
+        assert.equal(reference.downloadUrl, undefined, reason);
+    }
+});
+
+test("source fetch rejects redirects and bounds streamed file size", async (t) => {
+    const url = "https://raw.githubusercontent.com/flix/flix/fe909c20c7213088b72578a4f97f6e6f05f091ff/main/src/library/Fixpoint3/Boxable.flix";
+    const limit = 1024 * 1024;
+    const fetch = t.mock.method(globalThis, "fetch", async (_url, options) => {
+        if (options.redirect === "error") throw new TypeError("Redirect rejected");
+        return new Response("redirected source");
+    });
+    await assert.rejects(fetchSource(url), /Redirect rejected/);
+    assert.equal(fetch.mock.calls[0].arguments[0], url);
+
+    const chunk = new Uint8Array(limit / 2).fill(120);
+    function file(chunks) {
+        return new Response(new ReadableStream({
+            pull(controller) {
+                if (chunks.length) controller.enqueue(chunks.shift());
+                else controller.close();
+            },
+        }));
+    }
+    fetch.mock.mockImplementation(async () => file([chunk, chunk]));
+    assert.equal((await fetchSource(url)).length, limit);
+    fetch.mock.mockImplementation(async () => file([chunk, chunk, Uint8Array.of(120)]));
+    await assert.rejects(fetchSource(url), /exceeds 1 MiB/);
 });
 
 test("the published formatter and preview honor flixVersion", async () => {
