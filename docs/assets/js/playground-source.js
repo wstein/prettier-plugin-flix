@@ -1,4 +1,5 @@
 const commitHash = /^[0-9a-f]{40}$/i;
+const repositorySegment = /^[a-z0-9_.-]+$/i;
 
 function parseLines(value) {
     const match = /^(\d+)(?:-(\d+))?$/.exec(value ?? "");
@@ -23,7 +24,9 @@ export function sourceReference(value, lines) {
         const blob = url.hostname === "github.com" && kind === "blob" && commitHash.test(commit);
         const revision = raw ? kind : commit;
         const path = raw ? parts.slice(3) : file;
-        const github = !url.port && (raw || blob) && owner && repository && path.length && path.every(Boolean);
+        const github = !url.port && (raw || blob) &&
+            repositorySegment.test(owner ?? "") && repositorySegment.test(repository ?? "") &&
+            path.length && path.every(Boolean);
         const filename = decodeURIComponent(parts.at(-1) || url.hostname);
         let href = url.href;
         let downloadUrl;
