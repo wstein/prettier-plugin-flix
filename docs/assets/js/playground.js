@@ -5,6 +5,7 @@ import { readHandoff, writeHandoff } from "./playground-link.js";
 import { playgroundDefaultFlixVersion, playgroundIndentation } from "./playground-options.js";
 import { requestFormat } from "./playground-requests.js";
 import { linkEditorScroll } from "./playground-scroll.js";
+import { sourceReference } from "./playground-source.js";
 
 let highlighterPromise;
 let nextRequest = 0;
@@ -200,6 +201,63 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
             printWidth: printWidth.validity.valid ? printWidth.valueAsNumber : defaultWidth,
             flixVersion: flixVersion?.value || defaultFlixVersion,
         };
+    }
+
+    const sourceForm = playground.querySelector("[data-source-reference]");
+    if (sourceForm) {
+        const original = playground.querySelector("[data-original-source]");
+        const sourceStatus = playground.querySelector("[data-source-status]");
+        const reproLink = playground.querySelector("[data-repro-link]");
+        const urlField = sourceForm.elements.namedItem("sourceUrl");
+        const linesField = sourceForm.elements.namedItem("sourceLines");
+        let reference;
+
+        function setReference(next) {
+            reference = next;
+            urlField.value = next?.sourceUrl ?? "";
+            linesField.value = next?.sourceLines ?? "";
+            original.hidden = !next;
+            sourceStatus.textContent = "";
+            reproLink.hidden = true;
+            if (next) {
+                original.href = next.href;
+                const suffix = next.sourceLines ? ":" + next.sourceLines.replace("-", "–") : "";
+                original.textContent = `Original · ${next.filename}${suffix}`;
+            } else original.removeAttribute("href");
+        }
+
+        setReference(sourceReference(initial?.sourceUrl, initial?.sourceLines));
+        sourceForm.addEventListener("submit", (event) => {
+            event.preventDefault();
+            const next = sourceReference(urlField.value, linesField.value);
+            if (urlField.value && !next) {
+                sourceStatus.textContent = "Enter an HTTPS source URL without credentials.";
+                return;
+            }
+            if (next && linesField.value && !next.sourceLines) {
+                sourceStatus.textContent = "Enter a line number or a range such as 168-172.";
+                return;
+            }
+            setReference(next);
+        });
+
+        playground.querySelector("[data-copy-repro]").addEventListener("click", async () => {
+            const link = new URL(location.href);
+            link.searchParams.delete("fixture");
+            link.searchParams.delete("variant");
+            const url = writeHandoff(link, { ...snapshot(), ...reference });
+            reproLink.hidden = true;
+            try {
+                await navigator.clipboard.writeText(url);
+                sourceStatus.textContent = "Repro link copied.";
+            } catch {
+                reproLink.value = url;
+                reproLink.hidden = false;
+                reproLink.select();
+                sourceStatus.textContent = "Copy the selected repro link.";
+            }
+        });
+        select.addEventListener("change", () => setReference(undefined));
     }
 
     select?.addEventListener("change", () => useExample(select.value));

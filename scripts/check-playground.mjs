@@ -218,7 +218,7 @@ test("the Playground handoff preserves Unicode source, line width, and Flix vers
     assert.equal(new URLSearchParams(unconfigured.hash.slice(1)).has("flixVersion"), false);
     assert.deepEqual(readHandoff(unconfigured.hash), { source: draft.source, printWidth: undefined, flixVersion: undefined });
     const defaultVersion = new URL(writeHandoff(url.href, { source: draft.source, flixVersion: "0.80.0" }));
-    assert.deepEqual(readHandoff(defaultVersion.hash), { source: draft.source, printWidth: undefined, flixVersion: undefined });
+    assert.deepEqual(readHandoff(defaultVersion.hash), { source: draft.source, printWidth: undefined, flixVersion: "0.80.0" });
     assert.equal(readHandoff("#code=%21"), undefined);
 });
 
