@@ -5,6 +5,7 @@ import { basename } from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadFixture, optionsFor } from "../test/fixture.mjs";
 import { readHandoff, writeHandoff } from "../docs/assets/js/playground-link.js";
+import { sourceReference } from "../docs/assets/js/playground-source.js";
 import { playgroundIndentation } from "../docs/assets/js/playground-options.js";
 import { fingerprint, fmt, programProblems } from "../test/lib.mjs";
 
@@ -220,6 +221,27 @@ test("the Playground handoff preserves Unicode source, line width, and Flix vers
     const defaultVersion = new URL(writeHandoff(url.href, { source: draft.source, flixVersion: "0.80.0" }));
     assert.deepEqual(readHandoff(defaultVersion.hash), { source: draft.source, printWidth: undefined, flixVersion: "0.80.0" });
     assert.equal(readHandoff("#code=%21"), undefined);
+});
+
+test("source metadata round-trips with or without a code snapshot", () => {
+    const sourceUrl = "https://raw.githubusercontent.com/flix/flix/fe909c20c7213088b72578a4f97f6e6f05f091ff/main/src/library/Fixpoint3/Boxable.flix";
+    const draft = { sourceUrl, sourceLines: "168-172", printWidth: 60, flixVersion: "0.80.0" };
+    const url = new URL(writeHandoff("https://example.test/playground/", draft));
+    assert.equal(new URLSearchParams(url.hash.slice(1)).has("code"), false);
+    assert.deepEqual(readHandoff(url.hash), { source: undefined, ...draft });
+    const snapshot = new URL(writeHandoff(url.href, { ...draft, source: 'def x(): String = "Zürich"' }));
+    assert.deepEqual(readHandoff(snapshot.hash), { source: 'def x(): String = "Zürich"', ...draft });
+    const reference = sourceReference(sourceUrl, draft.sourceLines);
+    assert.match(reference.href, /github\.com\/flix\/flix\/blob\/.+Boxable\.flix#L168-L172$/);
+    assert.equal(reference.downloadUrl, sourceUrl);
+    assert.equal(sourceReference(reference.href).downloadUrl, sourceUrl);
+    assert.equal(sourceReference(reference.href).sourceLines, "168-172");
+    assert.equal(sourceReference("https://example.test/Boxable.flix").downloadUrl, undefined);
+    assert.equal(sourceReference("https://github.com/flix/flix/blob/main/Boxable.flix").downloadUrl, undefined);
+    assert.equal(sourceReference("https://raw.githubusercontent.com/flix/flix@other.invalid/x").downloadUrl, undefined);
+    assert.equal(sourceReference("https://github.com@other.invalid/x"), undefined);
+    assert.equal(sourceReference("javascript:alert(1)"), undefined);
+    assert.equal(sourceReference(sourceUrl, "172-168").sourceLines, undefined);
 });
 
 test("the published formatter and preview honor flixVersion", async () => {
