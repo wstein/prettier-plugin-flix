@@ -8,7 +8,7 @@ import test from "node:test";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 
-test("TypeScript consumers can import the plugin and recoverFormatting from the packed tarball", () => {
+test("TypeScript consumers can import the plugin and format both Flix pins from the packed tarball", () => {
     const work = mkdtempSync(join(tmpdir(), "prettier-plugin-flix-types-"));
     try {
         const packDir = join(work, "pack");
@@ -70,6 +70,36 @@ test("TypeScript consumers can import the plugin and recoverFormatting from the 
                 "",
             ].join("\n"),
         );
+        writeFileSync(
+            join(consumerDir, "format-both.mjs"),
+            [
+                'import assert from "node:assert/strict";',
+                'import { format } from "prettier";',
+                'import plugin from "prettier-plugin-flix";',
+                "",
+                "const shared = \"def f(): Int32 = 1\\n\";",
+                "const for79 = \"def val(): Int32 = 1\\n\";",
+                "const for80 = \"val n: Int32 = 1\\n\";",
+                "",
+                "const out80 = await format(shared, { parser: \"flix\", plugins: [plugin], flixVersion: \"0.80.0\" });",
+                "const out79 = await format(shared, { parser: \"flix\", plugins: [plugin], flixVersion: \"0.79.0\" });",
+                "assert.equal(out80, \"def f(): Int32 = 1\\n\");",
+                "assert.equal(out79, \"def f(): Int32 = 1\\n\");",
+                "assert.equal(",
+                "    await format(for80, { parser: \"flix\", plugins: [plugin], flixVersion: \"0.80.0\" }),",
+                "    \"val n: Int32 = 1\\n\",",
+                ");",
+                "assert.equal(",
+                "    await format(for79, { parser: \"flix\", plugins: [plugin], flixVersion: \"0.79.0\" }),",
+                "    \"def val(): Int32 = 1\\n\",",
+                ");",
+                "await assert.rejects(",
+                "    () => format(for80, { parser: \"flix\", plugins: [plugin], flixVersion: \"0.79.0\" }),",
+                "    (err) => err instanceof SyntaxError,",
+                ");",
+                "",
+            ].join("\n"),
+        );
 
         execFileSync(
             "npm",
@@ -84,6 +114,7 @@ test("TypeScript consumers can import the plugin and recoverFormatting from the 
             { cwd: consumerDir, stdio: "pipe" },
         );
         execFileSync("npx", ["tsc", "--project", "tsconfig.json"], { cwd: consumerDir, stdio: "pipe" });
+        execFileSync("node", ["format-both.mjs"], { cwd: consumerDir, stdio: "pipe" });
     } finally {
         rmSync(work, { recursive: true, force: true });
     }

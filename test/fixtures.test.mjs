@@ -17,7 +17,7 @@ for (const path of findFixtures(root)) {
 
     test(`${name}: ${meta.title}`, async () => {
         if (meta.status === "error") {
-            await assert.rejects(fmt(input.code), (e) => {
+            await assert.rejects(fmt(input.code, meta.options ?? {}), (e) => {
                 assert.ok(e instanceof SyntaxError, "expected a SyntaxError");
                 if (meta.message) assert.match(e.message, new RegExp(meta.message));
                 return true;
@@ -25,15 +25,20 @@ for (const path of findFixtures(root)) {
             return;
         }
 
-        const before = fingerprint(input.code);
-        assert.deepEqual(before.errors, [], "the Input block must parse");
         const actual = [];
         for (const block of outputs) {
             const options = optionsFor(fixture, block);
+            const version = options.flixVersion;
+            const before = fingerprint(input.code, version);
+            assert.deepEqual(before.errors, [], "the Input block must parse");
             const out = await fmt(input.code, options);
             actual.push(out);
             const label = `${name} (${JSON.stringify(options)})`;
-            assert.deepEqual(programProblems(before, fingerprint(out)), [], `${label}: the formatter must not change the program`);
+            assert.deepEqual(
+                programProblems(before, fingerprint(out, version)),
+                [],
+                `${label}: the formatter must not change the program`,
+            );
             assert.equal(await fmt(out, options), out, `${label}: formatting the output again must change nothing`);
         }
 

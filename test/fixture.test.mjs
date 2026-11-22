@@ -51,6 +51,7 @@ rejects("missing title", sample('flix: "0.80"', ""), /non-empty title/);
 rejects("unquoted flix version", sample("title: a\nflix: 0.80", ""), /quoted major\.minor/);
 rejects("bad status", sample('title: a\nflix: "0.80"\nstatus: maybe', ""), /status must be one of/);
 rejects("unknown option", sample('title: a\nflix: "0.80"\noptions: { semi: true }', ""), /unknown option "semi"/);
+rejects("non-exact flixVersion in options", sample('title: a\nflix: "0.80"\noptions: { flixVersion: "0.79" }', ""), /exact Flix version/);
 const withOptions = (value) => sample(`title: a\nflix: "0.80"\noptions: ${value}`, "");
 rejects("scalar options", withOptions("42"), /"options" must be a mapping/);
 rejects("sequence options", withOptions("[]"), /"options" must be a mapping/);
@@ -75,11 +76,18 @@ rejects("negative width", withInfo("printWidth=-4"), /positive integer/);
 rejects("empty value", withInfo("printWidth="), /positive integer, found ""/);
 rejects("duplicate option", withInfo("printWidth=30 printWidth=60"), /duplicate option "printWidth"/);
 rejects("unknown inline option", withInfo("semi=true"), /unknown option "semi"/);
+rejects("non-exact inline flixVersion", withInfo("flixVersion=0.79"), /exact Flix version/);
 
 test("accepts literal booleans and integers inline", () => {
     const f = parseFixture(withInfo("useTabs=true tabWidth=8 printWidth=100"));
     assert.deepEqual(f.outputs[1].options, { useTabs: true, tabWidth: 8, printWidth: 100 });
     assert.deepEqual(parseFixture(withInfo("useTabs=false")).outputs[1].options, { useTabs: false });
+});
+
+test("accepts exact flixVersion inline and in front matter", () => {
+    assert.deepEqual(parseFixture(withInfo("flixVersion=0.79.0")).outputs[1].options, { flixVersion: "0.79.0" });
+    const f = parseFixture(sample('title: a\nflix: "0.79"\noptions: { flixVersion: "0.79.0" }', `## Input\n\n${fence}flix\nx\n${fence}\n\n## Output\n\n${fence}flix\nx\n${fence}\n`));
+    assert.deepEqual(f.meta.options, { flixVersion: "0.79.0" });
 });
 
 test("parses CRLF fixtures like LF fixtures", () => {

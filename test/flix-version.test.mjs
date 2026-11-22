@@ -11,7 +11,7 @@ import {
     resolveFlixVersion,
 } from "../dist/index.js";
 import { parseFlix } from "../dist/parse.js";
-import { fmt } from "./lib.mjs";
+import { fingerprint, fmt, programProblems } from "./lib.mjs";
 
 const sample = "def f(): Int32 = 1\n";
 const moduleVal = "val n: Int32 = 1\n";
@@ -123,8 +123,26 @@ test("recoverFormatting validates flixVersion and uses the selected grammar", as
     const layout79 = { printWidth: 80, tabWidth: 4, useTabs: false, flixVersion: "0.79.0" };
     assert.equal(await recoverFormatting("def f():Int32=1\n", layout80, fmt), "def f(): Int32 = 1\n");
     assert.equal(await recoverFormatting("def f():Int32=1\n", layout79, fmt), "def f(): Int32 = 1\n");
+    // A broken span is left verbatim; a later complete def still formats under 0.79.
+    const partial79 = "def ok(): Int32 = 1\n@@@\ndef later():Int32=2\n";
+    const recovered79 = await recoverFormatting(partial79, layout79, (source) => fmt(source, { flixVersion: "0.79.0" }));
+    assert.match(recovered79 ?? "", /def ok\(\): Int32 = 1/);
+    assert.match(recovered79 ?? "", /@@@/);
+    assert.match(recovered79 ?? "", /def later\(\): Int32 = 2/);
     await assert.rejects(
         () => recoverFormatting("def f():Int32=1\n", { ...layout80, flixVersion: "0.78.0" }, fmt),
         /Unsupported flixVersion "0\.78\.0"\. Supported: 0\.79\.0, 0\.80\.0\./,
     );
+});
+
+test("fingerprint preserves tokens and tree shape under flixVersion 0.79.0", async () => {
+    const source = "def val(): Int32 = 1 + 2\n";
+    const formatted = await fmt(source, { flixVersion: "0.79.0" });
+    assert.equal(formatted, "def val(): Int32 = 1 + 2\n");
+    const before = fingerprint(source, "0.79.0");
+    const after = fingerprint(formatted, "0.79.0");
+    assert.deepEqual(before.errors, []);
+    assert.deepEqual(programProblems(before, after), []);
+    // Default fingerprint uses 0.80 and rejects `val` as a name.
+    assert.notEqual(fingerprint(source).errors.length, 0);
 });
