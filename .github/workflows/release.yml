@@ -31,7 +31,7 @@ jobs:
       version: ${{ steps.package.outputs.version }}
       commit: ${{ steps.package.outputs.commit }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -44,7 +44,7 @@ jobs:
             exit 1
           fi
           git checkout --detach "$SOURCE_COMMIT"
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -211,7 +211,7 @@ jobs:
         with:
           name: plugin-package
           path: ${{ runner.temp }}/package
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org

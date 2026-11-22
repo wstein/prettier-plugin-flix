@@ -11,14 +11,14 @@ jobs:
   corpus:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
+      - uses: actions/checkout@v5
         with:
           repository: wstein/flix-spec
           # Keep equal to FLIX_SPEC_REF in flix-corpora.yml.
           ref: 34630fe87450c0c2d52c4543b68de97c99a46920
           path: flix-spec
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
