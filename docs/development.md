@@ -189,8 +189,8 @@ invalid options. The pair test has no known-failure list: every failure fails th
 
 `npm run review:kinds` (`scripts/comment-kinds-report.mjs`) is the detector behind that report. It names the kind
 of each comment (attached before or after a token; own line, line start, line end or inline) in the source, in pass 1
-and in pass 2, and counts every change of kind over the repository inputs (`--sites` adds comment-site variants,
-`--widths` sets the widths). It exits 0 when every run is idempotent, 1 when one is not and 2 for invalid options or an unreadable path;
+and in pass 2, and counts every change of kind over the repository inputs (`--sites` adds comment-site variants at widths 40, 60 and 100,
+`--widths` sets the widths). It exits 0 when every run is idempotent, 1 when one is not and 2 for invalid options, an unreadable path or an error while formatting (the formatter throws);
 `--help` prints the usage and runs nothing. `--every <n>` (default 6) samples the site variants. Both tools call the built plugin in `dist/`; they
 change no formatter code.
 

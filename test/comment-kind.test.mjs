@@ -109,6 +109,30 @@ test("report with --sites adds the comment-site variants, sampled by --every", a
     assert.ok(runs(sites) > runs(sparse) && runs(sparse) > runs(plain), `${runs(plain)} ${runs(sparse)} ${runs(sites)}`);
 });
 
+const runsOf = (r) => Number(/^runs (\d+),/.exec(r.lines[0])[1]);
+
+test("report widths: eight by default for inputs, three for site variants, --widths for both", async () => {
+    assert.equal(runsOf(await run([])), 8); // 40,50,60,70,80,100,120,160
+    assert.equal(runsOf(await run(["--widths", "60"])), 1);
+    assert.equal(runsOf(await run(["--widths", "60,80"])), 2);
+    // 111 variants parse at each width; without --widths the variants use 40,60,100 and the inputs the eight widths.
+    assert.equal(runsOf(await run(["--sites", "--every", "1", "--widths", "60"])), 1 + 111);
+    assert.equal(runsOf(await run(["--sites", "--every", "1", "--widths", "60,80"])), 2 + 2 * 111);
+    assert.equal(runsOf(await run(["--sites", "--every", "1"])), 8 + 3 * 111);
+});
+
+test("report lists the classes by count, highest first", async () => {
+    const { lines } = await run(["--sites", "--every", "1", "--widths", "60"]);
+    const counts = lines.slice(1, -1).map((l) => Number(/^ *(\d+) /.exec(l)[1]));
+    assert.ok(counts.length >= 2, lines.join("\n"));
+    assert.deepEqual(counts, [...counts].sort((a, b) => b - a));
+    assert.ok(counts[0] > counts.at(-1));
+});
+
+test("report passes a formatter error on instead of counting it", async () => {
+    await assert.rejects(runKindsReport(parseKindsArgs(["--widths", "60"]), { format: () => { throw new Error("boom"); }, inputs: REPORT_INPUTS, log: () => {} }), /boom/);
+});
+
 test("report counts runs that are not idempotent and exits 1", async () => {
     const toggle = (text) => (text.includes("/* a */\n") ? text.replace(/\/\* a \*\/\s+\+/, "/* a */ +") : text.replace(/\/\* a \*\/\s+\+/, "/* a */\n    +"));
     const { code, lines } = await run(["--widths", "80"], toggle, [{ name: "t.flix", source: "def f(): Int32 = 1 /* a */ + 2\n" }]);
@@ -126,6 +150,7 @@ test("report skips inputs that do not parse", async () => {
 test("report arguments: defaults and errors", () => {
     const d = parseKindsArgs([]);
     assert.deepEqual([d.every, d.sites, d.widths, d.repo, d.help], [6, false, undefined, true, undefined]);
+    assert.equal(parseKindsArgs(["-h"]).help, true);
     const o = parseKindsArgs(["--sites", "--every", "3", "--widths", "40,60", "--no-repo", "--json", "o.json", "p.flix", "--help"]);
     assert.deepEqual([o.every, o.sites, o.widths, o.repo, o.json, o.paths, o.help], [3, true, [40, 60], false, "o.json", ["p.flix"], true]);
     for (const [argv, re] of [[["--widths", "x"], /--widths expects/], [["--widths", "0"], /--widths expects/], [["--every", "0"], /--every expects/], [["--every", "x"], /--every expects/], [["--bogus"], /unknown option/], [["--json"], /needs a value/]]) {
