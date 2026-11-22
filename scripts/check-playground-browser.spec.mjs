@@ -185,6 +185,72 @@ test("both editors move their column guide with the configured width and horizon
     for (const editor of editors) await expect(editor).toHaveCSS("background-position-x", "-1px");
 });
 
+test("sync scroll follows matching code in both directions across formatting changes", async ({ page }) => {
+    await page.setViewportSize({ width: 1450, height: 850 });
+    await page.goto(siteUrl + "playground/");
+    await expect(page.getByLabel("Example")).toBeEnabled();
+    const input = page.getByRole("textbox", { name: "Flix input" });
+    const preview = page.getByRole("textbox", { name: "Preview" });
+    const toggle = page.getByRole("checkbox", { name: "Sync scroll" });
+    const status = page.locator("[data-full-playground]").getByRole("status", { includeHidden: true });
+    const lines = [
+        ...Array.from({ length: 10 }, (_, i) =>
+            `def prep${i}(): Int32 = { let first = ${i}; let second = 1; first + second }`),
+        ...Array.from({ length: 60 }, (_, i) => `def checkpoint${i}(): Int32 = ${i}`),
+    ];
+    await input.fill(lines.join("\n") + "\n");
+    await expect(status).toHaveText("");
+    const scrollTop = (editor) => editor.evaluate((content) => content.closest(".cm-scroller").scrollTop);
+    const topLine = (editor) => editor.evaluate((content) => {
+        const top = content.closest(".cm-scroller").getBoundingClientRect().top;
+        return [...content.querySelectorAll(".cm-line")]
+            .find((line) => line.getBoundingClientRect().bottom > top + 2)?.textContent;
+    });
+    const scrollBeforeLine = (editor, lineIndex) => editor.evaluate((content, index) => {
+        const line = content.querySelector(".cm-line");
+        const padding = parseFloat(getComputedStyle(content).paddingTop);
+        content.closest(".cm-scroller").scrollTop = padding + index * line.getBoundingClientRect().height + 2;
+    }, lineIndex);
+
+    await expect(toggle).not.toBeChecked();
+    await scrollBeforeLine(preview, 0);
+    await scrollBeforeLine(input, 18);
+    await expect.poll(() => topLine(input)).toBe(lines[18]);
+    await expect.poll(() => topLine(preview)).toBe("def prep0(): Int32 = {");
+
+    await toggle.check();
+    await expect.poll(() => topLine(preview)).toBe(lines[18]);
+    expect(await scrollTop(preview)).toBeGreaterThan(await scrollTop(input) + 150);
+
+    await scrollBeforeLine(input, 22);
+    await expect.poll(() => topLine(preview)).toBe(lines[22]);
+    await preview.evaluate((content, target) => {
+        const line = [...content.querySelectorAll(".cm-line")].find((line) => line.textContent === target);
+        const scroller = content.closest(".cm-scroller");
+        scroller.scrollTop += line.getBoundingClientRect().top - scroller.getBoundingClientRect().top + 2;
+    }, lines[25]);
+    await expect.poll(() => topLine(input)).toBe(lines[25]);
+
+    await page.getByRole("button", { name: "Diff", exact: true }).click();
+    await expect(toggle).toBeDisabled();
+    await page.getByRole("button", { name: "Formatted", exact: true }).click();
+    await expect(toggle).toBeChecked();
+    await expect(toggle).toBeEnabled();
+
+    // Replacing the expanding prelude removes the line offset between editors.
+    const updated = lines.slice(10);
+    await input.fill(updated.join("\n") + "\n");
+    await expect(status).toHaveText("");
+    await scrollBeforeLine(input, 12);
+    await expect.poll(() => topLine(preview)).toBe(updated[12]);
+
+    await toggle.uncheck();
+    const previous = await scrollTop(preview);
+    await scrollBeforeLine(input, 20);
+    await expect.poll(() => topLine(input)).toBe(updated[20]);
+    expect(await scrollTop(preview)).toBe(previous);
+});
+
 test("the live preview keeps trailing comments, reports cursor selection, and recovers from a syntax error", async ({ page }) => {
     await page.goto(siteUrl + "playground/");
     const input = page.getByRole("textbox", { name: "Flix input" });
