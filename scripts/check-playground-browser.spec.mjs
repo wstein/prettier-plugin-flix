@@ -251,6 +251,82 @@ test("sync scroll follows matching code in both directions across formatting cha
     expect(await scrollTop(preview)).toBe(previous);
 });
 
+test("a shared repro keeps its code and original reference without fetching the source", async ({ page, context }) => {
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+    const raw = "https://raw.githubusercontent.com/flix/flix/fe909c20c7213088b72578a4f97f6e6f05f091ff/main/src/library/Fixpoint3/Boxable.flix";
+    const blob = raw.replace("raw.githubusercontent.com", "github.com").replace("/flix/flix/", "/flix/flix/blob/");
+    let requests = 0;
+    await page.route(raw, (route) => {
+        requests++;
+        return route.abort();
+    });
+    await page.goto(siteUrl + "playground/");
+    await expect(page.getByLabel("Example")).toBeEnabled();
+    const input = page.getByRole("textbox", { name: "Flix input" });
+    const repro = 'def demo(): String = "Grüße"';
+    await input.fill(repro);
+    await page.getByLabel("Line width").fill("60");
+    await page.getByLabel("Flix version").selectOption("0.79.0");
+    await page.getByText("Source", { exact: true }).click();
+    await page.getByLabel("Source URL").fill(blob + "#L168-L172");
+    await page.getByRole("button", { name: "Set source" }).click();
+    const original = page.getByRole("link", { name: "Original · Boxable.flix:168–172" });
+    await expect(original).toHaveAttribute("href", blob + "#L168-L172");
+    await page.getByRole("button", { name: "Copy repro link" }).click();
+    await expect(page.getByText("Repro link copied.")).toBeVisible();
+    const shared = await page.evaluate(() => navigator.clipboard.readText());
+    await page.goto(shared);
+    await page.reload();
+    await expect(input).toHaveText(repro);
+    await expect(page.getByLabel("Example")).toHaveValue("");
+    await expect(page.getByLabel("Line width")).toHaveValue("60");
+    await expect(page.getByLabel("Flix version")).toHaveValue("0.79.0");
+    await expect(original).toBeVisible();
+    expect(requests).toBe(0);
+});
+
+test("a source-only link loads a complete pinned file on request and selects its original lines", async ({ page, context }) => {
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+    const raw = "https://raw.githubusercontent.com/flix/flix/fe909c20c7213088b72578a4f97f6e6f05f091ff/main/src/library/Fixpoint3/Boxable.flix";
+    const lines = Array.from({ length: 200 }, (_, i) => `def original${i + 1}(): Int32 = ${i + 1}`);
+    let requests = 0;
+    await page.route(raw, (route) => {
+        requests++;
+        return route.fulfill(requests === 1
+            ? { status: 404, body: "Not found" }
+            : { contentType: "text/plain", body: lines.join("\n") + "\n" });
+    });
+    const params = new URLSearchParams({ sourceUrl: raw, sourceLines: "168-172", printWidth: "60" });
+    await page.goto(siteUrl + "playground/#" + params);
+    const input = page.getByRole("textbox", { name: "Flix input" });
+    const load = page.getByRole("button", { name: "Load source" });
+    await expect(input).toBeEmpty();
+    await expect(page.getByRole("link", { name: "Original · Boxable.flix:168–172" })).toBeVisible();
+    expect(requests).toBe(0);
+
+    await load.click();
+    await expect(page.getByText("Could not load source. GitHub returned HTTP 404.")).toBeVisible();
+    await expect(input).toBeEmpty();
+    await load.click();
+    await expect(page.getByText("Source loaded.")).toBeVisible();
+    await expect(page.locator("[data-cursor-position]")).toHaveText(/Ln 168, Col 1 · \d+ selected/);
+    await expect(input.locator(".cm-line").filter({ hasText: lines[167] })).toBeInViewport();
+    await input.press("ControlOrMeta+Home");
+    await expect(input).toContainText(lines[0]);
+    await input.press("ControlOrMeta+End");
+    await expect(input).toContainText(lines.at(-1));
+
+    await page.getByRole("button", { name: "Copy source link" }).click();
+    await expect(page.getByText("Source link copied.")).toBeVisible();
+    const shared = new URL(await page.evaluate(() => navigator.clipboard.readText()));
+    const fragment = new URLSearchParams(shared.hash.slice(1));
+    expect(fragment.has("code")).toBe(false);
+    expect(fragment.get("sourceUrl")).toBe(raw);
+    expect(fragment.get("sourceLines")).toBe("168-172");
+    expect(fragment.get("printWidth")).toBe("60");
+    expect(requests).toBe(2);
+});
+
 test("the live preview keeps trailing comments, reports cursor selection, and recovers from a syntax error", async ({ page }) => {
     await page.goto(siteUrl + "playground/");
     const input = page.getByRole("textbox", { name: "Flix input" });
