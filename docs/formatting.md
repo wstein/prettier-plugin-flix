@@ -270,6 +270,24 @@ declarations stay together, and an existing gap becomes one blank line,
 including next to braced bodies. Annotations and leading comments stay with
 their declaration. [Declaration spacing fixture](../test/fixtures/declarations/block-spacing.md)
 
+A blank line directly after the `{` of a `mod`, `trait`, `instance` or `enum`
+stays, and several become one. The formatter never adds one, and it keeps the
+blank line before a comment or Flixdoc that follows it. Flix does the same
+(`PrettyPrinter`, v0.80.0) and does not depend on the length of the block. The
+Flix standard library has 249 such blocks (179 `mod`, 21 `trait`, 49
+`instance`, no `enum`); `flix format` leaves all of them, and in the standard
+library no block length separates blocks with a blank line from those without
+(`mod`: 9 of 10 blocks of 6 to 15 lines, 70 % of blocks over 100 lines). A blank
+line before the closing `}` is still removed.
+[Blank line after the brace fixture](../test/fixtures/declarations/mod-blank-line-after-brace.md)
+
+```flix
+mod Shapes {
+
+    def area(): Int32 = 1
+}
+```
+
 In a `run { … } with` chain, keep the first `with` beside the closing brace,
 like `} else`. A long handler call wraps its arguments within the clause.
 If its single argument is itself a call, the closing parentheses can share
@@ -588,6 +606,10 @@ at width 80, 12944 at 100 and 8827 at 160. The main kinds at widths 80 and 160:
 This section describes the output. It does not change a rule and promises no
 match with `flix format`. The idempotence guarantee for `printWidth` of 40 or
 more (see [Supported print widths](#supported-print-widths)) is unchanged.
+
+The row about the blank line after `{` counts the plugin before the rule
+above: the plugin now keeps that blank line in `mod`, `trait`, `instance` and
+`enum` blocks and removes it elsewhere.
 
 ## Sources and limits
 
