@@ -270,6 +270,9 @@ test("a shared repro keeps its code and original reference without fetching the 
     const dialog = page.getByRole("dialog", { name: "Load from GitHub" });
     await open.click();
     await expect(dialog.getByLabel("Source URL")).toBeFocused();
+    await expect(dialog.getByRole("link", { name: "Boxable.flix permalink, lines 168–172" }))
+        .toHaveAttribute("href", blob + "#L168-L172");
+    await expect(dialog.getByRole("link", { name: "Boxable.flix Raw URL" })).toHaveAttribute("href", raw);
     await page.keyboard.press("Escape");
     await expect(dialog).toBeHidden();
     await expect(open).toBeFocused();

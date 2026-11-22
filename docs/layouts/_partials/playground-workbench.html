@@ -31,7 +31,14 @@
         <h2 id="source-dialog-title">Load from GitHub</h2>
         <form data-source-reference>
           <label>Source URL <input name="sourceUrl" type="url" required autofocus aria-describedby="source-dialog-help"></label>
-          <p id="source-dialog-help">Use a GitHub file permalink or Raw URL with a full commit SHA. A GitHub line anchor is optional.</p>
+          <p id="source-dialog-help">
+            Use a GitHub file permalink or Raw URL with a full commit SHA. A GitHub line anchor is optional.
+            Copy an example link into the field to try it.
+          </p>
+          <ul>
+            <li><a href="https://github.com/flix/flix/blob/fe909c20c7213088b72578a4f97f6e6f05f091ff/main/src/library/Fixpoint3/Boxable.flix#L168-L172" target="_blank" rel="noopener">Boxable.flix permalink, lines 168–172</a></li>
+            <li><a href="https://raw.githubusercontent.com/flix/flix/fe909c20c7213088b72578a4f97f6e6f05f091ff/main/src/library/Fixpoint3/Boxable.flix" target="_blank" rel="noopener">Boxable.flix Raw URL</a></li>
+          </ul>
           <div class="playground-source-actions">
             <button type="submit" value="load">Load</button>
             <button type="submit" value="attach">Attach as reference</button>
