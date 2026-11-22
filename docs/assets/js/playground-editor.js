@@ -71,6 +71,11 @@ export function createEditor(parent, onEdit, doc = "", onCursor, diagnosticId) {
 
     return {
         view,
+        setColumnGuide(width) {
+            const style = view.contentDOM.style;
+            if (width === undefined) style.removeProperty("--playground-guide-position");
+            else style.setProperty("--playground-guide-position", `calc(var(--playground-code-inset) + ${width}ch)`);
+        },
         markError(location, invalid = false) {
             const { doc } = view.state;
             const marks = [];

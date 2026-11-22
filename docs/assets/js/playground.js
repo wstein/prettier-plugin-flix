@@ -25,6 +25,10 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
     const flixVersion = playground.querySelector("[data-flix-version]");
     const defaultWidth = Number(printWidth.defaultValue);
     const defaultFlixVersion = flixVersion?.value || playgroundDefaultFlixVersion;
+    if (initial) {
+        printWidth.value = initial.printWidth ?? defaultWidth;
+        if (flixVersion) flixVersion.value = initial.flixVersion ?? defaultFlixVersion;
+    }
     const status = playground.querySelector(".playground-status");
     const cursorPosition = playground.querySelector("[data-cursor-position]");
     const copy = playground.querySelector(".playground-copy");
@@ -41,6 +45,13 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
 
     const input = createEditor(playground.querySelector("[data-input]"), queuePreview, initial?.source, showCursor, status.id);
     const output = createEditor(formatted, undefined, preview?.output);
+    updateColumnGuides();
+
+    function updateColumnGuides() {
+        const width = printWidth.validity.valid ? printWidth.valueAsNumber : undefined;
+        input.setColumnGuide(width);
+        output.setColumnGuide(width);
+    }
 
     function replaceCode(view, code) {
         if (view.state.doc.toString() !== code) {
@@ -169,6 +180,7 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
     function loadDraft({ source, printWidth: width = defaultWidth, flixVersion: version = defaultFlixVersion }) {
         printWidth.value = width;
         if (flixVersion) flixVersion.value = version;
+        updateColumnGuides();
         replaceCode(input.view, source);
         queuePreview();
     }
@@ -187,7 +199,10 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
         input.view.dispatch({ changes: { from: 0, to: input.view.state.doc.length, insert: "" } });
         input.view.focus();
     });
-    printWidth.addEventListener("input", queuePreview);
+    printWidth.addEventListener("input", () => {
+        updateColumnGuides();
+        queuePreview();
+    });
     flixVersion?.addEventListener("change", queuePreview);
 
     copy.addEventListener("click", async () => {
@@ -246,8 +261,6 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
     }
 
     if (initial) {
-        printWidth.value = initial.printWidth ?? defaultWidth;
-        if (flixVersion) flixVersion.value = initial.flixVersion ?? defaultFlixVersion;
         if (preview) copy.disabled = preview.output.length === 0;
         else queuePreview();
     }
