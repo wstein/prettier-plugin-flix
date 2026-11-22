@@ -55,13 +55,18 @@ function main(argv) {
     if (values.merge) {
         const files = positionals.length > 0 ? positionals : [];
         if (files.length === 0) throw new Error("--merge needs one or more shard JSON files");
+        if (values.base || values.candidate || values.audit) {
+            throw new Error("--merge cannot be combined with --base, --candidate, or --audit");
+        }
         const merged = mergeShardResults(files.map((f) => loadDoc(resolve(f))));
         const text = `${JSON.stringify(merged, null, 2)}\n`;
         if (values.out) writeFileSync(resolve(values.out), text);
         else process.stdout.write(text);
         return 0;
     }
-    // Allow a directory of shard-*.json via positional when neither base/candidate set? Keep simple.
+    if (positionals.length > 0) {
+        throw new Error(`unexpected arguments: ${positionals.join(" ")} (shard files go after --merge)`);
+    }
     const sweep = {
         base: values.base ? loadDoc(resolve(values.base)) : null,
         candidate: values.candidate ? loadDoc(resolve(values.candidate)) : null,

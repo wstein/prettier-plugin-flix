@@ -64,8 +64,9 @@ User-facing changes to Prettier Plugin for Flix. Plugin releases have their own 
   it is not a formal git trailer.
 - Document that `Protect main` still needs an admin-enabled required-check
   rule for `test` and Fixture documentation `build` ([#109](https://github.com/wstein/prettier-plugin-flix/issues/109)).
-- Export versioned sweep results (`review:sweep --export`) and publish a pull-request
-  review summary of new failures, fixed failures, and official-example layout changes
+- Export versioned sweep results (`review:sweep --export`) and summarize new/fixed failures
+  and official-example layout changes with `review:summary` (audit layout in the official-examples
+  job summary; sweep diffs when base/candidate exports are provided)
   ([#206](https://github.com/wstein/prettier-plugin-flix/issues/206)).
 - Report formatter timeouts separately from load failures and retry on the next edit. Associate syntax and line-width errors with their controls and give diff rows accessible line labels.
 - Pin the weekly upstream Flix corpus. Require a review reason for each new or changed official example layout diff in a pull request.
