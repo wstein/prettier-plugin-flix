@@ -76,3 +76,87 @@ test("comments are listed in source order", () => {
     assert.deepEqual(commentKinds("def f(): Int32 = 1 /* a */ + /* b */ 2 // c\n").map((k) => k.text), ["/* a */", "/* b */", "// c"]);
     assert.deepEqual(commentKinds("def f(): Int32 = {\n// a\nlet x = 1; // b\n/* c */ x // d\n}\n").map((k) => k.text), ["// a", "// b", "/* c */", "// d"]);
 });
+
+// The report (scripts/comment-kinds-report-lib.mjs, scripts/comment-kinds-report.mjs).
+import { spawnSync } from "node:child_process";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { parseKindsArgs, runKindsReport } from "../scripts/comment-kinds-report-lib.mjs";
+
+const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const REPORT_INPUTS = [{ name: "c.flix", source: CASE1 }];
+const run = async (argv, fmtFn = format, inputs = REPORT_INPUTS) => {
+    const lines = [];
+    const code = await runKindsReport(parseKindsArgs(argv), { format: fmtFn, inputs, log: (l) => lines.push(l) });
+    return { code, lines };
+};
+
+test("report counts runs and the transition classes at the given widths", async () => {
+    const { code, lines } = await run(["--widths", "40,80"]);
+    assert.equal(code, 0);
+    assert.equal(lines[0], "runs 2, not idempotent 0");
+    assert.match(lines[1], /^ +2  \(non-idempotent runs 0\)  pass1 lead:inline -> lead:line-start   e\.g\. c\.flix@40:\d+ "\/\* note \*\/"$/);
+    assert.match(lines.at(-1), /^kinds finished in [\d.]+ s$/);
+});
+
+test("report with --sites adds the comment-site variants, sampled by --every", async () => {
+    const plain = await run(["--widths", "60"]);
+    const sites = await run(["--widths", "60", "--sites"]);
+    const sparse = await run(["--widths", "60", "--sites", "--every", "1000"]);
+    const runs = (r) => Number(/^runs (\d+),/.exec(r.lines[0])[1]);
+    assert.equal(runs(plain), 1);
+    assert.ok(runs(sites) > runs(sparse) && runs(sparse) > runs(plain), `${runs(plain)} ${runs(sparse)} ${runs(sites)}`);
+});
+
+test("report counts runs that are not idempotent and exits 1", async () => {
+    const toggle = (text) => (text.includes("/* a */\n") ? text.replace(/\/\* a \*\/\s+\+/, "/* a */ +") : text.replace(/\/\* a \*\/\s+\+/, "/* a */\n    +"));
+    const { code, lines } = await run(["--widths", "80"], toggle, [{ name: "t.flix", source: "def f(): Int32 = 1 /* a */ + 2\n" }]);
+    assert.equal(code, 1);
+    assert.equal(lines[0], "runs 1, not idempotent 1");
+    assert.ok(lines.some((l) => /\(non-idempotent runs 1\)  pass1 lead:inline -> trail:line-end/.test(l)));
+    assert.ok(lines.some((l) => /\(non-idempotent runs 1\)  pass2 trail:line-end -> lead:inline/.test(l)), lines.join("\n"));
+});
+
+test("report skips inputs that do not parse", async () => {
+    const { lines } = await run(["--widths", "60"], format, [{ name: "bad.flix", source: "def (((\n" }]);
+    assert.equal(lines[0], "runs 0, not idempotent 0");
+});
+
+test("report arguments: defaults and errors", () => {
+    const d = parseKindsArgs([]);
+    assert.deepEqual([d.every, d.sites, d.widths, d.repo, d.help], [6, false, undefined, true, undefined]);
+    const o = parseKindsArgs(["--sites", "--every", "3", "--widths", "40,60", "--no-repo", "--json", "o.json", "p.flix", "--help"]);
+    assert.deepEqual([o.every, o.sites, o.widths, o.repo, o.json, o.paths, o.help], [3, true, [40, 60], false, "o.json", ["p.flix"], true]);
+    for (const [argv, re] of [[["--widths", "x"], /--widths expects/], [["--widths", "0"], /--widths expects/], [["--every", "0"], /--every expects/], [["--every", "x"], /--every expects/], [["--bogus"], /unknown option/], [["--json"], /needs a value/]]) {
+        assert.throws(() => parseKindsArgs(argv), re, argv.join(" "));
+    }
+});
+
+const kindsCli = (...args) => spawnSync(process.execPath, [join(root, "scripts", "comment-kinds-report.mjs"), ...args], { cwd: root, encoding: "utf8" });
+
+test("report command line: --help prints usage only, bad usage exits 2, a run exits 0 and writes JSON", () => {
+    const h = kindsCli("--help", "--widths", "x");
+    assert.equal(h.status, 2); // the invalid value is reported even with --help
+    const h2 = kindsCli("--help");
+    assert.equal(h2.status, 0);
+    assert.match(h2.stdout, /Usage: npm run review:kinds/);
+    assert.doesNotMatch(h2.stdout, /^runs /m);
+    for (const args of [["--widths", "0"], ["--every", "x"], ["--bogus"], ["--no-repo"], ["--no-repo", "no/such/path.flix"]]) {
+        const r = kindsCli(...args);
+        assert.equal(r.status, 2, args.join(" "));
+        assert.match(r.stderr, /^comment-kinds-report: /);
+    }
+    const dir = mkdtempSync(join(root, "test", ".kinds-"));
+    try {
+        const file = join(dir, "in.flix");
+        writeFileSync(file, CASE1);
+        const json = join(dir, "out.json");
+        const r = kindsCli("--no-repo", "--widths", "40", "--json", json, file);
+        assert.equal(r.status, 0, r.stderr);
+        assert.match(r.stdout, /^runs 1, not idempotent 0$/m);
+        assert.equal(JSON.parse(readFileSync(json, "utf8"))[0][0], "pass1 lead:inline -> lead:line-start");
+    } finally {
+        rmSync(dir, { recursive: true, force: true });
+    }
+});

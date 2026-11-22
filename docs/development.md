@@ -180,7 +180,7 @@ seed. Pairs and triples use separate random streams: the pairs do not change wit
 | `--forms <list>` | line,block,own | forms to draw from |
 | `--only <text>`, `--no-repo`, `--json <file>`, `--max <n>` | | as in `review:sweep`; extra paths are added as inputs |
 
-The defaults run about 23000 formats in about 100 seconds (one process, build first with `npm run build`). A run
+The defaults run about 23000 runs (each formats at least twice) in about 100 seconds (one process, build first with `npm run build`). A run
 passes when the output parses, keeps tokens, comments, parse-tree shape and token classes, and a second pass
 changes nothing. The command prints the number of runs, the combinations skipped because the variant does not
 parse, and the failures by kind; for a non-idempotent run it adds the comment-kind changes of pass 1
@@ -190,7 +190,8 @@ invalid options. The pair test has no known-failure list: every failure fails th
 `npm run review:kinds` (`scripts/comment-kinds-report.mjs`) is the detector behind that report. It names the kind
 of each comment (attached before or after a token; own line, line start, line end or inline) in the source, in pass 1
 and in pass 2, and counts every change of kind over the repository inputs (`--sites` adds comment-site variants,
-`--widths` sets the widths). It reports and always exits 0. Both tools call the built plugin in `dist/`; they
+`--widths` sets the widths). It exits 0 when every run is idempotent, 1 when one is not and 2 for invalid options or an unreadable path;
+`--help` prints the usage and runs nothing. `--every <n>` (default 6) samples the site variants. Both tools call the built plugin in `dist/`; they
 change no formatter code.
 
 ## Issue triage and labels
