@@ -33,17 +33,17 @@ jobs:
       matrix:
         shard: ["1/3", "2/3", "3/3"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
           repository: flix/flix
           ref: v0.80.0
           path: flix-source
           sparse-checkout: main/src/library
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm

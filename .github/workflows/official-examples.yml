@@ -38,22 +38,22 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
           fetch-depth: 0
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
       - run: npm ci
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           repository: flix/book
           ref: ${{ github.event_name == 'schedule' && 'refs/heads/master' || inputs.book_ref || '64d81bd6984ede06442ef7b63235092b9fe3c29c' }}
           path: upstream-book
           persist-credentials: false
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           repository: flix/flix.dev
           ref: ${{ github.event_name == 'schedule' && 'refs/heads/master' || inputs.website_ref || '655c94385f09855e88b333e98577194cedf91ce7' }}

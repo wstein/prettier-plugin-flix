@@ -23,13 +23,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
+      - uses: actions/checkout@v5
         with:
           repository: wstein/flix-spec
           ref: ${{ env.FLIX_SPEC_REF }}
           path: flix-spec
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -38,7 +38,7 @@ jobs:
         run: |
           echo "commit=$(node -p "require('./flix-spec/pin.json').upstream.commit")" >> "$GITHUB_OUTPUT"
           echo "jar=$(node -p "require('./flix-spec/pin.json').oracleArtifact.url")" >> "$GITHUB_OUTPUT"
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           repository: flix/flix
           ref: ${{ steps.pin.outputs.commit }}
