@@ -173,6 +173,23 @@ constraint. Wrapped constraints are indented one level deeper than the body
 or members so they do not share a column with the code that follows. The same
 deeper indent separates a wrapped `with` list from a wrapped function return
 type: constraints sit one level deeper than the continued arrow parameters.
+Wrapped constraints after a wrapped return type therefore share the column of
+the last result line, and the formatter does not separate that column further.
+
+When the signature does not fit on one line but the whole `with` list does,
+the `with` line is a continuation in the body column, one level below `def`,
+and the body follows in the same column. This matches how the Flix authors
+write it (`Fixpoint3/Boxable.flix`, where `with` and the body share a column).
+A wrapped constraint list, with one constraint per line, stays one level
+deeper than the body. At width 60:
+
+```flix
+pub def lookup(m: Map[a, b], k: a): Option[b]
+    with Order[a], ToString[b], Eq[b], Hash[a] =
+    Map.get(k, m)
+```
+
+[Signature boundaries fixture](../test/fixtures/declarations/signature-boundaries.md) ·
 [Rust Style Guide](https://doc.rust-lang.org/style-guide/items.html#where-clauses) ·
 [Trait constraint fixture](../test/fixtures/declarations/trait-constraint-lists.md) ·
 [Arrow return with list fixture](../test/fixtures/declarations/arrow-return-with-list.md)
