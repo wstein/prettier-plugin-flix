@@ -55,7 +55,8 @@ Flix 0.80.0 adds reserved `KeywordVal` and module-level `Decl.Val`, so
 `def val(): Int32 = 42` is rejected under `0.80.0` because `val` is reserved.
 Unsupported values error. Keep one `flix` parser and `.flix` language entry for
 every pin; the shared `flix-ast` printer uses each parse tree's grammar token
-constants.
+constants. The Playground and embedded editors offer the same choices; a
+non-default version travels with **Open in Playground** handoff.
 
 ## Supported print widths
 

@@ -202,8 +202,12 @@ test("all curated examples match their fixtures in the published browser bundle"
     }
 });
 
-test("the Playground handoff preserves Unicode source and line width in a URL fragment", () => {
-    const draft = { source: 'pub def board(): String = "🚉 Köln & Zürich"\n', printWidth: 47 };
+test("the Playground handoff preserves Unicode source, line width, and Flix version in a URL fragment", () => {
+    const draft = {
+        source: 'pub def board(): String = "🚉 Köln & Zürich"\n',
+        printWidth: 47,
+        flixVersion: "0.79.0",
+    };
     const url = new URL(writeHandoff("https://example.test/flix/playground/?fixture=strings%2Fitinerary.md", draft));
     assert.equal(url.searchParams.get("fixture"), "strings/itinerary.md");
     assert.doesNotMatch(url.hash, /tabWidth|useTabs/);
@@ -211,6 +215,29 @@ test("the Playground handoff preserves Unicode source and line width in a URL fr
     assert.deepEqual(readHandoff(url.hash + "&tabWidth=2&useTabs=true"), draft);
     const unconfigured = new URL(writeHandoff(url.href, { source: draft.source }));
     assert.equal(new URLSearchParams(unconfigured.hash.slice(1)).has("printWidth"), false);
-    assert.deepEqual(readHandoff(unconfigured.hash), { source: draft.source, printWidth: undefined });
+    assert.equal(new URLSearchParams(unconfigured.hash.slice(1)).has("flixVersion"), false);
+    assert.deepEqual(readHandoff(unconfigured.hash), { source: draft.source, printWidth: undefined, flixVersion: undefined });
+    const defaultVersion = new URL(writeHandoff(url.href, { source: draft.source, flixVersion: "0.80.0" }));
+    assert.deepEqual(readHandoff(defaultVersion.hash), { source: draft.source, printWidth: undefined, flixVersion: undefined });
     assert.equal(readHandoff("#code=%21"), undefined);
+});
+
+test("the published formatter and preview honor flixVersion", async () => {
+    const moduleVal = "val n: Int32 = 1\n";
+    assert.equal(await formatFlix(moduleVal, { flixVersion: "0.80.0" }), moduleVal);
+    await assert.rejects(() => formatFlix(moduleVal, { flixVersion: "0.79.0" }), SyntaxError);
+    const preview80 = await formatFlixPreview(moduleVal, { flixVersion: "0.80.0" });
+    assert.equal(preview80.output, moduleVal);
+    assert.equal(preview80.error, undefined);
+    const preview79 = await formatFlixPreview(moduleVal, { flixVersion: "0.79.0" });
+    assert.ok(preview79.error);
+});
+
+test("the Playground page exposes Flix version choices", async () => {
+    assert.match(page, /data-flix-version/);
+    assert.match(page, /<option[^>]*value=(?:"0\.80\.0"|0\.80\.0)[^>]*selected/);
+    assert.match(page, /<option[^>]*value=(?:"0\.79\.0"|0\.79\.0)/);
+    const data = JSON.parse(await readFile(new URL("../docs/data/playground.json", import.meta.url), "utf8"));
+    assert.equal(data.defaultFlixVersion, "0.80.0");
+    assert.deepEqual(data.supportedFlixVersions, ["0.79.0", "0.80.0"]);
 });

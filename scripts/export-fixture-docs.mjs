@@ -3,8 +3,12 @@ import { basename } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createHighlighter } from "shiki";
 import { flixThemes } from "../docs/assets/js/flix-themes.js";
-import { playgroundIndentation } from "../docs/assets/js/playground-options.js";
-import { defaultOptions } from "../dist/index.js";
+import {
+    playgroundDefaultFlixVersion,
+    playgroundFlixVersions,
+    playgroundIndentation,
+} from "../docs/assets/js/playground-options.js";
+import { DEFAULT_FLIX_VERSION, SUPPORTED_FLIX_VERSIONS, defaultOptions } from "../dist/index.js";
 import { EXAMPLE_PRINT_WIDTH, findFixtures, loadFixture, optionsFor, relativeTo } from "../test/fixture.mjs";
 import { fmt } from "../test/lib.mjs";
 
@@ -158,8 +162,17 @@ for (const group of playground.groups) {
     }
 }
 if (!Object.hasOwn(examples, playground.defaultFixture)) throw new Error("The default playground fixture must be a menu example.");
+if (playgroundDefaultFlixVersion !== DEFAULT_FLIX_VERSION) {
+    throw new Error("Playground default Flix version must match DEFAULT_FLIX_VERSION.");
+}
+if (playgroundFlixVersions.join(",") !== [...SUPPORTED_FLIX_VERSIONS].join(",")) {
+    throw new Error("Playground Flix versions must match SUPPORTED_FLIX_VERSIONS.");
+}
 await writeFile(new URL("playground.json", destination), JSON.stringify({
     ...playground, defaultOptions,
-    embeddedPrintWidth: EMBEDDED_PRINT_WIDTH, fixtures: examples,
+    embeddedPrintWidth: EMBEDDED_PRINT_WIDTH,
+    defaultFlixVersion: playgroundDefaultFlixVersion,
+    supportedFlixVersions: playgroundFlixVersions,
+    fixtures: examples,
 }) + "\n");
 await writeFile(new URL("playgroundFixtures.json", destination), JSON.stringify(playgroundFixtures) + "\n");

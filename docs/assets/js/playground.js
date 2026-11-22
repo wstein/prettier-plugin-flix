@@ -2,7 +2,7 @@ import { countColumn, Transaction } from "@codemirror/state";
 import { renderDiff } from "./playground-diff.js";
 import { createEditor, createFlixHighlighter } from "./playground-editor.js";
 import { readHandoff, writeHandoff } from "./playground-link.js";
-import { playgroundIndentation } from "./playground-options.js";
+import { playgroundDefaultFlixVersion, playgroundIndentation } from "./playground-options.js";
 import { requestFormat } from "./playground-requests.js";
 
 let highlighterPromise;
@@ -22,7 +22,9 @@ function readableDiagnostic(message) {
 function mountWorkbench(playground, { initial, onChange } = {}) {
     const select = playground.querySelector("#playground-example");
     const printWidth = playground.querySelector("[data-print-width]");
+    const flixVersion = playground.querySelector("[data-flix-version]");
     const defaultWidth = Number(printWidth.defaultValue);
+    const defaultFlixVersion = flixVersion?.value || playgroundDefaultFlixVersion;
     const status = playground.querySelector(".playground-status");
     const cursorPosition = playground.querySelector("[data-cursor-position]");
     const copy = playground.querySelector(".playground-copy");
@@ -92,7 +94,11 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
             id,
             asset: playground.dataset.formatter,
             source: input.view.state.doc.toString(),
-            options: { printWidth: printWidth.valueAsNumber, ...playgroundIndentation },
+            options: {
+                printWidth: printWidth.valueAsNumber,
+                flixVersion: flixVersion?.value || playgroundDefaultFlixVersion,
+                ...playgroundIndentation,
+            },
         }, (data) => {
             if (id !== revision) return;
             if (data.failure) {
@@ -160,8 +166,9 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
         if (fixture) showStatus("Loading example…");
     }
 
-    function loadDraft({ source, printWidth: width = defaultWidth }) {
+    function loadDraft({ source, printWidth: width = defaultWidth, flixVersion: version = defaultFlixVersion }) {
         printWidth.value = width;
+        if (flixVersion) flixVersion.value = version;
         replaceCode(input.view, source);
         queuePreview();
     }
@@ -170,6 +177,7 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
         return {
             source: input.view.state.doc.toString(),
             printWidth: printWidth.validity.valid ? printWidth.valueAsNumber : defaultWidth,
+            flixVersion: flixVersion?.value || defaultFlixVersion,
         };
     }
 
@@ -180,6 +188,7 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
         input.view.focus();
     });
     printWidth.addEventListener("input", queuePreview);
+    flixVersion?.addEventListener("change", queuePreview);
 
     copy.addEventListener("click", async () => {
         try {
@@ -238,6 +247,7 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
 
     if (initial) {
         printWidth.value = initial.printWidth ?? defaultWidth;
+        if (flixVersion) flixVersion.value = initial.flixVersion ?? defaultFlixVersion;
         if (preview) copy.disabled = preview.output.length === 0;
         else queuePreview();
     }
@@ -265,9 +275,15 @@ function startEmbedded(embedded) {
     embedded.style.setProperty("--source-lines", lines);
     mountWorkbench(embedded, {
         initial,
-        onChange: ({ source, printWidth }) => {
+        onChange: ({ source, printWidth, flixVersion: version }) => {
             const widthOverride = printWidth === initial.printWidth ? undefined : printWidth;
-            link.href = writeHandoff(originalLink, { source, printWidth: widthOverride });
+            const versionOverride = version === (initial.flixVersion ?? playgroundDefaultFlixVersion)
+                ? undefined : version;
+            link.href = writeHandoff(originalLink, {
+                source,
+                printWidth: widthOverride,
+                flixVersion: versionOverride,
+            });
         },
     });
     embedded.hidden = false;
