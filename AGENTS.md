@@ -54,7 +54,8 @@ for the fixture-to-review workflow.
   Comment sites full sweep runs it in CI once the workflow is on `main`) and,
   after PR #196 lands, `scripts/comment-pairs.mjs`.
 - Mutate each new branch of logic. A surviving mutation of the new logic is a
-  finding. See the [review triage skill](.agents/skills/flix-review-triage/SKILL.md).
+  finding. See the
+  [review triage skill](.agents/skills/flix-review-triage/SKILL.md).
 
 ## Change the Playground or fixture site
 
@@ -103,7 +104,9 @@ blocking finding are in
   open review without stating in the PR which findings the push addresses.
 - One pull request has one topic and at most one scope: formatter, or
   workflow and documentation, or tooling. Two topics are two pull requests. Do
-  not combine several issues in one pull request. A pull request may join
+  not combine unrelated issues in one pull request. An epic batch may close
+  up to 5 issues or lines of one class (`Closes #n` or `Refs #n` for each),
+  see [Epics](docs/development.md#epics). A pull request may join
   two scopes at most when each scope checks the other, for example a workflow
   and the formatter code that its paths cover. The PR text names what each scope
   checks in the other and why the PR is an exception. Each scope gets its own
@@ -113,17 +116,11 @@ blocking finding are in
   A `reach:synthetic` finding does not block. It is a line in the epic
   (label `epic`) of its class, not an issue of its own.
 - Triage issues by type, area, class and reach.
-- Reviewer rules: wait the full quiet period (head, base branch and `main`
-  unchanged for 10 minutes, then post), check the head immediately before
-  posting, write nothing outside the scratch folder (no `/tmp`), do not use
-  `git -c user.*`, `pkill` or `pgrep -f`, and check free memory before heavy
-  runs. A delta review checks only the diff since the last review. After a merge
-  without CLEAR, post a follow-up review as a normal COMMENT review on the
-  merged head.
-- A CLEAR carries over when the patch-id of `src/` and `test/fixtures` is
-  unchanged and CI is green (a pure rebase). Post a comment that states the
-  carry-over. After CLEAR, add no commits except a rebase or a fix for review
-  findings.
+- Reviewer rules: the quiet period, the delta review, the follow-up review
+  and the CLEAR carry-over are in the
+  [review triage skill](.agents/skills/flix-review-triage/SKILL.md). Write
+  nothing outside the scratch folder (no `/tmp`), do not use `git -c user.*`,
+  `pkill` or `pgrep -f`, and check free memory before heavy runs.
 - Review labels are `review:clear`, `review:nits`, `review:blocking` and
   `review:findings`. The helper sets them, not the reviewer. A new head clears
   all of them until a review of that head exists.
