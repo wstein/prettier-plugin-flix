@@ -31,6 +31,7 @@ export function linkEditorScroll(input, output, canSync) {
         const target = views[to];
         if (!canSync() || !target.scrollDOM.clientHeight) return;
 
+        // replaceCode swaps document identity, so the map rebuilds on the next sync.
         const current = views.map((view) => view.state.doc);
         if (!documents || current.some((doc, index) => doc !== documents[index])) {
             documents = current;
@@ -62,5 +63,6 @@ export function linkEditorScroll(input, output, canSync) {
             sync(index);
         }, { passive: true });
     });
+
     return () => sync(0);
 }
