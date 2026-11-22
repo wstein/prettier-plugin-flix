@@ -263,9 +263,19 @@ test("a shared repro keeps its code and original reference without fetching the 
     await input.fill(repro);
     await page.getByLabel("Line width").fill("60");
     await page.getByLabel("Flix version").selectOption("0.79.0");
-    await page.getByText("Source", { exact: true }).click();
-    await page.getByLabel("Source URL").fill(blob + "#L168-L172");
-    await page.getByRole("button", { name: "Set source" }).click();
+    const open = page.locator(".playground-toolbar").getByRole("button", { name: "Load from GitHub…" });
+    const dialog = page.getByRole("dialog", { name: "Load from GitHub" });
+    await open.click();
+    await expect(dialog.getByLabel("Source URL")).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeHidden();
+    await expect(open).toBeFocused();
+
+    await open.click();
+    await dialog.getByLabel("Source URL").fill(blob + "#L168-L172");
+    await dialog.getByRole("button", { name: "Attach as reference" }).click();
+    await expect(dialog).toBeHidden();
+    await expect(input).toHaveText(repro);
     const original = page.getByRole("link", { name: "Original · Boxable.flix:168–172" });
     await expect(original).toHaveAttribute("href", blob + "#L168-L172");
     await page.locator(".playground-toolbar").getByRole("button", { name: "Copy Playground link" }).click();
@@ -286,24 +296,52 @@ test("a source-only link loads a complete pinned file on request and selects its
     const raw = "https://raw.githubusercontent.com/flix/flix/fe909c20c7213088b72578a4f97f6e6f05f091ff/main/src/library/Fixpoint3/Boxable.flix";
     const lines = Array.from({ length: 200 }, (_, i) => `def original${i + 1}(): Int32 = ${i + 1}`);
     let requests = 0;
-    await page.route(raw, (route) => {
+    const paused = Promise.withResolvers();
+    await page.route(raw, async (route) => {
         requests++;
-        return route.fulfill(requests === 1
-            ? { status: 404, body: "Not found" }
-            : { contentType: "text/plain", body: lines.join("\n") + "\n" });
+        if (requests === 1) return route.fulfill({ status: 404, body: "Not found" });
+        const response = { contentType: "text/plain", body: lines.join("\n") + "\n" };
+        if (requests === 2) {
+            await paused.promise;
+            return route.fulfill(response).catch(() => {});
+        }
+        return route.fulfill(response);
     });
     const params = new URLSearchParams({ sourceUrl: raw, sourceLines: "168-172", printWidth: "60" });
     await page.goto(siteUrl + "playground/#" + params);
     const input = page.getByRole("textbox", { name: "Flix input" });
-    const load = page.locator(".playground-toolbar").getByRole("button", { name: "Load source" });
+    const open = page.locator(".playground-toolbar").getByRole("button", { name: "Load from GitHub…" });
+    const dialog = page.getByRole("dialog", { name: "Load from GitHub" });
+    const urlField = dialog.getByLabel("Source URL");
+    const load = dialog.getByRole("button", { name: "Load", exact: true });
     await expect(input).toBeEmpty();
     await expect(page.getByRole("link", { name: "Original · Boxable.flix:168–172" })).toBeVisible();
     expect(requests).toBe(0);
 
+    await open.click();
+    await expect(urlField).toHaveValue(raw);
+    await expect(urlField).toBeFocused();
+    await urlField.fill(raw.replace(/\/[0-9a-f]{40}\//, "/main/"));
     await load.click();
-    await expect(page.getByText("Could not load source. GitHub returned HTTP 404.")).toBeVisible();
+    await expect(dialog.getByText("Use a GitHub file URL with a full commit SHA.")).toBeVisible();
+    expect(requests).toBe(0);
+
+    await urlField.fill(raw);
+    await load.click();
+    await expect(dialog.getByText("Could not load source. GitHub returned HTTP 404.")).toBeVisible();
+    await expect(page.locator("[data-input] .cm-content")).toBeEmpty();
+
+    await load.click();
+    await expect.poll(() => requests).toBe(2);
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeHidden();
+    paused.resolve();
     await expect(input).toBeEmpty();
+
+    await open.click();
+    await expect(load).toBeEnabled();
     await load.click();
+    await expect(dialog).toBeHidden();
     await expect(page.getByText("Source loaded.")).toBeVisible();
     await expect(page.locator("[data-cursor-position]")).toHaveText(/Ln 168, Col 1 · \d+ selected/);
     await expect(input.locator(".cm-line").filter({ hasText: lines[167] })).toBeInViewport();
@@ -320,7 +358,7 @@ test("a source-only link loads a complete pinned file on request and selects its
     expect(fragment.get("sourceUrl")).toBe(raw);
     expect(fragment.get("sourceLines")).toBe("168-172");
     expect(fragment.get("printWidth")).toBe("60");
-    expect(requests).toBe(2);
+    expect(requests).toBe(3);
 });
 
 test("the live preview keeps trailing comments, reports cursor selection, and recovers from a syntax error", async ({ page }) => {

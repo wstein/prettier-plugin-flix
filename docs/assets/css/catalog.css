@@ -160,17 +160,28 @@ pre.shiki {
 .playground-toolbar [data-flix-version] { min-width: 5.5rem; max-width: 7rem; }
 .playground-toolbar button { cursor: pointer; color: var(--link); }
 .playground-toolbar button:disabled { cursor: default; opacity: 0.65; }
-.playground-source, .playground-source form {
+.playground-source, .playground-source-actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.35rem 0.65rem;
 }
-.playground-source, .playground-source details { min-width: 0; max-width: 100%; }
+.playground-source { min-width: 0; max-width: 100%; }
 .playground-toolbar [data-sync-scroll] { margin: 0; }
-.playground-source form { margin-block: 0.3rem; }
 .playground-source input { max-width: 100%; }
-.playground-source [name="sourceLines"] { width: 5rem; }
+.playground-source dialog {
+  width: min(30rem, calc(100vw - 2rem));
+  box-sizing: border-box;
+  border: 1px solid var(--border);
+  border-radius: 0.45rem;
+  background: var(--surface);
+  color: var(--foreground);
+  font-size: 0.9rem;
+}
+.playground-source dialog h2 { margin: 0 0 0.65rem; }
+.playground-source dialog label { display: grid; gap: 0.25rem; }
+.playground-source dialog input { width: 100%; }
+.playground-source [data-source-dialog-status]:empty { margin: 0; }
 .playground-source [data-original-source] { overflow-wrap: anywhere; }
 .playground-links { display: flex; flex-wrap: wrap; gap: 0.25rem 0.65rem; margin-inline-start: auto; }
 .playground-handoff { font-weight: 650; }
