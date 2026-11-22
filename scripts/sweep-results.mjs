@@ -78,6 +78,50 @@ export function buildResultDocument({
     };
 }
 
+/**
+ * CLI export mapping for a finished sweep command. `inputNames` are the corpus
+ * inputs (not case files — an input may yield no cases). Pass `base` only for
+ * regression (resolved SHA); other commands leave it unset so `all --base` exports
+ * match standalone idempotence/sites runs (`configKey` includes base).
+ */
+export function buildSweepExportDocument({
+    command,
+    widths,
+    inputNames,
+    options,
+    cases,
+    formatter,
+    base = null,
+}) {
+    if (!formatter?.revision) throw new Error("export needs formatter.revision");
+    if (!Array.isArray(inputNames)) throw new Error("export needs inputNames");
+    if (!Array.isArray(cases)) throw new Error("export needs cases");
+    const names = inputNames.map(String);
+    return buildResultDocument({
+        command,
+        formatter,
+        corpus: {
+            // Plugin checkout; fingerprint and inputs name the input set (not only case files).
+            revision: formatter.revision,
+            inputCount: names.length,
+            paths: options?.paths,
+            inputs: names,
+            fingerprint: corpusFingerprint(names),
+        },
+        config: {
+            widths,
+            every: command === "sites" ? (options?.every ?? null) : null,
+            shard: options?.shard ?? null,
+            base: base ?? null,
+            only: options?.only ?? null,
+            repo: options?.repo,
+            seed: options?.seed ?? null,
+            known: options?.known ?? null,
+        },
+        cases: cases.map((c) => makeCase(c)),
+    });
+}
+
 /** Deterministic order so identical inputs yield identical classification and order. */
 export function sortCases(cases) {
     return [...cases].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
