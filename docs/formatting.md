@@ -272,10 +272,12 @@ their declaration. [Declaration spacing fixture](../test/fixtures/declarations/b
 
 A blank line directly after the `{` of a `mod`, `trait`, `instance` or `enum`
 stays, and several become one; the formatter never deletes that blank. When the
-body spans 50 content lines or more between the braces and the source has no
-blank after `{`, the formatter inserts exactly one. Shorter blocks without a
-blank stay tight. The blank line before a comment or Flixdoc that follows the
-opening blank is kept. A blank line before the closing `}` is still removed.
+body has at least 50 members and the source has no blank after `{`, the
+formatter inserts exactly one. That threshold is the width-stable form of a
+50-line one-member-per-line body: a raw line span would grow when members wrap
+and break idempotence. Shorter blocks without a blank stay tight. The blank
+line before a comment or Flixdoc that follows the opening blank is kept. A blank
+line before the closing `}` is still removed.
 [Blank line after the brace fixture](../test/fixtures/declarations/mod-blank-line-after-brace.md)
 
 ```flix
@@ -606,8 +608,8 @@ more (see [Supported print widths](#supported-print-widths)) is unchanged.
 
 The row about the blank line after `{` counts the plugin before the rule
 above: the plugin now keeps a source blank after `{` in `mod`, `trait`,
-`instance` and `enum` blocks, inserts one when the body spans at least 50
-content lines, and removes that blank elsewhere.
+`instance` and `enum` blocks, inserts one when the body has at least 50
+members, and removes that blank elsewhere.
 
 ## Sources and limits
 

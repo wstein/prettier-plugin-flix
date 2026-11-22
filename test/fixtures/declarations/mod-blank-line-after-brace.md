@@ -1,6 +1,6 @@
 ---
 title: "Blank line after the opening brace of a declaration block"
-description: "Keep a source blank after `{` of a mod, trait, instance or enum. When the body spans 50 content lines or more and has no blank, insert one. Never delete an existing blank; short blocks without a blank stay tight."
+description: "Keep a source blank after `{` of a mod, trait, instance or enum. When the body has at least 50 members and has no blank, insert one. Never delete an existing blank; short blocks without a blank stay tight."
 group: "Declarations"
 flix: "0.80"
 options: { printWidth: 80 }

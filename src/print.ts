@@ -87,8 +87,12 @@ const BINARY = new Set([
 const SELF_SPACED = new Set(["DeclPrefix", "AnnotationList", "ModifierList"]);
 /** Declaration blocks that may keep or insert a blank line after `{`. */
 const BLANK_AFTER_BRACE = new Set(["ModDeclaration", "TraitDeclaration", "InstanceDeclaration", "EnumDeclarationTail"]);
-/** Insert a blank after `{` when the body has at least this many content lines and none is present. */
-const BLANK_AFTER_BRACE_MIN_LINES = 50;
+/**
+ * Insert a blank after `{` when the body has at least this many members and none is present.
+ * Member count is the width-stable reading of a 50-line one-member-per-line body; a raw
+ * source line span grows when members wrap and would break idempotence.
+ */
+const BLANK_AFTER_BRACE_MIN_MEMBERS = 50;
 const DECLARATION_BLOCKS = new Set(["ModDeclaration", "TraitDeclaration", "InstanceDeclaration", "EffDeclaration"]);
 
 export class Printer {
@@ -715,13 +719,12 @@ export class Printer {
                 }
             });
             const vertical = sourceMultiline || comments.length > 0;
-            // Keep a source blank after `{`; also insert one when the body is long enough.
+            // Keep a source blank after `{`; also insert one when the body has enough members.
             // Never remove an existing blank. Empty / short blocks without a blank stay tight.
             const firstMember = entries[0]?.[0];
             const sourceBlank = firstMember !== undefined && this.blankBefore(firstTerm(firstMember));
-            const bodyLines = Math.max(0, close.symbol.line - open.symbol.line - 1);
             const blankAfterOpen = sourceMultiline && BLANK_AFTER_BRACE.has(parentKind) && entries.length > 0 &&
-                (sourceBlank || bodyLines >= BLANK_AFTER_BRACE_MIN_LINES);
+                (sourceBlank || entries.length >= BLANK_AFTER_BRACE_MIN_MEMBERS);
             return [group([
                 openDoc, indent([vertical ? hardline : firstSline, blankAfterOpen ? hardline : "", docs, tail]),
                 vertical ? hardline : lastSline, closeDoc,
