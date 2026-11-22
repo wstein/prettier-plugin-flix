@@ -250,6 +250,49 @@ test("sync scroll follows matching code in both directions across formatting cha
     expect(await scrollTop(preview)).toBe(previous);
 });
 
+test("sync scroll remaps after a preview replace without another scroll", async ({ page }) => {
+    await page.setViewportSize({ width: 1450, height: 850 });
+    await page.goto(siteUrl + "playground/");
+    await expect(page.getByLabel("Example")).toBeEnabled();
+    const input = page.getByRole("textbox", { name: "Flix input" });
+    const preview = page.getByRole("textbox", { name: "Preview" });
+    const header = page.locator(".playground-preview-header");
+    const toggle = header.getByRole("checkbox", { name: "Sync scroll" });
+    const width = page.getByLabel("Line width");
+    const status = page.locator("[data-full-playground]").getByRole("status", { includeHidden: true });
+    // Compact one-line prep bodies expand when the width shrinks, so the preview
+    // gains lines above the checkpoint without the user scrolling again.
+    const lines = [
+        ...Array.from({ length: 12 }, (_, i) =>
+            `def prep${i}(): Int32 = { let first = ${i}; let second = 1; first + second }`),
+        ...Array.from({ length: 40 }, (_, i) => `def checkpoint${i}(): Int32 = ${i}`),
+    ];
+    await input.fill(lines.join("\n") + "\n");
+    await width.fill("100");
+    await expect(status).toHaveText("");
+    await expect(toggle).toBeChecked();
+    const topLine = (editor) => editor.evaluate((content) => {
+        const top = content.closest(".cm-scroller").getBoundingClientRect().top;
+        return [...content.querySelectorAll(".cm-line")]
+            .find((line) => line.getBoundingClientRect().bottom > top + 2)?.textContent;
+    });
+    const scrollBeforeLine = (editor, lineIndex) => editor.evaluate((content, index) => {
+        const line = content.querySelector(".cm-line");
+        const padding = parseFloat(getComputedStyle(content).paddingTop);
+        content.closest(".cm-scroller").scrollTop = padding + index * line.getBoundingClientRect().height + 2;
+    }, lineIndex);
+
+    await scrollBeforeLine(input, 18);
+    await expect.poll(() => topLine(input)).toBe(lines[18]);
+    await expect.poll(() => topLine(preview)).toBe(lines[18]);
+
+    await width.fill("40");
+    await expect(status).toHaveText("");
+    // Without resync-after-preview, the preview keeps its old scrollTop and drifts.
+    await expect.poll(() => topLine(preview)).toBe(lines[18]);
+    await expect.poll(() => topLine(input)).toBe(lines[18]);
+});
+
 test("a shared repro keeps its code and original reference without fetching the source", async ({ page, context }) => {
     await context.grantPermissions(["clipboard-read", "clipboard-write"]);
     const raw = "https://raw.githubusercontent.com/flix/flix/fe909c20c7213088b72578a4f97f6e6f05f091ff/main/src/library/Fixpoint3/Boxable.flix";
