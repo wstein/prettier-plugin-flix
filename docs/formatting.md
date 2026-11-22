@@ -268,7 +268,12 @@ choosing between compact and multiline forms. [Ormolu](https://github.com/tweag/
 Between sibling declarations, use the spacing from the source. Adjacent
 declarations stay together, and an existing gap becomes one blank line,
 including next to braced bodies. Annotations and leading comments stay with
-their declaration. [Declaration spacing fixture](../test/fixtures/declarations/block-spacing.md)
+their declaration. A Flixdoc block (exactly `///`, not `////`) sits directly
+above that declaration (or its leading annotations) with no blank line in
+between when the last leading comment is Flixdoc. A plain `//` or `////`
+header may keep a blank line before the code.
+[Declaration spacing fixture](../test/fixtures/declarations/block-spacing.md) ·
+[Flixdoc attachment](../test/fixtures/comments/attach-flixdoc.md)
 
 In a `run { … } with` chain, keep the first `with` beside the closing brace,
 like `} else`. A long handler call wraps its arguments within the clause.
