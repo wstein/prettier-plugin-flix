@@ -1,6 +1,6 @@
 import { ParserRuleContext, TerminalNode } from "antlr4ng";
 import { doc, util, type Doc } from "prettier";
-import { FlixLexer as L } from "./generated/FlixLexer.js";
+import { grammarForId, type FlixLexerClass } from "./grammar.js";
 import { ignoredDeclarationEnd, type Comment, type FlixRoot, type TokenInfo } from "./parse.js";
 import { LINE_COMMENT_GAP } from "./comment-layout.js";
 
@@ -61,24 +61,8 @@ function nextTerm(n: Node): TerminalNode | null {
     return null;
 }
 
-function isAccessDot(t: TerminalNode): boolean {
-    return (ttype(t) === L.DOT || ttype(t) === L.DOT_WS) && kind(t.parent as Node) === "Dot";
-}
-
-const OPEN_TO_CLOSE = new Map<number, number>([
-    [L.LPAREN, L.RPAREN],
-    [L.LBRACK, L.RBRACK],
-    [L.LBRACE, L.RBRACE],
-    [L.HASH_LBRACE, L.RBRACE],
-    [L.HASH_LPAREN, L.RPAREN],
-    [L.HASH_BAR, L.BAR_HASH],
-]);
-
-const HASH_COLLECTIONS = new Set([L.ARRAY_HASH, L.LIST_HASH, L.MAP_HASH, L.SET_HASH, L.VECTOR_HASH]);
-
 /** Characters that make up user operators; two adjacent runs of them would lex as one token. */
 const OP_CHARS = "+-*<>=!&|^$";
-const TIGHT_OPERATORS = new Set([L.ARROW_TIGHT, L.COLON_COLON_TIGHT]);
 
 /** Brace lists printed without inner padding: `use A.{b, c}`, `List#{1, 2}`. */
 const NO_PAD = new Set(["UseClause", "ImportClause", "CollectionLiteral"]);
@@ -94,7 +78,6 @@ const EQ_BODY = new Set([
     "DefDeclaration", "ValDeclaration", "AliasDeclaration", "AssocTypeDeclaration", "LocalDefExpr",
     "HandlerRule", "NewBody", "MatchRule", "CatchRule", "SelectRule", "LetExpr", "LambdaExpr",
 ]);
-const BODY_ARROWS = new Set([L.EQUAL, L.ARROW_THICK_R, L.ARROW_WS]);
 const BINARY = new Set([
     "UserOpExpr", "AngledPlusExpr", "MultExpr", "AddExpr", "ConsExpr", "ConsPattern",
     "CompareExpr", "EqualityExpr", "AndExpr", "OrExpr",
@@ -102,11 +85,6 @@ const BINARY = new Set([
 /** Own-separator nodes: they emit their trailing space or newline themselves. */
 const SELF_SPACED = new Set(["DeclPrefix", "AnnotationList", "ModifierList"]);
 const DECLARATION_BLOCKS = new Set(["ModDeclaration", "TraitDeclaration", "InstanceDeclaration", "EffDeclaration"]);
-
-const CALL_LIKE = new Set([
-    L.NAME_LOWERCASE, L.NAME_UPPERCASE, L.NAME_MATH, L.STATIC_UPPER, L.ANNOTATION, L.HOLE_NAMED,
-    L.HOLE_VARIABLE, L.SUPER, L.CHECKED_CAST, L.CHECKED_ECAST, L.UNCHECKED_CAST,
-]);
 
 export class Printer {
     hasAlignmentCandidates = false;
@@ -126,18 +104,47 @@ export class Printer {
      */
     private softTrailBreaks = 0;
 
+    private readonly L: FlixLexerClass;
+    private readonly OPEN_TO_CLOSE: Map<number, number>;
+    private readonly HASH_COLLECTIONS: Set<number>;
+    private readonly TIGHT_OPERATORS: Set<number>;
+    private readonly BODY_ARROWS: Set<number>;
+    private readonly CALL_LIKE: Set<number>;
+
     constructor(
         private root: FlixRoot,
         private printWidth: number,
         private tabWidth: number,
         private alignmentIndent?: ReadonlyMap<number, number>,
-    ) {}
+    ) {
+        const L = grammarForId(root.grammarId).Lexer;
+        this.L = L;
+        this.OPEN_TO_CLOSE = new Map([
+            [this.L.LPAREN, this.L.RPAREN],
+            [this.L.LBRACK, this.L.RBRACK],
+            [this.L.LBRACE, this.L.RBRACE],
+            [this.L.HASH_LBRACE, this.L.RBRACE],
+            [this.L.HASH_LPAREN, this.L.RPAREN],
+            [this.L.HASH_BAR, this.L.BAR_HASH],
+        ]);
+        this.HASH_COLLECTIONS = new Set([this.L.ARRAY_HASH, this.L.LIST_HASH, this.L.MAP_HASH, this.L.SET_HASH, this.L.VECTOR_HASH]);
+        this.TIGHT_OPERATORS = new Set([this.L.ARROW_TIGHT, this.L.COLON_COLON_TIGHT]);
+        this.BODY_ARROWS = new Set([this.L.EQUAL, this.L.ARROW_THICK_R, this.L.ARROW_WS]);
+        this.CALL_LIKE = new Set([
+            this.L.NAME_LOWERCASE, this.L.NAME_UPPERCASE, this.L.NAME_MATH, this.L.STATIC_UPPER, this.L.ANNOTATION, this.L.HOLE_NAMED,
+            this.L.HOLE_VARIABLE, this.L.SUPER, this.L.CHECKED_CAST, this.L.CHECKED_ECAST, this.L.UNCHECKED_CAST,
+        ]);
+    }
+
+    private isAccessDot(t: TerminalNode): boolean {
+        return (ttype(t) === this.L.DOT || ttype(t) === this.L.DOT_WS) && kind(t.parent as Node) === "Dot";
+    }
 
     // ------------------------------------------------------------------ tokens
 
     private src(t: TerminalNode): string {
         const s = t.symbol;
-        if (s.type === L.EOF) return "";
+        if (s.type === this.L.EOF) return "";
         return this.root.codePoints.slice(s.start, s.stop + 1).join("");
     }
 
@@ -190,7 +197,7 @@ export class Printer {
         // An own-line comment must start its own line even when a space was planned here.
         const before = !this.lineStart.has(idx) && info.lead[0].nl > 0 ? [hardline] : [];
         const previous = prevTerm(t);
-        const touchesDot = isAccessDot(t) || (previous !== null && ttype(previous) === L.DOT && isAccessDot(previous));
+        const touchesDot = this.isAccessDot(t) || (previous !== null && ttype(previous) === this.L.DOT && this.isAccessDot(previous));
         return [...before, ...this.leadDoc(info, false, touchesDot ? "" : " ")];
     }
 
@@ -231,20 +238,20 @@ export class Printer {
     }
 
     private touchesTightOperator(t: TerminalNode): boolean {
-        if (TIGHT_OPERATORS.has(ttype(t))) return true;
+        if (this.TIGHT_OPERATORS.has(ttype(t))) return true;
         const p = prevTerm(t);
-        return p !== null && TIGHT_OPERATORS.has(ttype(p));
+        return p !== null && this.TIGHT_OPERATORS.has(ttype(p));
     }
 
     private tokTrail(t: TerminalNode): Doc {
         // `a.// c\nb`: the comment must touch the dot. Datalog terminators use whitespace instead.
-        if (ttype(t) === L.DOT && isAccessDot(t)) {
+        if (ttype(t) === this.L.DOT && this.isAccessDot(t)) {
             const info = this.info(t);
             return info ? this.trailDoc(info, "") : "";
         }
         const info = this.info(t);
         // A space before a glued line comment would change the operator token.
-        const gap = TIGHT_OPERATORS.has(ttype(t)) ? "" : " ";
+        const gap = this.TIGHT_OPERATORS.has(ttype(t)) ? "" : " ";
         return info ? this.trailDoc(info, gap) : "";
     }
 
@@ -274,7 +281,7 @@ export class Printer {
         const next = nextTerm(t);
         if (next === null) return false;
         const type = ttype(next);
-        return type === L.COMMA || type === L.SEMI;
+        return type === this.L.COMMA || type === this.L.SEMI;
     }
 
     /**
@@ -338,42 +345,42 @@ export class Printer {
         const sa = this.src(a);
         const sb = this.src(b);
         if (OP_CHARS.includes(sa.charAt(sa.length - 1)) && OP_CHARS.includes(sb.charAt(0))) return " ";
-        if (ta === L.DOT_WS && isAccessDot(a)) return " ";
-        if (tb === L.COMMA || tb === L.SEMI || tb === L.RPAREN || tb === L.RBRACK || tb === L.COLON) return "";
-        if (ta === L.LPAREN || ta === L.LBRACK || ta === L.HASH_LPAREN) return "";
-        if (ta === L.DOT || ta === L.DOT_WS || tb === L.DOT || tb === L.DOT_WS) return "";
-        if (ta === L.HASH || tb === L.HASH) return "";
-        if (TIGHT_OPERATORS.has(ta) || TIGHT_OPERATORS.has(tb)) return "";
-        if (tb === L.LBRACE && HASH_COLLECTIONS.has(ta)) return "";
-        if ((tb === L.LPAREN || tb === L.LBRACK) && this.callLike(a)) return "";
-        if (parentKind === "SignExpr" && (ta === L.PLUS || ta === L.MINUS)) return "";
-        if (parentKind === "UnaryType" && ta === L.TILDE) return "";
+        if (ta === this.L.DOT_WS && this.isAccessDot(a)) return " ";
+        if (tb === this.L.COMMA || tb === this.L.SEMI || tb === this.L.RPAREN || tb === this.L.RBRACK || tb === this.L.COLON) return "";
+        if (ta === this.L.LPAREN || ta === this.L.LBRACK || ta === this.L.HASH_LPAREN) return "";
+        if (ta === this.L.DOT || ta === this.L.DOT_WS || tb === this.L.DOT || tb === this.L.DOT_WS) return "";
+        if (ta === this.L.HASH || tb === this.L.HASH) return "";
+        if (this.TIGHT_OPERATORS.has(ta) || this.TIGHT_OPERATORS.has(tb)) return "";
+        if (tb === this.L.LBRACE && this.HASH_COLLECTIONS.has(ta)) return "";
+        if ((tb === this.L.LPAREN || tb === this.L.LBRACK) && this.callLike(a)) return "";
+        if (parentKind === "SignExpr" && (ta === this.L.PLUS || ta === this.L.MINUS)) return "";
+        if (parentKind === "UnaryType" && ta === this.L.TILDE) return "";
         if (parentKind === "InfixCallExpr") {
-            if (ta === L.BACKTICK) return this.isOpeningBacktick(a) ? "" : " ";
-            if (tb === L.BACKTICK) return this.isOpeningBacktick(b) ? " " : "";
+            if (ta === this.L.BACKTICK) return this.isOpeningBacktick(a) ? "" : " ";
+            if (tb === this.L.BACKTICK) return this.isOpeningBacktick(b) ? " " : "";
         }
-        if (parentKind === "PredicateAndArity" && (ta === L.SLASH || tb === L.SLASH)) {
+        if (parentKind === "PredicateAndArity" && (ta === this.L.SLASH || tb === this.L.SLASH)) {
             // A leading `/*` or `//` glued after `/` would start a line comment.
             const lead = this.info(b)?.lead[0];
-            if (ta === L.SLASH && lead && lead.nl === 0 && lead.text.startsWith("/")) return " ";
+            if (ta === this.L.SLASH && lead && lead.nl === 0 && lead.text.startsWith("/")) return " ";
             return "";
         }
-        if (parentKind === "CaseSetType" && (ta === L.ANGLE_L || tb === L.ANGLE_R)) return "";
-        if (parentKind === "PrimaryPattern" && ta === L.MINUS) return "";
+        if (parentKind === "CaseSetType" && (ta === this.L.ANGLE_L || tb === this.L.ANGLE_R)) return "";
+        if (parentKind === "PrimaryPattern" && ta === this.L.MINUS) return "";
         return " ";
     }
 
     private isOpeningBacktick(t: TerminalNode): boolean {
-        const sibs = kids(t.parent as Node).filter((c) => isTerm(c) && ttype(c) === L.BACKTICK);
+        const sibs = kids(t.parent as Node).filter((c) => isTerm(c) && ttype(c) === this.L.BACKTICK);
         return sibs[0] === t;
     }
 
     private callLike(a: TerminalNode): boolean {
         const t = ttype(a);
-        if (CALL_LIKE.has(t)) return true;
+        if (this.CALL_LIKE.has(t)) return true;
         const pk = a.parent ? kind(a.parent as Node) : "";
-        if (t === L.RPAREN) return pk === "ArgumentList" || pk === "ParenPrimary";
-        if (t === L.RBRACK) return pk === "IndexExpr" || pk === "TypeArgs";
+        if (t === this.L.RPAREN) return pk === "ArgumentList" || pk === "ParenPrimary";
+        if (t === this.L.RBRACK) return pk === "IndexExpr" || pk === "TypeArgs";
         // Operator definitions: `def +(a, b)`, `use A.{+}`.
         const gp = a.parent?.parent ? kind(a.parent.parent as Node) : "";
         return pk === "GenericOperator" && (gp === "DefinitionName" || gp === "UseName");
@@ -393,7 +400,7 @@ export class Printer {
             let first: TerminalNode | null;
             let last: TerminalNode | null;
             let step = 1;
-            const close = isTerm(ch) && OPEN_TO_CLOSE.has(ttype(ch)) ? this.findClose(children, i) : -1;
+            const close = isTerm(ch) && this.OPEN_TO_CLOSE.has(ttype(ch)) ? this.findClose(children, i) : -1;
             if (close > 0) {
                 first = ch as TerminalNode;
                 piece = [
@@ -413,8 +420,8 @@ export class Printer {
                     // an access dot or a tight `::` (including in patterns). Wrap the
                     // next piece so own-line comments leading it stay indented too.
                     const indentContinuation =
-                        (ttype(prevTerm) === L.DOT && isAccessDot(prevTerm)) ||
-                        ttype(prevTerm) === L.COLON_COLON_TIGHT;
+                        (ttype(prevTerm) === this.L.DOT && this.isAccessDot(prevTerm)) ||
+                        ttype(prevTerm) === this.L.COLON_COLON_TIGHT;
                     out.push(indentContinuation ? indent([hardline, piece]) : [hardline, piece]);
                     if (last) prevTerm = last;
                     prevChild = children[i + step - 1];
@@ -434,7 +441,7 @@ export class Printer {
 
     private findClose(children: Node[], i: number): number {
         const open = ttype(children[i] as TerminalNode);
-        const close = OPEN_TO_CLOSE.get(open)!;
+        const close = this.OPEN_TO_CLOSE.get(open)!;
         let depth = 0;
         for (let j = i + 1; j < children.length; j++) {
             const c = children[j];
@@ -481,7 +488,7 @@ export class Printer {
         if (isTerm(n)) return this.hasComment(n, n === rowEnd, n === rowStart) ? undefined : util.getStringWidth(this.src(n));
         const cs = kids(n);
         if (cs.length === 1) return this.inlineWidth(cs[0], rowEnd, extra, rowStart);
-        if (extra === "list" && kind(n) === "CollectionLiteral" && isTerm(cs[0]) && ttype(cs[0]) === L.LIST_HASH) {
+        if (extra === "list" && kind(n) === "CollectionLiteral" && isTerm(cs[0]) && ttype(cs[0]) === this.L.LIST_HASH) {
             return this.flatListWidth(cs, rowEnd);
         }
         if (extra === "add" && kind(n) === "AddExpr") {
@@ -504,7 +511,7 @@ export class Printer {
         let width = "List#{}".length;
         if (children.length === 3) return width;
 
-        const { items, seps } = this.splitOn(children.slice(2, -1), L.COMMA);
+        const { items, seps } = this.splitOn(children.slice(2, -1), this.L.COMMA);
         if (seps.some((separator) => this.hasComment(separator))) return;
         for (const item of items) {
             if (item.length !== 1) return;
@@ -560,7 +567,7 @@ export class Printer {
             const entryKind = kind(item[0]);
             if (entryKind !== "MapEntry" && entryKind !== "RecordOpField") return;
             const [left, delimiter, right, ...rest] = kids(item[0]);
-            const expected = entryKind === "MapEntry" ? L.ARROW_THICK_R : L.EQUAL;
+            const expected = entryKind === "MapEntry" ? this.L.ARROW_THICK_R : this.L.EQUAL;
             if (rest.length || !right || !isTerm(delimiter) || ttype(delimiter) !== expected || this.hasComment(delimiter)) return;
             const leftWidth = this.inlineWidth(left, null, undefined, firstTerm(left));
             // Suffix comments stay with their entry and take no space in the code columns.
@@ -602,7 +609,7 @@ export class Printer {
         const hasRowTail = parentKind === "RecordOperation" || parentKind === "RecordType" ||
             parentKind === "RecordPattern" || parentKind === "TupleType" ||
             parentKind === "SchemaType" || parentKind === "SchemaRowType";
-        if (this.flat === 0 && hasRowTail && isTerm(bar) && ttype(bar) === L.BAR && !this.hasComment(bar)) {
+        if (this.flat === 0 && hasRowTail && isTerm(bar) && ttype(bar) === this.L.BAR && !this.hasComment(bar)) {
             return [
                 this.print(field),
                 group([this.after(lastTerm(field), line), this.seq([bar, ...base], parentKind)]),
@@ -617,7 +624,7 @@ export class Printer {
         const close = children[j] as TerminalNode;
         const inner = children.slice(i + 1, j);
         const openType = ttype(open);
-        const braces = openType === L.LBRACE || openType === L.HASH_LBRACE || openType === L.HASH_BAR;
+        const braces = openType === this.L.LBRACE || openType === this.L.HASH_LBRACE || openType === this.L.HASH_BAR;
         const pad = braces && !NO_PAD.has(parentKind);
         const comments = this.takeClosingComments(close);
         const openDoc = this.tok(open);
@@ -640,22 +647,22 @@ export class Printer {
 
         const ruleKids = inner.filter((n) => !isTerm(n));
         const isMembers =
-            (openType === L.LBRACE || openType === L.HASH_LBRACE) &&
+            (openType === this.L.LBRACE || openType === this.L.HASH_LBRACE) &&
             ruleKids.length > 0 &&
             ruleKids.every((n) => MEMBERS.has(kind(n))) &&
-            inner.every((n) => !isTerm(n) || ttype(n) === L.COMMA);
+            inner.every((n) => !isTerm(n) || ttype(n) === this.L.COMMA);
         const sourceMultiline = open.symbol.line !== close.symbol.line;
 
-        if (isMembers || (parentKind === "StructDeclaration" && openType === L.LBRACE)) {
-            const structSplit = parentKind === "StructDeclaration" ? this.splitOn(inner, L.COMMA) : null;
+        if (isMembers || (parentKind === "StructDeclaration" && openType === this.L.LBRACE)) {
+            const structSplit = parentKind === "StructDeclaration" ? this.splitOn(inner, this.L.COMMA) : null;
             const entries = structSplit ? structSplit.items.filter((x) => x.length > 0) : [];
             if (!structSplit) {
                 for (const rule of ruleKids) {
                     const previous = entries.at(-1);
                     const first = firstTerm(rule);
                     const last = previous && lastTerm(previous[previous.length - 1]);
-                    if (kind(rule) === "EnumCase" && previous && last && ttype(last) === L.COMMA &&
-                        first && ttype(first) === L.NAME_UPPERCASE) previous.push(rule);
+                    if (kind(rule) === "EnumCase" && previous && last && ttype(last) === this.L.COMMA &&
+                        first && ttype(first) === this.L.NAME_UPPERCASE) previous.push(rule);
                     else entries.push([rule]);
                 }
             }
@@ -692,7 +699,7 @@ export class Printer {
             ], { id: layoutId, shouldBreak: vertical }), closeTrail];
         }
 
-        const sepType = SEMI_LISTS.has(parentKind) ? L.SEMI : L.COMMA;
+        const sepType = SEMI_LISTS.has(parentKind) ? this.L.SEMI : this.L.COMMA;
         const split = this.splitOn(inner, sepType);
         let items = split.items;
         let trailingTok: TerminalNode | null = null;
@@ -701,7 +708,7 @@ export class Printer {
             trailingTok = split.seps[split.seps.length - 1];
         }
         const collection = children[i - 1];
-        const isMap = parentKind === "CollectionLiteral" && isTerm(collection) && ttype(collection) === L.MAP_HASH;
+        const isMap = parentKind === "CollectionLiteral" && isTerm(collection) && ttype(collection) === this.L.MAP_HASH;
         const layoutId = Symbol();
         const alignable = isMap || parentKind === "RecordOperation";
         const mayAlign = alignable &&
@@ -731,8 +738,8 @@ export class Printer {
         ];
         const commentAtBoundary = boundaryTokens.some((t) => t !== null && this.hasComment(t));
         const hugCandidate =
-            !pad && comments.length === 0 && !commentAtBoundary && sepType === L.COMMA && lastTok !== null && ttype(lastTok) === L.RBRACE &&
-            !items.slice(0, -1).some((it) => it.length > 0 && lastTerm(it[it.length - 1]) !== null && ttype(lastTerm(it[it.length - 1])!) === L.RBRACE);
+            !pad && comments.length === 0 && !commentAtBoundary && sepType === this.L.COMMA && lastTok !== null && ttype(lastTok) === this.L.RBRACE &&
+            !items.slice(0, -1).some((it) => it.length > 0 && lastTerm(it[it.length - 1]) !== null && ttype(lastTerm(it[it.length - 1])!) === this.L.RBRACE);
         const canRelaxLambda = hugCandidate && finalArgument && kind(finalArgument) === "LambdaExpr";
         // Hug alternatives are built from copies that have not yet taken the comments, so
         // both alternatives see the same comments and line starts as the broken form.
@@ -786,7 +793,7 @@ export class Printer {
             list.push(quiet ? ifBreak(this.src(trailingTok), "") : this.tok(trailingTok));
         }
         list.push(...tail);
-        const preserveMultiline = (pad && openType === L.LBRACE) || (isMap && aligned);
+        const preserveMultiline = (pad && openType === this.L.LBRACE) || (isMap && aligned);
         const innerFirst = inner.length > 0 ? firstTerm(inner[0]) : null;
         const forceBreak = preserveMultiline && this.flat === 0 &&
             innerFirst !== null && innerFirst.symbol.line > open.symbol.line;
@@ -1053,7 +1060,7 @@ export class Printer {
     }
 
     private hasBodyArrow(n: ParserRuleContext): boolean {
-        return kids(n).some((c) => isTerm(c) && BODY_ARROWS.has(ttype(c)));
+        return kids(n).some((c) => isTerm(c) && this.BODY_ARROWS.has(ttype(c)));
     }
 
     private printForYield(n: ParserRuleContext): Doc {
@@ -1097,8 +1104,8 @@ export class Printer {
         const [keyword, sources, ...clauses] = children;
         if (this.flat > 0 || !isTerm(keyword)) return this.seq(children, kind(n));
         const type = ttype(keyword);
-        const isQuery = type === L.QUERY || type === L.PQUERY;
-        if (!isQuery && type !== L.SOLVE && type !== L.PSOLVE && type !== L.INJECT) {
+        const isQuery = type === this.L.QUERY || type === this.L.PQUERY;
+        if (!isQuery && type !== this.L.SOLVE && type !== this.L.PSOLVE && type !== this.L.INJECT) {
             return this.seq(children, kind(n));
         }
 
@@ -1113,7 +1120,7 @@ export class Printer {
 
         const body = clauses.map((clause, index) => {
             const [clauseKeyword, ...items] = kids(this.ls(clause));
-            const content = isTerm(clauseKeyword) && ttype(clauseKeyword) === L.FROM && items.length > 1
+            const content = isTerm(clauseKeyword) && ttype(clauseKeyword) === this.L.FROM && items.length > 1
                 ? this.printFixpointList(clauseKeyword, items)
                 : this.print(clause);
             return [index === 0 ? "" : this.after(lastTerm(clauses[index - 1]), line), group(content)];
@@ -1124,7 +1131,7 @@ export class Printer {
     }
 
     private printFixpointList(keyword: TerminalNode, nodes: Node[]): Doc {
-        const { items, seps } = this.splitOn(nodes, L.COMMA);
+        const { items, seps } = this.splitOn(nodes, this.L.COMMA);
         const entries = items.map(([item], i) => {
             const comma = seps[i];
             const end = lastTerm(item);
@@ -1140,11 +1147,11 @@ export class Printer {
     private printConstraint(n: ParserRuleContext): Doc {
         const children = kids(n);
         const [head, implication] = children;
-        if (this.flat > 0 || !isTerm(implication) || ttype(implication) !== L.COLON_MINUS) {
+        if (this.flat > 0 || !isTerm(implication) || ttype(implication) !== this.L.COLON_MINUS) {
             return this.seq(children, kind(n));
         }
         const dot = children[children.length - 1] as TerminalNode;
-        const { items, seps } = this.splitOn(children.slice(2, -1), L.COMMA);
+        const { items, seps } = this.splitOn(children.slice(2, -1), this.L.COMMA);
         const vertical = items.length > 1 && items.every(([predicate]) => this.onNewLine(firstTerm(predicate)));
         const bodyBreak = vertical ? hardline : line;
         const predicates = items.map((item, i) => {
@@ -1281,8 +1288,8 @@ export class Printer {
         const l = lastTerm(body);
         const sameLine = !!f && f.symbol.line === arrow.symbol.line;
         // Hug when the author kept the body on the arrow's line and it closes with a brace.
-        if (sameLine && l !== null && ttype(l) === L.RBRACE) return [this.after(arrow, " ", true), this.print(body)];
-        if (this.flat === 0 && kind(body) === "ParYieldExpr" && ttype(arrow) === L.EQUAL &&
+        if (sameLine && l !== null && ttype(l) === this.L.RBRACE) return [this.after(arrow, " ", true), this.print(body)];
+        if (this.flat === 0 && kind(body) === "ParYieldExpr" && ttype(arrow) === this.L.EQUAL &&
             !this.hasLineTrail(arrow) && f && !this.hasComment(f, true)) {
             return this.printParYield(body as ParserRuleContext, true);
         }
@@ -1300,7 +1307,7 @@ export class Printer {
     private eqBodyDocs(n: ParserRuleContext): { head: Doc; gap: Doc; tail: Doc; arrow: TerminalNode } {
         const cs = kids(n);
         const k = kind(n);
-        const ai = cs.findIndex((c) => isTerm(c) && BODY_ARROWS.has(ttype(c)));
+        const ai = cs.findIndex((c) => isTerm(c) && this.BODY_ARROWS.has(ttype(c)));
         const arrow = cs[ai] as TerminalNode;
         const headLast = ai > 0 ? lastTerm(cs[ai - 1]) : null;
         const head = k === "DefDeclaration" ? this.printDefinitionHead(n, cs, ai) :
@@ -1322,7 +1329,7 @@ export class Printer {
     /** `case pattern if guard` with deeper wrap indent for the guard's own operator chain. */
     private printMatchRuleHead(children: Node[], arrowIndex: number): Doc {
         const head = children.slice(0, arrowIndex);
-        const ifIndex = head.findIndex((child) => isTerm(child) && ttype(child) === L.IF);
+        const ifIndex = head.findIndex((child) => isTerm(child) && ttype(child) === this.L.IF);
         if (ifIndex < 0 || ifIndex === head.length - 1) return this.seq(head, "MatchRule");
         const prefix = this.seq(head.slice(0, ifIndex + 1), "MatchRule");
         const guard = head[ifIndex + 1];
@@ -1355,7 +1362,7 @@ export class Printer {
             return this.printSignature(n, head, equalsTrailer, huggedBodyTrailer);
         }
         const parts = kids(schema);
-        const { items, seps } = this.splitOn(parts.slice(1, -1), L.COMMA);
+        const { items, seps } = this.splitOn(parts.slice(1, -1), this.L.COMMA);
         const first = firstTerm(n)!;
         const last = lastTerm(schema)!;
         if (items.length < 2) return this.seq(head, kind(n));
@@ -1429,7 +1436,7 @@ export class Printer {
         // Count only bodies that placeBody keeps on the `=` line in every pass; a body
         // that may move below `=` is gone from that line in pass 2.
         const last = lastTerm(body);
-        if ((!last || ttype(last) !== L.RBRACE) && !willBreak(printed)) return 0;
+        if ((!last || ttype(last) !== this.L.RBRACE) && !willBreak(printed)) return 0;
         const printWidth = Math.max(1, this.printWidth - this.declarationIndent(n));
         const formatted = doc.printer.printDocToString(printed, {
             printWidth,
@@ -1452,7 +1459,7 @@ export class Printer {
         if (this.flat > 0 || children.length < 4) return this.seq(children, kind(n));
 
         const [keyword, ...constraints] = children;
-        const { items, seps } = this.splitOn(constraints, L.COMMA);
+        const { items, seps } = this.splitOn(constraints, this.L.COMMA);
         const rows = items.map(([constraint], index) => {
             const separator = seps[index];
             const end = lastTerm(constraint);
@@ -1510,7 +1517,7 @@ export class Printer {
         // instead (#92). Simple effects like `\ a` keep the old ` =`-only trailer.
         const effectOpen = hasEffect ? firstTerm(effect) : null;
         const bracedEffect = effectOpen !== null &&
-            (ttype(effectOpen) === L.LBRACE || ttype(effectOpen) === L.HASH_LBRACE);
+            (ttype(effectOpen) === this.L.LBRACE || ttype(effectOpen) === this.L.HASH_LBRACE);
         const trailerWidth = equalsTrailer + (bracedEffect ? huggedBodyTrailer : 0);
         const width = this.printWidth - this.declarationIndent(n);
         const options = { printWidth: Math.max(1, width), tabWidth: this.tabWidth };
@@ -1537,7 +1544,7 @@ export class Printer {
         const body = cs[ai + 1];
         const rest = cs.slice(ai + 2);
         const restDoc = rest.length > 0 ? this.seq(rest, k) : "";
-        const comma = rest.length > 0 && isTerm(rest[0]) && ttype(rest[0] as TerminalNode) === L.COMMA;
+        const comma = rest.length > 0 && isTerm(rest[0]) && ttype(rest[0] as TerminalNode) === this.L.COMMA;
         const tailDoc: Doc = rest.length > 0 ? (comma ? restDoc : [" ", restDoc]) : "";
 
         // Keep hug soft-trail for a nested match-lambda pattern only; clear it for MatchExpr
@@ -1613,7 +1620,7 @@ export class Printer {
         continuation.push(indent([this.after(lastTerm(previousArrow), line), this.print(this.ls(rest))]));
         // `placeBody` keeps a type that a comment breaks on the line of its `=`.
         const previous = firstToken === null ? null : prevTerm(firstToken);
-        const hugged = previous !== null && BODY_ARROWS.has(ttype(previous)) &&
+        const hugged = previous !== null && this.BODY_ARROWS.has(ttype(previous)) &&
             previous.symbol.line === firstToken!.symbol.line &&
             willBreak([head, continuation]);
         // A head that breaks inside its own brackets keeps a fitting rest on its last line.
@@ -1674,7 +1681,7 @@ export class Printer {
         const continuation = this.matchGuardStart !== null && firstTerm(n) === this.matchGuardStart
             ? (value: Doc) => indent(indent(value))
             : indent;
-        if (k !== "AddExpr" || !ops.every((op) => isTerm(op) && ttype(op) === L.PLUS)) {
+        if (k !== "AddExpr" || !ops.every((op) => isTerm(op) && ttype(op) === this.L.PLUS)) {
             return [leading, group([first, continuation(links.map(({ operator, after, operand }) => [operator, after, operand]))])];
         }
 
@@ -1701,7 +1708,7 @@ export class Printer {
 
     /** True when the operator is list cons `::` (tight or spaced), not append `:::`. */
     private isConsColonColon(op: Node): boolean {
-        return isTerm(op) && (ttype(op) === L.COLON_COLON || ttype(op) === L.COLON_COLON_TIGHT);
+        return isTerm(op) && (ttype(op) === this.L.COLON_COLON || ttype(op) === this.L.COLON_COLON_TIGHT);
     }
 
     /**
@@ -1716,7 +1723,7 @@ export class Printer {
         let start = 0;
         for (let i = 0; i <= ops.length; i++) {
             const op = i < ops.length ? ops[i] : null;
-            const append = op !== null && isTerm(op) && ttype(op) === L.COLON_COLON_COLON;
+            const append = op !== null && isTerm(op) && ttype(op) === this.L.COLON_COLON_COLON;
             if (!append && i < ops.length) continue;
             const segOperands = operands.slice(start, i + 1);
             const segOps = ops.slice(start, i);
@@ -1747,8 +1754,8 @@ export class Printer {
             ? (value: Doc) => indent(indent(value))
             : indent;
         const glued = ops.map((op, i) =>
-            isTerm(op) && ttype(op) === L.COLON_COLON_TIGHT && this.consHasGluedComment(op, operands[i + 1]));
-        const chainTight = ops.every((op) => isTerm(op) && ttype(op) === L.COLON_COLON_TIGHT);
+            isTerm(op) && ttype(op) === this.L.COLON_COLON_TIGHT && this.consHasGluedComment(op, operands[i + 1]));
+        const chainTight = ops.every((op) => isTerm(op) && ttype(op) === this.L.COLON_COLON_TIGHT);
         const forcedBreak = ops.some((op) => isTerm(op) && this.hasLineTrail(op));
 
         const tightLink = (i: number): Doc => {

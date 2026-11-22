@@ -1,7 +1,7 @@
 import { format } from "prettier";
 import { CharStream, CommonTokenStream } from "antlr4ng";
-import { FlixLexer } from "../dist/generated/FlixLexer.js";
-import { FlixParser } from "../dist/generated/FlixParser.js";
+import { FlixLexer } from "../dist/generated/flix-0.80.0/FlixLexer.js";
+import { FlixParser } from "../dist/generated/flix-0.80.0/FlixParser.js";
 import plugin from "../dist/index.js";
 import { findStringContinuationError } from "../dist/parse.js";
 
@@ -19,7 +19,7 @@ export function fingerprint(text) {
     parser.removeErrorListeners(); parser.addErrorListener(l);
     const tree = parser.compilationUnit();
     stream.fill();
-    const continuation = findStringContinuationError(stream.getTokens());
+    const continuation = findStringContinuationError(stream.getTokens(), FlixLexer);
     if (continuation) {
         const { line, column } = continuation.loc.start;
         errors.unshift(`${line}:${column - 1} ${continuation.message}`);

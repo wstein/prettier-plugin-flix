@@ -1,16 +1,6 @@
 import { CharStream, CommonTokenStream, ParserRuleContext, type Token } from "antlr4ng";
 import { grammarIdForVersion, resolveFlixVersion } from "./flix-version.js";
-import { FlixLexer as L } from "./generated/FlixLexer.js";
-import {
-    ConstraintSetContext,
-    DeclarationContext,
-    DotContext,
-    EnumDeclarationTailContext,
-    FlixParser,
-    ModDeclarationContext,
-    StructDeclarationContext,
-    UsesOrImportsContext,
-} from "./generated/FlixParser.js";
+import { grammarForId, type FlixLexerClass } from "./grammar.js";
 
 type Layout = {
     printWidth: number;
@@ -24,15 +14,6 @@ type Format = (source: string, options: Layout) => Promise<string>;
 type Unit = "declaration" | "module" | "datalog" | "enum" | "struct";
 type Slice = { start: number; end: number; unit: Unit; indent: string };
 
-const declarationStarts = new Set([
-    L.USE, L.IMPORT, L.DEF, L.REDEF, L.VAL, L.MOD, L.ENUM, L.STRUCT, L.TRAIT, L.INSTANCE, L.EFF, L.TYPE,
-]);
-const declarationPrefixes = new Set([L.ANNOTATION, L.PUB, L.SEALED, L.MUT, L.RESTRICTABLE]);
-const closers = new Map([
-    [L.LPAREN, L.RPAREN], [L.LBRACK, L.RBRACK], [L.LBRACE, L.RBRACE], [L.HASH_LBRACE, L.RBRACE],
-    [L.HASH_LPAREN, L.RPAREN], [L.HASH_BAR, L.BAR_HASH], [L.INTERPOLATION_START, L.INTERPOLATION_END],
-]);
-const closingTokens = new Set(closers.values());
 const wrappers = {
     module: "mod Recovery {",
     datalog: "def recovery() = #{",
@@ -40,7 +21,25 @@ const wrappers = {
     struct: "struct Recovery {",
 };
 
-function matchingDelimiters(tokens: Token[]): Map<number, number> {
+function declarationStartTypes(L: FlixLexerClass): Set<number> {
+    const types = [L.USE, L.IMPORT, L.DEF, L.REDEF, L.MOD, L.ENUM, L.STRUCT, L.TRAIT, L.INSTANCE, L.EFF, L.TYPE];
+    if (L.VAL !== undefined) types.push(L.VAL);
+    return new Set(types);
+}
+
+function declarationPrefixTypes(L: FlixLexerClass): Set<number> {
+    return new Set([L.ANNOTATION, L.PUB, L.SEALED, L.MUT, L.RESTRICTABLE]);
+}
+
+function closerMap(L: FlixLexerClass): Map<number, number> {
+    return new Map([
+        [L.LPAREN, L.RPAREN], [L.LBRACK, L.RBRACK], [L.LBRACE, L.RBRACE], [L.HASH_LBRACE, L.RBRACE],
+        [L.HASH_LPAREN, L.RPAREN], [L.HASH_BAR, L.BAR_HASH], [L.INTERPOLATION_START, L.INTERPOLATION_END],
+    ]);
+}
+
+function matchingDelimiters(tokens: Token[], closers: Map<number, number>): Map<number, number> {
+    const closingTokens = new Set(closers.values());
     const pairs = new Map<number, number>();
     const stack: Token[] = [];
     for (const token of tokens) {
@@ -66,12 +65,26 @@ function matchingDelimiters(tokens: Token[]): Map<number, number> {
 }
 
 function recoverySlices(source: string, layout: Layout): Slice[] {
-    // Same version gate as full formatting; grammar selection hooks in here later.
-    void grammarIdForVersion(resolveFlixVersion(layout.flixVersion));
+    const grammar = grammarForId(grammarIdForVersion(resolveFlixVersion(layout.flixVersion)));
+    const L = grammar.Lexer;
+    const {
+        DeclarationContext,
+        UsesOrImportsContext,
+        DotContext,
+        ModDeclarationContext,
+        ConstraintSetContext,
+        EnumDeclarationTailContext,
+        StructDeclarationContext,
+        Parser,
+    } = grammar;
+    const declarationStarts = declarationStartTypes(L);
+    const declarationPrefixes = declarationPrefixTypes(L);
+    const closers = closerMap(L);
+
     const lexer = new L(CharStream.fromString(source));
     lexer.removeErrorListeners();
     const stream = new CommonTokenStream(lexer);
-    const parser = new FlixParser(stream);
+    const parser = new Parser(stream);
     parser.removeErrorListeners();
     const tree = parser.compilationUnit();
     stream.fill();
@@ -86,7 +99,7 @@ function recoverySlices(source: string, layout: Layout): Slice[] {
     const unclosedComment = tokens.find((token) => token.type === L.SLASH && source.startsWith("/*", startOf(token)));
     const limit = unclosedComment ? startOf(unclosedComment) : source.length;
     const code = tokens.filter((token) => token.channel === 0 && token.type !== L.EOF && startOf(token) < limit);
-    const pairs = matchingDelimiters(code);
+    const pairs = matchingDelimiters(code, closers);
     const lineStart = (pos: number) => Math.max(source.lastIndexOf("\n", pos - 1), source.lastIndexOf("\r", pos - 1)) + 1;
     const indentAt = (pos: number) => /^[ \t]*/.exec(source.slice(lineStart(pos)))![0];
 
@@ -113,8 +126,9 @@ function recoverySlices(source: string, layout: Layout): Slice[] {
         const starts = new Set<number>();
         if (unit === "declaration" || unit === "module") {
             for (const node of scope.children ?? []) {
-                if ((node instanceof DeclarationContext || node instanceof UsesOrImportsContext) && node.start) {
-                    starts.add(node.start.tokenIndex);
+                if ((node instanceof DeclarationContext || node instanceof UsesOrImportsContext) &&
+                    (node as ParserRuleContext).start) {
+                    starts.add((node as ParserRuleContext).start!.tokenIndex);
                 }
             }
         }
