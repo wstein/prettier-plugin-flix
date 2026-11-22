@@ -4,7 +4,8 @@ Visualize before-and-after sweep exports from [#206](https://github.com/wstein/p
 across print widths. The first example is the two [#201](https://github.com/wstein/prettier-plugin-flix/issues/201)
 repros at every integer width from 20 to 160.
 
-This directory is **not** part of the published plugin or of `npm test`. R and ggplot2 are optional.
+This directory is not part of the published plugin. `test/width-heatmap.test.mjs` covers the Node helpers and runs in
+`npm test`; the R script is not run there. R and ggplot2 are optional.
 
 ## Sample
 
@@ -16,7 +17,7 @@ This directory is **not** part of the published plugin or of `npm test`. R and g
 
 ## Collect real exports
 
-Build the plugin, then run an idempotence export for the widths you care about (here 20–160). Point
+Build the plugin, then run an idempotence export for the widths you care about (here 20 to 160). Point
 `--only` at the fixture names that hold the repros, or pass the `.flix` / fixture paths directly:
 
 ```sh
@@ -31,9 +32,13 @@ Or build a tiny grid from named snippets without sweeping the whole corpus:
 
 ```sh
 node analysis/width-heatmap/export-repro-grid.mjs \
-  --base-revision main --candidate-revision HEAD \
-  --out-dir analysis/width-heatmap/out
+  --revision "$(git rev-parse HEAD)" \
+  --out-dir analysis/width-heatmap/out/candidate
 ```
+
+The script formats the repros with the `dist/` of the checkout it runs in and writes `candidate.json` into
+`--out-dir`; it has no base/candidate option. Run it once per revision (build `dist/` in each checkout) with a
+different `--out-dir`, for example `out/base` and `out/candidate`, and pass the two files to the plot.
 
 ## Render
 
@@ -54,4 +59,6 @@ Rscript analysis/width-heatmap/plot-width-heatmap.R \
 
 The R script also writes `changed-widths.tsv` next to the figure: one row per case whose status
 differs between base and candidate, listing the changed widths.
-Install with `install.packages(c("ggplot2", "jsonlite"))` when you want the ggplot2 panels.
+A cell with several cases (a `sites` export has one per form) shows its worst status: fail, then skipped, then pass.
+Install with `install.packages(c("ggplot2", "jsonlite", "svglite"))` when you want the ggplot2 panels;
+`ggsave` needs `svglite` to write `.svg` files.

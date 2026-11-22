@@ -250,15 +250,15 @@ when you pass `--base` / `--candidate` exports (local command above, or a future
 `analysis/width-heatmap/` plots before-and-after sweep exports across print widths (fixture or repro on
 the vertical axis, width on the horizontal axis, one panel per formatter revision). Pass, fail, skipped,
 and missing cells are distinct. The first example is the two [#201](https://github.com/wstein/prettier-plugin-flix/issues/201)
-repros at widths 20–160.
+repros at widths 20 to 160.
 
-R and ggplot2 are optional and are **not** a dependency of the published plugin or of `npm test`. A Node
-fallback writes the same sample SVG and a `changed-widths.tsv` table. See
+R and ggplot2 are optional and are not a dependency of the published plugin; `npm test` covers only the Node
+helpers. A Node fallback writes the same sample SVG and a `changed-widths.tsv` table. See
 [analysis/width-heatmap/README.md](../analysis/width-heatmap/README.md) for the collect and render commands.
 
 ```sh
 node analysis/width-heatmap/build-sample.mjs
-# with R: Rscript analysis/width-heatmap/plot-width-heatmap.R --base …/base.json --candidate …/candidate.json --out out/heatmap.svg
+# with R: Rscript analysis/width-heatmap/plot-width-heatmap.R --base base.json --candidate candidate.json --out analysis/width-heatmap/out/heatmap.svg
 ```
 
 

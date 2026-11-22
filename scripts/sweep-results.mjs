@@ -10,6 +10,21 @@ export const RESULT_SCHEMA_VERSION = 1;
 
 export const CASE_STATUSES = ["pass", "fail", "skipped"];
 
+/** Case statuses from best to worst. A cell that merges several cases shows the worst one. */
+export const CASE_STATUS_SEVERITY = ["pass", "skipped", "fail"];
+
+/** The worst status of a non-empty list of case statuses (fail > skipped > pass). */
+export function worstCaseStatus(statuses) {
+    let worst = -1;
+    for (const status of statuses) {
+        const rank = CASE_STATUS_SEVERITY.indexOf(status);
+        if (rank < 0) throw new Error(`unknown case status: ${status}`);
+        if (rank > worst) worst = rank;
+    }
+    if (worst < 0) throw new Error("worstCaseStatus needs at least one status");
+    return CASE_STATUS_SEVERITY[worst];
+}
+
 /** Stable case id shared with known-failure entry keys (`file|width|form|token`). */
 export function caseId({ file, width, form = "plain", token = "-" }) {
     return [file, width, form ?? "plain", token ?? "-"].join("|");

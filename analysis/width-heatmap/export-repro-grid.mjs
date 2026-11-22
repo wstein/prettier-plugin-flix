@@ -1,5 +1,5 @@
 // Collect a schema-v1 idempotence export for the two #201 repros at widths 20..160.
-// Uses the built plugin in dist/. Optional — not part of npm test.
+// Uses the built plugin in dist/. Optional; not part of the plugin.
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";

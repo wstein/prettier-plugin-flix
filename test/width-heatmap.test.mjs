@@ -9,8 +9,10 @@ import {
     expandHeatmapRows,
     formatChangedWidthsTsv,
     renderHeatmapSvg,
+    STATUS_COLORS,
 } from "../analysis/width-heatmap/heatmap-lib.mjs";
-import { parseResultDocument } from "../scripts/sweep-results.mjs";
+import * as results from "../scripts/sweep-results.mjs";
+import { buildResultDocument, makeCase, parseResultDocument } from "../scripts/sweep-results.mjs";
 
 const sample = join(dirname(fileURLToPath(import.meta.url)), "..", "analysis", "width-heatmap", "sample");
 const load = (name) => JSON.parse(readFileSync(join(sample, name), "utf8"));
@@ -63,4 +65,82 @@ test("renderHeatmapSvg marks each status", () => {
     assert.match(svg, /data-status="skipped"/);
     assert.match(svg, /data-status="missing"/);
     assert.match(svg, /equals-own-line/);
+});
+
+// A sites export holds several cases (one per form) in one file+width cell.
+const sitesDoc = (rev, statuses, widths = [40]) =>
+    buildResultDocument({
+        command: "sites",
+        formatter: { revision: rev.repeat(40) },
+        config: { widths },
+        cases: statuses.flatMap((status, i) =>
+            widths.map((width) => makeCase({ file: "f", width, form: `form${i}`, token: "3", status })),
+        ),
+    });
+const candRow = (doc, base, width = 40) =>
+    expandHeatmapRows(base, doc).rows.find((r) => r.role === "candidate" && r.width === width);
+
+test("a cell with several cases shows the worst status (fail > skipped > pass), in any order", () => {
+    const base = sitesDoc("a", ["pass", "pass"]);
+    for (const [statuses, want] of [
+        [["pass", "fail"], "fail"],
+        [["fail", "pass"], "fail"],
+        [["pass", "skipped"], "skipped"],
+        [["skipped", "pass"], "skipped"],
+        [["skipped", "fail", "pass"], "fail"],
+        [["pass", "pass"], "pass"],
+    ]) {
+        assert.equal(candRow(sitesDoc("b", statuses), base).status, want, statuses.join());
+    }
+});
+
+test("changedWidthsTable reports a failing form of a sites export", () => {
+    const table = changedWidthsTable(sitesDoc("a", ["pass", "pass"], [40, 50]), sitesDoc("b", ["pass", "fail"], [40, 50]));
+    assert.deepEqual(table, [{ file: "f", from: "pass", to: "fail", widths: [40, 50] }]);
+    assert.deepEqual(changedWidthsTable(sitesDoc("a", ["pass"]), sitesDoc("b", ["pass"])), []);
+});
+
+test("worstCaseStatus follows the schema-v1 ranking", () => {
+    assert.deepEqual(results.CASE_STATUS_SEVERITY, ["pass", "skipped", "fail"]);
+    assert.equal(results.worstCaseStatus(["pass", "skipped"]), "skipped");
+    assert.equal(results.worstCaseStatus(["fail", "skipped", "pass"]), "fail");
+    assert.equal(results.worstCaseStatus(["pass"]), "pass");
+    assert.throws(() => results.worstCaseStatus(["bogus"]), /unknown case status/);
+});
+
+test("the table lists only changed cells, sorted by file, with ascending widths", () => {
+    const mk = (rev, entries) =>
+        buildResultDocument({
+            command: "idempotence",
+            formatter: { revision: rev.repeat(40) },
+            config: { widths: [] },
+            cases: entries.map(([file, width, status]) => makeCase({ file, width, status, reason: "r" })),
+        });
+    const base = mk("a", [["b", 60, "pass"], ["b", 20, "pass"], ["a", 30, "pass"], ["a", 40, "pass"]]);
+    const cand = mk("b", [["b", 60, "fail"], ["b", 20, "fail"], ["a", 30, "skipped"], ["a", 40, "pass"]]);
+    assert.deepEqual(changedWidthsTable(base, cand), [
+        { file: "a", from: "pass", to: "skipped", widths: [30] },
+        { file: "b", from: "pass", to: "fail", widths: [20, 60] },
+    ]);
+    const { widths } = expandHeatmapRows(base, cand);
+    assert.deepEqual(widths, [20, 30, 40, 60]);
+});
+
+test("each status has its own color in the SVG, and the base panel shows base statuses", () => {
+    assert.equal(new Set(Object.values(STATUS_COLORS)).size, 4);
+    assert.deepEqual(STATUS_COLORS, { pass: "#2ca02c", fail: "#d62728", skipped: "#ff7f0e", missing: "#c7c7c7" });
+    const base = sitesDoc("a", ["fail"], [40]);
+    const cand = sitesDoc("b", ["skipped"], [40, 50]);
+    const svg = renderHeatmapSvg(base, cand);
+    const rects = [...svg.matchAll(/<rect [^>]*fill="(#[0-9a-f]{6})" data-status="(\w+)" data-file="f" data-width="(\d+)"/g)];
+    // Panels are drawn base first, then candidate.
+    assert.deepEqual(
+        rects.map((m) => [m[2], m[1], m[3]]),
+        [
+            ["fail", STATUS_COLORS.fail, "40"],
+            ["missing", STATUS_COLORS.missing, "50"],
+            ["skipped", STATUS_COLORS.skipped, "40"],
+            ["skipped", STATUS_COLORS.skipped, "50"],
+        ],
+    );
 });

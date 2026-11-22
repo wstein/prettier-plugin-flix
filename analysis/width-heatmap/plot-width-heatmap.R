@@ -45,13 +45,22 @@ axis_widths <- if (!is.null(opt$widths)) {
 
 files <- sort(unique(c(base$cases$file, cand$cases$file)))
 
-expand <- function(doc, role) {
-  cases <- doc$cases
-  if (is.null(cases) || nrow(cases) == 0) {
-    cases <- data.frame(file = character(), width = integer(), status = character())
+# One status per file and width. A sites export has several cases per cell: keep
+# the worst (fail > skipped > pass, as CASE_STATUS_SEVERITY in scripts/sweep-results.mjs).
+status_rank <- c(pass = 1, skipped = 2, fail = 3)
+worst_cases <- function(cases) {
+  if (is.null(cases) || NROW(cases) == 0) {
+    return(data.frame(file = character(), width = integer(), status = character(), stringsAsFactors = FALSE))
   }
+  cases <- cases[order(-status_rank[cases$status]), c("file", "width", "status")]
+  cases[!duplicated(cases[, c("file", "width")]), ]
+}
+base_cases <- worst_cases(base$cases)
+cand_cases <- worst_cases(cand$cases)
+
+expand <- function(doc, role, cases) {
   grid <- expand.grid(file = files, width = axis_widths, stringsAsFactors = FALSE)
-  merged <- merge(grid, cases[, c("file", "width", "status")], by = c("file", "width"), all.x = TRUE)
+  merged <- merge(grid, cases, by = c("file", "width"), all.x = TRUE)
   merged$status[is.na(merged$status)] <- "missing"
   merged$role <- role
   merged$revision <- substr(doc$formatter$revision, 1, 12)
@@ -59,7 +68,7 @@ expand <- function(doc, role) {
   merged
 }
 
-rows <- rbind(expand(base, "base"), expand(cand, "candidate"))
+rows <- rbind(expand(base, "base", base_cases), expand(cand, "candidate", cand_cases))
 rows$status <- factor(rows$status, levels = c("pass", "fail", "skipped", "missing"))
 rows$panel <- factor(rows$panel, levels = unique(rows$panel))
 
@@ -84,18 +93,16 @@ if (ext == "png") {
 }
 
 # Compact table of changed widths
-base_map <- paste(base$cases$file, base$cases$width, sep = "|")
-names(base_map) <- base_map
-base_status <- setNames(base$cases$status, paste(base$cases$file, base$cases$width, sep = "|"))
-cand_status <- setNames(cand$cases$status, paste(cand$cases$file, cand$cases$width, sep = "|"))
+base_status <- setNames(base_cases$status, paste(base_cases$file, base_cases$width, sep = "|"))
+cand_status <- setNames(cand_cases$status, paste(cand_cases$file, cand_cases$width, sep = "|"))
 keys <- sort(unique(c(names(base_status), names(cand_status), paste(rep(files, each = length(axis_widths)), axis_widths, sep = "|"))))
 changes <- list()
 for (key in keys) {
   parts <- strsplit(key, "|", fixed = TRUE)[[1]]
   file <- parts[[1]]
   width <- as.integer(parts[[2]])
-  b <- if (!is.null(base_status[[key]])) base_status[[key]] else "missing"
-  cstat <- if (!is.null(cand_status[[key]])) cand_status[[key]] else "missing"
+  b <- if (key %in% names(base_status)) base_status[[key]] else "missing"
+  cstat <- if (key %in% names(cand_status)) cand_status[[key]] else "missing"
   if (b != cstat) {
     id <- paste(file, b, cstat, sep = "\t")
     if (is.null(changes[[id]])) changes[[id]] <- integer()

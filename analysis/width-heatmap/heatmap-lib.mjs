@@ -1,6 +1,6 @@
 // Pure helpers for the optional width heatmap: expand a width grid, build a
 // changed-widths table, and draw a simple SVG when R/ggplot2 is not installed.
-import { RESULT_SCHEMA_VERSION, caseId, parseResultDocument, sortCases } from "../../scripts/sweep-results.mjs";
+import { RESULT_SCHEMA_VERSION, caseId, parseResultDocument, sortCases, worstCaseStatus } from "../../scripts/sweep-results.mjs";
 
 export const HEATMAP_STATUSES = ["pass", "fail", "skipped", "missing"];
 
@@ -15,7 +15,8 @@ export const STATUS_COLORS = {
 /**
  * Expands base and candidate exports into long rows
  * `{ revision, label, file, width, status }` covering every width in `widths`.
- * Widths present in neither document become `missing`.
+ * Widths present in neither document become `missing`. A cell with several cases shows the worst
+ * status (fail > skipped > pass, `CASE_STATUS_SEVERITY` in sweep-results.mjs).
  */
 export function expandHeatmapRows(base, candidate, { widths } = {}) {
     const docs = [
@@ -35,37 +36,23 @@ export function expandHeatmapRows(base, candidate, { widths } = {}) {
     const rows = [];
     for (const { role, doc } of docs) {
         const label = `${role}\n${doc.formatter.revision.slice(0, 12)}`;
-        const byKey = new Map(doc.cases.map((c) => [caseId(c), c]));
+        // One cell per file and width. A sites export has several cases per cell:
+        // the cell shows the worst status among them.
+        const byCell = new Map();
+        for (const c of doc.cases) {
+            const key = `${c.file}|${c.width}`;
+            byCell.set(key, [...(byCell.get(key) ?? []), c.status]);
+        }
         for (const file of fileList) {
             for (const width of allWidths) {
-                // Prefer an exact case; fall back to plain idempotence key.
-                const keys = [
-                    caseId({ file, width, form: "plain", token: "-" }),
-                    ...doc.cases.filter((c) => c.file === file && c.width === width).map((c) => c.id),
-                ];
-                let found = null;
-                for (const id of keys) {
-                    if (byKey.has(id)) {
-                        found = byKey.get(id);
-                        break;
-                    }
-                }
-                // Also match any case for this file+width (sites forms).
-                if (!found) {
-                    for (const c of doc.cases) {
-                        if (c.file === file && c.width === width) {
-                            found = c;
-                            break;
-                        }
-                    }
-                }
+                const statuses = byCell.get(`${file}|${width}`);
                 rows.push({
                     revision: doc.formatter.revision,
                     role,
                     label,
                     file,
                     width,
-                    status: found ? found.status : "missing",
+                    status: statuses ? worstCaseStatus(statuses) : "missing",
                 });
             }
         }
