@@ -157,10 +157,12 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
         previewSource = input.view.state.doc;
         preview = { source: previewSource.toString(), output: data.output };
         replaceCode(output.view, preview.output);
+        // Remap after layout so Sync survives wrapping that changes the preview height.
         highlighter?.apply(output.view);
         refreshDiff();
         copy.disabled = data.output.length === 0;
         if (!data.error) showStatus(highlightingFailed ? "Syntax highlighting could not load." : "");
+        requestAnimationFrame(() => syncFromInput());
     }
 
     function refreshDiff() {
