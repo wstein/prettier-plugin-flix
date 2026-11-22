@@ -83,6 +83,8 @@ User-facing changes to Prettier Plugin for Flix. Plugin releases have their own 
   with line width. ([#166](https://github.com/wstein/prettier-plugin-flix/issues/166))
 - Measure `coverage:syntax` against the latest supported Flix pin only
   (`0.80.0`); older pins stay format-selectable.
+- Publish the fixture catalog under `/flix/0.80.0/` as well as the existing
+  root URLs, with one Hugo build per version tree for a single Pages deploy.
 
 ### Compatibility
 

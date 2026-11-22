@@ -107,6 +107,19 @@ On pull requests and main, `npm run coverage:syntax -- --check` requires the Mar
 
 For layout decisions, prefer the [Flix language documentation](https://doc.flix.dev/) and hand-written upstream tests and examples. Wrapped list constructors follow the leading `::` layout shown in [the railroad example](https://github.com/flix/flix/blob/4022083acf86ab8b92308f2fb47ae615d5088de0/examples/datalog/railroad-network.flix#L49). The built-in formatter is recorded separately as a comparison.
 
+## Versioned fixture documentation
+
+The Pages site keeps stable root URLs (`/formatting/`, `/playground/`, …) and
+also publishes the same catalog under `/flix/<exact-version>/`, aligned with
+`flixVersion` / [`src/flix-version.ts`](../src/flix-version.ts). `npm run docs:build`
+runs one Hugo build per versioned tree (today: `0.80.0`) plus the root build,
+then merges them into `docs/public` for a single Pages deploy. Each build sets
+`params.flixDocVersion` so embedded editors and the Playground default to that
+pin; search and chapter links use that build’s `baseURL`, so they stay inside the
+version catalog. When another tested pin should get its own tree, add it to
+`scripts/build-docs-site.mjs` and introduce a version switcher; until then root
+URLs remain the primary entry points.
+
 ## Verify the Playground in Chromium
 
 The fixture documentation workflow runs a Playwright smoke test against

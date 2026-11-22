@@ -241,3 +241,19 @@ test("the Playground page exposes Flix version choices", async () => {
     assert.equal(data.defaultFlixVersion, "0.80.0");
     assert.deepEqual(data.supportedFlixVersions, ["0.79.0", "0.80.0"]);
 });
+
+test("the latest Flix pin also publishes under /flix/<version>/ while root URLs stay", async () => {
+    const version = "0.80.0";
+    const rootGuide = await readFile(new URL("formatting/index.html", site), "utf8");
+    const versionGuide = await readFile(new URL(`flix/${version}/formatting/index.html`, site), "utf8");
+    const versionPlayground = await readFile(new URL(`flix/${version}/playground/index.html`, site), "utf8");
+    const versionHome = await readFile(new URL(`flix/${version}/index.html`, site), "utf8");
+    assert.match(rootGuide, /<h1[^>]*>Flix formatting style<\/h1>/);
+    assert.match(versionGuide, /<h1[^>]*>Flix formatting style<\/h1>/);
+    assert.match(versionPlayground, /data-flix-version/);
+    assert.match(versionPlayground, /<option[^>]*value=(?:"0\.80\.0"|0\.80\.0)[^>]*selected/);
+    // Versioned pages keep navigation inside their catalog.
+    assert.match(versionHome, new RegExp(`/flix/${version.replace(/\./g, "\\.")}/formatting/`));
+    assert.match(versionHome, new RegExp(`/flix/${version.replace(/\./g, "\\.")}/playground/`));
+    assert.doesNotMatch(versionHome, /href=(?:"\/prettier-plugin-flix\/formatting\/"|\/prettier-plugin-flix\/formatting\/)/);
+});
