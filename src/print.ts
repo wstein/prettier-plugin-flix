@@ -1581,7 +1581,13 @@ export class Printer {
             return [out, tailDoc];
         }
         if (this.isMultiStatement(stmt)) {
-            return [indent([hardline, this.printStatement(stmt)]), tailDoc];
+            const soft = this.softTrailBreaks;
+            this.softTrailBreaks = 0;
+            try {
+                return [indent([hardline, this.printStatement(stmt)]), tailDoc];
+            } finally {
+                this.softTrailBreaks = soft;
+            }
         }
         const only = parts[0];
         const out: Doc[] = [place(only.expr)];
