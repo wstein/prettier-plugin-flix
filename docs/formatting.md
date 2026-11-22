@@ -259,9 +259,11 @@ declarations stay together, and an existing gap becomes one blank line,
 including next to braced bodies. Annotations and leading comments stay with
 their declaration. A Flixdoc block (`///`) sits directly above that declaration
 (or its leading annotations) with no blank line in between; a plain `//`
-header may keep a blank line before the code.
+header may keep a blank line before the code. A decorative divider (`//`
+made only of `-`, `=` or `*`) always gets a blank line above and below.
 [Declaration spacing fixture](../test/fixtures/declarations/block-spacing.md) ·
-[Flixdoc attachment](../test/fixtures/comments/attach-flixdoc.md)
+[Flixdoc attachment](../test/fixtures/comments/attach-flixdoc.md) ·
+[Section dividers](../test/fixtures/comments/section-divider.md)
 
 In a `run { … } with` chain, keep the first `with` beside the closing brace,
 like `} else`. A long handler call wraps its arguments within the clause.
