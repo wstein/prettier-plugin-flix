@@ -26,12 +26,46 @@ export function sourceReference(value, lines) {
         const github = !url.port && (raw || blob) && owner && repository && path.length && path.every(Boolean);
         const filename = decodeURIComponent(parts.at(-1) || url.hostname);
         let href = url.href;
+        let downloadUrl;
         if (github) {
             const anchor = sourceLines ? "#L" + sourceLines.replace("-", "-L") : "";
             href = `https://github.com/${owner}/${repository}/blob/${revision}/${path.join("/")}${anchor}`;
+            if (!url.search && !path.some((part) => /%2f|%5c/i.test(part))) {
+                downloadUrl = `https://raw.githubusercontent.com/${owner}/${repository}/${revision}/${path.join("/")}`;
+            }
         }
-        return { sourceUrl: url.href, sourceLines, href, filename };
+        return { sourceUrl: url.href, sourceLines, href, filename, downloadUrl };
     } catch {
         return;
+    }
+}
+
+
+export async function fetchSource(url) {
+    const response = await fetch(url, {
+        credentials: "omit",
+        redirect: "error",
+        referrerPolicy: "no-referrer",
+        signal: AbortSignal.timeout(10_000),
+    });
+    if (!response.ok) throw new Error(`GitHub returned HTTP ${response.status}.`);
+    if (!response.body || response.headers.get("content-type")?.startsWith("text/html")) {
+        throw new Error("GitHub did not return a source file.");
+    }
+
+    const decoder = new TextDecoder("utf-8", { fatal: true });
+    const reader = response.body.getReader();
+    let bytes = 0;
+    let source = "";
+    try {
+        for (;;) {
+            const { value, done } = await reader.read();
+            if (done) return source + decoder.decode();
+            bytes += value.byteLength;
+            if (bytes > 1024 * 1024) throw new Error("The source file exceeds 1 MiB.");
+            source += decoder.decode(value, { stream: true });
+        }
+    } finally {
+        await reader.cancel().catch(() => {});
     }
 }
