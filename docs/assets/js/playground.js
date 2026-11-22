@@ -1,11 +1,12 @@
 import { countColumn, Transaction } from "@codemirror/state";
+import { EditorView } from "@codemirror/view";
 import { renderDiff } from "./playground-diff.js";
 import { createEditor, createFlixHighlighter } from "./playground-editor.js";
 import { readHandoff, writeHandoff } from "./playground-link.js";
 import { playgroundDefaultFlixVersion, playgroundIndentation } from "./playground-options.js";
 import { requestFormat } from "./playground-requests.js";
 import { linkEditorScroll } from "./playground-scroll.js";
-import { sourceReference } from "./playground-source.js";
+import { fetchSource, sourceReference } from "./playground-source.js";
 
 let highlighterPromise;
 let nextRequest = 0;
@@ -207,6 +208,8 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
     if (sourceForm) {
         const original = playground.querySelector("[data-original-source]");
         const sourceStatus = playground.querySelector("[data-source-status]");
+        const loadSource = playground.querySelector("[data-load-source]");
+        const copySource = playground.querySelector("[data-copy-source]");
         const reproLink = playground.querySelector("[data-repro-link]");
         const urlField = sourceForm.elements.namedItem("sourceUrl");
         const linesField = sourceForm.elements.namedItem("sourceLines");
@@ -217,6 +220,7 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
             urlField.value = next?.sourceUrl ?? "";
             linesField.value = next?.sourceLines ?? "";
             original.hidden = !next;
+            loadSource.hidden = copySource.hidden = !next?.downloadUrl;
             sourceStatus.textContent = "";
             reproLink.hidden = true;
             if (next) {
@@ -241,20 +245,62 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
             setReference(next);
         });
 
-        playground.querySelector("[data-copy-repro]").addEventListener("click", async () => {
+        async function copyShareLink(draft, label) {
             const link = new URL(location.href);
             link.searchParams.delete("fixture");
             link.searchParams.delete("variant");
-            const url = writeHandoff(link, { ...snapshot(), ...reference });
+            const url = writeHandoff(link, draft);
             reproLink.hidden = true;
             try {
                 await navigator.clipboard.writeText(url);
-                sourceStatus.textContent = "Repro link copied.";
+                sourceStatus.textContent = `${label} link copied.`;
             } catch {
                 reproLink.value = url;
                 reproLink.hidden = false;
                 reproLink.select();
-                sourceStatus.textContent = "Copy the selected repro link.";
+                sourceStatus.textContent = "Copy the selected link.";
+            }
+        }
+
+        playground.querySelector("[data-copy-repro]").addEventListener("click", () =>
+            copyShareLink({ ...snapshot(), ...reference }, "Repro"));
+        copySource.addEventListener("click", () => {
+            const { printWidth, flixVersion } = snapshot();
+            return copyShareLink({ ...reference, printWidth, flixVersion }, "Source");
+        });
+        loadSource.addEventListener("click", async () => {
+            const requested = reference;
+            if (!requested?.downloadUrl) return;
+            const currentDoc = input.view.state.doc;
+            loadSource.disabled = true;
+            sourceStatus.textContent = "Loading source…";
+            try {
+                const source = await fetchSource(requested.downloadUrl);
+                if (reference !== requested) return;
+                if (input.view.state.doc !== currentDoc) {
+                    sourceStatus.textContent = "Input changed while loading. Click Load source to try again.";
+                    return;
+                }
+                select.value = "";
+                replaceCode(input.view, source);
+                queuePreview();
+                const doc = input.view.state.doc;
+                const [first, last = first] = (requested.sourceLines ?? "1").split("-").map(Number);
+                if (last > doc.lines) {
+                    sourceStatus.textContent = "Source loaded. The requested lines are outside the file.";
+                    return;
+                }
+                const anchor = doc.line(first).from;
+                input.view.dispatch({
+                    selection: { anchor: requested.sourceLines ? doc.line(last).to : anchor, head: anchor },
+                    effects: EditorView.scrollIntoView(anchor, { y: "start" }),
+                });
+                input.view.focus();
+                sourceStatus.textContent = "Source loaded.";
+            } catch (error) {
+                if (reference === requested) sourceStatus.textContent = `Could not load source. ${error.message}`;
+            } finally {
+                loadSource.disabled = false;
             }
         });
         select.addEventListener("change", () => setReference(undefined));
