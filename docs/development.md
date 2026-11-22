@@ -227,7 +227,8 @@ A line in an epic checklist has the form
   test. A pair test over the comment sites is planned and not part of the acceptance yet.
 - **Rhythm.** Work on an epic starts when it has at least 5 open lines or before a release. A finding with
   `reach:real`, `reach:narrow` or `corrupts-program` has its own issue and is worked on at once.
-- **Size.** One epic per pull request, at most 5 lines per pull request. Tests and fixtures go in the first commit and
+- **Size.** One epic per pull request. A batch closes at most 5 lines of that epic, and each
+  line is closed with `Closes #n` or referenced with `Refs #n`. Tests and fixtures go in the first commit and
   the fixes follow in later commits.
 
 ## Test sources
