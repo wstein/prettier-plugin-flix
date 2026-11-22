@@ -191,7 +191,8 @@ test("sync scroll follows matching code in both directions across formatting cha
     await expect(page.getByLabel("Example")).toBeEnabled();
     const input = page.getByRole("textbox", { name: "Flix input" });
     const preview = page.getByRole("textbox", { name: "Preview" });
-    const toggle = page.locator(".playground-toolbar").getByRole("checkbox", { name: "Sync scroll" });
+    const header = page.locator(".playground-preview-header");
+    const toggle = header.getByRole("checkbox", { name: "Sync scroll" });
     const status = page.locator("[data-full-playground]").getByRole("status", { includeHidden: true });
     const lines = [
         ...Array.from({ length: 10 }, (_, i) =>
@@ -213,6 +214,8 @@ test("sync scroll follows matching code in both directions across formatting cha
     }, lineIndex);
 
     await expect(toggle).toBeChecked();
+    const formatted = header.getByRole("button", { name: "Formatted", exact: true });
+    expect((await toggle.boundingBox()).x).toBeLessThan((await formatted.boundingBox()).x);
     await scrollBeforeLine(input, 18);
     await expect.poll(() => topLine(input)).toBe(lines[18]);
     await expect.poll(() => topLine(preview)).toBe(lines[18]);
@@ -276,7 +279,7 @@ test("a shared repro keeps its code and original reference without fetching the 
     await dialog.getByRole("button", { name: "Attach as reference" }).click();
     await expect(dialog).toBeHidden();
     await expect(input).toHaveText(repro);
-    const original = page.getByRole("link", { name: "Original · Boxable.flix:168–172" });
+    const original = page.locator(".playground-statusbar").getByRole("link", { name: "Original · Boxable.flix:168–172" });
     await expect(original).toHaveAttribute("href", blob + "#L168-L172");
     await page.locator(".playground-toolbar").getByRole("button", { name: "Copy Playground link" }).click();
     await expect(page.getByText("Playground link copied.")).toBeVisible();
@@ -342,7 +345,7 @@ test("a source-only link loads a complete pinned file on request and selects its
     await expect(load).toBeEnabled();
     await load.click();
     await expect(dialog).toBeHidden();
-    await expect(page.getByText("Source loaded.")).toBeVisible();
+    await expect(page.locator(".playground-statusbar").getByText("Source loaded.")).toBeVisible();
     await expect(page.locator("[data-cursor-position]")).toHaveText(/Ln 168, Col 1 · \d+ selected/);
     await expect(input.locator(".cm-line").filter({ hasText: lines[167] })).toBeInViewport();
     await input.press("ControlOrMeta+Home");
@@ -359,6 +362,11 @@ test("a source-only link loads a complete pinned file on request and selects its
     expect(fragment.get("sourceLines")).toBe("168-172");
     expect(fragment.get("printWidth")).toBe("60");
     expect(requests).toBe(3);
+
+    await page.setViewportSize({ width: 390, height: 780 });
+    const statusbar = page.locator(".playground-statusbar");
+    await expect(statusbar.getByRole("link", { name: "Original · Boxable.flix:168–172" })).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
 });
 
 test("the live preview keeps trailing comments, reports cursor selection, and recovers from a syntax error", async ({ page }) => {
@@ -493,7 +501,7 @@ test("diff, copy, invalid width and unrecoverable input stay in sync", async ({ 
     const preview = page.getByRole("textbox", { name: "Preview" });
     const width = page.getByLabel("Line width");
     const status = page.locator("[data-full-playground]").getByRole("status", { includeHidden: true });
-    const copy = page.getByRole("button", { name: "Copy output" });
+    const copy = page.locator(".playground-preview-header").getByRole("button", { name: "Copy output" });
 
     await input.fill("def chosen():Int32=42");
     await expect(preview).toHaveText("def chosen(): Int32 = 42");
@@ -520,7 +528,7 @@ test("diff, copy, invalid width and unrecoverable input stay in sync", async ({ 
     await page.getByRole("button", { name: "Formatted", exact: true }).click();
     await expect(preview).toHaveText("def");
     await expect(copy).toBeEnabled();
-    await page.getByRole("button", { name: "Clear input" }).click();
+    await page.locator(".playground-input-header").getByRole("button", { name: "Clear input" }).click();
     await expect(input).toBeEmpty();
     await expect(status).toBeEmpty();
 });

@@ -18,16 +18,12 @@
         {{ end }}
       </select>
     </label>
-    <button type="button" class="playground-clear">Clear input</button>
-    <button type="button" class="playground-copy" disabled>Copy output</button>
     {{ with .handoff }}<div class="playground-links">
       <a href="{{ $.sourceUrl }}">Source on GitHub</a>
       {{ with $.upstreamUrl }}<a href="{{ . }}">Upstream example</a>{{ end }}
       <a class="playground-handoff" href="{{ . }}">Open in Playground <span aria-hidden="true">↗</span></a>
     </div>{{ end }}
-    <label class="playground-sync-scroll"><input type="checkbox" data-sync-scroll checked> Sync scroll</label>
     {{ if .full }}<div class="playground-source">
-      <a data-original-source hidden></a>
       <button type="button" data-open-source aria-haspopup="dialog">Load from GitHub…</button>
       <button type="button" data-copy-source hidden>Copy source link</button>
       <button type="button" data-copy-playground>Copy Playground link</button>
@@ -45,21 +41,27 @@
           <p data-source-dialog-status aria-live="polite"></p>
         </form>
       </dialog>
-      <span data-source-status aria-live="polite"></span>
       <input data-repro-link aria-label="Share link" readonly hidden>
     </div>{{ end }}
   </div>
   <div class="playground-panes">
     <section class="playground-pane">
-      <h2 id="{{ $prefix }}flix-input-label">Flix input</h2>
+      <div class="playground-pane-header playground-input-header">
+        <h2 id="{{ $prefix }}flix-input-label">Flix input</h2>
+        <button type="button" class="playground-clear">Clear input</button>
+      </div>
       <div id="{{ $prefix }}flix-input" class="playground-editor" data-input></div>
     </section>
     <section class="playground-pane">
-      <div class="playground-preview-header">
+      <div class="playground-pane-header playground-preview-header">
         <h2 id="{{ $prefix }}flix-output-label">Preview</h2>
-        <div class="playground-preview-modes" role="group" aria-label="Preview mode">
-          <button type="button" data-preview-mode="formatted" aria-controls="{{ $prefix }}flix-output" aria-pressed="true">Formatted</button>
-          <button type="button" data-preview-mode="diff" aria-controls="{{ $prefix }}flix-diff" aria-pressed="false">Diff</button>
+        <div class="playground-preview-controls">
+          <label class="playground-sync-scroll"><input type="checkbox" data-sync-scroll checked> Sync scroll</label>
+          <div class="playground-preview-modes" role="group" aria-label="Preview mode">
+            <button type="button" data-preview-mode="formatted" aria-controls="{{ $prefix }}flix-output" aria-pressed="true">Formatted</button>
+            <button type="button" data-preview-mode="diff" aria-controls="{{ $prefix }}flix-diff" aria-pressed="false">Diff</button>
+          </div>
+          <button type="button" class="playground-copy" disabled>Copy output</button>
         </div>
       </div>
       <div id="{{ $prefix }}flix-output" class="playground-editor" data-output></div>
@@ -68,6 +70,10 @@
   </div>
   <div class="playground-statusbar">
     <p id="{{ $prefix }}format-diagnostic" class="playground-status" role="status">{{ if .full }}Loading the editor…{{ end }}</p>
+    {{ if .full }}
+    <a data-original-source hidden></a>
+    <span data-source-status aria-live="polite"></span>
+    {{ end }}
     <span class="playground-cursor" data-cursor-position>Ln 1, Col 1</span>
   </div>
 </div>

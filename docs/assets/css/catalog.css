@@ -146,7 +146,8 @@ pre.shiki {
   background: light-dark(#187443, #60d394);
 }
 .playground-example { min-width: 0; }
-.playground-toolbar :is(input, select, button) {
+.playground-toolbar :is(input, select, button),
+:is(.playground-clear, .playground-copy) {
   box-sizing: border-box;
   padding: 0.15rem 0.35rem;
   border: 1px solid var(--border);
@@ -158,8 +159,8 @@ pre.shiki {
 .playground-toolbar [data-print-width] { width: 3.4rem; }
 .playground-toolbar select { min-width: 0; max-width: min(16rem, 55vw); }
 .playground-toolbar [data-flix-version] { min-width: 5.5rem; max-width: 7rem; }
-.playground-toolbar button { cursor: pointer; color: var(--link); }
-.playground-toolbar button:disabled { cursor: default; opacity: 0.65; }
+.playground-toolbar button, :is(.playground-clear, .playground-copy) { cursor: pointer; color: var(--link); }
+.playground-toolbar button:disabled, .playground-copy:disabled { cursor: default; opacity: 0.65; }
 .playground-source, .playground-source-actions {
   display: flex;
   flex-wrap: wrap;
@@ -167,7 +168,6 @@ pre.shiki {
   gap: 0.35rem 0.65rem;
 }
 .playground-source { min-width: 0; max-width: 100%; }
-.playground-toolbar [data-sync-scroll] { margin: 0; }
 .playground-source input { max-width: 100%; }
 .playground-source dialog {
   width: min(30rem, calc(100vw - 2rem));
@@ -182,7 +182,6 @@ pre.shiki {
 .playground-source dialog label { display: grid; gap: 0.25rem; }
 .playground-source dialog input { width: 100%; }
 .playground-source [data-source-dialog-status]:empty { margin: 0; }
-.playground-source [data-original-source] { overflow-wrap: anywhere; }
 .playground-links { display: flex; flex-wrap: wrap; gap: 0.25rem 0.65rem; margin-inline-start: auto; }
 .playground-handoff { font-weight: 650; }
 .playground-panes {
@@ -196,8 +195,6 @@ pre.shiki {
 .playground-pane h2 {
   margin: 0;
   padding: 0.45rem 0.7rem;
-  border-bottom: 1px solid var(--border);
-  background: var(--surface);
   font-size: 0.9rem;
   font-weight: 650;
 }
@@ -228,12 +225,14 @@ pre.shiki {
 }
 .playground-statusbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   gap: 0.75rem;
   padding: 0.35rem 0.65rem;
   border-top: 1px solid var(--border);
   font-size: 0.85rem;
 }
+.playground-statusbar [data-original-source] { min-width: 0; overflow-wrap: anywhere; }
 .playground-status { min-width: 0; margin: 0; }
 .playground-status:empty { display: none; }
 .playground-cursor { margin-inline-start: auto; white-space: nowrap; font-variant-numeric: tabular-nums; }
@@ -252,9 +251,9 @@ pre.shiki {
   :is(.playground-editor .cm-editor, .playground-diff) { height: 20rem; }
 }
 
-.playground-pane > h2,
-.playground-preview-header { min-height: 2.6rem; box-sizing: border-box; }
-.playground-preview-header {
+.playground-pane-header {
+  min-height: 2.6rem;
+  box-sizing: border-box;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -264,7 +263,10 @@ pre.shiki {
   border-bottom: 1px solid var(--border);
   background: var(--surface);
 }
-.playground-preview-header h2 { border: 0; }
+.playground-pane-header { font-size: 0.8rem; }
+.playground-preview-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem; }
+.playground-sync-scroll { display: inline-flex; align-items: center; gap: 0.25rem; }
+.playground-sync-scroll input { margin: 0; }
 .playground-preview-modes { display: flex; gap: 0.2rem; }
 .playground-preview-modes button {
   border: 1px solid transparent;
