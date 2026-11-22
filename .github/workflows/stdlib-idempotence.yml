@@ -1,0 +1,61 @@
+name: Stdlib idempotence
+on:
+  pull_request:
+    paths:
+      - "src/**"
+      - "scripts/review-sweep.mjs"
+      - "scripts/review-sweep-lib.mjs"
+      - "test/known-idempotence-failures.json"
+      - "package.json"
+      - "package-lock.json"
+      - "rescript.json"
+      - ".github/workflows/stdlib-idempotence.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+
+concurrency:
+  group: stdlib-idempotence-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Formats the Flix standard library at widths 40, 50, 60, 70, 80, 100, 120 and
+# 160, twice, and fails on any file that is not idempotent and not listed in
+# test/known-idempotence-failures.json (#203). The compile check of the library
+# is the workflow Flix standard library compilation.
+jobs:
+  idempotence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ["1/3", "2/3", "3/3"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: flix/flix
+          ref: v0.80.0
+          path: flix-source
+          sparse-checkout: main/src/library
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Stdlib idempotence at eight widths (shard ${{ matrix.shard }})
+        env:
+          FLIX_STDLIB_DIR: ${{ github.workspace }}/flix-source/main/src/library
+        run: |
+          set -o pipefail
+          node --max-old-space-size=1100 scripts/review-sweep.mjs idempotence --no-repo --shard ${{ matrix.shard }} | tee "$RUNNER_TEMP/sweep.log"
+      - name: Step summary
+        if: always()
+        run: |
+          {
+            echo "### Stdlib idempotence, Flix v0.80.0, shard ${{ matrix.shard }}"
+            echo '```'
+            grep -E '^(idempotence:|  unknown|idempotence finished)' "$RUNNER_TEMP/sweep.log" || echo "no result: the sweep did not finish"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
