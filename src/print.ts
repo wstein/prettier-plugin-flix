@@ -472,6 +472,21 @@ export class Printer {
             (!ignoreTrailing && info.trail.length > 0));
     }
 
+    /** Whether any token of `n` carries a comment. */
+    private subtreeHasComment(n: Node): boolean {
+        if (isTerm(n)) return this.hasComment(n);
+        return kids(n).some((c) => this.subtreeHasComment(c));
+    }
+
+    /**
+     * What separates `else` from a plain (not hugged) else branch. A line comment after `else` is
+     * deferred to the end of the output line; when the branch holds comments of its own, they would
+     * print in front of it and swap the order, so the branch starts on a new line.
+     */
+    private elseGap(elseTok: TerminalNode, elseNode: Node): Doc {
+        return this.hasLineTrail(elseTok) && this.subtreeHasComment(elseNode) ? hardline : line;
+    }
+
     /** Measure atoms and supported single-line map or record values. */
     private inlineWidth(n: Node, rowEnd: TerminalNode | null = null, extra?: "list" | "add",
         rowStart?: TerminalNode | null): number | undefined {
@@ -1028,7 +1043,7 @@ export class Printer {
             if (elseTok) {
                 parts.push(this.after(thenLast, " "), this.tok(elseTok));
                 const elseDoc = this.print(hugs(elseNode) ? elseNode : this.ls(elseNode));
-                parts.push(hugs(elseNode) ? [this.after(elseTok, " ", true), elseDoc] : group(indent([line, elseDoc])));
+                parts.push(hugs(elseNode) ? [this.after(elseTok, " ", true), elseDoc] : group(indent([this.elseGap(elseTok, elseNode), elseDoc])));
             }
             return parts;
         }
@@ -1037,7 +1052,7 @@ export class Printer {
             this.lineStart.add(elseTok.symbol.tokenIndex); // a line break precedes `else` here
             const elseDoc = kind(elseNode) === "IfExpr" ? this.printIf(elseNode as ParserRuleContext, false) :
                 this.print(hugs(elseNode) ? elseNode : this.ls(elseNode));
-            parts.push(this.after(thenLast, line), this.tok(elseTok), hugs(elseNode) ? [this.after(elseTok, " ", true), elseDoc] : indent([line, elseDoc]));
+            parts.push(this.after(thenLast, line), this.tok(elseTok), hugs(elseNode) ? [this.after(elseTok, " ", true), elseDoc] : indent([this.elseGap(elseTok, elseNode), elseDoc]));
         }
         return groupChain ? group(parts) : parts;
     }
