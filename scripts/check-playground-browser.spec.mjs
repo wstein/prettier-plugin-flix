@@ -212,13 +212,9 @@ test("sync scroll follows matching code in both directions across formatting cha
         content.closest(".cm-scroller").scrollTop = padding + index * line.getBoundingClientRect().height + 2;
     }, lineIndex);
 
-    await expect(toggle).not.toBeChecked();
-    await scrollBeforeLine(preview, 0);
+    await expect(toggle).toBeChecked();
     await scrollBeforeLine(input, 18);
     await expect.poll(() => topLine(input)).toBe(lines[18]);
-    await expect.poll(() => topLine(preview)).toBe("def prep0(): Int32 = {");
-
-    await toggle.check();
     await expect.poll(() => topLine(preview)).toBe(lines[18]);
     expect(await scrollTop(preview)).toBeGreaterThan(await scrollTop(input) + 150);
 
@@ -428,6 +424,7 @@ for (const override of [undefined, "54"]) {
         const width = fixture.getByLabel("Line width");
         await expect(width).toBeVisible();
         await expect(width).toHaveValue("60");
+        await expect(fixture.getByRole("checkbox", { name: "Sync scroll" })).toBeChecked();
 
         const embeddedInput = fixture.getByRole("textbox", { name: "Flix input" });
         await expect(embeddedInput).toHaveCSS("--playground-guide-position", /60ch/);

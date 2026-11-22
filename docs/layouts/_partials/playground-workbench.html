@@ -25,7 +25,7 @@
       {{ with $.upstreamUrl }}<a href="{{ . }}">Upstream example</a>{{ end }}
       <a class="playground-handoff" href="{{ . }}">Open in Playground <span aria-hidden="true">↗</span></a>
     </div>{{ end }}
-    <label class="playground-sync-scroll"><input type="checkbox" data-sync-scroll> Sync scroll</label>
+    <label class="playground-sync-scroll"><input type="checkbox" data-sync-scroll checked> Sync scroll</label>
     {{ if .full }}<div class="playground-source">
       <a data-original-source hidden></a>
       <button type="button" data-load-source hidden>Load source</button>
