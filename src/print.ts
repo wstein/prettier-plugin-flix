@@ -1540,10 +1540,15 @@ export class Printer {
         const options = { printWidth: Math.max(1, width), tabWidth: this.tabWidth };
         const render = (value: Doc): string => doc.printer.printDocToString(value, options).formatted;
         const rows = parts.map(render);
+        const prefixWidth = util.getStringWidth(render(prefix).split("\n").at(-1)!);
         // A result type that is an arrow chain moves to its own continuation line as a
         // whole. Measure widths only; the chosen document is built from the parts.
         const chainOnOwnLine = (): Doc | null => {
-            if (kind(result) !== "ArrowType" || rows[0].includes("\n")) return null;
+            // Only a chain of two or more arrows moves; a single arrow keeps the layout
+            // of the ordinary signature wrap. Arrows nest to the right: `a -> (b -> c)`.
+            let arrows = 0;
+            for (let type: Node = result; kind(type) === "ArrowType"; type = kids(type as ParserRuleContext)[2]) arrows++;
+            if (arrows < 2) return null;
             // A chain always has a clause or an effect after it; the bare chain returns early.
             const more = join(" ", parts.slice(1));
             const rest = rows.slice(1);
@@ -1556,10 +1561,11 @@ export class Printer {
             // Otherwise the first word of the remaining parts follows the chain on its line.
             const word = 1 + util.getStringWidth(rows[1].split(/[ \n]/)[0]);
             if (chain + word > width) return null;
+            // A chain that stays on the signature line up to the next word keeps its place.
+            if (prefixWidth + 1 + util.getStringWidth(rows[0]) + word <= width) return null;
             return [prefix, indent([hardline, parts[0]]), " ", more];
         };
         if (rows.some((row) => row.includes("\n"))) return chainOnOwnLine() ?? ordinary;
-        const prefixWidth = util.getStringWidth(render(prefix).split("\n").at(-1)!);
         if (prefixWidth + 1 + util.getStringWidth(rows.join(" ")) + trailerWidth <= width) return ordinary;
 
         // Prefer breaking at the outer clause, then the effect, then the result

@@ -18,6 +18,11 @@ User-facing changes to Prettier Plugin for Flix. Plugin releases have their own 
 - Wrap long function types at arrows, long trait constraints between entries, and long record and schema row tails before the pipe.
 - Preserve vertical Datalog rules and wrap long query, solve, and inject lists between clauses or entries.
 - Wrap oversized calls with trailing lambdas while keeping the call head and lambda together when they fit.
+- Keep a return type arrow chain of two or more arrows on one line when it
+  fits: it moves as a whole to its own continuation line, and a short `with`
+  list follows in the same column. A single arrow, and arrows in parentheses,
+  wrap as before. Existing files may reformat signatures whose chain wrapped
+  at each arrow.
 
 ### Fixes
 
