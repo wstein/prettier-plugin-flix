@@ -1,6 +1,6 @@
 ---
 title: "Align match arms when a block comment in a pattern wraps the arm head"
-description: "A block comment inside a case pattern breaks the pattern over several lines; the arrow column is measured as if the comment did not break the head, so the other arms stay aligned with it."
+description: "A block comment inside a case pattern breaks the pattern over several lines; the arrow column of the other arms is measured as if the comment did not break the head, so it is not taken from the wrapped arm's head."
 group: "Line endings and comment placement"
 flix: "0.80"
 options: { printWidth: 40 }
