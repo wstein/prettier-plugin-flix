@@ -183,9 +183,9 @@ share a column.
 
 When the signature does not fit on one line but the whole `with` list does,
 the `with` line starts one level below `def`. A short body can follow `=` on
-that line, as in the fixture at widths 70 and 100. If the body moves to the
+that line, as in the fixture at widths 70 and 80. If the body moves to the
 next line, it starts in the same column as `with`, as in
-[Flix's Boxable example](https://github.com/flix/flix/blob/v0.80.0/main/src/library/Fixpoint3/Boxable.flix#L168-L169).
+[Flix's Boxable example](https://github.com/flix/flix/blob/v0.80.0/main/src/library/Fixpoint3/Boxable.flix#L168-L170).
 When the constraints themselves wrap, each starts one level deeper than the
 body, as shown in the trait constraint fixture. At width 60:
 
