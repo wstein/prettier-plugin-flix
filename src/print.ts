@@ -1330,17 +1330,7 @@ export class Printer {
         const head = k === "DefDeclaration" ? this.printDefinitionHead(n, cs, ai) :
             k === "MatchRule" ? this.printMatchRuleHead(cs, ai) : this.seq(cs.slice(0, ai), k);
         const gap = this.after(headLast, " ", true);
-        // Arrow trail: clear hug soft-trail so `-> /* c */` keeps its break. Nested
-        // MatchLambdaExpr heads still see softTrailBreaks via printEqBodyTail.
-        const soft = this.softTrailBreaks;
-        this.softTrailBreaks = 0;
-        let arrowDoc: Doc;
-        try {
-            arrowDoc = this.tok(arrow);
-        } finally {
-            this.softTrailBreaks = soft;
-        }
-        return { head, gap, arrow, tail: [arrowDoc, this.printEqBodyTail(cs, ai, k, arrow)] };
+        return { head, gap, arrow, tail: [this.tok(arrow), this.printEqBodyTail(cs, ai, k, arrow)] };
     }
 
     /** `case pattern if guard` with deeper wrap indent for the guard's own operator chain. */
@@ -1615,13 +1605,7 @@ export class Printer {
             return [out, tailDoc];
         }
         if (this.isMultiStatement(stmt)) {
-            const soft = this.softTrailBreaks;
-            this.softTrailBreaks = 0;
-            try {
-                return [indent([hardline, this.printStatement(stmt)]), tailDoc];
-            } finally {
-                this.softTrailBreaks = soft;
-            }
+            return [indent([hardline, this.printStatement(stmt)]), tailDoc];
         }
         const only = parts[0];
         const out: Doc[] = [place(only.expr)];
