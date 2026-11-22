@@ -31,7 +31,14 @@ import YAML from "yaml";
 
 export const STATUSES = ["pass", "todo", "error"];
 const META_KEYS = new Set(["title", "description", "group", "showcase", "flix", "options", "status", "issue", "message", "source", "tags", "flixFormat", "flixFormatInvalid"]);
-const OPTION_TYPES = { printWidth: "number", tabWidth: "number", useTabs: "boolean" };
+const OPTION_TYPES = {
+    printWidth: "number",
+    tabWidth: "number",
+    useTabs: "boolean",
+    // Exact Flix compiler pin; must match a supported flixVersion choice.
+    flixVersion: "string",
+};
+const FLIX_VERSION = /^\d+\.\d+\.\d+$/;
 
 const fail = (file, line, msg) => {
     throw new Error(`${file}${line ? `:${line}` : ""}: ${msg}`);
@@ -46,6 +53,10 @@ function checkOptions(file, line, options) {
         if (!(k in OPTION_TYPES)) fail(file, line, `unknown option "${k}" (allowed: ${Object.keys(OPTION_TYPES).join(", ")})`);
         if (OPTION_TYPES[k] === "number") {
             if (!Number.isInteger(v) || v < 1) fail(file, line, `option "${k}" must be a positive integer, found ${JSON.stringify(v)}`);
+        } else if (OPTION_TYPES[k] === "string") {
+            if (typeof v !== "string" || (k === "flixVersion" && !FLIX_VERSION.test(v))) {
+                fail(file, line, `option "${k}" must be an exact Flix version such as "0.79.0", found ${JSON.stringify(v)}`);
+            }
         } else if (typeof v !== "boolean") {
             fail(file, line, `option "${k}" must be true or false, found ${JSON.stringify(v)}`);
         }
@@ -57,6 +68,12 @@ function parseOptionValue(file, line, key, raw) {
     if (OPTION_TYPES[key] === "number") {
         if (!/^[1-9]\d{0,8}$/.test(raw)) fail(file, line, `option "${key}" must be a positive integer, found "${raw}"`);
         return Number(raw);
+    }
+    if (OPTION_TYPES[key] === "string") {
+        if (key === "flixVersion" && !FLIX_VERSION.test(raw)) {
+            fail(file, line, `option "${key}" must be an exact Flix version such as "0.79.0", found "${raw}"`);
+        }
+        return raw;
     }
     if (raw !== "true" && raw !== "false") fail(file, line, `option "${key}" must be true or false, found "${raw}"`);
     return raw === "true";

@@ -1,30 +1,39 @@
 import { format } from "prettier";
 import { CharStream, CommonTokenStream } from "antlr4ng";
-import { FlixLexer } from "../dist/generated/flix-0.80.0/FlixLexer.js";
-import { FlixParser } from "../dist/generated/flix-0.80.0/FlixParser.js";
 import plugin from "../dist/index.js";
+import { grammarForId } from "../dist/grammar.js";
+import { DEFAULT_FLIX_VERSION, grammarIdForVersion, resolveFlixVersion } from "../dist/flix-version.js";
 import { findStringContinuationError } from "../dist/parse.js";
 
 export const fmt = (text, opts = {}) =>
     format(text, { parser: "flix", plugins: [plugin], ...opts });
 
-/** Default-channel token texts plus a parse-tree shape string. */
-export function fingerprint(text) {
-    const lexer = new FlixLexer(CharStream.fromString(text));
+/** Lexer and parser classes for an exact Flix pin (default 0.80.0). */
+function grammarClasses(flixVersion = DEFAULT_FLIX_VERSION) {
+    return grammarForId(grammarIdForVersion(resolveFlixVersion(flixVersion)));
+}
+
+/**
+ * Default-channel token texts plus a parse-tree shape string.
+ * Pass `flixVersion` so 0.79 sources are checked with the 0.79 grammar (#166).
+ */
+export function fingerprint(text, flixVersion = DEFAULT_FLIX_VERSION) {
+    const { Lexer, Parser } = grammarClasses(flixVersion);
+    const lexer = new Lexer(CharStream.fromString(text));
     const stream = new CommonTokenStream(lexer);
-    const parser = new FlixParser(stream);
+    const parser = new Parser(stream);
     const errors = [];
     const l = { syntaxError: (_r, _s, line, col, msg) => errors.push(`${line}:${col} ${msg}`), reportAmbiguity() {}, reportAttemptingFullContext() {}, reportContextSensitivity() {} };
     lexer.removeErrorListeners(); lexer.addErrorListener(l);
     parser.removeErrorListeners(); parser.addErrorListener(l);
     const tree = parser.compilationUnit();
     stream.fill();
-    const continuation = findStringContinuationError(stream.getTokens(), FlixLexer);
+    const continuation = findStringContinuationError(stream.getTokens(), Lexer);
     if (continuation) {
         const { line, column } = continuation.loc.start;
         errors.unshift(`${line}:${column - 1} ${continuation.message}`);
     }
-    const tokens = stream.getTokens().filter((t) => t.channel === 0 && t.type !== FlixLexer.EOF).map((t) => t.text);
+    const tokens = stream.getTokens().filter((t) => t.channel === 0 && t.type !== Lexer.EOF).map((t) => t.text);
     const comments = stream.getTokens().filter((t) => t.channel >= 2).map((t) => t.text.trim());
     const shape = (n) => (n.children ? `${n.constructor.name}(${n.children.map(shape).join(",")})` : "t");
     const constraintEnds = new Map();
@@ -32,12 +41,12 @@ export function fingerprint(text) {
     const walk = (n) => {
         if (n.constructor.name === "DatalogConstraintContext") {
             const { symbol } = n.children[n.children.length - 1];
-            constraintEnds.set(symbol.tokenIndex, FlixLexer.symbolicNames[symbol.type]);
+            constraintEnds.set(symbol.tokenIndex, Lexer.symbolicNames[symbol.type]);
         }
         if (n.constructor.name === "ConsExprContext" || n.constructor.name === "ConsPatternContext") {
             for (const child of n.children ?? []) {
                 const type = child.symbol?.type;
-                if (type === FlixLexer.COLON_COLON || type === FlixLexer.COLON_COLON_TIGHT) {
+                if (type === Lexer.COLON_COLON || type === Lexer.COLON_COLON_TIGHT) {
                     consOps.add(child.symbol.tokenIndex);
                 }
             }
@@ -45,9 +54,9 @@ export function fingerprint(text) {
         (n.children ?? []).forEach(walk);
     };
     walk(tree);
-    const classified = new Set([FlixLexer.ARROW_TIGHT, FlixLexer.ARROW_WS, FlixLexer.DOT, FlixLexer.DOT_WS, FlixLexer.FREE_DOT, FlixLexer.COLON_COLON, FlixLexer.COLON_COLON_TIGHT]);
+    const classified = new Set([Lexer.ARROW_TIGHT, Lexer.ARROW_WS, Lexer.DOT, Lexer.DOT_WS, Lexer.FREE_DOT, Lexer.COLON_COLON, Lexer.COLON_COLON_TIGHT]);
     const sensitive = stream.getTokens().filter((t) => classified.has(t.type));
-    const classes = sensitive.map((t) => FlixLexer.symbolicNames[t.type]);
+    const classes = sensitive.map((t) => Lexer.symbolicNames[t.type]);
     // Only parsed Datalog terminators may be normalized from DOT to DOT_WS.
     // Cons `::` in expressions and patterns may loosen ColonColonTight to ColonColon;
     // `use` path qualifiers must keep their exact class.
@@ -108,8 +117,9 @@ function mulberry32(seed) {
  * there was none, so tight tokens (`a->b`, `Foo::Bar`) stay tight, and a run after a `//` comment
  * keeps a line break. Reproducible for a given seed.
  */
-export function perturbWhitespace(text, seed) {
-    const lexer = new FlixLexer(CharStream.fromString(text));
+export function perturbWhitespace(text, seed, flixVersion = DEFAULT_FLIX_VERSION) {
+    const { Lexer } = grammarClasses(flixVersion);
+    const lexer = new Lexer(CharStream.fromString(text));
     lexer.removeErrorListeners();
     const stream = new CommonTokenStream(lexer);
     stream.fill();
@@ -118,9 +128,9 @@ export function perturbWhitespace(text, seed) {
     let out = "";
     let previous = null;
     for (const t of stream.getTokens()) {
-        if (t.type === FlixLexer.EOF) break;
-        if (t.type === FlixLexer.WS) {
-            const afterLineComment = previous && (previous.type === FlixLexer.LINE_COMMENT || previous.type === FlixLexer.DOC_COMMENT);
+        if (t.type === Lexer.EOF) break;
+        if (t.type === Lexer.WS) {
+            const afterLineComment = previous && (previous.type === Lexer.LINE_COMMENT || previous.type === Lexer.DOC_COMMENT);
             let pick = choices[Math.floor(rand() * choices.length)];
             if (afterLineComment && !pick.includes("\n")) pick = "\n";
             out += pick;
@@ -133,33 +143,38 @@ export function perturbWhitespace(text, seed) {
 }
 
 /** Tokens a comment is glued to: a space after a tight `.` or `::` would change the token class. */
-const TIGHT_TYPES = new Set([FlixLexer.DOT, FlixLexer.COLON_COLON_TIGHT]);
+function tightTypes(Lexer) {
+    return new Set([Lexer.DOT, Lexer.COLON_COLON_TIGHT]);
+}
 
 /**
  * A comment site is a default-channel token outside a string. Tight dots and double colons
  * use a glued comment to exercise their original token classes.
  */
-export function commentSites(text) {
-    const lexer = new FlixLexer(CharStream.fromString(text));
+export function commentSites(text, flixVersion = DEFAULT_FLIX_VERSION) {
+    const { Lexer } = grammarClasses(flixVersion);
+    const lexer = new Lexer(CharStream.fromString(text));
     lexer.removeErrorListeners();
     const stream = new CommonTokenStream(lexer);
     stream.fill();
-    const stringTypes = new Set([FlixLexer.STRING_START, FlixLexer.STRING_END, FlixLexer.STRING_CONTENT, FlixLexer.INTERPOLATION_START, FlixLexer.INTERPOLATION_END, FlixLexer.DEBUG_INTERPOLATOR]);
+    const stringTypes = new Set([Lexer.STRING_START, Lexer.STRING_END, Lexer.STRING_CONTENT, Lexer.INTERPOLATION_START, Lexer.INTERPOLATION_END, Lexer.DEBUG_INTERPOLATOR]);
+    const gluedTypes = tightTypes(Lexer);
     const sites = [];
     let depth = 0;
     for (const t of stream.getTokens()) {
-        if (t.channel !== 0 || t.type === FlixLexer.EOF) continue;
-        if (t.type === FlixLexer.STRING_START) depth++;
+        if (t.channel !== 0 || t.type === Lexer.EOF) continue;
+        if (t.type === Lexer.STRING_START) depth++;
         const inString = depth > 0 || stringTypes.has(t.type);
-        if (!inString) sites.push({ tokenIndex: t.tokenIndex, glued: TIGHT_TYPES.has(t.type) });
-        if (t.type === FlixLexer.STRING_END) depth--;
+        if (!inString) sites.push({ tokenIndex: t.tokenIndex, glued: gluedTypes.has(t.type) });
+        if (t.type === Lexer.STRING_END) depth--;
     }
     return sites;
 }
 
 /** Insert a line or block comment after the selected token; tight dots and :: glue it. */
-export function withLineCommentAfter(text, { tokenIndex, glued, style = "line" }) {
-    const lexer = new FlixLexer(CharStream.fromString(text));
+export function withLineCommentAfter(text, { tokenIndex, glued, style = "line" }, flixVersion = DEFAULT_FLIX_VERSION) {
+    const { Lexer } = grammarClasses(flixVersion);
+    const lexer = new Lexer(CharStream.fromString(text));
     lexer.removeErrorListeners();
     const stream = new CommonTokenStream(lexer);
     stream.fill();
@@ -168,7 +183,7 @@ export function withLineCommentAfter(text, { tokenIndex, glued, style = "line" }
         : (glued ? "// note\n" : " // note\n");
     let out = "";
     for (const t of stream.getTokens()) {
-        if (t.type === FlixLexer.EOF) break;
+        if (t.type === Lexer.EOF) break;
         out += t.text;
         if (t.tokenIndex === tokenIndex) out += comment;
     }
@@ -187,19 +202,21 @@ export const COMMENT_MARKERS = { line: "// note", block: "/* note */", own: "// 
  * - `block`: `/* note *\/` after the token (glued the same way, else surrounded by spaces),
  * - `own`: `// own` on its own line before the token.
  */
-export function withCommentAt(text, tokenIndex, form) {
+export function withCommentAt(text, tokenIndex, form, flixVersion = DEFAULT_FLIX_VERSION) {
     if (!COMMENT_FORMS.includes(form)) throw new Error(`unknown comment form ${form}`);
-    const lexer = new FlixLexer(CharStream.fromString(text));
+    const { Lexer } = grammarClasses(flixVersion);
+    const lexer = new Lexer(CharStream.fromString(text));
     lexer.removeErrorListeners();
     const stream = new CommonTokenStream(lexer);
     stream.fill();
+    const gluedTypes = tightTypes(Lexer);
     let out = "";
     for (const t of stream.getTokens()) {
-        if (t.type === FlixLexer.EOF) break;
+        if (t.type === Lexer.EOF) break;
         if (form === "own" && t.tokenIndex === tokenIndex) out += "\n// own\n";
         out += t.text;
         if (t.tokenIndex === tokenIndex) {
-            const glued = TIGHT_TYPES.has(t.type);
+            const glued = gluedTypes.has(t.type);
             if (form === "line") out += glued ? "// note\n" : " // note\n";
             if (form === "block") out += glued ? "/* note */" : " /* note */ ";
         }
