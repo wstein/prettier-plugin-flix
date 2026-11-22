@@ -178,15 +178,16 @@ constraint. Wrapped constraints are indented one level deeper than the body
 or members so they do not share a column with the code that follows. The same
 deeper indent separates a wrapped `with` list from a wrapped function return
 type: constraints sit one level deeper than the continued arrow parameters.
-Wrapped constraints after a wrapped return type therefore share the column of
-the last result line, and the formatter does not separate that column further.
+Wrapped constraints and the last result line of a wrapped function return type
+share a column.
 
 When the signature does not fit on one line but the whole `with` list does,
-the `with` line is a continuation in the body column, one level below `def`,
-and the body follows in the same column. This matches how the Flix authors
-write it (`Fixpoint3/Boxable.flix`, where `with` and the body share a column).
-A wrapped constraint list, with one constraint per line, stays one level
-deeper than the body. At width 60:
+the `with` line starts one level below `def`. A short body can follow `=` on
+that line, as in the fixture at widths 70 and 100. If the body moves to the
+next line, it starts in the same column as `with`, as in
+[Flix's Boxable example](https://github.com/flix/flix/blob/v0.80.0/main/src/library/Fixpoint3/Boxable.flix#L168-L169).
+When the constraints themselves wrap, each starts one level deeper than the
+body, as shown in the trait constraint fixture. At width 60:
 
 ```flix
 pub def lookup(m: Map[a, b], k: a): Option[b]
@@ -548,17 +549,19 @@ The plugin formats in the Prettier style: it chooses line breaks from the
 print width. It does not replace `flix format`. The Flix 0.80.0 formatter has
 no line width: it derives no layout from a width constraint, uses a fixed
 indent of four spaces and rewrites files in place
-([Doc.scala](https://github.com/flix/flix/blob/v0.80.0/main/src/ca/uwaterloo/flix/tools/fmt/Doc.scala)).
-Its correctness test, `./mill flix.testFormatter`, runs locally and is not
-part of the workflows in the Flix repository
+([document model](https://github.com/flix/flix/blob/v0.80.0/main/src/ca/uwaterloo/flix/tools/fmt/Doc.scala),
+[indentation](https://github.com/flix/flix/blob/v0.80.0/main/src/ca/uwaterloo/flix/tools/fmt/PrettyPrinter.scala#L19),
+[file writes](https://github.com/flix/flix/blob/v0.80.0/main/src/ca/uwaterloo/flix/api/lsp/FormatterLsp.scala#L31-L72)).
+In Flix v0.80.0, `./mill flix.testFormatter` runs locally. The Flix CI
+workflows at that tag omit the formatter correctness test
 ([build.mill](https://github.com/flix/flix/blob/v0.80.0/build.mill),
 [TestFormatterCorrectness.scala](https://github.com/flix/flix/blob/v0.80.0/main/test/ca/uwaterloo/flix/tools/fmt/TestFormatterCorrectness.scala)).
 
 The v0.80.0 standard library was reformatted with the Flix formatter in
 May 2026 (flix/flix#12755). A pass of the Flix formatter changes 12 of its
-243 files; the other 231 are already fixed points, and 12 files were edited by
-hand since. The plugin output changes 236 of the 243 files at print width 80
-and at 100 (238 at 160). Measured on `74de28a` of `main` on 2026-11-22, the
+243 files. The other 231 are already fixed points. All 12 changed files have
+later commits after the reformat. The plugin output changes 236 of the 243
+files at print widths 80 and 100 (238 at 160). Measured on `74de28a` of `main` on 2026-11-22, the
 token sequence of every file is unchanged at widths 80, 100 and 160; only the
 whitespace between tokens differs. Of 408110 gaps between tokens, 19311 differ
 at width 80, 12944 at 100 and 8827 at 160. The main kinds at widths 80 and 160:
@@ -567,7 +570,7 @@ at width 80, 12944 at 100 and 8827 at 160. The main kinds at widths 80 and 160:
 | --- | --- | --- |
 | The plugin breaks a line, Flix does not | 13822 | 1997 |
 | Flix breaks a line, the plugin does not (often after `=`) | 1363 | 3430 |
-| Spaces inside a line (padding before `=` and `=>`, `{x = T}` braces, space before a trailing comment) | 2485 | 1972 |
+| Spaces inside a line (padding before `=` and `=>`, record type braces (Flix `{x = T}`, plugin `{ x = T }`), space before a trailing comment) | 2485 | 1972 |
 | Indentation of a line that both break | 921 | 708 |
 | Blank line after `{` or before `}`, which Flix keeps and the plugin removes | 476 | 476 |
 

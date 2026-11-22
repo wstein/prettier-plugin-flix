@@ -255,5 +255,13 @@ test("the latest Flix pin also publishes under /flix/<version>/ while root URLs 
     // Versioned pages keep navigation inside their catalog.
     assert.match(versionHome, new RegExp(`/flix/${version.replace(/\./g, "\\.")}/formatting/`));
     assert.match(versionHome, new RegExp(`/flix/${version.replace(/\./g, "\\.")}/playground/`));
-    assert.doesNotMatch(versionHome, /href=(?:"\/prettier-plugin-flix\/formatting\/"|\/prettier-plugin-flix\/formatting\/)/);
+    const prefix = `/prettier-plugin-flix/flix/${version}/`;
+    for (const [pageName, html] of [["home", versionHome], ["formatting", versionGuide], ["playground", versionPlayground]]) {
+        for (const [, doubleQuoted, singleQuoted, unquoted] of html.matchAll(/\shref=(?:"([^"]*)"|'([^']*)'|([^\s>]+))/g)) {
+            const href = doubleQuoted ?? singleQuoted ?? unquoted;
+            if (href.startsWith("/") && !href.startsWith("//")) {
+                assert.ok(href.startsWith(prefix), `Versioned ${pageName} links outside its catalog: ${href}`);
+            }
+        }
+    }
 });
