@@ -242,6 +242,8 @@ pre.shiki {
   background: var(--surface);
 }
 .playground-preview-header h2 { border: 0; }
+.playground-preview-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 0.6rem; }
+.playground-sync-scroll { display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.8rem; }
 .playground-preview-modes { display: flex; gap: 0.2rem; }
 .playground-preview-modes button {
   border: 1px solid transparent;
