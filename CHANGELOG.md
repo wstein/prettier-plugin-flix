@@ -70,7 +70,7 @@ User-facing changes to Prettier Plugin for Flix. Plugin releases have their own 
   ([#206](https://github.com/wstein/prettier-plugin-flix/issues/206)).
 - Optional width heatmap over those exports (R/ggplot2 or a Node SVG fallback), starting
   with the [#201](https://github.com/wstein/prettier-plugin-flix/issues/201) repros at
-  widths 20–160 ([#207](https://github.com/wstein/prettier-plugin-flix/issues/207)).
+  widths 20 to 160 ([#207](https://github.com/wstein/prettier-plugin-flix/issues/207)).
 - Report formatter timeouts separately from load failures and retry on the next edit. Associate syntax and line-width errors with their controls and give diff rows accessible line labels.
 - Pin the weekly upstream Flix corpus. Require a review reason for each new or changed official example layout diff in a pull request.
 - Guarantee idempotence for `printWidth` of 40 or more, except the known failures in `test/known-idempotence-failures.json`; below 40 idempotence is best effort and not supported.
