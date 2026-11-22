@@ -2,15 +2,30 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { CharStream, CommonTokenStream } from "antlr4ng";
-import { FlixLexer } from "../dist/generated/flix-0.80.0/FlixLexer.js";
-import { FlixParser } from "../dist/generated/flix-0.80.0/FlixParser.js";
+import { DEFAULT_FLIX_VERSION, grammarIdForVersion } from "../dist/flix-version.js";
+import { grammarForId } from "../dist/grammar.js";
 import { parseFlix } from "../dist/parse.js";
 import { findFixtures, loadFixture } from "../test/fixture.mjs";
+
+/**
+ * Syntax coverage is measured against the latest supported Flix pin only.
+ * Older pins stay selectable for formatting, but the gate tracks the current
+ * grammar surface so fixture growth follows the active language.
+ */
+const coverageVersion = DEFAULT_FLIX_VERSION;
+const coverageGrammarId = grammarIdForVersion(coverageVersion);
+const grammar = grammarForId(coverageGrammarId);
+const FlixLexer = grammar.Lexer;
+const FlixParser = grammar.Parser;
+const parseOptions = { flixVersion: coverageVersion };
 
 const testDir = fileURLToPath(new URL("../test", import.meta.url));
 const fixtures = findFixtures(join(testDir, "fixtures")).map((path) => loadFixture(path));
 const fixtureInputs = fixtures.filter(({ meta }) => meta.status !== "error").map(({ input }) => input.code);
-const parserSource = readFileSync(new URL("../dist/generated/flix-0.80.0/FlixParser.js", import.meta.url), "utf8");
+const parserSource = readFileSync(
+    new URL(`../dist/generated/${coverageGrammarId}/FlixParser.js`, import.meta.url),
+    "utf8",
+);
 const alternatives = [...parserSource.matchAll(/^export class (\w+Context) extends \w+Context \{/gm)]
     .map((match) => match[1]);
 const tokenNames = FlixLexer.symbolicNames.filter(Boolean);
@@ -42,7 +57,7 @@ function measure(sources) {
     for (const source of sources) {
         let root;
         try {
-            root = parseFlix(source);
+            root = parseFlix(source, parseOptions);
         } catch (error) {
             if (!(error instanceof SyntaxError)) throw error;
             skipped++;
@@ -80,6 +95,8 @@ function report(label, { tokens, rules, contexts, parsed, skipped }) {
         if (missing.length) console.log(`    Unobserved: ${missing.join(", ")}`);
     }
 }
+
+console.log(`Syntax coverage grammar: Flix ${coverageVersion} (${coverageGrammarId})`);
 
 const markdown = measure(fixtureInputs);
 report("Markdown fixture inputs", markdown);
