@@ -23,8 +23,8 @@ function mapLine(line, changes, from, to) {
     return line + offset;
 }
 
-/** Top-level / nested Flix declaration starters used as sync calibration points. */
-const DECL_ANCHOR = /^(?:pub\s+)?(def|law|enum|struct|alias|trait|instance|eff|mod|rel|lat|type)\b(?:\s+alias)?\s*(`[^`]+`|[A-Za-z_][\w']*)?/;
+/** Declaration starters used as sync calibration points (allows module indent). */
+const DECL_ANCHOR = /^\s*(?:pub\s+)?(def|law|enum|struct|alias|trait|instance|eff|mod|rel|lat|type)\b(?:\s+alias)?\s*(`[^`]+`|[A-Za-z_][\w']*)?/;
 
 /**
  * Collect declaration anchors from a CodeMirror document.
