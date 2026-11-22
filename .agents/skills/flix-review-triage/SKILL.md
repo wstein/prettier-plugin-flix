@@ -65,7 +65,8 @@ Format the input of every new or changed fixture with the head and with
 `origin/main`, at printWidth 20 to 160 (20, 40, 60, 80, 100, 120, 140, 160).
 Format each result a second time. Compare:
 
-- pass 2 equals pass 1 at printWidth 40 and above;
+- pass 2 equals pass 1 at printWidth 40 and above (below 40, idempotence is best effort and not
+  supported);
 - the output parses and keeps tokens and comments;
 - the head differs from `main` only where the PR intends it.
 
