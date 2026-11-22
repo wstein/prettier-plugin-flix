@@ -3,6 +3,7 @@ import { doc, util, type Doc } from "prettier";
 import { FlixLexer as L } from "./generated/FlixLexer.js";
 import { DefDeclarationContext, HandlerExprContext } from "./generated/FlixParser.js";
 import { ignoredDeclarationEnd, parseFlix, type FlixRoot } from "./parse.js";
+import { alignTupleFields } from "./TupleColumns.res.mjs";
 
 type LayoutOptions = { printWidth: number; tabWidth: number; useTabs: boolean };
 type Scope = { parent: Scope | undefined };
@@ -387,18 +388,10 @@ function alignTupleRows(tokens: Token[], lines: string[], options: LayoutOptions
         const first = rows[0];
         if (!rows.every((row) => row.indent === first.indent && row.cells.length === first.cells.length &&
             row.cells.every((cell, col) => cell.kind === first.cells[col].kind))) continue;
-        const widths = first.cells.map((_, col) => rows.reduce(({ before, after }, { cells }) => ({
-            before: Math.max(before, cells[col].before),
-            after: Math.max(after, cells[col].after),
-        }), { before: 0, after: 0 }));
-        const aligned = rows.map((row) => {
-            const fields = row.cells.map((cell, col) => {
-                const leading = " ".repeat(widths[col].before - cell.before);
-                const separator = col === widths.length - 1 ? "" : ", " + " ".repeat(widths[col].after - cell.after);
-                return leading + cell.text + separator;
-            });
-            return row.indent + "(" + fields.join("") + ")" + row.suffix;
-        });
+        // Column maxima and pad spaces live in ReScript; discovery/measurement stay here.
+        const fields = alignTupleFields(rows.map((row) =>
+            row.cells.map(({ text, before, after }) => ({ text, before, after }))));
+        const aligned = rows.map((row, i) => row.indent + "(" + fields[i].join("") + ")" + row.suffix);
         if (aligned.some((text, i) => {
             const original = lines[rows[i].line - 1];
             const originalWidth = width(original, options.tabWidth);
