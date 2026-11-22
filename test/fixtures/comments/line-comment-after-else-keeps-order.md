@@ -22,6 +22,18 @@ def alone(): Int32 = if (true) 1 else // note
 
 def blockOnly(): Int32 = if (true) 1 else
     x /* B */
+
+def lead(): Int32 = if (true) 1 else // note
+    /* B */ x
+
+def leadInner(): Int32 = if (true) 1 else // note
+    g(/* B */ x)
+
+def blockTrail(): Int32 = if (true) 1 else /* c */
+    x /* B */
+
+def blockThenLine(): Int32 = if (true) 1 else /* c */
+    x // d
 ```
 
 ## Output
@@ -43,6 +55,20 @@ def afterBlock(): Int32 = if (true) { 1 } else  // note
 def alone(): Int32 = if (true) 1 else x  // note
 
 def blockOnly(): Int32 = if (true) 1 else x /* B */
+
+def lead(): Int32 = if (true)
+    1
+else  // note
+    /* B */ x
+
+def leadInner(): Int32 = if (true)
+    1
+else  // note
+    g(/* B */ x)
+
+def blockTrail(): Int32 = if (true) 1 else /* c */ x /* B */
+
+def blockThenLine(): Int32 = if (true) 1 else /* c */ x  // d
 ```
 
 ```flix printWidth=40
@@ -65,6 +91,22 @@ def alone(): Int32 = if (true) 1 else x  // note
 
 def blockOnly(): Int32 =
     if (true) 1 else x /* B */
+
+def lead(): Int32 = if (true)
+    1
+else  // note
+    /* B */ x
+
+def leadInner(): Int32 = if (true)
+    1
+else  // note
+    g(/* B */ x)
+
+def blockTrail(): Int32 =
+    if (true) 1 else /* c */ x /* B */
+
+def blockThenLine(): Int32 =
+    if (true) 1 else /* c */ x  // d
 ```
 
 ```flix printWidth=60
@@ -84,6 +126,20 @@ def afterBlock(): Int32 = if (true) { 1 } else  // note
 def alone(): Int32 = if (true) 1 else x  // note
 
 def blockOnly(): Int32 = if (true) 1 else x /* B */
+
+def lead(): Int32 = if (true)
+    1
+else  // note
+    /* B */ x
+
+def leadInner(): Int32 = if (true)
+    1
+else  // note
+    g(/* B */ x)
+
+def blockTrail(): Int32 = if (true) 1 else /* c */ x /* B */
+
+def blockThenLine(): Int32 = if (true) 1 else /* c */ x  // d
 ```
 
 ```flix printWidth=100
@@ -103,4 +159,18 @@ def afterBlock(): Int32 = if (true) { 1 } else  // note
 def alone(): Int32 = if (true) 1 else x  // note
 
 def blockOnly(): Int32 = if (true) 1 else x /* B */
+
+def lead(): Int32 = if (true)
+    1
+else  // note
+    /* B */ x
+
+def leadInner(): Int32 = if (true)
+    1
+else  // note
+    g(/* B */ x)
+
+def blockTrail(): Int32 = if (true) 1 else /* c */ x /* B */
+
+def blockThenLine(): Int32 = if (true) 1 else /* c */ x  // d
 ```
