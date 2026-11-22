@@ -39,6 +39,8 @@ test("parsePairArgs: defaults, values and errors", () => {
     assert.deepEqual([d.pairs, d.triples, d.seed, d.widths, d.repo], [DEFAULT_PAIRS, DEFAULT_TRIPLES, DEFAULT_SEED, PAIR_WIDTHS, true]);
     const o = parsePairArgs(["--pairs", "4", "--triples", "0", "--seed", "9", "--widths", "40,50", "--forms", "line,own", "--only", "x", "--no-repo", "p.flix"]);
     assert.deepEqual([o.pairs, o.triples, o.seed, o.widths, o.forms, o.only, o.repo, o.paths], [4, 0, 9, [40, 50], ["line", "own"], "x", false, ["p.flix"]]);
+    for (const seed of ["0", "4294967295"]) assert.equal(parsePairArgs(["--seed", seed]).seed, Number(seed));
+    assert.equal(parsePairArgs(["--pairs", "0"]).pairs, 0);
     for (const [argv, re] of [
         [["--bogus"], /unknown option --bogus/],
         [["--seed"], /--seed needs a value/],
@@ -112,6 +114,8 @@ test("a formatter that drops comments is a program failure", async () => {
     assert.ok(r.failures.length > 0);
     assert.ok(r.failures.every((f) => f.kind === "program" && f.size === 2 && f.width === 60));
     assert.equal(pairsExitCode(r), 1);
+    assert.equal(pairsExitCode({ failures: [r.failures[0]] }), 1);
+    assert.equal(pairsExitCode({ failures: [] }), 0);
 });
 
 test("a formatter that throws is reported as throw, one that emits garbage as unparsable", async () => {
