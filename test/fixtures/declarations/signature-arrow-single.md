@@ -17,6 +17,20 @@ pub def lift2X1(_f: t1 -> t2 -> t3 -> t): Vector[String] -> Vector[String] with 
 
 pub def effectOnly(_f: t1 -> t2 -> t3 -> t4 -> t5 -> t): Vector[String] -> Vector[String] \ (ef - Logger) + Fs.FileWrite + Abort + Net.Http =
     _ -> Vector.empty()
+
+pub def paren1(_f: t1 -> t2 -> t): (String -> String) -> String with Order[t1], Order[t2], Order[t] =
+    _ -> ""
+
+pub def paren2(_f: t1 -> t2 -> t): String -> (String -> String) with Order[t1], Order[t2], Order[t] =
+    _ -> _ -> ""
+
+pub def paren3(_f: t1 -> t2 -> t): (String -> String, String -> String) -> String with Order[t1], Order[t2], Order[t] =
+    _ -> ""
+pub def rec1(_f: t1 -> t2 -> t): {f = String -> String} -> String with Order[t1], Order[t2], Order[t] =
+    _ -> ""
+
+pub def rec2(_f: t1 -> t2 -> t): String -> {f = String -> String, g = Int32} with Order[t1], Order[t2], Order[t] =
+    _ -> {f = _ -> "", g = 1}
 ```
 
 ## Output
@@ -31,6 +45,20 @@ pub def lift2X1(_f: t1 -> t2 -> t3 -> t): Vector[String] -> Vector[String]
 pub def effectOnly(_f: t1 -> t2 -> t3 -> t4 -> t5 -> t): Vector[String] ->
         Vector[String] \ (ef - Logger) + Fs.FileWrite + Abort + Net.Http =
     _ -> Vector.empty()
+
+pub def paren1(_f: t1 -> t2 -> t): (String -> String) -> String
+    with Order[t1], Order[t2], Order[t] = _ -> ""
+
+pub def paren2(_f: t1 -> t2 -> t): String -> (String -> String)
+    with Order[t1], Order[t2], Order[t] = _ -> _ -> ""
+
+pub def paren3(_f: t1 -> t2 -> t): (String -> String, String -> String) ->
+        String with Order[t1], Order[t2], Order[t] = _ -> ""
+pub def rec1(_f: t1 -> t2 -> t): { f = String -> String } -> String
+    with Order[t1], Order[t2], Order[t] = _ -> ""
+
+pub def rec2(_f: t1 -> t2 -> t): String -> { f = String -> String, g = Int32 }
+    with Order[t1], Order[t2], Order[t] = _ -> { f = _ -> "", g = 1 }
 ```
 
 ```flix printWidth=60
@@ -49,6 +77,28 @@ pub def effectOnly(
 ): Vector[String] -> Vector[String] \ (
     ef - Logger
 ) + Fs.FileWrite + Abort + Net.Http = _ -> Vector.empty()
+
+pub def paren1(_f: t1 -> t2 -> t): (String -> String) ->
+        String with Order[t1], Order[t2], Order[t] = _ -> ""
+
+pub def paren2(_f: t1 -> t2 -> t): String ->
+        (String -> String) with
+        Order[t1],
+        Order[t2],
+        Order[t] = _ -> _ -> ""
+
+pub def paren3(_f: t1 -> t2 -> t): (
+    String -> String,
+    String -> String
+) -> String with Order[t1], Order[t2], Order[t] = _ -> ""
+pub def rec1(_f: t1 -> t2 -> t): { f = String -> String } ->
+        String with Order[t1], Order[t2], Order[t] = _ -> ""
+
+pub def rec2(_f: t1 -> t2 -> t): String ->
+        { f = String -> String, g = Int32 } with
+        Order[t1],
+        Order[t2],
+        Order[t] = _ -> { f = _ -> "", g = 1 }
 ```
 
 ```flix printWidth=100
@@ -59,4 +109,18 @@ pub def lift2X1(_f: t1 -> t2 -> t3 -> t): Vector[String] -> Vector[String]
 
 pub def effectOnly(_f: t1 -> t2 -> t3 -> t4 -> t5 -> t): Vector[String] -> Vector[String]
     \ (ef - Logger) + Fs.FileWrite + Abort + Net.Http = _ -> Vector.empty()
+
+pub def paren1(_f: t1 -> t2 -> t): (String -> String) -> String
+    with Order[t1], Order[t2], Order[t] = _ -> ""
+
+pub def paren2(_f: t1 -> t2 -> t): String -> (String -> String)
+    with Order[t1], Order[t2], Order[t] = _ -> _ -> ""
+
+pub def paren3(_f: t1 -> t2 -> t): (String -> String, String -> String) -> String
+    with Order[t1], Order[t2], Order[t] = _ -> ""
+pub def rec1(_f: t1 -> t2 -> t): { f = String -> String } -> String
+    with Order[t1], Order[t2], Order[t] = _ -> ""
+
+pub def rec2(_f: t1 -> t2 -> t): String -> { f = String -> String, g = Int32 }
+    with Order[t1], Order[t2], Order[t] = _ -> { f = _ -> "", g = 1 }
 ```
