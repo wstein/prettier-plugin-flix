@@ -163,6 +163,10 @@ export class Printer {
         return join(literalline, lines);
     }
 
+    private isFlixdoc(c: Comment): boolean {
+        return c.isLine && c.text.startsWith("///");
+    }
+
     private leadDoc(info: TokenInfo, closing: boolean, inlineGap = " "): Doc[] {
         const parts: Doc[] = [];
         info.lead.forEach((c, i) => {
@@ -170,7 +174,12 @@ export class Printer {
             parts.push(this.commentText(c));
             parts.push(c.isLine || c.nlNext > 0 ? hardline : inlineGap);
         });
-        if (info.lead.length > 0 && info.nlAfter >= 2 && !closing) parts.push(hardline);
+        // Flixdoc stays glued to the declaration (or its leading annotation).
+        // Ordinary `//` headers may keep a blank line before the code.
+        const last = info.lead.at(-1);
+        if (info.lead.length > 0 && info.nlAfter >= 2 && !closing && !(last && this.isFlixdoc(last))) {
+            parts.push(hardline);
+        }
         return parts;
     }
 
