@@ -9,6 +9,14 @@
       <select id="playground-example" disabled><option value="" selected disabled hidden>Choose an example</option></select>
     </label>{{ end }}
     <label>Line width <input id="{{ $prefix }}print-width" data-print-width type="number" min="1" step="1" required value="{{ $width }}"></label>
+    {{ $flixDefault := site.Data.playground.defaultFlixVersion }}
+    <label>Flix version
+      <select id="{{ $prefix }}flix-version" data-flix-version aria-label="Flix version">
+        {{ range site.Data.playground.supportedFlixVersions }}
+          <option value="{{ . }}"{{ if eq . $flixDefault }} selected{{ end }}>{{ . }}</option>
+        {{ end }}
+      </select>
+    </label>
     <button type="button" class="playground-clear">Clear input</button>
     <button type="button" class="playground-copy" disabled>Copy output</button>
     {{ with .handoff }}<div class="playground-links">
