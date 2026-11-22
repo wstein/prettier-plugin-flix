@@ -171,6 +171,25 @@ the width, the comment form and token index (comment sites), the kind (`unparsab
 - Entries are matched by token index. After a fixture input changes, regenerate the affected entries:
   run `npm run review:sweep -- sites --json out.json` and copy the failures that belong to an open issue.
 
+### Stdlib idempotence in CI
+
+The workflow `Stdlib idempotence` (`.github/workflows/stdlib-idempotence.yml`) formats the Flix 0.80.0
+standard library (243 files from a sparse checkout of `flix/flix` at `v0.80.0`) at the eight widths, twice, with
+`npm run review:sweep -- idempotence --no-repo` in three `--shard k/3` jobs (`node --max-old-space-size=1100`).
+A file that is not idempotent and not listed in `test/known-idempotence-failures.json` fails the shard
+(exit 1; the log names file and width and shows the smallest input and the output diff). Each shard writes its
+run count and failures to the step summary. It is not a required check.
+
+- Trigger: pull requests that touch `src/**`, `scripts/review-sweep.mjs`, `scripts/review-sweep-lib.mjs`,
+  `test/known-idempotence-failures.json`, `package.json`, `package-lock.json`, `rescript.json` or the workflow file;
+  `workflow_dispatch`. The 1944 runs take about 4 minutes per shard locally (parallel, 1944 runs in all) on GitHub runners.
+- Reproduce locally: `npm run build`, then
+  `FLIX_STDLIB_DIR=<flix checkout>/main/src/library node --max-old-space-size=1100 scripts/review-sweep.mjs idempotence --no-repo`
+  (add `--shard 1/3` to run one part).
+- A red run is a formatter regression on real code. Fix the formatter; do not add a known entry unless the owner
+  accepts the failure and an issue exists. Widths below 40 are not swept (unsupported, see "Blocking findings" below);
+  the sweep default starts at 40.
+
 ### Pair and triple test
 
 `npm run review:pairs -- [options]` (`scripts/comment-pairs.mjs`) inserts several comments at once, where

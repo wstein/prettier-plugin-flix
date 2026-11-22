@@ -49,7 +49,8 @@ for the fixture-to-review workflow.
   pull requests: set `FLIX_STDLIB_DIR` and run
   `npm run review:sweep -- idempotence --no-repo` (eight widths, three
   `--shard k/3` processes, `node --max-old-space-size=1100`). The result is
-  0 new failures against `main`. A CI job for this is planned.
+  0 new failures against `main`. The workflow Stdlib idempotence runs it
+  in CI for pull requests that touch `src/**` (see docs/development.md).
 - For changes in `src/`, also run the comment-site sweep (the workflow
   Comment sites full sweep runs it in CI once the workflow is on `main`) and
   `npm run review:pairs` (the pair and triple test).
