@@ -1436,7 +1436,6 @@ export class Printer {
             tabWidth: this.tabWidth,
         }).formatted;
         const firstLine = formatted.split("\n")[0] ?? "";
-        if (firstLine.length === 0) return 0;
         // Space before `=` plus the hugged first line. When that line is only the first
         // body token and the rest breaks away (e.g. `= match` then an own-line comment),
         // the doc fit still counts the gap before the break (#201), the same as the
