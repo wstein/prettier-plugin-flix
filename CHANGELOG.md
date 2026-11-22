@@ -93,7 +93,13 @@ User-facing changes to Prettier Plugin for Flix. Plugin releases have their own 
 - Support Flix `0.79.0` alongside default `0.80.0` through `flixVersion` /
   `--flix-version`, with separate generated grammars. Module-level `val`
   parses only under `0.80.0`; `def val` is rejected there because `val` is
-  reserved. Completes the first increment of
+  reserved. ([#166](https://github.com/wstein/prettier-plugin-flix/issues/166),
+  [PR #224](https://github.com/wstein/prettier-plugin-flix/pull/224))
+- Document Prettier `overrides` for different `flixVersion` pins in one
+  repository; verify both pins from the packed npm artifact; and preserve
+  tokens and parse-tree shape under `0.79.0` (including handler `=`
+  alignment, `prettier-ignore`, and the string-continuation diagnostic).
+  Completes the first increment of
   [#166](https://github.com/wstein/prettier-plugin-flix/issues/166).
 - Reject an empty `flixVersion` the same way as any unsupported value; only an omitted option keeps the default `0.80.0`.
 - Declare `"engines": { "node": ">=22" }` so installers match CI and release publishing.
