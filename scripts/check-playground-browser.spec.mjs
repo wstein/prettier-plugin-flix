@@ -125,6 +125,66 @@ test("the catalog gives embedded editors room and aligns the header with the cha
     }
 });
 
+test("both editors move their column guide with the configured width and horizontal scroll", async ({ page }) => {
+    await page.setViewportSize({ width: 1250, height: 850 });
+    await page.goto(siteUrl + "playground/");
+    const width = page.getByLabel("Line width");
+    const input = page.getByRole("textbox", { name: "Flix input" });
+    const preview = page.getByRole("textbox", { name: "Preview" });
+    const editors = [input, preview];
+
+    async function expectGuide(editor, columns) {
+        const { position, expected } = await editor.evaluate((content, columns) => {
+            const lineStyle = getComputedStyle(content.querySelector(".cm-line"));
+            const context = document.createElement("canvas").getContext("2d");
+            context.font = lineStyle.font;
+            return {
+                position: parseFloat(getComputedStyle(content).backgroundPositionX),
+                expected: parseFloat(lineStyle.paddingLeft) + context.measureText("0".repeat(columns)).width,
+            };
+        }, columns);
+        expect(Math.abs(position - expected)).toBeLessThan(1);
+    }
+
+    await expect(width).toHaveValue("100");
+    const literal = "x".repeat(240);
+    await input.fill(`def message(): String = "${literal}"`);
+    await expect(preview).toContainText(literal);
+    for (const editor of editors) await expectGuide(editor, 100);
+
+    await width.fill("80");
+    for (const editor of editors) {
+        await expectGuide(editor, 80);
+        const scrolled = await editor.evaluate((content) => {
+            const scroller = content.closest(".cm-scroller");
+            const guide = () => content.getBoundingClientRect().left +
+                parseFloat(getComputedStyle(content).backgroundPositionX);
+            scroller.scrollLeft = 0;
+            const before = guide();
+            scroller.scrollLeft = 240;
+            return { delta: before - guide(), scrollLeft: scroller.scrollLeft };
+        });
+        expect(scrolled.scrollLeft).toBeGreaterThan(0);
+        expect(scrolled.delta).toBeCloseTo(scrolled.scrollLeft);
+    }
+
+    const theme = page.getByLabel("Theme");
+    await theme.selectOption("light");
+    const light = await input.evaluate((content) => getComputedStyle(content).backgroundImage);
+    await theme.selectOption("dark");
+    const dark = await input.evaluate((content) => getComputedStyle(content).backgroundImage);
+    expect(light).not.toBe("none");
+    expect(dark).not.toBe("none");
+    expect(dark).not.toBe(light);
+
+    await page.getByRole("button", { name: "Diff", exact: true }).click();
+    await expect(preview).toBeHidden();
+    await page.getByRole("button", { name: "Formatted", exact: true }).click();
+    await expectGuide(preview, 80);
+    await width.clear();
+    for (const editor of editors) await expect(editor).toHaveCSS("background-position-x", "-1px");
+});
+
 test("the live preview keeps trailing comments, reports cursor selection, and recovers from a syntax error", async ({ page }) => {
     await page.goto(siteUrl + "playground/");
     const input = page.getByRole("textbox", { name: "Flix input" });
@@ -227,8 +287,10 @@ for (const override of [undefined, "54"]) {
         await expect(width).toBeVisible();
         await expect(width).toHaveValue("60");
 
+        const embeddedInput = fixture.getByRole("textbox", { name: "Flix input" });
+        await expect(embeddedInput).toHaveCSS("--playground-guide-position", /60ch/);
         const source = 'def smokeText():String="Grüße 🚉"';
-        await fixture.getByRole("textbox", { name: "Flix input" }).fill(source);
+        await embeddedInput.fill(source);
         if (override !== undefined) await width.fill(override);
         await fixture.getByRole("link", { name: "Open in Playground" }).click();
 
@@ -236,7 +298,9 @@ for (const override of [undefined, "54"]) {
         await expect(page.getByLabel("Example")).toBeEnabled();
         await expect(page.getByLabel("Example")).toHaveValue("");
         await expect(page.getByLabel("Line width")).toHaveValue(override ?? "100");
-        await expect(page.getByRole("textbox", { name: "Flix input" })).toHaveText(source);
+        const standaloneInput = page.getByRole("textbox", { name: "Flix input" });
+        await expect(standaloneInput).toHaveCSS("--playground-guide-position", new RegExp(`${override ?? "100"}ch`));
+        await expect(standaloneInput).toHaveText(source);
         await expect(page.getByRole("textbox", { name: "Preview" })).toContainText('def smokeText(): String = "Grüße 🚉"');
     });
 }
