@@ -219,8 +219,8 @@ review of the new head exists.
 - a false statement in documentation or text that has consequences;
 - a test without effect, or a surviving mutation of the new logic.
 
-A failure only below `printWidth` 40 is `reach:synthetic`. It does not block and goes into the epic of its
-class.
+A failure only below `printWidth` 40 is `reach:synthetic`. Below 40, idempotence is best effort and not supported.
+Such a failure does not block and goes into the epic of its class. The sweeps check widths below 40 only with `--widths`.
 
 ### Epics
 
