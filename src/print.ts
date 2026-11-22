@@ -484,7 +484,8 @@ export class Printer {
      * print in front of it and swap the order, so the branch starts on a new line.
      */
     private elseGap(elseTok: TerminalNode, elseNode: Node): Doc {
-        return this.hasLineTrail(elseTok) && this.subtreeHasComment(elseNode) ? hardline : line;
+        const lineComment = !!this.info(elseTok)?.trail.some((c) => c.isLine);
+        return lineComment && this.subtreeHasComment(elseNode) ? hardline : line;
     }
 
     /** Measure atoms and supported single-line map or record values. */
