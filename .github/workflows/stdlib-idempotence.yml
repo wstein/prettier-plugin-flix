@@ -6,6 +6,8 @@ on:
       - "scripts/review-sweep.mjs"
       - "scripts/review-sweep-lib.mjs"
       - "test/known-idempotence-failures.json"
+      - "test/lib.mjs"
+      - "test/fixture.mjs"
       - "package.json"
       - "package-lock.json"
       - "rescript.json"
@@ -32,8 +34,11 @@ jobs:
         shard: ["1/3", "2/3", "3/3"]
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/checkout@v4
         with:
+          persist-credentials: false
           repository: flix/flix
           ref: v0.80.0
           path: flix-source

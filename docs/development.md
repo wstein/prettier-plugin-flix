@@ -181,8 +181,10 @@ A file that is not idempotent and not listed in `test/known-idempotence-failures
 run count and failures to the step summary. It is not a required check.
 
 - Trigger: pull requests that touch `src/**`, `scripts/review-sweep.mjs`, `scripts/review-sweep-lib.mjs`,
-  `test/known-idempotence-failures.json`, `package.json`, `package-lock.json`, `rescript.json` or the workflow file;
-  `workflow_dispatch`. The 1944 runs take about 4 minutes per shard locally (parallel, 1944 runs in all) on GitHub runners.
+  `test/known-idempotence-failures.json`, `test/lib.mjs`, `test/fixture.mjs`, `package.json`, `package-lock.json`,
+  `rescript.json` or the workflow file; `workflow_dispatch`. The sweep is 1944 runs (648 per shard). Measured: about
+  4 minutes per shard locally; on GitHub runners (one run, PR #220) the sweep took 122.5 s, 235.9 s and 190.7 s
+  and the three jobs 2.3 to 4.2 minutes.
 - Reproduce locally: `npm run build`, then
   `FLIX_STDLIB_DIR=<flix checkout>/main/src/library node --max-old-space-size=1100 scripts/review-sweep.mjs idempotence --no-repo`
   (add `--shard 1/3` to run one part).
