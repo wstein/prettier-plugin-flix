@@ -73,9 +73,15 @@ jobs:
       - name: Publish review summary
         if: ${{ !cancelled() }}
         run: |
-          # Retains the audit step's exit status: this step only writes the job summary.
-          npm run review:summary -- --audit official-examples-audit --out "$RUNNER_TEMP/review-summary.md"
-          cat "$RUNNER_TEMP/review-summary.md" >> "$GITHUB_STEP_SUMMARY"
+          # Does not change the audit step's exit status: failures here only skip the summary.
+          # This job publishes the audit (layout) section. Sweep new/fixed counts need --base/--candidate
+          # exports from a sweep workflow (see docs/development.md).
+          artifact="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          if npm run review:summary -- --audit official-examples-audit --artifact-url "$artifact" --out "$RUNNER_TEMP/review-summary.md"; then
+            cat "$RUNNER_TEMP/review-summary.md" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "review:summary failed; leaving the audit check exit status unchanged." >> "$GITHUB_STEP_SUMMARY"
+          fi
           if [ -f official-examples-audit/summary.md ]; then
             {
               echo ""
@@ -84,6 +90,7 @@ jobs:
               cat official-examples-audit/summary.md
             } >> "$GITHUB_STEP_SUMMARY"
           fi
+          true
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:

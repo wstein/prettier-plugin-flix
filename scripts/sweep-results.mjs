@@ -55,9 +55,11 @@ export function buildResultDocument({
             ...(formatter.dirty !== undefined ? { dirty: Boolean(formatter.dirty) } : {}),
         },
         corpus: {
+            // Plugin checkout that produced the run when the corpus is the repo itself;
+            // with external paths the fingerprint identifies the input set.
             revision: corpus?.revision ?? formatter.revision,
             inputCount: corpus?.inputCount ?? 0,
-            ...(corpus?.paths ? { paths: corpus.paths } : {}),
+            ...(corpus?.paths ? { paths: [...corpus.paths] } : {}),
             ...(corpus?.fingerprint ? { fingerprint: corpus.fingerprint } : {}),
         },
         config: {
@@ -82,8 +84,10 @@ export function sortCases(cases) {
 /** Fingerprint of the input names in a run (stable across shard merges of the same corpus). */
 export function corpusFingerprint(names) {
     const hash = createHash("sha256");
-    for (const name of [...names].sort()) hash.update(name);
-    hash.update("\n");
+    for (const name of [...names].sort()) {
+        hash.update(name);
+        hash.update("\0");
+    }
     return hash.digest("hex");
 }
 
@@ -105,9 +109,25 @@ export function parseResultDocument(input, where = "sweep result") {
     return doc;
 }
 
-/** Config fields that must match for a like-for-like comparison or shard merge. */
-export function configKey(doc) {
+/** Parses `k/n` shard specs. Returns null when unset. */
+export function parseShardSpec(shard) {
+    if (shard == null || shard === "") return null;
+    const m = /^(\d+)\/(\d+)$/.exec(String(shard));
+    if (!m || Number(m[1]) < 1 || Number(m[1]) > Number(m[2])) {
+        throw new Error(`invalid shard spec: ${shard}`);
+    }
+    return { k: Number(m[1]), n: Number(m[2]) };
+}
+
+/**
+ * Config fields that must match for a like-for-like comparison or shard merge.
+ * Full compares include shard (null when merged) and corpus fingerprint so a
+ * partial shard set cannot look compatible with a full run. Shard merges ignore
+ * per-shard fingerprints (recomputed from the union) and the shard field itself.
+ */
+export function configKey(doc, { ignoreShard = false, ignoreFingerprint = false } = {}) {
     const c = doc.config ?? {};
+    const paths = [...(doc.corpus?.paths ?? c.paths ?? [])].map(String).sort();
     return JSON.stringify({
         command: doc.command,
         widths: c.widths ?? [],
@@ -117,25 +137,47 @@ export function configKey(doc) {
         repo: c.repo !== false,
         seed: c.seed ?? null,
         known: c.known ?? null,
+        paths,
+        fingerprint: ignoreFingerprint ? null : (doc.corpus?.fingerprint ?? null),
+        ...(ignoreShard ? {} : { shard: c.shard ?? null }),
     });
 }
 
 /**
- * Merges shard exports of one logical run. Cases are unioned by id; duplicate ids must agree.
- * The merged document has `config.shard: null` and the same counts as an unsharded run.
+ * Merges shard exports of one logical run. Requires a complete `1/n`…`n/n` set.
+ * Cases are unioned by id; duplicate ids must agree. The merged document has
+ * `config.shard: null`, `inputCount` = sum of shard input counts, and a fingerprint
+ * over the union of case file names (same as an unsharded run of those inputs).
  */
 export function mergeShardResults(docs) {
     if (!Array.isArray(docs) || docs.length === 0) throw new Error("merge needs at least one result document");
     const parsed = docs.map((d, i) => parseResultDocument(d, `shard ${i + 1}`));
-    const key = configKey(parsed[0]);
+    const key = configKey(parsed[0], { ignoreShard: true, ignoreFingerprint: true });
     for (let i = 1; i < parsed.length; i++) {
-        if (configKey(parsed[i]) !== key) {
+        if (configKey(parsed[i], { ignoreShard: true, ignoreFingerprint: true }) !== key) {
             throw new Error(`incompatible shard config: shard 1 vs shard ${i + 1}`);
         }
         if (parsed[i].formatter.revision !== parsed[0].formatter.revision) {
             throw new Error(`incompatible formatter revision across shards`);
         }
     }
+    const specs = parsed.map((d, i) => {
+        const spec = parseShardSpec(d.config?.shard);
+        if (!spec) throw new Error(`shard ${i + 1}: merge requires config.shard k/n (got ${d.config?.shard})`);
+        return spec;
+    });
+    const n = specs[0].n;
+    if (specs.some((s) => s.n !== n)) throw new Error("incompatible shard denominators");
+    if (parsed.length !== n) throw new Error(`incomplete shard set: got ${parsed.length} of ${n}`);
+    const seen = new Set();
+    for (const s of specs) {
+        if (seen.has(s.k)) throw new Error(`duplicate shard ${s.k}/${n}`);
+        seen.add(s.k);
+    }
+    for (let k = 1; k <= n; k++) {
+        if (!seen.has(k)) throw new Error(`missing shard ${k}/${n}`);
+    }
+
     const byId = new Map();
     for (const doc of parsed) {
         for (const c of doc.cases) {
@@ -146,14 +188,16 @@ export function mergeShardResults(docs) {
             byId.set(c.id, c);
         }
     }
-    const inputCount = Math.max(...parsed.map((d) => d.corpus?.inputCount ?? 0));
+    const files = [...new Set([...byId.values()].map((c) => c.file))].sort();
+    const inputCount = parsed.reduce((sum, d) => sum + (d.corpus?.inputCount ?? 0), 0);
     return buildResultDocument({
         command: parsed[0].command,
         formatter: parsed[0].formatter,
         corpus: {
-            ...parsed[0].corpus,
+            revision: parsed[0].corpus.revision,
             inputCount,
-            fingerprint: parsed[0].corpus?.fingerprint,
+            ...(parsed[0].corpus.paths ? { paths: parsed[0].corpus.paths } : {}),
+            fingerprint: corpusFingerprint(files),
         },
         config: { ...parsed[0].config, shard: null },
         cases: [...byId.values()],
@@ -174,6 +218,7 @@ function isFail(c) {
 /**
  * Compares two like-for-like sweep exports.
  * Returns classifications with stable sort order, plus flags for absent/incomplete/incompatible runs.
+ * A base failure whose id is missing from the candidate (or only skipped there) is incomplete, not a fix.
  */
 export function compareSweepResults(base, candidate) {
     const empty = {
@@ -184,6 +229,7 @@ export function compareSweepResults(base, candidate) {
         fixedFailures: [],
         ongoingFailures: [],
         skipped: [],
+        missingFromCandidate: [],
         counts: { cases: 0, pass: 0, fail: 0, skipped: 0 },
     };
     if (!candidate) return { ...empty, reason: "candidate export absent" };
@@ -203,6 +249,21 @@ export function compareSweepResults(base, candidate) {
             fixedFailures: [],
             ongoingFailures: [],
             skipped: [],
+            missingFromCandidate: [],
+            counts,
+            candidate: cand,
+        };
+    }
+    if (cand.config?.shard) {
+        return {
+            compatible: true,
+            incomplete: true,
+            reason: `candidate is a partial shard (${cand.config.shard}); merge shards first`,
+            newFailures: cand.cases.filter(isFail),
+            fixedFailures: [],
+            ongoingFailures: [],
+            skipped: cand.cases.filter((c) => c.status === "skipped"),
+            missingFromCandidate: [],
             counts,
             candidate: cand,
         };
@@ -216,6 +277,7 @@ export function compareSweepResults(base, candidate) {
             fixedFailures: [],
             ongoingFailures: [],
             skipped: cand.cases.filter((c) => c.status === "skipped"),
+            missingFromCandidate: [],
             counts,
             candidate: cand,
         };
@@ -226,6 +288,21 @@ export function compareSweepResults(base, candidate) {
     } catch (e) {
         return { ...empty, reason: e.message, counts, candidate: cand };
     }
+    if (baseDoc.config?.shard) {
+        return {
+            compatible: true,
+            incomplete: true,
+            reason: `base is a partial shard (${baseDoc.config.shard}); merge shards first`,
+            newFailures: [],
+            fixedFailures: [],
+            ongoingFailures: [],
+            skipped: [],
+            missingFromCandidate: [],
+            counts,
+            candidate: cand,
+            base: baseDoc,
+        };
+    }
     if (configKey(baseDoc) !== configKey(cand)) {
         return {
             compatible: false,
@@ -235,6 +312,7 @@ export function compareSweepResults(base, candidate) {
             fixedFailures: [],
             ongoingFailures: [],
             skipped: [],
+            missingFromCandidate: [],
             counts,
             candidate: cand,
             base: baseDoc,
@@ -245,6 +323,7 @@ export function compareSweepResults(base, candidate) {
     const newFailures = [];
     const fixedFailures = [];
     const ongoingFailures = [];
+    const missingFromCandidate = [];
     const skipped = cand.cases.filter((c) => c.status === "skipped");
     for (const c of sortCases(cand.cases)) {
         if (!isFail(c)) continue;
@@ -255,10 +334,27 @@ export function compareSweepResults(base, candidate) {
     for (const c of sortCases(baseDoc.cases)) {
         if (!isFail(c)) continue;
         const next = after.get(c.id);
-        if (next && next.status === "pass") fixedFailures.push({ ...c, status: "pass", fixedFrom: c.kind });
-        else if (!next) {
-            // Base had a failure the candidate never ran: incomplete coverage, not a fix.
+        if (next && next.status === "pass") {
+            fixedFailures.push({ ...c, status: "pass", fixedFrom: c.kind });
+        } else if (!next || next.status === "skipped") {
+            // Absent or skipped: not a fix, and the comparison is incomplete.
+            missingFromCandidate.push(c);
         }
+    }
+    if (missingFromCandidate.length > 0) {
+        return {
+            compatible: true,
+            incomplete: true,
+            reason: `${missingFromCandidate.length} base failure(s) missing or skipped in the candidate`,
+            newFailures,
+            fixedFailures,
+            ongoingFailures,
+            skipped,
+            missingFromCandidate,
+            counts,
+            candidate: cand,
+            base: baseDoc,
+        };
     }
     return {
         compatible: true,
@@ -268,6 +364,7 @@ export function compareSweepResults(base, candidate) {
         fixedFailures,
         ongoingFailures,
         skipped,
+        missingFromCandidate: [],
         counts,
         candidate: cand,
         base: baseDoc,
@@ -282,7 +379,7 @@ export function countStatuses(cases) {
 
 /**
  * Reads layout-change cases from an official-examples audit directory (`report.json`,
- * optional `drift.json` and `summary.md`).
+ * optional `drift.json`). Malformed JSON is treated as absent, not thrown.
  */
 export function readAuditLayoutChanges(auditDir) {
     if (!auditDir) return { present: false, layoutChanges: [], drift: null, totals: null };
@@ -290,10 +387,19 @@ export function readAuditLayoutChanges(auditDir) {
     let report;
     try {
         report = JSON.parse(readFileSync(reportPath, "utf8"));
-    } catch {
-        return { present: false, layoutChanges: [], drift: null, totals: null, reason: `missing ${reportPath}` };
+    } catch (e) {
+        return {
+            present: false,
+            layoutChanges: [],
+            drift: null,
+            totals: null,
+            reason: e.code === "ENOENT" ? `missing ${reportPath}` : `unreadable ${reportPath}: ${e.message}`,
+        };
     }
-    const layoutChanges = (report.cases ?? [])
+    if (!report || typeof report !== "object" || !Array.isArray(report.cases)) {
+        return { present: false, layoutChanges: [], drift: null, totals: null, reason: `${reportPath}: expected cases array` };
+    }
+    const layoutChanges = report.cases
         .filter((c) => c.status === "layout-change")
         .map((c) => ({
             id: c.case_name,
@@ -345,10 +451,17 @@ export function renderReviewSummary({
     title = "Formatter review summary",
 } = {}) {
     const lines = [`# ${title}`, ""];
+    const hasSweep = sweep?.base != null || sweep?.candidate != null;
     const sweepCmp = compareSweepResults(sweep?.base, sweep?.candidate);
 
     lines.push("## Sweep comparison", "");
-    if (sweepCmp.incomplete || !sweepCmp.compatible) {
+    if (!hasSweep) {
+        lines.push(
+            "- status · **absent** (no `--base` / `--candidate` export in this job)",
+            "- tip · run `review:sweep --export` locally or in a sweep workflow, then `review:summary --base … --candidate …`",
+            "",
+        );
+    } else if (sweepCmp.incomplete || !sweepCmp.compatible) {
         lines.push(`- status · **incomplete** (${sweepCmp.reason})`);
         if (sweepCmp.counts?.cases) {
             lines.push(`- recorded cases · ${sweepCmp.counts.cases} (pass ${sweepCmp.counts.pass}, fail ${sweepCmp.counts.fail}, skipped ${sweepCmp.counts.skipped})`);
@@ -356,6 +469,9 @@ export function renderReviewSummary({
             lines.push("- recorded cases · 0");
         }
         lines.push("- result · not green (missing or incompatible data)", "");
+        if (sweepCmp.missingFromCandidate?.length) {
+            lines.push("### Base failures missing from the candidate", "", ...bulletCases(sweepCmp.missingFromCandidate, { linkPrefix: artifactUrl }), "");
+        }
     } else {
         lines.push(
             `- new failures · ${sweepCmp.newFailures.length}`,
@@ -372,7 +488,7 @@ export function renderReviewSummary({
             lines.push("### Fixed failures", "", ...bulletCases(sweepCmp.fixedFailures, { linkPrefix: artifactUrl }), "");
         }
     }
-    if (artifactUrl) lines.push(`Full sweep artifact: ${artifactUrl}`, "");
+    if (artifactUrl && hasSweep) lines.push(`Full sweep artifact: ${artifactUrl}`, "");
 
     lines.push("## Official examples (layout)", "");
     const auditInfo = typeof audit === "string" || audit?.present === undefined
@@ -406,4 +522,11 @@ export function renderReviewSummary({
     }
 
     return `${lines.join("\n").replace(/\n+$/, "")}\n`;
+}
+
+/** Per-command export path when `all` would otherwise overwrite one file. */
+export function exportPathForCommand(path, command) {
+    if (!path) return null;
+    const m = /^(.*)(\.[^./]+)$/.exec(path);
+    return m ? `${m[1]}.${command}${m[2]}` : `${path}.${command}`;
 }

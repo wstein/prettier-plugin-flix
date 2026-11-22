@@ -33,7 +33,7 @@ import {
     selectShard,
     sitesExitCode,
 } from "./review-sweep-lib.mjs";
-import { buildResultDocument, corpusFingerprint, makeCase } from "./sweep-results.mjs";
+import { buildResultDocument, corpusFingerprint, exportPathForCommand, makeCase } from "./sweep-results.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const testDir = join(root, "test");
@@ -67,7 +67,8 @@ Options
   --shard <k/n>     only every n-th input, starting at the k-th (1-based): run shards in parallel processes
   --no-repo         skip the repository's own inputs, use only the extra paths
   --json <file>     write the failures (or the differences) as JSON (unchanged interface)
-  --export <file>   write a versioned result document with one outcome per planned case (see docs/development.md)
+  --export <file>   write a versioned result document with one outcome per planned case (see docs/development.md).
+                    With \`all\`, writes one file per command (out.json → out.idempotence.json, …).
   --seed <N>        record a seed in the export (sweeps themselves are deterministic without it)
   --max <N>         print at most N failures or hunks per command (default 40)
   --help            this text
@@ -100,29 +101,35 @@ function gatherInputs(o) {
 }
 
 function writeExport(path, { command, widths, inputs, o, cases, baseSha }) {
-    const doc = buildResultDocument({
-        command,
-        formatter: { revision: gitRevision(), dirty: gitDirty() },
-        corpus: {
-            revision: gitRevision(),
-            inputCount: inputs.length,
-            paths: o.paths,
-            fingerprint: corpusFingerprint(inputs.map((i) => i.name)),
-        },
-        config: {
-            widths,
-            every: command === "sites" ? o.every : null,
-            shard: o.shard ?? null,
-            base: baseSha ?? o.base ?? null,
-            only: o.only ?? null,
-            repo: o.repo,
-            seed: o.seed ?? null,
-            known: o.known ?? null,
-        },
-        cases: cases.map((c) => makeCase(c)),
-    });
-    writeFileSync(path, `${JSON.stringify(doc, null, 2)}\n`);
-    return `; exported ${path} (${doc.cases.length} cases)`;
+    try {
+        const doc = buildResultDocument({
+            command,
+            formatter: { revision: gitRevision(), dirty: gitDirty() },
+            corpus: {
+                // Plugin checkout; fingerprint identifies the input names in this run.
+                revision: gitRevision(),
+                inputCount: inputs.length,
+                paths: o.paths,
+                fingerprint: corpusFingerprint(inputs.map((i) => i.name)),
+            },
+            config: {
+                widths,
+                every: command === "sites" ? o.every : null,
+                shard: o.shard ?? null,
+                base: baseSha ?? o.base ?? null,
+                only: o.only ?? null,
+                repo: o.repo,
+                seed: o.seed ?? null,
+                known: o.known ?? null,
+            },
+            cases: cases.map((c) => makeCase(c)),
+        });
+        writeFileSync(path, `${JSON.stringify(doc, null, 2)}\n`);
+        return `; exported ${path} (${doc.cases.length} cases)`;
+    } catch (e) {
+        // Keep the sweep exit status: a bad --export path must not discard the check result.
+        return `; export failed: ${e.message}`;
+    }
 }
 
 function loadKnown(o, fallbackName) {
@@ -328,7 +335,8 @@ async function main() {
                 console.log("regression: not run (no --base)");
                 continue;
             }
-            code = Math.max(code, await commands[name](o));
+            const opts = o.export ? { ...o, export: exportPathForCommand(o.export, name) } : o;
+            code = Math.max(code, await commands[name](opts));
             console.log("");
         }
         console.log(`all finished in ${seconds(Date.now() - started)}`);

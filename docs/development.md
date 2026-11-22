@@ -211,13 +211,19 @@ as it is.
 | Field | Meaning |
 | --- | --- |
 | `command` | `idempotence`, `sites`, or `regression` |
-| `formatter.revision` | `HEAD` of the plugin that produced the run |
-| `corpus` | Input count, optional paths, and a fingerprint of the input names |
-| `config` | `widths`, `every`, `shard`, `base`, `only`, `repo`, optional `seed` |
+| `createdAt` | ISO timestamp of the export |
+| `formatter.revision` / `formatter.dirty` | `HEAD` of the plugin that produced the run, and whether the tree was dirty |
+| `corpus.revision` | Plugin checkout when the corpus is the repo; with external paths the fingerprint identifies the input set |
+| `corpus.inputCount` / `paths` / `fingerprint` | Input count, optional CLI paths, and a hash of the input names (`\\0`-separated) |
+| `config` | `widths`, `every`, `shard`, `base`, `only`, `repo`, optional `seed` and `known` |
 | `cases` | One record per planned case: `id`, `file`, `width`, optional `form`/`token`, `status` (`pass` / `fail` / `skipped`), optional `kind` and `reason` |
 
 Stable case ids use the same key as known-failure entries: `file|width|form|token` (idempotence uses
 `plain` and `-` for the form and token). Skipped cases carry a reason (for example `variant does not parse`).
+
+`review:summary --merge` requires a complete `1/n`…`n/n` set. The merged document has `shard: null`,
+`inputCount` equal to the sum of the shard counts, and a fingerprint over the union of case files — the
+same case counts as an unsharded run of those inputs. A missing shard is rejected.
 
 Merge shard exports and build the review summary locally:
 
@@ -229,10 +235,14 @@ npm run review:summary -- --merge shard-1.json shard-2.json shard-3.json --out m
 npm run review:summary -- --base main-sites.json --candidate merged.json --audit official-examples-audit --out summary.md
 ```
 
-`npm run review:summary` classifies new failures, fixed failures, and layout-only changes from the
-official-examples audit report. A run with no recorded cases, a missing base export, or an incompatible
-configuration is marked incomplete and never described as green. The Official Flix examples workflow
-appends this summary to the Actions job summary without changing the audit check's exit status.
+`npm run review:summary` classifies new failures, fixed failures, and layout-only changes when the matching
+exports and audit report are provided. A run with no recorded cases, a partial shard, a base failure
+missing from the candidate, a missing base export, or an incompatible configuration is marked incomplete
+and never described as green.
+
+The Official Flix examples workflow appends the **audit (layout)** section to the Actions job summary and
+links the run artifact. It does not fail the job if the summary step errors. Sweep new/fixed counts appear
+when you pass `--base` / `--candidate` exports (local command above, or a future sweep workflow).
 
 
 ## Issue triage and labels
