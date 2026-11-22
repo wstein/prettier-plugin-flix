@@ -1439,10 +1439,10 @@ export class Printer {
         if (firstLine.length === 0) return 0;
         // Space before `=` plus the hugged first line. When that line is only the first
         // body token and the rest breaks away (e.g. `= match` then an own-line comment),
-        // the doc fit still counts the gap before the break (#201) — same as the
+        // the doc fit still counts the gap before the break (#201), the same as the
         // own-line lead gap on `=` itself.
         let width = 1 + util.getStringWidth(firstLine);
-        if (firstLine === first.getText() && formatted.startsWith(firstLine + "\n")) {
+        if (firstLine === first.getText()) {
             width += util.getStringWidth(" ");
         }
         return width;

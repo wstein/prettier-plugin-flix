@@ -33,6 +33,15 @@ mod M {
 }
 ```
 
+```flix printWidth=60
+mod M {
+    pub def shuffle(rc1: Region[r1], d: MutDeque[a, r2]):
+        MutDeque[a, r1] \ { r2, r1, Shuffle } = region rc3 {
+        result
+    }
+}
+```
+
 ```flix printWidth=80
 mod M {
     pub def shuffle(rc1: Region[r1], d: MutDeque[a, r2]): MutDeque[a, r1]

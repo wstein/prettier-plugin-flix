@@ -42,3 +42,11 @@ c {
     case _ => ()
 }
 ```
+
+```flix printWidth=64
+def wait(c: Chan, d: Deadline): Unit \ { Chan, NonDet } = match
+// own
+c {
+    case _ => ()
+}
+```
