@@ -9,7 +9,8 @@
   "corpus": {
     "revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     "inputCount": 2,
-    "fingerprint": "base-corpus"
+    "inputs": ["a.flix", "b.flix"],
+    "fingerprint": "47866ef30524913b006cccfb041124493f0e64980ef5bcd7c838f3ff674552b9"
   },
   "config": {
     "widths": [40, 60],

@@ -214,16 +214,17 @@ as it is.
 | `createdAt` | ISO timestamp of the export |
 | `formatter.revision` / `formatter.dirty` | `HEAD` of the plugin that produced the run, and whether the tree was dirty |
 | `corpus.revision` | Plugin checkout when the corpus is the repo; with external paths the fingerprint identifies the input set |
-| `corpus.inputCount` / `paths` / `fingerprint` | Input count, optional CLI paths, and a hash of the input names (`\\0`-separated) |
+| `corpus.inputCount` / `inputs` / `paths` / `fingerprint` | Input count, the input names, optional CLI paths, and a hash of those names (`\\0`-separated) |
 | `config` | `widths`, `every`, `shard`, `base`, `only`, `repo`, optional `seed` and `known` |
 | `cases` | One record per planned case: `id`, `file`, `width`, optional `form`/`token`, `status` (`pass` / `fail` / `skipped`), optional `kind` and `reason` |
 
 Stable case ids use the same key as known-failure entries: `file|width|form|token` (idempotence uses
 `plain` and `-` for the form and token). Skipped cases carry a reason (for example `variant does not parse`).
 
-`review:summary --merge` requires a complete `1/n`…`n/n` set. The merged document has `shard: null`,
-`inputCount` equal to the sum of the shard counts, and a fingerprint over the union of case files — the
-same case counts as an unsharded run of those inputs. A missing shard is rejected.
+`review:summary --merge` requires a complete `1/n`…`n/n` set and `corpus.inputs` on every shard. The
+merged document has `shard: null`, `inputCount` equal to the sum of the shard counts, and a fingerprint
+over the union of those input names — the same fingerprint as an unsharded export of the same inputs
+(case files alone are not enough: an input may yield no cases). A missing shard is rejected.
 
 Merge shard exports and build the review summary locally:
 

@@ -187,6 +187,40 @@ export function mergePlans(...plans) {
     });
 }
 
+/**
+ * Idempotence outcomes for export: one case per input×width (pass / fail / skipped).
+ * Kept separate from the CLI so tests can assert fail cases stay `fail` under mutation.
+ */
+export async function collectIdempotenceOutcomes(format, inputs, widths) {
+    const failures = [];
+    const cases = [];
+    const checked = new Set();
+    let runs = 0;
+    let skipped = 0;
+    for (const input of inputs) {
+        const before = fingerprint(input.source);
+        if (before.errors.length > 0) {
+            skipped++;
+            for (const width of widths) {
+                cases.push({ file: input.name, width, status: "skipped", reason: "input does not parse" });
+            }
+            continue;
+        }
+        for (const width of widths) {
+            runs++;
+            const r = await checkFormat(format, input.source, width, before);
+            checked.add([input.name, width, "plain", "-"].join("|"));
+            if (r) {
+                failures.push({ file: input.name, width, kind: r.kind, detail: r.detail, source: input.source, output: r.output, second: r.second });
+                cases.push({ file: input.name, width, status: "fail", kind: r.kind, reason: r.detail });
+            } else {
+                cases.push({ file: input.name, width, status: "pass" });
+            }
+        }
+    }
+    return { failures, cases, checked, runs, skipped };
+}
+
 /** Runs a comment-site plan on one input; returns `{ failures, checked, skipped, cases }` with `checked` as a Set of entry keys. */
 export async function runSitePlan(format, { name, source }, plan) {
     const failures = [];

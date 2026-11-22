@@ -2,7 +2,7 @@
 // the Markdown review summary used in GitHub Actions. Kept separate from the sweep
 // runners so other tools (R heatmaps, DuckDB) can depend on a stable schema.
 import { createHash } from "node:crypto";
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 /** Bump when the document shape changes in a way that breaks consumers. */
@@ -60,6 +60,8 @@ export function buildResultDocument({
             revision: corpus?.revision ?? formatter.revision,
             inputCount: corpus?.inputCount ?? 0,
             ...(corpus?.paths ? { paths: [...corpus.paths] } : {}),
+            // Input names used for the fingerprint (not case files — an input may yield no cases).
+            ...(corpus?.inputs ? { inputs: [...corpus.inputs].map(String).sort() } : {}),
             ...(corpus?.fingerprint ? { fingerprint: corpus.fingerprint } : {}),
         },
         config: {
@@ -147,7 +149,7 @@ export function configKey(doc, { ignoreShard = false, ignoreFingerprint = false 
  * Merges shard exports of one logical run. Requires a complete `1/n`…`n/n` set.
  * Cases are unioned by id; duplicate ids must agree. The merged document has
  * `config.shard: null`, `inputCount` = sum of shard input counts, and a fingerprint
- * over the union of case file names (same as an unsharded run of those inputs).
+ * over the union of `corpus.inputs` (same as an unsharded export of those inputs).
  */
 export function mergeShardResults(docs) {
     if (!Array.isArray(docs) || docs.length === 0) throw new Error("merge needs at least one result document");
@@ -188,7 +190,15 @@ export function mergeShardResults(docs) {
             byId.set(c.id, c);
         }
     }
-    const files = [...new Set([...byId.values()].map((c) => c.file))].sort();
+    const inputNames = [];
+    for (let i = 0; i < parsed.length; i++) {
+        const names = parsed[i].corpus?.inputs;
+        if (!Array.isArray(names)) {
+            throw new Error(`shard ${i + 1}: merge requires corpus.inputs (input names used for the fingerprint)`);
+        }
+        inputNames.push(...names);
+    }
+    const inputs = [...new Set(inputNames.map(String))].sort();
     const inputCount = parsed.reduce((sum, d) => sum + (d.corpus?.inputCount ?? 0), 0);
     return buildResultDocument({
         command: parsed[0].command,
@@ -196,13 +206,30 @@ export function mergeShardResults(docs) {
         corpus: {
             revision: parsed[0].corpus.revision,
             inputCount,
+            inputs,
             ...(parsed[0].corpus.paths ? { paths: parsed[0].corpus.paths } : {}),
-            fingerprint: corpusFingerprint(files),
+            fingerprint: corpusFingerprint(inputs),
         },
         config: { ...parsed[0].config, shard: null },
         cases: [...byId.values()],
         createdAt: parsed.map((d) => d.createdAt).sort().at(-1),
     });
+}
+
+/** Writes JSON; returns a status suffix. Never throws (keeps sweep exit status). */
+export function safeWriteJson(path, value) {
+    try {
+        writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`);
+        return { ok: true, message: `; exported ${path}` };
+    } catch (e) {
+        return { ok: false, message: `; export failed: ${e.message}` };
+    }
+}
+
+/** Options for one command under `all`, with a per-command --export path when set. */
+export function sweepCommandOptions(o, commandName) {
+    if (!o?.export) return o;
+    return { ...o, export: exportPathForCommand(o.export, commandName) };
 }
 
 function outcomeMap(doc) {
