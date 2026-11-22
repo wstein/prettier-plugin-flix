@@ -1540,7 +1540,25 @@ export class Printer {
         const options = { printWidth: Math.max(1, width), tabWidth: this.tabWidth };
         const render = (value: Doc): string => doc.printer.printDocToString(value, options).formatted;
         const rows = parts.map(render);
-        if (rows.some((row) => row.includes("\n"))) return ordinary;
+        // A result type that is an arrow chain moves to its own continuation line as a
+        // whole. Measure widths only; the chosen document is built from the parts.
+        const chainOnOwnLine = (): Doc | null => {
+            if (kind(result) !== "ArrowType" || rows[0].includes("\n")) return null;
+            // A chain always has a clause or an effect after it; the bare chain returns early.
+            const more = join(" ", parts.slice(1));
+            const rest = rows.slice(1);
+            const chain = this.tabWidth + util.getStringWidth(rows[0]);
+            // The remaining parts share the next line with `=` and the body column.
+            if (chain <= width &&
+                this.tabWidth + util.getStringWidth(rest.join(" ")) + trailerWidth <= width) {
+                return [prefix, indent([hardline, parts[0], hardline, more])];
+            }
+            // Otherwise the first word of the remaining parts follows the chain on its line.
+            const word = 1 + util.getStringWidth(rows[1].split(/[ \n]/)[0]);
+            if (chain + word > width) return null;
+            return [prefix, indent([hardline, parts[0]]), " ", more];
+        };
+        if (rows.some((row) => row.includes("\n"))) return chainOnOwnLine() ?? ordinary;
         const prefixWidth = util.getStringWidth(render(prefix).split("\n").at(-1)!);
         if (prefixWidth + 1 + util.getStringWidth(rows.join(" ")) + trailerWidth <= width) return ordinary;
 
@@ -1554,7 +1572,7 @@ export class Printer {
                 this.tabWidth + util.getStringWidth(right) + trailerWidth > width) continue;
             return [prefix, i === 0 ? "" : [" ", join(" ", parts.slice(0, i))], indent([hardline, join(" ", parts.slice(i))])];
         }
-        return ordinary;
+        return chainOnOwnLine() ?? ordinary;
     }
 
     private printEqBodyTail(cs: Node[], ai: number, k: string, arrow: TerminalNode): Doc {
