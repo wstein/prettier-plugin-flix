@@ -15,6 +15,13 @@ npm run build
 npx prettier --plugin=./dist/index.js --check "path/to/**/*.flix"
 ```
 
+`npm run build` generates the ANTLR parser, compiles the ReScript tuple-column
+helper (`src/TupleColumns.res` → `src/TupleColumns.res.mjs`, copied into
+`dist/`), then runs `tsc`. To rebuild only the ReScript piece after editing it,
+run `npm run build:rescript`. The emitted `.res.mjs` is plain ESM with no
+`@rescript/runtime` import; TypeScript still owns cell discovery and width
+measurement in `src/comment-layout.ts`.
+
 The local Git configuration allows npm to fetch the locked grammar over HTTPS.
 To write specific files with program-preservation checks, run
 `npm run format:checked -- file.flix other.flix`. It applies Prettier and

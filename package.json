@@ -23,10 +23,11 @@
   "scripts": {
     "changelog:draft": "node scripts/changelog-draft.mjs",
     "generate": "node scripts/generate.mjs",
-    "build": "npm run generate && tsc && cp types/index.d.ts dist/index.d.ts",
+    "build:rescript": "rescript && node scripts/copy-rescript.mjs",
+    "build": "npm run generate && npm run build:rescript && tsc && cp types/index.d.ts dist/index.d.ts",
     "prepublishOnly": "npm run build && npm test",
     "test": "npm run build && node --test test/*.test.mjs",
-    "test:coverage": "npm run build && node --test --experimental-test-coverage --test-coverage-include='dist/*.js' --test-coverage-exclude='dist/FlixLexerBase.js' --test-coverage-lines=95 --test-coverage-branches=90 --test-reporter=spec --test-reporter-destination=stdout --test-reporter=lcov --test-reporter-destination=coverage.lcov test/*.test.mjs",
+    "test:coverage": "npm run build && node --test --experimental-test-coverage --test-coverage-include='dist/*.{js,mjs}' --test-coverage-exclude='dist/FlixLexerBase.js' --test-coverage-lines=95 --test-coverage-branches=90 --test-reporter=spec --test-reporter-destination=stdout --test-reporter=lcov --test-reporter-destination=coverage.lcov test/*.test.mjs",
     "docs:build": "npm run build && node scripts/export-fixture-docs.mjs && hugo --source docs --minify && node --test scripts/check-playground.mjs",
     "docs:test:browser": "playwright test scripts/check-playground-browser.spec.mjs",
     "coverage:syntax": "node scripts/syntax-coverage.mjs",
@@ -57,6 +58,7 @@
     "@wstein/flix-antlr-grammar": "https://codeload.github.com/wstein/flix-antlr-grammar/tar.gz/f8f711d32370bf2089b79e28d08d68f616a266b3",
     "antlr-ng": "1.0.10",
     "prettier": "3.10.1",
+    "rescript": "12.3.1",
     "shiki": "4.6.0",
     "typescript": "5.9.3",
     "yaml": "2.9.1"
