@@ -14,7 +14,7 @@ const HELP = `Usage: npm run review:kinds -- [options] [dir-or-file...]
 
 Formats test/*.flix, the fixture inputs and the extra paths twice per width and counts every change of comment kind
 (attached before or after a token; own line, line start, line end, inline) between source, pass 1 and pass 2.
-Exit code 0: every run is idempotent; 1: a run is not idempotent; 2: invalid usage.
+Exit code 0: every run is idempotent; 1: a run is not idempotent; 2: invalid usage or an error (unreadable path, formatter throws).
 
 Options
   --sites         also run comment-site variants (as review:sweep sites), widths ${SITE_WIDTHS.join(",")}
