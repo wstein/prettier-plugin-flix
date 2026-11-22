@@ -81,6 +81,8 @@ User-facing changes to Prettier Plugin for Flix. Plugin releases have their own 
 - Add a Flix version control to the standalone Playground and embedded
   editors; handoff carries a non-default `flixVersion` in the URL fragment
   with line width. ([#166](https://github.com/wstein/prettier-plugin-flix/issues/166))
+- Measure `coverage:syntax` against the latest supported Flix pin only
+  (`0.80.0`); older pins stay format-selectable.
 
 ### Compatibility
 
