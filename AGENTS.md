@@ -51,8 +51,8 @@ for the fixture-to-review workflow.
   `--shard k/3` processes, `node --max-old-space-size=1100`). The result is
   0 new failures against `main`. A CI job for this is planned.
 - For changes in `src/`, also run the comment-site sweep (the workflow
-  Comment sites full sweep runs it in CI once the workflow is on `main`) and,
-  after PR #196 lands, `scripts/comment-pairs.mjs`.
+  Comment sites full sweep runs it in CI once the workflow is on `main`) and
+  `npm run review:pairs` (the pair and triple test).
 - Mutate each new branch of logic. A surviving mutation of the new logic is a
   finding. See the
   [review triage skill](.agents/skills/flix-review-triage/SKILL.md).

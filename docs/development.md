@@ -163,6 +163,36 @@ the width, the comment form and token index (comment sites), the kind (`unparsab
 - Entries are matched by token index. After a fixture input changes, regenerate the affected entries:
   run `npm run review:sweep -- sites --json out.json` and copy the failures that belong to an open issue.
 
+### Pair and triple test
+
+`npm run review:pairs -- [options]` (`scripts/comment-pairs.mjs`) inserts several comments at once, where
+`review:sweep sites` inserts one. For a seeded sample of `test/*.flix` and fixture inputs it picks two (pair) or
+three (triple) distinct comment sites, gives each a form (`// note`, `/* note */` or `// own`), and formats the
+result twice at each width. The sample is a pure function of `--seed`, so a failure is reproduced with the printed
+seed. Pairs and triples use separate random streams: the pairs do not change with `--triples`.
+
+| Option | Default | Meaning |
+| --- | --- | --- |
+| `--pairs <n>` | 5000 | combinations of two comments |
+| `--triples <n>` | 3000 | combinations of three comments (0 skips them) |
+| `--seed <n>` | 1 | seed, 0 to 4294967295 |
+| `--widths <a,b>` | 40,60,100 | `printWidth` values; widths below 40 only with this option, best effort and not supported |
+| `--forms <list>` | line,block,own | forms to draw from |
+| `--only <text>`, `--no-repo`, `--json <file>`, `--max <n>` | | as in `review:sweep`; extra paths are added as inputs |
+
+The defaults run about 23000 formats in about 100 seconds (one process, build first with `npm run build`). A run
+passes when the output parses, keeps tokens, comments, parse-tree shape and token classes, and a second pass
+changes nothing. The command prints the number of runs, the combinations skipped because the variant does not
+parse, and the failures by kind; for a non-idempotent run it adds the comment-kind changes of pass 1
+(for example `lead:inline -> lead:line-start`). The exit code is 0 when no run failed, 1 when one failed and 2 for
+invalid options. The pair test has no known-failure list: every failure fails the run.
+
+`npm run review:kinds` (`scripts/comment-kinds-report.mjs`) is the detector behind that report. It names the kind
+of each comment (attached before or after a token; own line, line start, line end or inline) in the source, in pass 1
+and in pass 2, and counts every change of kind over the repository inputs (`--sites` adds comment-site variants,
+`--widths` sets the widths). It reports and always exits 0. Both tools call the built plugin in `dist/`; they
+change no formatter code.
+
 ## Issue triage and labels
 
 Issue forms in `.github/ISSUE_TEMPLATE/` set one static type label. The triager adds the other labels.
@@ -231,7 +261,7 @@ A line in an epic checklist has the form
   that names the epic. An epic closes when every line is done or moved to the section "Outside the guarantee (printWidth
   below 40)" of the epic. A batch is accepted when `npm test` passes, the comment-site sweep passes, the standard library is idempotent
   at the eight widths of `review:sweep idempotence` (set `FLIX_STDLIB_DIR`), and a mutation of the new logic fails a
-  test. A pair test over the comment sites is planned and not part of the acceptance yet.
+  test. The pair test (`npm run review:pairs`, see Review sweeps) is not part of the acceptance yet; formatter changes in `src/` report its result.
 - **Rhythm.** Work on an epic starts when it has at least 5 open lines or before a release. A finding with
   `reach:real`, `reach:narrow` or `corrupts-program` has its own issue and is worked on at once.
 - **Size.** One epic per pull request. A batch closes at most 5 lines of that epic, and each

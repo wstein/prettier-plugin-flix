@@ -48,7 +48,7 @@ Mark a check that did not run as "not run".
 
 Run the standard library idempotence on `main` as well. A failure counts as
 new when it does not appear on `main`. For `src/` changes, also run
-`scripts/comment-pairs.mjs` after PR #196 lands.
+`npm run review:pairs` (see docs/development.md, Pair and triple test).
 
 ### Mutations
 
