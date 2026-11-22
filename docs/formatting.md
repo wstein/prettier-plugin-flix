@@ -520,6 +520,39 @@ line after the head, preserve that layout at wider widths.
 [Query and schema fixture](../test/fixtures/datalog/query-clause-layout.md) ·
 [Rule fixture](../test/fixtures/datalog/lattice-rule-layout.md)
 
+## Relation to flix format
+
+The plugin formats in the Prettier style: it chooses line breaks from the
+print width. It does not replace `flix format`. The Flix 0.80.0 formatter has
+no line width: it derives no layout from a width constraint, uses a fixed
+indent of four spaces and rewrites files in place
+([Doc.scala](https://github.com/flix/flix/blob/v0.80.0/main/src/ca/uwaterloo/flix/tools/fmt/Doc.scala)).
+Its correctness test, `./mill flix.testFormatter`, runs locally and is not
+part of the workflows in the Flix repository
+([build.mill](https://github.com/flix/flix/blob/v0.80.0/build.mill),
+[TestFormatterCorrectness.scala](https://github.com/flix/flix/blob/v0.80.0/main/test/ca/uwaterloo/flix/tools/fmt/TestFormatterCorrectness.scala)).
+
+The v0.80.0 standard library was reformatted with the Flix formatter in
+May 2026 (flix/flix#12755). A pass of the Flix formatter changes 12 of its
+243 files; the other 231 are already fixed points, and 12 files were edited by
+hand since. The plugin output changes 236 of the 243 files at print width 80
+and at 100 (238 at 160). Measured on `74de28a` of `main` on 2026-11-22, the
+token sequence of every file is unchanged at widths 80, 100 and 160; only the
+whitespace between tokens differs. Of 408110 gaps between tokens, 19311 differ
+at width 80, 12944 at 100 and 8827 at 160. The main kinds at widths 80 and 160:
+
+| Difference | Gaps at 80 | Gaps at 160 |
+| --- | --- | --- |
+| The plugin breaks a line, Flix does not | 13822 | 1997 |
+| Flix breaks a line, the plugin does not (often after `=`) | 1363 | 3430 |
+| Spaces inside a line (padding before `=` and `=>`, `{x = T}` braces, space before a trailing comment) | 2485 | 1972 |
+| Indentation of a line that both break | 921 | 708 |
+| Blank line after `{` or before `}`, which Flix keeps and the plugin removes | 476 | 476 |
+
+This section describes the output. It does not change a rule and promises no
+match with `flix format`. The idempotence guarantee for `printWidth` of 40 or
+more (see [Supported print widths](#supported-print-widths)) is unchanged.
+
 ## Sources and limits
 
 The [Flix website](https://flix.dev/) and [Flix language book](https://doc.flix.dev/)
