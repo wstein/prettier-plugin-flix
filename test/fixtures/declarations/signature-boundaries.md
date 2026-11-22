@@ -25,7 +25,7 @@ eff Console {
 def wait(rx: Receiver[Int32], n: Int32, tx: Sender[List[Int32]]): Unit
     \ { Chan, NonDet } = Channel.send(recvN(n, rx), tx)
 pub def lookup(m: Map[a, b], k: a): Option[b]
-    with Order[a], ToString[b], Eq[b], Hash[a] = Map.get(k, m)
+        with Order[a], ToString[b], Eq[b], Hash[a] = Map.get(k, m)
 ```
 
 ```flix printWidth=50
@@ -40,9 +40,11 @@ def wait(
     tx: Sender[List[Int32]]
 ): Unit \ { Chan, NonDet } =
     Channel.send(recvN(n, rx), tx)
-pub def lookup(m: Map[a, b], k: a): Option[b]
-    with Order[a], ToString[b], Eq[b], Hash[a] =
-    Map.get(k, m)
+pub def lookup(m: Map[a, b], k: a): Option[b] with
+        Order[a],
+        ToString[b],
+        Eq[b],
+        Hash[a] = Map.get(k, m)
 ```
 
 ```flix printWidth=60
@@ -56,7 +58,7 @@ def wait(
     tx: Sender[List[Int32]]
 ): Unit \ { Chan, NonDet } = Channel.send(recvN(n, rx), tx)
 pub def lookup(m: Map[a, b], k: a): Option[b]
-    with Order[a], ToString[b], Eq[b], Hash[a] =
+        with Order[a], ToString[b], Eq[b], Hash[a] =
     Map.get(k, m)
 ```
 
@@ -68,5 +70,5 @@ eff Console {
 def wait(rx: Receiver[Int32], n: Int32, tx: Sender[List[Int32]]): Unit
     \ { Chan, NonDet } = Channel.send(recvN(n, rx), tx)
 pub def lookup(m: Map[a, b], k: a): Option[b]
-    with Order[a], ToString[b], Eq[b], Hash[a] = Map.get(k, m)
+        with Order[a], ToString[b], Eq[b], Hash[a] = Map.get(k, m)
 ```

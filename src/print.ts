@@ -1448,6 +1448,9 @@ export class Printer {
         return width;
     }
 
+    private lastArrowId: symbol | null = null;
+    private signatureArrowId: symbol | null = null;
+
     private printWithClause(n: ParserRuleContext): Doc {
         const children = kids(n);
         if (this.flat > 0 || children.length < 4) return this.seq(children, kind(n));
@@ -1466,6 +1469,10 @@ export class Printer {
         // Indent one level deeper than the body so wrapped constraints do not
         // share a column with the `=` body, members, or arrow continuations.
         const body = group(indent([this.after(lastTerm(keyword), line), rows]));
+        const arrowId = this.signatureArrowId;
+        if (arrowId) {
+            return [this.print(keyword), ifBreak(indent(indent(body)), indent(body), { groupId: arrowId })];
+        }
         return [this.print(keyword), indent(body)];
     }
 
@@ -1501,9 +1508,13 @@ export class Printer {
 
         const [result, slash, effect] = hasEffect ? kids(type) : [type];
         const prefix = this.seq(children.slice(0, typeIndex), parentKind);
+        this.lastArrowId = null;
         const parts: Doc[] = [this.print(result)];
+        const arrowIdOfResult = kind(result) === "ArrowType" ? this.lastArrowId : null;
         if (hasEffect) parts.push(this.seq([slash, effect], "EffectAnnotatedType"));
+        this.signatureArrowId = arrowIdOfResult;
         parts.push(...clauses.map((clause) => this.print(clause)));
+        this.signatureArrowId = null;
         const ordinary: Doc = [prefix, " ", join(" ", parts)];
 
         // Count a hugged body only for braced effect sets: a too-tight break before
@@ -1512,11 +1523,13 @@ export class Printer {
         const effectOpen = hasEffect ? firstTerm(effect) : null;
         const bracedEffect = effectOpen !== null &&
             (ttype(effectOpen) === L.LBRACE || ttype(effectOpen) === L.HASH_LBRACE);
+        const base0 = hasEffect ? 2 : 1;
         const trailerWidth = equalsTrailer + (bracedEffect ? huggedBodyTrailer : 0);
         const width = this.printWidth - this.declarationIndent(n);
         const options = { printWidth: Math.max(1, width), tabWidth: this.tabWidth };
         const render = (value: Doc): string => doc.printer.printDocToString(value, options).formatted;
-        const rows = parts.map(render);
+        const plainParts: Doc[] = parts.map((part, index) => index >= base0 && kind(clauses[index - base0]) === "WithClause" ? this.print(clauses[index - base0]) : part);
+        const rows = plainParts.map(render);
         if (rows.some((row) => row.includes("\n"))) return ordinary;
         const prefixWidth = util.getStringWidth(render(prefix).split("\n").at(-1)!);
         if (prefixWidth + 1 + util.getStringWidth(rows.join(" ")) + trailerWidth <= width) return ordinary;
@@ -1524,12 +1537,16 @@ export class Printer {
         // Prefer breaking at the outer clause, then the effect, then the result
         // type. Keep individual parts compact if they fit on the continuation with
         // the `=` trailer (and hugged body) that shares that line.
+        const base = hasEffect ? 2 : 1;
         for (let i = parts.length - 1; i >= 0; i--) {
+            const isWith = i >= base && kind(clauses[i - base]) === "WithClause";
+            const depth = equalsTrailer > 0 && isWith ? 2 : 1;
             const left = i === 0 ? "" : " " + rows.slice(0, i).join(" ");
             const right = rows.slice(i).join(" ");
             if (prefixWidth + util.getStringWidth(left) > width ||
-                this.tabWidth + util.getStringWidth(right) + trailerWidth > width) continue;
-            return [prefix, i === 0 ? "" : [" ", join(" ", parts.slice(0, i))], indent([hardline, join(" ", parts.slice(i))])];
+                this.tabWidth * depth + util.getStringWidth(right) + trailerWidth > width) continue;
+            const tail = [hardline, join(" ", parts.slice(i))];
+            return [prefix, i === 0 ? "" : [" ", join(" ", parts.slice(0, i))], depth === 2 ? indent(indent(tail)) : indent(tail)];
         }
         return ordinary;
     }
@@ -1618,7 +1635,9 @@ export class Printer {
             previous.symbol.line === firstToken!.symbol.line &&
             willBreak([head, continuation]);
         // A head that breaks inside its own brackets keeps a fitting rest on its last line.
-        return group([head, group(atLineStart && !hugged ? continuation : indent(continuation))]);
+        const arrowId = Symbol("arrowResult");
+        this.lastArrowId = arrowId;
+        return group([head, group(atLineStart && !hugged ? continuation : indent(continuation), { id: arrowId })]);
     }
 
     private printBinary(n: ParserRuleContext): Doc {

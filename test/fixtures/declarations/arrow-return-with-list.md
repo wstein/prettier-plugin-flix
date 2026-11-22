@@ -22,12 +22,12 @@ pub def lift5(_f: t1 -> t2 -> t3 -> t4 -> t5 -> t): String ->
     String ->
     String ->
         String with
-        Order[t1],
-        Order[t2],
-        Order[t3],
-        Order[t4],
-        Order[t5],
-        Order[t] = _ -> _ -> _ -> _ -> _ -> ""
+            Order[t1],
+            Order[t2],
+            Order[t3],
+            Order[t4],
+            Order[t5],
+            Order[t] = _ -> _ -> _ -> _ -> _ -> ""
 ```
 
 ```flix printWidth=100
