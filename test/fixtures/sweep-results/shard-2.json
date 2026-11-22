@@ -8,7 +8,8 @@
   "corpus": {
     "revision": "cccccccccccccccccccccccccccccccccccccccc",
     "inputCount": 1,
-    "fingerprint": "shard-corpus"
+    "inputs": ["b.flix"],
+    "fingerprint": "e8b7100f6682661ba4b11311a6427cc1c0721bbf5716b42369f77241d0afb3e5"
   },
   "config": {
     "widths": [40, 80],

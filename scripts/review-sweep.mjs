@@ -12,6 +12,7 @@ import {
     REGRESSION_WIDTHS,
     SITE_WIDTHS,
     checkFormat,
+    collectIdempotenceOutcomes,
     describeNotRun,
     isPrivateOwnedDir,
     knownPlan,
@@ -33,7 +34,7 @@ import {
     selectShard,
     sitesExitCode,
 } from "./review-sweep-lib.mjs";
-import { buildResultDocument, corpusFingerprint, exportPathForCommand, makeCase } from "./sweep-results.mjs";
+import { buildResultDocument, corpusFingerprint, makeCase, safeWriteJson, sweepCommandOptions } from "./sweep-results.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const testDir = join(root, "test");
@@ -101,35 +102,32 @@ function gatherInputs(o) {
 }
 
 function writeExport(path, { command, widths, inputs, o, cases, baseSha }) {
-    try {
-        const doc = buildResultDocument({
-            command,
-            formatter: { revision: gitRevision(), dirty: gitDirty() },
-            corpus: {
-                // Plugin checkout; fingerprint identifies the input names in this run.
-                revision: gitRevision(),
-                inputCount: inputs.length,
-                paths: o.paths,
-                fingerprint: corpusFingerprint(inputs.map((i) => i.name)),
-            },
-            config: {
-                widths,
-                every: command === "sites" ? o.every : null,
-                shard: o.shard ?? null,
-                base: baseSha ?? o.base ?? null,
-                only: o.only ?? null,
-                repo: o.repo,
-                seed: o.seed ?? null,
-                known: o.known ?? null,
-            },
-            cases: cases.map((c) => makeCase(c)),
-        });
-        writeFileSync(path, `${JSON.stringify(doc, null, 2)}\n`);
-        return `; exported ${path} (${doc.cases.length} cases)`;
-    } catch (e) {
-        // Keep the sweep exit status: a bad --export path must not discard the check result.
-        return `; export failed: ${e.message}`;
-    }
+    const names = inputs.map((i) => i.name);
+    const doc = buildResultDocument({
+        command,
+        formatter: { revision: gitRevision(), dirty: gitDirty() },
+        corpus: {
+            // Plugin checkout; fingerprint and inputs name the input set (not only case files).
+            revision: gitRevision(),
+            inputCount: names.length,
+            paths: o.paths,
+            inputs: names,
+            fingerprint: corpusFingerprint(names),
+        },
+        config: {
+            widths,
+            every: command === "sites" ? o.every : null,
+            shard: o.shard ?? null,
+            base: baseSha ?? o.base ?? null,
+            only: o.only ?? null,
+            repo: o.repo,
+            seed: o.seed ?? null,
+            known: o.known ?? null,
+        },
+        cases: cases.map((c) => makeCase(c)),
+    });
+    const written = safeWriteJson(path, doc);
+    return written.ok ? `${written.message} (${doc.cases.length} cases)` : written.message;
 }
 
 function loadKnown(o, fallbackName) {
@@ -152,32 +150,7 @@ async function idempotence(o) {
     const widths = parseWidths(o.widths, IDEMPOTENCE_WIDTHS);
     const inputs = gatherInputs(o);
     const known = loadKnown(o, "known-idempotence-failures.json");
-    const failures = [];
-    const cases = [];
-    const checked = new Set();
-    let runs = 0;
-    let skipped = 0;
-    for (const input of inputs) {
-        const before = fingerprint(input.source);
-        if (before.errors.length > 0) {
-            skipped++;
-            for (const width of widths) {
-                cases.push({ file: input.name, width, status: "skipped", reason: "input does not parse" });
-            }
-            continue;
-        }
-        for (const width of widths) {
-            runs++;
-            const r = await checkFormat(format, input.source, width, before);
-            checked.add([input.name, width, "plain", "-"].join("|"));
-            if (r) {
-                failures.push({ file: input.name, width, kind: r.kind, detail: r.detail, source: input.source, output: r.output, second: r.second });
-                cases.push({ file: input.name, width, status: "fail", kind: r.kind, reason: r.detail });
-            } else {
-                cases.push({ file: input.name, width, status: "pass" });
-            }
-        }
-    }
+    const { failures, cases, checked, runs, skipped } = await collectIdempotenceOutcomes(format, inputs, widths);
     const { unknown, fixed, messages } = reconcile(known.filter((e) => inputs.some((i) => i.name === e.file)), failures, checked);
     report("idempotence", { failures, messages: [], unknown, fixed, runs, skipped }, o);
     // The smallest input and the first/second output diff, for every failure that is not known.
@@ -335,8 +308,7 @@ async function main() {
                 console.log("regression: not run (no --base)");
                 continue;
             }
-            const opts = o.export ? { ...o, export: exportPathForCommand(o.export, name) } : o;
-            code = Math.max(code, await commands[name](opts));
+            code = Math.max(code, await commands[name](sweepCommandOptions(o, name)));
             console.log("");
         }
         console.log(`all finished in ${seconds(Date.now() - started)}`);

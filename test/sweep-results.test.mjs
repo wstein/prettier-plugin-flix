@@ -19,9 +19,12 @@ import {
     parseShardSpec,
     readAuditLayoutChanges,
     renderReviewSummary,
+    safeWriteJson,
     sortCases,
+    sweepCommandOptions,
 } from "../scripts/sweep-results.mjs";
-import { parseSweepArgs, runSitePlan } from "../scripts/review-sweep-lib.mjs";
+import { collectIdempotenceOutcomes, parseSweepArgs, runSitePlan } from "../scripts/review-sweep-lib.mjs";
+import { main as reviewSummaryMain } from "../scripts/review-summary.mjs";
 
 const fixtures = join(dirname(fileURLToPath(import.meta.url)), "fixtures", "sweep-results");
 const load = (name) => JSON.parse(readFileSync(join(fixtures, name), "utf8"));
@@ -121,20 +124,32 @@ test("compareSweepResults: absent base is incomplete; incompatible config is fla
     assert.match(bad.reason, /incompatible/);
 });
 
-test("mergeShardResults: complete set matches unsharded counts; rejects a missing shard", () => {
+test("mergeShardResults: fingerprint matches unsharded input names, not case files alone", () => {
     const s1 = load("shard-1.json");
     const s2 = load("shard-2.json");
+    // Distinct per-shard fingerprints: merge must ignore them and recompute from inputs.
+    assert.notEqual(s1.corpus.fingerprint, s2.corpus.fingerprint);
     const merged = mergeShardResults([s1, s2]);
     assert.equal(merged.config.shard, null);
     assert.equal(merged.cases.length, 4);
     assert.equal(merged.corpus.inputCount, 2);
+    assert.deepEqual(merged.corpus.inputs, ["a.flix", "b.flix"]);
     assert.equal(merged.corpus.fingerprint, corpusFingerprint(["a.flix", "b.flix"]));
-    assert.deepEqual(
-        merged.cases.map((c) => c.id),
-        ["a.flix|40|plain|-", "a.flix|80|plain|-", "b.flix|40|plain|-", "b.flix|80|plain|-"],
-    );
+    // An input with no cases still belongs in the fingerprint (unsharded export includes it).
+    const withSilent = structuredClone(s2);
+    withSilent.corpus.inputs = ["b.flix", "silent.flix"];
+    withSilent.corpus.inputCount = 2;
+    withSilent.corpus.fingerprint = corpusFingerprint(["b.flix", "silent.flix"]);
+    const mergedSilent = mergeShardResults([s1, withSilent]);
+    assert.deepEqual(mergedSilent.corpus.inputs, ["a.flix", "b.flix", "silent.flix"]);
+    assert.equal(mergedSilent.corpus.fingerprint, corpusFingerprint(["a.flix", "b.flix", "silent.flix"]));
+    assert.notEqual(mergedSilent.corpus.fingerprint, corpusFingerprint(["a.flix", "b.flix"]));
     assert.throws(() => mergeShardResults([s1]), /incomplete shard set|missing shard/);
     assert.throws(() => mergeShardResults([s1, { ...s2, config: { ...s2.config, shard: "1/2" } }]), /duplicate shard/);
+    assert.throws(() => mergeShardResults([s1, { ...s2, config: { ...s2.config, shard: "2/3" } }]), /denominators/);
+    const noInputs = structuredClone(s2);
+    delete noInputs.corpus.inputs;
+    assert.throws(() => mergeShardResults([s1, noInputs]), /corpus\.inputs/);
 });
 
 test("mergeShardResults: rejects conflicting cases and incompatible config or revision", () => {
@@ -203,15 +218,51 @@ test("parseResultDocument: rejects a wrong schema version or invalid case", () =
     assert.equal(parseResultDocument(load("base-sites.json")).schemaVersion, RESULT_SCHEMA_VERSION);
 });
 
-test("parseSweepArgs / exportPathForCommand / parseShardSpec", () => {
+test("parseSweepArgs / exportPathForCommand / sweepCommandOptions / parseShardSpec", () => {
     const o = parseSweepArgs(["sites", "--export", "out.json", "--seed", "7"]);
     assert.equal(o.export, "out.json");
     assert.equal(o.seed, 7);
     assert.equal(exportPathForCommand("out.json", "sites"), "out.sites.json");
     assert.equal(exportPathForCommand("out", "idempotence"), "out.idempotence");
+    const forSites = sweepCommandOptions(o, "sites");
+    const forIdem = sweepCommandOptions(o, "idempotence");
+    assert.equal(forSites.export, "out.sites.json");
+    assert.equal(forIdem.export, "out.idempotence.json");
+    assert.notEqual(forSites.export, forIdem.export);
+    assert.equal(forSites.seed, 7);
     assert.deepEqual(parseShardSpec("2/3"), { k: 2, n: 3 });
     assert.equal(parseShardSpec(null), null);
     assert.throws(() => parseShardSpec("0/2"), /invalid shard/);
+});
+
+test("safeWriteJson: never throws; reports export failure", () => {
+    const dir = mkdtempSync(join(tmpdir(), "export-ok-"));
+    try {
+        const ok = safeWriteJson(join(dir, "out.json"), { a: 1 });
+        assert.equal(ok.ok, true);
+        assert.match(ok.message, /exported/);
+        const bad = safeWriteJson(join(dir, "missing", "nope.json"), { a: 1 });
+        assert.equal(bad.ok, false);
+        assert.match(bad.message, /export failed/);
+    } finally {
+        rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test("collectIdempotenceOutcomes: fail stays fail; seed-ready cases include kind", async () => {
+    const src = "def f(): Int32 = 1\n";
+    const inputs = [{ name: "a.flix", source: src }];
+    const ok = await collectIdempotenceOutcomes(async (t) => t, inputs, [40]);
+    assert.equal(ok.cases[0].status, "pass");
+    // First pass appends a blank line; second pass strips it → not idempotent.
+    let n = 0;
+    const flip = async (t) => (n++ % 2 === 0 ? t.trimEnd() + "\n\n" : t.trimEnd() + "\n");
+    const bad = await collectIdempotenceOutcomes(flip, inputs, [40]);
+    assert.equal(bad.cases[0].status, "fail");
+    assert.equal(bad.cases[0].kind, "not-idempotent");
+    assert.notEqual(bad.cases[0].status, "pass");
+    const skipped = await collectIdempotenceOutcomes(async (t) => t, [{ name: "x.flix", source: "def (" }], [40]);
+    assert.equal(skipped.cases[0].status, "skipped");
 });
 
 test("runSitePlan export cases: pass, fail, and skipped outcomes", async () => {
@@ -228,6 +279,28 @@ test("runSitePlan export cases: pass, fail, and skipped outcomes", async () => {
     assert.equal(drop.cases[0].kind, "program");
     const skip = await runSitePlan(async (t) => t, { name: "a.flix", source: "def (" }, [plan[0]]);
     assert.equal(skip.cases[0].status, "skipped");
+});
+
+test("review-summary: rejects --merge with --base and stray positionals", () => {
+    assert.throws(() => reviewSummaryMain(["--merge", "--base", "x.json", "a.json"]), /cannot be combined/);
+    assert.throws(() => reviewSummaryMain(["--audit", "dir", "stray.json"]), /unexpected arguments/);
+});
+
+test("buildResultDocument records seed and inputs for export", () => {
+    const doc = buildResultDocument({
+        command: "idempotence",
+        formatter: { revision: "a".repeat(40) },
+        corpus: { revision: "a".repeat(40), inputCount: 1, inputs: ["a.flix"], fingerprint: corpusFingerprint(["a.flix"]) },
+        config: { widths: [40], every: null, shard: null, base: null, only: null, repo: true, seed: 7, known: "k.json" },
+        cases: [makeCase({ file: "a.flix", width: 40, status: "pass" })],
+    });
+    assert.equal(doc.config.seed, 7);
+    assert.equal(doc.config.known, "k.json");
+    assert.deepEqual(doc.corpus.inputs, ["a.flix"]);
+    assert.equal(configKey(doc), configKey(structuredClone(doc)));
+    const dropped = structuredClone(doc);
+    dropped.config.seed = null;
+    assert.notEqual(configKey(doc), configKey(dropped));
 });
 
 test("sortCases: deterministic order", () => {
