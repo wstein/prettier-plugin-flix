@@ -1,5 +1,5 @@
 /** Exact Flix compiler versions the plugin can parse today. */
-export const SUPPORTED_FLIX_VERSIONS = ["0.80.0"] as const;
+export const SUPPORTED_FLIX_VERSIONS = ["0.79.0", "0.80.0"] as const;
 
 export type FlixVersion = (typeof SUPPORTED_FLIX_VERSIONS)[number];
 
@@ -8,12 +8,13 @@ export const DEFAULT_FLIX_VERSION: FlixVersion = "0.80.0";
 
 /**
  * Stable id for the generated grammar bundle that implements a Flix version.
- * Today every supported version maps to the single shipped grammar; a future
- * syntax-changing release adds another id and generated tree.
+ * Each syntax-changing release that the plugin supports gets its own id and
+ * tree under `src/generated/<id>/`.
  */
-export type FlixGrammarId = "flix-0.80.0";
+export type FlixGrammarId = "flix-0.79.0" | "flix-0.80.0";
 
 const GRAMMAR_BY_VERSION: Record<FlixVersion, FlixGrammarId> = {
+    "0.79.0": "flix-0.79.0",
     "0.80.0": "flix-0.80.0",
 };
 

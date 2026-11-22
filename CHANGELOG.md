@@ -77,10 +77,14 @@ User-facing changes to Prettier Plugin for Flix. Plugin releases have their own 
 
 ### Compatibility
 
+- Support Flix `0.79.0` alongside default `0.80.0` through `flixVersion` /
+  `--flix-version`, with separate generated grammars. Module-level `val`
+  parses only under `0.80.0`; `def val` is rejected there because `val` is
+  reserved. ([#166](https://github.com/wstein/prettier-plugin-flix/issues/166))
 - Reject an empty `flixVersion` the same way as any unsupported value; only an omitted option keeps the default `0.80.0`.
 - Declare `"engines": { "node": ">=22" }` so installers match CI and release publishing.
 - Ship TypeScript declarations for the plugin default export and `recoverFormatting`.
-- Add a `flixVersion` Prettier option (`--flix-version`) that selects an exact Flix compiler grammar. Default and only supported value today is `0.80.0`; unsupported versions fail clearly. ([#166](https://github.com/wstein/prettier-plugin-flix/issues/166))
+- Add a `flixVersion` Prettier option (`--flix-version`) that selects an exact Flix compiler grammar. Unsupported versions fail clearly. ([#166](https://github.com/wstein/prettier-plugin-flix/issues/166))
 
 ## [0.1.3] - 2026-11-20
 

@@ -47,11 +47,15 @@ default. Supported values:
 
 | `flixVersion` | Grammar |
 | --- | --- |
-| `0.80.0` (default) | Current `@wstein/flix-antlr-grammar` pin |
+| `0.80.0` (default) | Current `@wstein/flix-antlr-grammar` pin (`flix-0.80.0`) |
+| `0.79.0` | Vendored `@wstein/flix-antlr-grammar` commit before reserved `val` (`flix-0.79.0`) |
 
-Only `0.80.0` is registered today. A later release can add another pin when
-Flix introduces a syntax-changing version; until then unsupported values
-error. Keep one `flix` parser and `.flix` language entry for every pin.
+Flix 0.80.0 adds reserved `KeywordVal` and module-level `Decl.Val`, so
+`val n: Int32 = 1` parses under `0.80.0` and is rejected under `0.79.0`, while
+`def val(): Int32 = 42` is rejected under `0.80.0` because `val` is reserved.
+Unsupported values error. Keep one `flix` parser and `.flix` language entry for
+every pin; the shared `flix-ast` printer uses each parse tree's grammar token
+constants.
 
 ## Supported print widths
 

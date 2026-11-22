@@ -10,9 +10,8 @@ import {
     type Recognizer,
     type Token,
 } from "antlr4ng";
-import { grammarIdForVersion, resolveFlixVersion, type FlixVersion } from "./flix-version.js";
-import { FlixLexer } from "./generated/FlixLexer.js";
-import { DeclarationContext, FlixParser } from "./generated/FlixParser.js";
+import { grammarIdForVersion, resolveFlixVersion, type FlixGrammarId, type FlixVersion } from "./flix-version.js";
+import { grammarForId, type FlixLexerClass } from "./grammar.js";
 
 /** Optional parse settings. `flixVersion` selects which pinned grammar to use. */
 export type ParseFlixOptions = {
@@ -46,6 +45,10 @@ export interface TokenInfo {
 
 export interface FlixRoot {
     type: "flix-root";
+    /** Exact Flix compiler version selected for this parse. */
+    flixVersion: FlixVersion;
+    /** Grammar that produced `tree`; printers must use its token constants. */
+    grammarId: FlixGrammarId;
     tree: ParserRuleContext;
     text: string;
     /** Source split into code points: ANTLR token offsets count code points, not UTF-16 units. */
@@ -57,6 +60,7 @@ export interface FlixRoot {
 
 /** End of a declaration copied verbatim by an own-line prettier-ignore directive. */
 export function ignoredDeclarationEnd(root: FlixRoot, node: ParserRuleContext): number | undefined {
+    const { DeclarationContext } = grammarForId(root.grammarId);
     if (!(node instanceof DeclarationContext) || !node.start || !node.stop) return;
     const leading = root.info.get(node.start.tokenIndex)?.lead;
     if (!leading?.some((comment) => comment.isLine && comment.text.slice(2).trim() === "prettier-ignore")) return;
@@ -71,9 +75,12 @@ class FlixSyntaxError extends SyntaxError {
     }
 }
 
-export function findStringContinuationError(tokens: Token[]): FlixSyntaxError | undefined {
+export function findStringContinuationError(
+    tokens: Token[],
+    Lexer: FlixLexerClass,
+): FlixSyntaxError | undefined {
     for (const token of tokens) {
-        if (token.type !== FlixLexer.STRING_CONTENT) continue;
+        if (token.type !== Lexer.STRING_CONTENT) continue;
         const content = token.text ?? "";
         const escape = /\\[\r\n]/.exec(content);
         if (escape) {
@@ -98,12 +105,15 @@ function countNewlines(s: string): number {
     return n;
 }
 
-const STAYS_WITH_PREVIOUS = new Set<number>([
-    FlixLexer.COMMA, FlixLexer.SEMI, FlixLexer.RPAREN, FlixLexer.RBRACK, FlixLexer.COLON,
-    FlixLexer.LPAREN, FlixLexer.LBRACK, FlixLexer.DOT, FlixLexer.DOT_WS, FlixLexer.EOF,
-]);
+function staysWithPrevious(Lexer: FlixLexerClass): Set<number> {
+    return new Set([
+        Lexer.COMMA, Lexer.SEMI, Lexer.RPAREN, Lexer.RBRACK, Lexer.COLON,
+        Lexer.LPAREN, Lexer.LBRACK, Lexer.DOT, Lexer.DOT_WS, Lexer.EOF,
+    ]);
+}
 
-function buildTokenInfo(tokens: Token[]): Map<number, TokenInfo> {
+function buildTokenInfo(tokens: Token[], Lexer: FlixLexerClass): Map<number, TokenInfo> {
+    const hugsTypes = staysWithPrevious(Lexer);
     const info = new Map<number, TokenInfo>();
     let prevDefault: Token | null = null;
     let pending: Comment[] = [];
@@ -121,7 +131,7 @@ function buildTokenInfo(tokens: Token[]): Map<number, TokenInfo> {
                 while (k < lead.length && lead[k].nl === 0) k++;
                 // `a /* c */ b`: an inline block comment leads the next token, unless that token
                 // is punctuation that hugs its left neighbor.
-                const hugs = STAYS_WITH_PREVIOUS.has(t.type);
+                const hugs = hugsTypes.has(t.type);
                 while (k > 0 && !hugs && !lead[k - 1].isLine && lead[k - 1].nlNext === 0) k--;
                 trail.push(...lead.slice(0, k));
                 lead = lead.slice(k);
@@ -136,17 +146,17 @@ function buildTokenInfo(tokens: Token[]): Map<number, TokenInfo> {
             prevDefault = t;
             pending = [];
             nl = 0;
-        } else if (t.type === FlixLexer.WS) {
+        } else if (t.type === Lexer.WS) {
             nl += countNewlines(t.text ?? "");
         } else if (
-            t.type === FlixLexer.LINE_COMMENT ||
-            t.type === FlixLexer.DOC_COMMENT ||
-            t.type === FlixLexer.BLOCK_COMMENT
+            t.type === Lexer.LINE_COMMENT ||
+            t.type === Lexer.DOC_COMMENT ||
+            t.type === Lexer.BLOCK_COMMENT
         ) {
             pending.push({
                 text: (t.text ?? "").replace(/[ \t\r]+$/, ""),
                 end: t.stop + 1,
-                isLine: t.type !== FlixLexer.BLOCK_COMMENT,
+                isLine: t.type !== Lexer.BLOCK_COMMENT,
                 nl,
                 nlNext: 0,
             });
@@ -158,13 +168,13 @@ function buildTokenInfo(tokens: Token[]): Map<number, TokenInfo> {
 
 /**
  * Parse Flix source with the grammar for `flixVersion` (default 0.80.0).
- * Only one grammar is shipped today; `grammarIdForVersion` is the hook for a
- * future second pin.
+ * Selects the generated bundle through `grammarIdForVersion`.
  */
 export function parseFlix(text: string, options: ParseFlixOptions = {}): FlixRoot {
     const version: FlixVersion = resolveFlixVersion(options.flixVersion);
-    // Reserved for multi-grammar loading; the only id today is flix-0.80.0.
-    void grammarIdForVersion(version);
+    const grammarId = grammarIdForVersion(version);
+    const grammar = grammarForId(grammarId);
+    const { Lexer, Parser } = grammar;
 
     let firstError: FlixSyntaxError | null = null;
     const listener = new (class extends BaseErrorListener {
@@ -181,12 +191,12 @@ export function parseFlix(text: string, options: ParseFlixOptions = {}): FlixRoo
         }
     })();
 
-    const lexer = new FlixLexer(CharStream.fromString(text));
+    const lexer = new Lexer(CharStream.fromString(text));
     lexer.removeErrorListeners();
     lexer.addErrorListener(listener);
     const stream = new CommonTokenStream(lexer);
     stream.fill();
-    const syntaxError = earlierError(firstError, findStringContinuationError(stream.getTokens()));
+    const syntaxError = earlierError(firstError, findStringContinuationError(stream.getTokens(), Lexer));
     if (syntaxError) throw syntaxError;
 
     // Two-stage parse: SLL prediction without error recovery is two orders of magnitude faster
@@ -194,7 +204,7 @@ export function parseFlix(text: string, options: ParseFlixOptions = {}): FlixRoo
     // also produces the syntax error report.
     let tree: ParserRuleContext;
     try {
-        const fast = new FlixParser(stream);
+        const fast = new Parser(stream);
         fast.removeErrorListeners();
         fast.errorHandler = new BailErrorStrategy();
         fast.interpreter.predictionMode = PredictionMode.SLL;
@@ -202,7 +212,7 @@ export function parseFlix(text: string, options: ParseFlixOptions = {}): FlixRoo
     } catch (e) {
         if (!(e instanceof ParseCancellationException)) throw e;
         stream.seek(0);
-        const parser = new FlixParser(stream);
+        const parser = new Parser(stream);
         parser.removeErrorListeners();
         parser.addErrorListener(listener);
         tree = parser.compilationUnit();
@@ -211,10 +221,12 @@ export function parseFlix(text: string, options: ParseFlixOptions = {}): FlixRoo
 
     return {
         type: "flix-root",
+        flixVersion: version,
+        grammarId,
         tree,
         text,
         codePoints: Array.from(text),
-        info: buildTokenInfo(stream.getTokens()),
+        info: buildTokenInfo(stream.getTokens(), Lexer),
         start: 0,
         end: text.length,
     };

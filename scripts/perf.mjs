@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { CharStream, CommonTokenStream, PredictionMode, BailErrorStrategy } from "antlr4ng";
-import { FlixLexer } from "../dist/generated/FlixLexer.js";
-import { FlixParser } from "../dist/generated/FlixParser.js";
+import { FlixLexer } from "../dist/generated/flix-0.80.0/FlixLexer.js";
+import { FlixParser } from "../dist/generated/flix-0.80.0/FlixParser.js";
 const text = readFileSync(process.argv[2], "utf8");
 for (const mode of ["SLL"]) {
   for (let r = 0; r < 2; r++) {

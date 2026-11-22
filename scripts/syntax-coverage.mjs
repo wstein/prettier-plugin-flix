@@ -2,15 +2,15 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { CharStream, CommonTokenStream } from "antlr4ng";
-import { FlixLexer } from "../dist/generated/FlixLexer.js";
-import { FlixParser } from "../dist/generated/FlixParser.js";
+import { FlixLexer } from "../dist/generated/flix-0.80.0/FlixLexer.js";
+import { FlixParser } from "../dist/generated/flix-0.80.0/FlixParser.js";
 import { parseFlix } from "../dist/parse.js";
 import { findFixtures, loadFixture } from "../test/fixture.mjs";
 
 const testDir = fileURLToPath(new URL("../test", import.meta.url));
 const fixtures = findFixtures(join(testDir, "fixtures")).map((path) => loadFixture(path));
 const fixtureInputs = fixtures.filter(({ meta }) => meta.status !== "error").map(({ input }) => input.code);
-const parserSource = readFileSync(new URL("../dist/generated/FlixParser.js", import.meta.url), "utf8");
+const parserSource = readFileSync(new URL("../dist/generated/flix-0.80.0/FlixParser.js", import.meta.url), "utf8");
 const alternatives = [...parserSource.matchAll(/^export class (\w+Context) extends \w+Context \{/gm)]
     .map((match) => match[1]);
 const tokenNames = FlixLexer.symbolicNames.filter(Boolean);

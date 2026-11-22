@@ -1,10 +1,10 @@
 import type { Parser, Plugin, Printer, SupportLanguage, SupportOptions } from "prettier";
 
 /** Exact Flix compiler versions the plugin can parse today. */
-export const SUPPORTED_FLIX_VERSIONS: readonly ["0.80.0"];
+export const SUPPORTED_FLIX_VERSIONS: readonly ["0.79.0", "0.80.0"];
 export type FlixVersion = (typeof SUPPORTED_FLIX_VERSIONS)[number];
 export const DEFAULT_FLIX_VERSION: FlixVersion;
-export type FlixGrammarId = "flix-0.80.0";
+export type FlixGrammarId = "flix-0.79.0" | "flix-0.80.0";
 
 export function resolveFlixVersion(value: unknown): FlixVersion;
 export function grammarIdForVersion(version: FlixVersion): FlixGrammarId;

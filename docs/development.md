@@ -35,10 +35,10 @@ It follows the standard plugin shape: a **parser** (source → AST) and a **prin
 
 | Piece | Where | Notes |
 | --- | --- | --- |
-| Grammar | `@wstein/flix-antlr-grammar` (dev dependency, pinned to an exact commit) | [`wstein/flix-antlr-grammar`](https://github.com/wstein/flix-antlr-grammar). `npm run generate` reads its `.g4` files from `node_modules`; nothing is copied into this repo. |
-| Version selection | `src/flix-version.ts` | `flixVersion` / `--flix-version` maps an exact compiler version to a grammar id. Only `0.80.0` → `flix-0.80.0` today; add pins here when a syntax-changing Flix release needs a second generated tree. |
-| Parser | `src/parse.ts` | The `antlr4ng` runtime over the generated lexer and parser. Returns one root node that carries the ANTLR parse tree, the code-point source, and the comment/line-break facts read from the hidden token channels. Resolves `flixVersion` before parsing. |
-| Printer | `src/print.ts` | Walks the parse tree and builds the doc with `group`, `indent`, `line`, `softline`, `hardline`, `join`, `ifBreak`, `lineSuffix`, `breakParent`. |
+| Grammar | `@wstein/flix-antlr-grammar` (0.80.0 pin) plus `third_party/flix-antlr-grammar-0.79.0` | [`wstein/flix-antlr-grammar`](https://github.com/wstein/flix-antlr-grammar). `npm run generate` emits `src/generated/flix-0.80.0/` from the npm pin and `src/generated/flix-0.79.0/` from the vendored 0.79 commit. |
+| Version selection | `src/flix-version.ts`, `src/grammar.ts` | `flixVersion` / `--flix-version` maps an exact compiler version to a grammar id (`0.80.0` → `flix-0.80.0`, `0.79.0` → `flix-0.79.0`). `grammarForId` loads the matching generated lexer and parser. |
+| Parser | `src/parse.ts` | The `antlr4ng` runtime over the selected grammar. Returns one root node that carries `flixVersion`, `grammarId`, the ANTLR parse tree, the code-point source, and the comment/line-break facts read from the hidden token channels. |
+| Printer | `src/print.ts` | Shared `flix-ast` printer. Walks the parse tree with that tree's grammar token constants (`VAL` shifts later lexer indices between 0.79 and 0.80). |
 | Plugin | `src/index.ts` | `languages`, `parsers.flix` (`astFormat: "flix-ast"`), `printers["flix-ast"]`, `options` (`flixVersion`), `defaultOptions`, `recoverFormatting`. |
 | Types | `types/index.d.ts` → `dist/index.d.ts` | Hand-written public declarations for the plugin default export, `flixVersion` helpers, and `recoverFormatting`. Generated parser types stay out of the published API. |
 

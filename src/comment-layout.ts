@@ -1,17 +1,49 @@
 import { CharStream, CommonTokenStream, ParserRuleContext, TerminalNode, type ParseTree, type Token } from "antlr4ng";
 import { doc, util, type Doc } from "prettier";
-import { FlixLexer as L } from "./generated/FlixLexer.js";
-import { DefDeclarationContext, HandlerExprContext } from "./generated/FlixParser.js";
+import { defaultGrammar, grammarForId, type FlixLexerClass } from "./grammar.js";
 import { ignoredDeclarationEnd, parseFlix, type FlixRoot } from "./parse.js";
 import { alignTupleFields } from "./TupleColumns.res.mjs";
 
 type LayoutOptions = { printWidth: number; tabWidth: number; useTabs: boolean };
 type Scope = { parent: Scope | undefined };
 type Row = { line: number; scope: Scope | undefined; indent: number; startsBody: boolean; code: string; width: number; comment: string };
-const OPEN = new Set([L.LPAREN, L.LBRACK, L.LBRACE, L.HASH_LBRACE, L.HASH_LPAREN, L.HASH_BAR, L.INTERPOLATION_START]);
-const CLOSE = new Set([L.RPAREN, L.RBRACK, L.RBRACE, L.BAR_HASH, L.INTERPOLATION_END]);
 const CARET = /^\/\/[ \t]*\^+/;
 export const LINE_COMMENT_GAP = "  ";
+
+/** Active lexer constants for the grammar of the tree being laid out. */
+let L: FlixLexerClass = defaultGrammar().Lexer;
+let OPEN = new Set([L.LPAREN, L.LBRACK, L.LBRACE, L.HASH_LBRACE, L.HASH_LPAREN, L.HASH_BAR, L.INTERPOLATION_START]);
+let CLOSE = new Set([L.RPAREN, L.RBRACK, L.RBRACE, L.BAR_HASH, L.INTERPOLATION_END]);
+let TABLE_COLLECTIONS = new Set([L.VECTOR_HASH, L.LIST_HASH, L.ARRAY_HASH, L.SET_HASH]);
+let DefDeclarationContext: abstract new (...args: never[]) => object = defaultGrammar().DefDeclarationContext;
+let HandlerExprContext: abstract new (...args: never[]) => object = defaultGrammar().HandlerExprContext;
+
+function bindGrammar(grammarId: FlixRoot["grammarId"]): void {
+    const grammar = grammarForId(grammarId);
+    L = grammar.Lexer;
+    OPEN = new Set([L.LPAREN, L.LBRACK, L.LBRACE, L.HASH_LBRACE, L.HASH_LPAREN, L.HASH_BAR, L.INTERPOLATION_START]);
+    CLOSE = new Set([L.RPAREN, L.RBRACK, L.RBRACE, L.BAR_HASH, L.INTERPOLATION_END]);
+    TABLE_COLLECTIONS = new Set([L.VECTOR_HASH, L.LIST_HASH, L.ARRAY_HASH, L.SET_HASH]);
+    DefDeclarationContext = grammar.DefDeclarationContext;
+    HandlerExprContext = grammar.HandlerExprContext;
+}
+
+function withGrammar<T>(grammarId: FlixRoot["grammarId"], fn: () => T): T {
+    const prev = {
+        L, OPEN, CLOSE, TABLE_COLLECTIONS, DefDeclarationContext, HandlerExprContext,
+    };
+    bindGrammar(grammarId);
+    try {
+        return fn();
+    } finally {
+        L = prev.L;
+        OPEN = prev.OPEN;
+        CLOSE = prev.CLOSE;
+        TABLE_COLLECTIONS = prev.TABLE_COLLECTIONS;
+        DefDeclarationContext = prev.DefDeclarationContext;
+        HandlerExprContext = prev.HandlerExprContext;
+    }
+}
 
 function lex(text: string): Token[] {
     const lexer = new L(CharStream.fromString(text));
@@ -41,6 +73,7 @@ function indentation(text: string): string {
 
 /** Map alignment separators to the indentation of their rendered lines. */
 export function alignmentIndents(root: FlixRoot, value: Doc, options: LayoutOptions): Map<number, number> {
+    return withGrammar(root.grammarId, () => {
     const { formatted } = doc.printer.printDocToString(value, options);
     const separators = (text: string) => lex(text).filter((token) => token.type === L.EQUAL || token.type === L.ARROW_THICK_R);
     const input = separators(root.text);
@@ -48,6 +81,7 @@ export function alignmentIndents(root: FlixRoot, value: Doc, options: LayoutOpti
     if (!sameTokens(input, output, true)) return new Map();
     const lines = formatted.split("\n");
     return new Map(input.map((token, i) => [token.tokenIndex, width(indentation(lines[output[i].line - 1]), options.tabWidth)]));
+    });
 }
 
 /** Locate printed definition separators using the source parse tree and code-token order. */
@@ -60,7 +94,7 @@ function printedDefinitionEquals(root: FlixRoot, tokens: Token[]): Set<Token> {
             return;
         }
         if (node instanceof DefDeclarationContext) {
-            const separator = node.EQUAL();
+            const separator = (node as ParserRuleContext & { EQUAL(): TerminalNode | null }).EQUAL();
             if (separator && root.info.get(separator.symbol.tokenIndex)?.trail.some((comment) => comment.isLine)) {
                 equals.add(separator.symbol);
             }
@@ -140,6 +174,7 @@ export function explainTrailingCommentAlignment(source: string, output: string, 
         if (error instanceof SyntaxError) return undefined;
         throw error;
     }
+    return withGrammar(root.grammarId, () => {
     const tokens = lex(source);
     const lines = source.split("\n");
     const expected = [...lines];
@@ -158,6 +193,7 @@ export function explainTrailingCommentAlignment(source: string, output: string, 
             beforeColumns: width(prefix, options.tabWidth) - codeWidth,
             afterColumns: width(alignedPrefix, options.tabWidth) - codeWidth,
         }];
+    });
     });
 }
 
@@ -274,7 +310,6 @@ type TupleCell = {
     after: number;
 };
 type TupleRow = { indent: string; cells: TupleCell[]; suffix: string; line: number };
-const TABLE_COLLECTIONS = new Set([L.VECTOR_HASH, L.LIST_HASH, L.ARRAY_HASH, L.SET_HASH]);
 
 function delimiterDepth(type: number): number {
     return OPEN.has(type) ? 1 : CLOSE.has(type) ? -1 : 0;
@@ -443,7 +478,10 @@ function alignHandlerClauses(root: FlixRoot, lines: string[], options: LayoutOpt
         if (node instanceof HandlerExprContext) {
             let clauses: Clause[] = [];
             let previousEnd = 0;
-            for (const rule of node.handlerRule()) {
+            const rules = (node as ParserRuleContext & {
+                handlerRule(): Array<ParserRuleContext & { EQUAL(): TerminalNode; start: Token; stop: Token }>;
+            }).handlerRule();
+            for (const rule of rules) {
                 const start = rule.start!;
                 const separator = rule.EQUAL().symbol;
                 const ownLine = start.line === separator.line && !before(lines, start).trim() &&
@@ -468,6 +506,7 @@ function alignHandlerClauses(root: FlixRoot, lines: string[], options: LayoutOpt
 }
 
 export function layoutSource(root: FlixRoot, value: Doc, options: LayoutOptions): Doc {
+    return withGrammar(root.grammarId, () => {
     let trailing = 0;
     let hasCaret = false;
     for (const info of root.info.values()) {
@@ -483,8 +522,9 @@ export function layoutSource(root: FlixRoot, value: Doc, options: LayoutOptions)
     // and the full comment widths, before changing horizontal space.
     const { formatted } = doc.printer.printDocToString(value, options);
     // Post-layout edits use printed line numbers, which can differ from the input.
+    const parseOpts = { flixVersion: root.flixVersion };
     const hasIgnored = ignoredDeclarationLines(root)?.size;
-    const printedRoot = mayHaveHandlers || hasIgnored ? parseFlix(formatted) : undefined;
+    const printedRoot = mayHaveHandlers || hasIgnored ? parseFlix(formatted, parseOpts) : undefined;
     const ignoredLines = hasIgnored && printedRoot ? ignoredDeclarationLines(printedRoot) : undefined;
     let lines = formatted.split("\n");
     if (mayHaveHandlers && printedRoot) alignHandlerClauses(printedRoot, lines, options, ignoredLines);
@@ -497,4 +537,5 @@ export function layoutSource(root: FlixRoot, value: Doc, options: LayoutOptions)
     if (mayHaveContinuations) alignCommentContinuations(root.text, tokens, lines, options.tabWidth, ignoredLines);
     if (hasCaret) lines = placeCaretComments(root.text, tokens, lines, options.tabWidth, ignoredLines);
     return lines.join("\n") === formatted ? value : doc.builders.join(doc.builders.literalline, lines);
+    });
 }

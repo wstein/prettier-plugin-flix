@@ -1,34 +1,45 @@
 #!/usr/bin/env node
 /**
- * Generate the antlr-ng (TypeScript) target from the shared grammars.
+ * Generate antlr-ng TypeScript targets for each supported Flix grammar pin.
  *
- * The pinned @wstein/flix-antlr-grammar package provides the canonical grammars.
+ * - `flix-0.80.0` comes from the pinned `@wstein/flix-antlr-grammar` package.
+ * - `flix-0.79.0` comes from the vendored pin under `third_party/`.
+ *
  * Their embedded actions use Java syntax, and antlr-ng's TypeScript target
- * ignores `options { superClass }`. Adapt the generated copy:
+ * ignores `options { superClass }`. Adapt each generated copy:
  *
  *   1. Pre-process a TypeScript-flavored copy of the grammars into build/.
- *   2. Run antlr-ng over the copy.
- *   3. Patch the generated lexer to extend FlixLexerBase.
+ *   2. Run antlr-ng over the copy into `src/generated/<grammarId>/`.
+ *   3. Patch the generated lexer to extend the shared FlixLexerBase.
  *
  * Run via `npm run generate`.
  */
 import { execFileSync } from "node:child_process";
-import { copyFileSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const pkg = dirname(fileURLToPath(import.meta.url)).replace(/scripts$/, "");
-const root = pkg;
-// The grammar comes from the pinned @wstein/flix-antlr-grammar dependency, never from a copy.
-const grammarPkg = join(root, "node_modules", "@wstein", "flix-antlr-grammar");
-const src = join(grammarPkg, "grammars");
-const staged = join(pkg, "build", "grammar");
-const out = join(pkg, "src", "generated");
+const outRoot = join(pkg, "src", "generated");
 
 /** Helpers defined on FlixLexerBase; unqualified in Java, `this.`-qualified in TypeScript. */
 const HELPERS = [
     "isNameCharFollow", "classifyColonColon", "classifyArrow", "classifyDot", "classifyOperator",
     "enterBrace", "exitBrace", "openInterpolation", "stripEscape", "popMode",
+];
+
+/** Grammar sources keyed by FlixGrammarId. */
+const PINS = [
+    {
+        id: "flix-0.80.0",
+        root: join(pkg, "node_modules", "@wstein", "flix-antlr-grammar"),
+        copyLexerBase: true,
+    },
+    {
+        id: "flix-0.79.0",
+        root: join(pkg, "third_party", "flix-antlr-grammar-0.79.0"),
+        copyLexerBase: false,
+    },
 ];
 
 function toTypeScript(grammar) {
@@ -45,32 +56,47 @@ function toTypeScript(grammar) {
     return s;
 }
 
-mkdirSync(staged, { recursive: true });
-copyFileSync(join(grammarPkg, "antlr-ng", "src", "FlixLexerBase.ts"), join(pkg, "src", "FlixLexerBase.ts"));
-for (const file of readdirSync(src).filter((f) => f.endsWith(".g4"))) {
-    writeFileSync(join(staged, file), toTypeScript(readFileSync(join(src, file), "utf8")));
-}
+function generateOne({ id, root, copyLexerBase }) {
+    const src = join(root, "grammars");
+    const staged = join(pkg, "build", "grammar", id);
+    const out = join(outRoot, id);
 
-execFileSync(
-    "npx",
-    ["antlr-ng", "-o", out, "-D", "language=TypeScript", "--generate-visitor",
-        "--generate-listener", "false", join(staged, "FlixLexer.g4"), join(staged, "FlixParser.g4")],
-    { cwd: pkg, stdio: "inherit" },
-);
+    rmSync(staged, { recursive: true, force: true });
+    rmSync(out, { recursive: true, force: true });
+    mkdirSync(staged, { recursive: true });
+    mkdirSync(out, { recursive: true });
 
-// antlr-ng honors `options { superClass }` in the class declaration but never emits
-// an import for it, so the base class is unresolved. Supply the import (and re-parent
-// defensively, in case a future version drops the superClass handling).
-const lexerFile = join(out, "FlixLexer.ts");
-let lexer = readFileSync(lexerFile, "utf8");
-if (!lexer.includes('from "../FlixLexerBase.js"')) {
-    const lines = lexer.split("\n");
-    const lastImport = lines.reduce((acc, l, i) => (l.startsWith("import ") ? i : acc), -1);
-    lines.splice(lastImport + 1, 0, `import { FlixLexerBase } from "../FlixLexerBase.js";`);
-    lexer = lines.join("\n").replace(
-        /export class FlixLexer extends \w+ \{/,
-        "export class FlixLexer extends FlixLexerBase {",
+    if (copyLexerBase) {
+        copyFileSync(join(root, "antlr-ng", "src", "FlixLexerBase.ts"), join(pkg, "src", "FlixLexerBase.ts"));
+    }
+
+    for (const file of readdirSync(src).filter((f) => f.endsWith(".g4"))) {
+        writeFileSync(join(staged, file), toTypeScript(readFileSync(join(src, file), "utf8")));
+    }
+
+    execFileSync(
+        "npx",
+        ["antlr-ng", "-o", out, "-D", "language=TypeScript", "--generate-visitor",
+            "--generate-listener", "false", join(staged, "FlixLexer.g4"), join(staged, "FlixParser.g4")],
+        { cwd: pkg, stdio: "inherit" },
     );
-    writeFileSync(lexerFile, lexer);
+
+    // Nested under src/generated/<id>/, so FlixLexerBase lives two levels up.
+    const lexerBaseImport = 'from "../../FlixLexerBase.js"';
+    const lexerFile = join(out, "FlixLexer.ts");
+    let lexer = readFileSync(lexerFile, "utf8");
+    if (!lexer.includes(lexerBaseImport)) {
+        const lines = lexer.split("\n");
+        const lastImport = lines.reduce((acc, l, i) => (l.startsWith("import ") ? i : acc), -1);
+        lines.splice(lastImport + 1, 0, `import { FlixLexerBase } ${lexerBaseImport};`);
+        lexer = lines.join("\n").replace(
+            /export class FlixLexer extends \w+ \{/,
+            "export class FlixLexer extends FlixLexerBase {",
+        );
+        writeFileSync(lexerFile, lexer);
+    }
+    console.log(`generated antlr-ng target into src/generated/${id}`);
 }
-console.log("generated antlr-ng target into src/generated");
+
+mkdirSync(outRoot, { recursive: true });
+for (const pin of PINS) generateOne(pin);
