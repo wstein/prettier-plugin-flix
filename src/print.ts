@@ -92,6 +92,8 @@ const BINARY = new Set([
 ]);
 /** Own-separator nodes: they emit their trailing space or newline themselves. */
 const SELF_SPACED = new Set(["DeclPrefix", "AnnotationList", "ModifierList"]);
+/** Declaration blocks whose blank line after `{` stays, as in the built-in Flix formatter. */
+const BLANK_AFTER_BRACE = new Set(["ModDeclaration", "TraitDeclaration", "InstanceDeclaration", "EnumDeclarationTail"]);
 const DECLARATION_BLOCKS = new Set(["ModDeclaration", "TraitDeclaration", "InstanceDeclaration", "EffDeclaration"]);
 
 export class Printer {
@@ -740,8 +742,11 @@ export class Printer {
                 }
             });
             const vertical = sourceMultiline || comments.length > 0;
+            const blankAfterOpen = sourceMultiline && BLANK_AFTER_BRACE.has(parentKind) &&
+                this.blankBefore(firstTerm(entries[0][0]));
             return [group([
-                openDoc, indent([vertical ? hardline : firstSline, docs, tail]), vertical ? hardline : lastSline, closeDoc,
+                openDoc, indent([vertical ? hardline : firstSline, blankAfterOpen ? hardline : "", docs, tail]),
+                vertical ? hardline : lastSline, closeDoc,
             ], { id: layoutId, shouldBreak: vertical }), closeTrail];
         }
 
