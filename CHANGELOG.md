@@ -6,7 +6,11 @@ User-facing changes to Prettier Plugin for Flix. Plugin releases have their own 
 
 ### Formatting changes
 
-- Keep a blank line after the opening brace of a `mod`, `trait`, `instance` or `enum`, as the built-in Flix formatter does; several blank lines become one and none is added. Existing files that had such a blank line and were formatted before now keep it.
+- Keep a blank line after the opening brace of a `mod`, `trait`, `instance` or
+  `enum` when the source has one, and insert exactly one when the body spans
+  50 content lines or more and has none. Several blank lines become one; an
+  existing blank is never removed. Shorter blocks without a blank stay tight.
+  Existing files may gain a blank after `{` on large declaration blocks.
 - Indent a wrapped match-arm guard one level deeper than the arm body.
 - Indent a wrapped `with` constraint list one level deeper than the body,
   members, or continued arrow parameters. Existing Flix files with wrapped

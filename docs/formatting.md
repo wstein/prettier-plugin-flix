@@ -271,14 +271,11 @@ including next to braced bodies. Annotations and leading comments stay with
 their declaration. [Declaration spacing fixture](../test/fixtures/declarations/block-spacing.md)
 
 A blank line directly after the `{` of a `mod`, `trait`, `instance` or `enum`
-stays, and several become one. The formatter never adds one, and it keeps the
-blank line before a comment or Flixdoc that follows it. Flix does the same
-(`PrettyPrinter`, v0.80.0) and does not depend on the length of the block. The
-Flix standard library has 249 such blocks (179 `mod`, 21 `trait`, 49
-`instance`, no `enum`); `flix format` leaves all of them, and in the standard
-library no block length separates blocks with a blank line from those without
-(`mod`: 9 of 10 blocks of 6 to 15 lines, 70 % of blocks over 100 lines). A blank
-line before the closing `}` is still removed.
+stays, and several become one; the formatter never deletes that blank. When the
+body spans 50 content lines or more between the braces and the source has no
+blank after `{`, the formatter inserts exactly one. Shorter blocks without a
+blank stay tight. The blank line before a comment or Flixdoc that follows the
+opening blank is kept. A blank line before the closing `}` is still removed.
 [Blank line after the brace fixture](../test/fixtures/declarations/mod-blank-line-after-brace.md)
 
 ```flix
@@ -608,8 +605,9 @@ match with `flix format`. The idempotence guarantee for `printWidth` of 40 or
 more (see [Supported print widths](#supported-print-widths)) is unchanged.
 
 The row about the blank line after `{` counts the plugin before the rule
-above: the plugin now keeps that blank line in `mod`, `trait`, `instance` and
-`enum` blocks and removes it elsewhere.
+above: the plugin now keeps a source blank after `{` in `mod`, `trait`,
+`instance` and `enum` blocks, inserts one when the body spans at least 50
+content lines, and removes that blank elsewhere.
 
 ## Sources and limits
 
