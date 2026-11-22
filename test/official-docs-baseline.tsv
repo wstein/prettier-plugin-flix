@@ -65,7 +65,7 @@ book.control-structures.applicative-for-yield.working-with-validations-02	unchan
 book.control-structures.applicative-for-yield.working-with-validations-03	needs-context	-	54d8e45ad2cda4d170eb14d001d27789737a4d1b0b550d925b57d4aa69e27ccd
 book.control-structures.applicative-for-yield.working-with-validations-04	unchanged	-	13d8314925d00b017c6ffe135220072afe2a625031049abf7d8bceef8d9533fe
 book.control-structures.applicative-for-yield.working-with-validations-05	unchanged	-	21884fb6449d38cba4fcb7561b01fcccb01bb85cebad0fa0126250f1f65be89f
-book.control-structures.foreach.a-trait-for-data-structures-that-support	layout-change	wrapping	db6aeb12b9cb057109794fb159aa2947ea5407357780e0e0ad5209387ed3a2a6
+book.control-structures.foreach.a-trait-for-data-structures-that-support	layout-change	wrapping	8359728ec84c8763f46582215314a71ce7ccea1a73b85494a9264a8f742927b2
 book.control-structures.foreach.adding-optional-braces-for-visual-clarit	unchanged	-	8186a5e36aa157473c37f3c7ae3e25c7e0e18e729b939175740230c738d809f7
 book.control-structures.foreach.filtering-elements	unchanged	-	a42e0267b56a233bc8705d904b98832ce7134e9d8dd454163524a4e53d83af4c
 book.control-structures.foreach.foreach	layout-change	wrapping	7d24b4c3f5e97c937865c5f57ef1c74a0965a3be20a3ca57f3569041a71774b6
@@ -549,8 +549,8 @@ book.traits.automatic-derivation.derivation-of-eq-and-order	unchanged	-	4e561071
 book.traits.automatic-derivation.derivation-of-eq-and-order-02	layout-change	spacing	b410eb90c17719a72f20a86777067fca4a496a25a32ba325c306a33aa9b56646
 book.traits.automatic-derivation.derivation-of-to-string	unchanged	-	d92e97582d07316d23a7b76dd39d5a0ab8aac0b976073210c794b18eea06056b
 book.traits.automatic-derivation.derivation-of-to-string-02	unchanged	-	f9ba6653876c3c90ad24bd00e1fa889895950b21f07373e1f796c407a715650b
-book.traits.essential-traits.the-eq-trait	layout-change	blank-lines	e4665c77ada15c42f0748e9c4f00b178a589768ebeb36e0d4ae2e2126ae1e0bc
-book.traits.essential-traits.the-order-trait	layout-change	blank-lines	000a89b7e590a519e747013ad511001e7f4a1634219517b02eaac9ba52c05cda
+book.traits.essential-traits.the-eq-trait	layout-change	blank-lines	f6a6c01131fb3f9976488a1245302ebaf86db01ff17813aaf4481c90ddb81f6f
+book.traits.essential-traits.the-order-trait	layout-change	blank-lines	373c7ffbca98bb62ab4a10914a1bf6d97b11656374f3ab13417ec4998595b2a5
 book.traits.essential-traits.the-order-trait-02	unchanged	-	18cd6d1585101cadbf14d5f5c19a37e128f0c40789316b838ed864e155e6d6ef
 book.traits.essential-traits.the-to-string-trait	unchanged	-	ca7fbc6ecc4cc49d88c9cfc8d22a929eaacbbf1e98e42c0f6aa0c20057660854
 book.traits.essential-traits.the-to-string-trait-02	unchanged	-	ff0abdaedf2017a202329b0e8909a3f6a5bd6c8d9734555d137223fcacad640d
@@ -581,7 +581,7 @@ website.front-page.associated-types.associated-types-example	needs-context	-	1b5
 website.front-page.concurrency.concurrency-example	layout-change	wrapping	90c76323b08a18763bb842709f775312149ce5b882a0aec9f7efb105db09abf6
 website.front-page.datalog.datalog-example	layout-change	wrapping	5522addf9ff73ee8ccab9ce457a9bea0bc92cc2a8786a90b4737e558fb430953
 website.front-page.effects.effects-example	layout-change	wrapping	bb3338b7c9a28801de1a591a394c6ba4cf8fea84557e3349a91a9038ecf38fe2
-website.front-page.hkt.hkt-example	layout-change	blank-lines	50fd2c0e58488ee1e01db55200bfa7d805f1b4bac09e054021652e4022f8d59e
+website.front-page.hkt.hkt-example	layout-change	blank-lines	135e579e50f9d658a89e39ff68d73b7b2f5d45ce462176c179ace32233ecf3e6
 website.front-page.http.demonstrates-composing-multiple-http-mid	layout-change	wrapping	89996c543580b6c6d7d4138889c0842a643dc01614883a14d21989f58370eb90
 website.front-page.java-interop.java-interop-example	layout-change	wrapping	08ebfdb05a1e9a7c506ae889fd5eb437f22ed041459d935e896aa085679dfb50
 website.front-page.library-effects.library-effects-example	layout-change	line-endings	1ba9e1b1e14a6c5fadda7f937822432509b6a9ab5e51a503465047becdeef63a

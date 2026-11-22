@@ -82,5 +82,21 @@
   "website.front-page.record.record-example": {
     "digest": "008f4db85c7f7f3fd8a30bd7d9932a7ce8f151427af72f65cce21ec1173622bb",
     "reason": "Normalize spacing around record braces already without inner padding, and join the short `area` body onto one line when it fits."
+  },
+  "book.traits.essential-traits.the-eq-trait": {
+    "digest": "ba685d186d69d52dc94293e6b970ac6c49697b6cebc39e4d63f2d108e4429164",
+    "reason": "Keep the blank line after the opening brace of the trait, as in the source and in the built-in Flix formatter; the plugin removed it before. The blank line before the closing comment is still removed as before."
+  },
+  "book.traits.essential-traits.the-order-trait": {
+    "digest": "e2622179022f46285f31e25e96177baa4b8a461c4fd1e1794929394ec0576dcf",
+    "reason": "Keep the blank line after the opening brace of the trait, as in the source and in the built-in Flix formatter; the plugin removed it before. The blank line before the closing comment is still removed as before."
+  },
+  "book.control-structures.foreach.a-trait-for-data-structures-that-support": {
+    "digest": "79d2ba8f65fbcba408acd6daa65f05d767b648f8251d97e1bc03d927b64fabbe",
+    "reason": "Keep the blank line after the opening brace of the trait, as in the source and in the built-in Flix formatter; the plugin removed it before. The long signature wrapping and the removed blank line before the closing brace are unchanged."
+  },
+  "website.front-page.hkt.hkt-example": {
+    "digest": "ac088d065be240c37176dff96d40b8d618e4f97f9a5401d7d8a32913c3364a9f",
+    "reason": "Keep the blank line after the opening brace of the trait, as in the source and in the built-in Flix formatter; the plugin removed it before. The kind annotation spacing and the removed blank line before the closing brace are unchanged."
   }
 }
