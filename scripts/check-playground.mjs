@@ -4,9 +4,16 @@ import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadFixture, optionsFor } from "../test/fixture.mjs";
+import { Text } from "@codemirror/state";
 import { readHandoff, writeHandoff } from "../docs/assets/js/playground-link.js";
 import { fetchSource, sourceReference } from "../docs/assets/js/playground-source.js";
 import { playgroundIndentation } from "../docs/assets/js/playground-options.js";
+import {
+    declarationAnchors,
+    mapLineByAnchors,
+    mapSyncedLine,
+    matchDeclarationAnchors,
+} from "../docs/assets/js/playground-scroll.js";
 import { fingerprint, fmt, programProblems } from "../test/lib.mjs";
 
 const site = new URL("../docs/public/", import.meta.url);
@@ -312,6 +319,38 @@ test("the Playground page exposes Flix version choices", async () => {
     const data = JSON.parse(await readFile(new URL("../docs/data/playground.json", import.meta.url), "utf8"));
     assert.equal(data.defaultFlixVersion, "0.80.0");
     assert.deepEqual(data.supportedFlixVersions, ["0.79.0", "0.80.0"]);
+});
+
+test("sync anchors pair declarations by kind and name across uneven wrapping", () => {
+    // Every declaration line is rewritten so the diff is one chunk; early defs expand
+    // much more than later ones. Proportional mapping lands mid-file; anchors pin def c.
+    const before = Text.of([
+        "def a(): Int32 = 1",
+        "def b(): Int32 = 2",
+        "def c(): Int32 = 3",
+    ]);
+    const after = Text.of([
+        "def a(): Int32 =",
+        ...Array.from({ length: 15 }, (_, i) => `    /* pad ${i} */`),
+        "    1",
+        "def b(): Int32 =",
+        "    2",
+        "def c(): Int32 =",
+        "    3",
+    ]);
+    const pairs = matchDeclarationAnchors(declarationAnchors(before), declarationAnchors(after));
+    assert.deepEqual(pairs, [[0, 0], [1, 17], [2, 19]]);
+    assert.equal(mapLineByAnchors(2, pairs, 0, 1), 19);
+    assert.equal(mapSyncedLine(2, before, after), 19);
+    assert.equal(mapSyncedLine(19, after, before, 0, 1), 2);
+});
+
+test("sync anchors fall back to diff mapping when no declarations match", () => {
+    const before = Text.of(["1 + 2", "3 + 4"]);
+    const after = Text.of(["1 + 2", "3", "+", "4"]);
+    assert.equal(declarationAnchors(before).length, 0);
+    assert.equal(mapLineByAnchors(1, [], 0, 1), null);
+    assert.equal(typeof mapSyncedLine(1, before, after), "number");
 });
 
 test("the latest Flix pin also publishes under /flix/<version>/ while root URLs stay", async () => {
