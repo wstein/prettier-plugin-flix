@@ -367,7 +367,11 @@ test("the live preview keeps trailing comments, reports cursor selection, and re
     const preview = page.getByRole("textbox", { name: "Preview" });
     const cursor = page.locator("[data-cursor-position]");
     const status = page.locator("[data-full-playground]").getByRole("status", { includeHidden: true });
-    await expect(page.getByRole("heading", { level: 1, name: "Playground" })).toBeVisible();
+    const title = page.getByRole("heading", { level: 1, name: "Playground", exact: true });
+    await expect(title).toHaveCount(1);
+    await expect(page.getByRole("navigation", { name: "Site" }).getByRole("heading", { level: 1 }))
+        .toHaveText("Playground");
+    await expect(title.getByRole("link", { name: "Playground" })).toHaveAttribute("aria-current", "page");
     await expect(page.getByLabel("Line width")).toHaveValue("100");
     await expect(page.getByLabel("Example")).toBeEnabled();
     await page.getByLabel("Example").selectOption("strings/itinerary.md");

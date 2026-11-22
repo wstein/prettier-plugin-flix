@@ -15,7 +15,11 @@
     <nav class="site-toolbar" aria-label="Site">
       <a href="{{ site.Home.RelPermalink }}">{{ site.Title }}</a>
       {{ with site.GetPage "playground" }}
-      <a class="site-playground" href="{{ .RelPermalink }}"{{ if $isPlayground }} aria-current="page"{{ end }}>Playground</a>
+      {{ if $isPlayground }}
+      <h1 class="playground-title"><a class="site-playground" href="{{ .RelPermalink }}" aria-current="page">{{ .Title }}</a></h1>
+      {{ else }}
+      <a class="site-playground" href="{{ .RelPermalink }}">{{ .Title }}</a>
+      {{ end }}
       {{ end }}
       {{ partialCached "site-search.html" . "catalog-index" }}
       <label class="site-theme">Theme
