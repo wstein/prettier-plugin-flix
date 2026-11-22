@@ -129,6 +129,22 @@ test("report lists the classes by count, highest first", async () => {
     assert.ok(counts[0] > counts.at(-1));
 });
 
+test("report orders the classes by count, not by name", async () => {
+    // The outputs differ from every source, so pass 2 leaves them alone. Three classes whose names sort A < B < C and whose counts are B 3, A 2, C 1: neither name order matches.
+    const A = "def f(): Int32 = 1 /* a */ + 2\n"; // inline -> trail:line-end
+    const B = "def f(): Int32 =\n/* a */ 1\n"; // line-start -> inline
+    const C = "def f(): Int32 = 1 /* a */\n    + 2\n"; // line-end -> inline
+    const outputs = new Map([[A, "def f(): Int32 = 1 /* a */\n  + 2\n"], [B, "def f(): Int32 = /* a */ 1\n"], [C, "def f(): Int32 = 1 /* a */  + 2\n"]]);
+    const inputs = [[A, 2], [B, 3], [C, 1]].flatMap(([source, n]) => Array.from({ length: n }, (_, i) => ({ name: `${outputs.get(source).length}-${i}.flix`, source })));
+    const { lines } = await run(["--widths", "60"], (text) => outputs.get(text) ?? text, inputs);
+    const classes = lines.slice(1, -1).map((l) => /^ *(\d+)  \(non-idempotent runs \d+\)  (pass\d .+?)   e\.g\./.exec(l).slice(1));
+    assert.deepEqual(classes, [
+        ["3", "pass1 lead:line-start -> lead:inline"],
+        ["2", "pass1 lead:inline -> trail:line-end"],
+        ["1", "pass1 trail:line-end -> lead:inline"],
+    ]);
+});
+
 test("report passes a formatter error on instead of counting it", async () => {
     await assert.rejects(runKindsReport(parseKindsArgs(["--widths", "60"]), { format: () => { throw new Error("boom"); }, inputs: REPORT_INPUTS, log: () => {} }), /boom/);
 });
