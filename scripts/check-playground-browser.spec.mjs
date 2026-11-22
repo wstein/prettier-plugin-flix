@@ -284,8 +284,8 @@ test("a shared repro keeps its code and original reference without fetching the 
     await expect(input).toHaveText(repro);
     const original = page.locator(".playground-statusbar").getByRole("link", { name: "Original · Boxable.flix:168–172" });
     await expect(original).toHaveAttribute("href", blob + "#L168-L172");
-    await page.locator(".playground-toolbar").getByRole("button", { name: "Copy Playground link" }).click();
-    await expect(page.getByText("Playground link copied.")).toBeVisible();
+    await page.locator(".playground-toolbar").getByRole("button", { name: "Copy permalink" }).click();
+    await expect(page.getByText("Permalink copied.")).toBeVisible();
     const shared = await page.evaluate(() => navigator.clipboard.readText());
     await page.goto(shared);
     await page.reload();

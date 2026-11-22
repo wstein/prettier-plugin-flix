@@ -254,7 +254,7 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
             sourceDialog.close();
         });
 
-        async function copyShareLink(draft, label) {
+        async function copyShareLink(draft, confirmation) {
             const link = new URL(location.href);
             link.searchParams.delete("fixture");
             link.searchParams.delete("variant");
@@ -262,7 +262,7 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
             reproLink.hidden = true;
             try {
                 await navigator.clipboard.writeText(url);
-                sourceStatus.textContent = `${label} link copied.`;
+                sourceStatus.textContent = confirmation;
             } catch {
                 reproLink.value = url;
                 reproLink.hidden = false;
@@ -272,10 +272,10 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
         }
 
         playground.querySelector("[data-copy-playground]").addEventListener("click", () =>
-            copyShareLink({ ...snapshot(), ...reference }, "Playground"));
+            copyShareLink({ ...snapshot(), ...reference }, "Permalink copied."));
         copySource.addEventListener("click", () => {
             const { printWidth, flixVersion } = snapshot();
-            return copyShareLink({ ...reference, printWidth, flixVersion }, "Source");
+            return copyShareLink({ ...reference, printWidth, flixVersion }, "Source link copied.");
         });
         sourceForm.addEventListener("submit", async (event) => {
             event.preventDefault();
