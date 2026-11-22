@@ -34,7 +34,7 @@ import {
     selectShard,
     sitesExitCode,
 } from "./review-sweep-lib.mjs";
-import { buildResultDocument, corpusFingerprint, makeCase, safeWriteJson, sweepCommandOptions } from "./sweep-results.mjs";
+import { buildSweepExportDocument, safeWriteJson, sweepCommandOptions } from "./sweep-results.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const testDir = join(root, "test");
@@ -102,29 +102,15 @@ function gatherInputs(o) {
 }
 
 function writeExport(path, { command, widths, inputs, o, cases, baseSha }) {
-    const names = inputs.map((i) => i.name);
-    const doc = buildResultDocument({
+    const doc = buildSweepExportDocument({
         command,
+        widths,
+        inputNames: inputs.map((i) => i.name),
+        options: o,
+        cases,
         formatter: { revision: gitRevision(), dirty: gitDirty() },
-        corpus: {
-            // Plugin checkout; fingerprint and inputs name the input set (not only case files).
-            revision: gitRevision(),
-            inputCount: names.length,
-            paths: o.paths,
-            inputs: names,
-            fingerprint: corpusFingerprint(names),
-        },
-        config: {
-            widths,
-            every: command === "sites" ? o.every : null,
-            shard: o.shard ?? null,
-            base: baseSha ?? o.base ?? null,
-            only: o.only ?? null,
-            repo: o.repo,
-            seed: o.seed ?? null,
-            known: o.known ?? null,
-        },
-        cases: cases.map((c) => makeCase(c)),
+        // Regression passes the resolved SHA; idempotence/sites leave base unset.
+        base: baseSha ?? null,
     });
     const written = safeWriteJson(path, doc);
     return written.ok ? `${written.message} (${doc.cases.length} cases)` : written.message;

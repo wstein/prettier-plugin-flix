@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import {
     RESULT_SCHEMA_VERSION,
     buildResultDocument,
+    buildSweepExportDocument,
     caseId,
     compareSweepResults,
     configKey,
@@ -301,6 +302,58 @@ test("buildResultDocument records seed and inputs for export", () => {
     const dropped = structuredClone(doc);
     dropped.config.seed = null;
     assert.notEqual(configKey(doc), configKey(dropped));
+});
+
+test("buildSweepExportDocument: input names, seed, and base only when set", () => {
+    const rev = "a".repeat(40);
+    const doc = buildSweepExportDocument({
+        command: "sites",
+        widths: [40, 100],
+        // Silent input yields no cases; count and fingerprint still include it.
+        inputNames: ["silent.flix", "a.flix"],
+        options: {
+            paths: ["extra"],
+            every: 20,
+            shard: "1/3",
+            only: "decl",
+            repo: true,
+            seed: 9,
+            known: "k.json",
+            base: "origin/main",
+        },
+        cases: [{ file: "a.flix", width: 40, form: "line", token: 0, status: "pass" }],
+        formatter: { revision: rev, dirty: false },
+    });
+    assert.equal(doc.corpus.inputCount, 2);
+    assert.notEqual(doc.corpus.inputCount, doc.cases.length);
+    assert.deepEqual(doc.corpus.inputs, ["a.flix", "silent.flix"]);
+    assert.equal(doc.corpus.fingerprint, corpusFingerprint(["a.flix", "silent.flix"]));
+    assert.notEqual(doc.corpus.fingerprint, corpusFingerprint([]));
+    assert.equal(doc.config.seed, 9);
+    assert.equal(doc.config.every, 20);
+    assert.equal(doc.config.shard, "1/3");
+    assert.equal(doc.config.known, "k.json");
+    // options.base must not leak into sites/idempotence (all --base vs standalone).
+    assert.equal(doc.config.base, null);
+    const noSeed = structuredClone(doc);
+    noSeed.config.seed = null;
+    assert.notEqual(configKey(doc), configKey(noSeed));
+    const noInputs = structuredClone(doc);
+    delete noInputs.corpus.inputs;
+    assert.notEqual(JSON.stringify(doc.corpus), JSON.stringify(noInputs.corpus));
+
+    const reg = buildSweepExportDocument({
+        command: "regression",
+        widths: [40],
+        inputNames: ["a.flix"],
+        options: { paths: [], repo: true, base: "origin/main", seed: null },
+        cases: [{ file: "a.flix", width: 40, status: "pass" }],
+        formatter: { revision: rev },
+        base: "b".repeat(40),
+    });
+    assert.equal(reg.config.base, "b".repeat(40));
+    assert.equal(reg.config.every, null);
+    assert.equal(reg.corpus.inputCount, 1);
 });
 
 test("sortCases: deterministic order", () => {
