@@ -140,6 +140,8 @@ blocking finding are in
   `chore` according to the change.
 - Describe the user-visible result in the subject. Add an optional
   `Changelog: ...` trailer when the subject needs a clearer release-note entry.
+  Put the trailer in the final paragraph alongside any `Co-authored-by:`
+  trailers. The draft warns about misplaced trailers on stderr.
   Mention when an intentional layout change may reformat existing files. For
   an incompatible change to a supported interface, use `!` in the subject or
   a `BREAKING CHANGE:` footer and explain the migration.

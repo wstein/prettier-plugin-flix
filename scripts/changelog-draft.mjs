@@ -48,14 +48,14 @@ function renderDraft(targetRef, baseRef) {
 
     const format = [
         "%H", "%s",
-        "%(trailers:key=Changelog,valueonly,unfold,separator=%x1f)",
+        "%(trailers:key=Changelog,unfold,separator=%x1f)",
         "%(trailers:key=BREAKING-CHANGE,valueonly,unfold,separator=%x1f)",
         "%B",
     ].join("%x00");
     const history = git("log", "--no-merges", "-z", `--format=${format}`, range, "--");
     const fields = history.split("\0");
     for (let i = 0; i + 4 < fields.length; i += 5) {
-        const [sha, subject, note, breakingNote, message] = fields.slice(i, i + 5);
+        const [sha, subject, changelogTrailers, breakingNote, message] = fields.slice(i, i + 5);
         // Conventional Commits allows a space in BREAKING CHANGE. Git's
         // trailer parser only accepts the hyphenated spelling.
         const trailers = /^BREAKING CHANGE:/m.test(message)
@@ -64,6 +64,14 @@ function renderDraft(targetRef, baseRef) {
                 encoding: "utf8",
             })
             : "";
+        const normalizedChangelogCount = [...trailers.matchAll(/^Changelog:/gim)].length;
+        const parsedChangelog = changelogTrailers ? changelogTrailers.split("\x1f") : [];
+        const body = message.slice(message.indexOf("\n") + 1);
+        const bodyChangelogCount = [...body.matchAll(/^Changelog:/gim)].length;
+        if (bodyChangelogCount > Math.max(normalizedChangelogCount, parsedChangelog.length)) {
+            console.warn("Warning: commit " + sha.slice(0, 7) + " has Changelog: outside the final trailer block.");
+        }
+
         // Prefer git trailers; also accept a Changelog line anywhere in the body so a
         // misplaced trailer still reaches the draft instead of vanishing silently.
         // Join wrapped lines up to a blank line, another key or an issue reference.
@@ -72,6 +80,7 @@ function renderDraft(targetRef, baseRef) {
             .map((match) => match[1].replace(/\s*\n\s*/g, " ").trim())
             .filter(Boolean)
             .join(" / ");
+        const note = parsedChangelog.map((trailer) => trailer.replace(/^Changelog:[ \t]*/i, "")).join("\x1f");
         const changelogNote = trailers.match(/^Changelog: (.+)$/im)?.[1] || note || changelogFromBody;
         const migrationNote = trailers.match(/^BREAKING-CHANGE: (.+)$/im)?.[1] || breakingNote;
         const [, type, breaking, summary] = conventionalSubject.exec(subject) ?? [];
