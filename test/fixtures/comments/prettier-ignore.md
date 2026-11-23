@@ -1,7 +1,6 @@
 ---
 title: prettier-ignore keeps the next declaration as written
 description: "An own-line directive preserves the next declaration, including its interior and suffix comments."
-flix: "0.80"
 group: "Line endings and comment placement"
 ---
 

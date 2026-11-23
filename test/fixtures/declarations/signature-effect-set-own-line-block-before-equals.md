@@ -2,7 +2,6 @@
 title: "Do not reserve a hugged-body trailer when `=` follows an own-line block comment"
 description: "An own-line block comment before `=` keeps the equals and body off the signature line, as an own-line line comment does."
 group: "Calls and function signatures"
-flix: "0.80"
 options: { printWidth: 30 }
 ---
 

@@ -1,7 +1,6 @@
 ---
 title: Align type comments on adjacent code lines
 description: The comments describe the list type before and after mapping. The second comment starts one column early and joins the first comment at 80 columns. At 72 columns both comments fit with ordinary spacing.
-flix: "0.80"
 group: "Line endings and comment placement"
 source: "https://github.com/flix/book/blob/64d81bd6984ede06442ef7b63235092b9fe3c29c/src/tuples.md#L35"
 options: { printWidth: 80 }

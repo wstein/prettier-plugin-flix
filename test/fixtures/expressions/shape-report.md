@@ -2,7 +2,6 @@
 title: "Room area and labels"
 description: "Format match arms, a record update, and a room description."
 group: "Playground examples"
-flix: "0.80"
 ---
 
 ## Input

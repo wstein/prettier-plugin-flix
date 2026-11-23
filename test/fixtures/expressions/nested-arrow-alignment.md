@@ -1,7 +1,6 @@
 ---
 title: Align nested rows only when they fit
 description: The indentation of the nested module counts toward the width. At wide settings both arrow groups align.
-flix: "0.80"
 ---
 
 ## Input

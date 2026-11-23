@@ -1,7 +1,6 @@
 ---
 title: Wrap Datalog queries at clause boundaries
 description: "The return schema hangs from the signature when both rows fit. The query wraps before select and, at narrower widths, before from."
-flix: "0.80"
 source: "https://github.com/flix/book/blob/64d81bd6984ede06442ef7b63235092b9fe3c29c/src/fixpoints.md#L89"
 ---
 

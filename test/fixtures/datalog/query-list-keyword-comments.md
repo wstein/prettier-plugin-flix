@@ -1,7 +1,6 @@
 ---
 title: "Preserve comments at Datalog query list keywords"
 description: "An own-line comment stays before from, and a trailing comment on from keeps the predicate list below the keyword."
-flix: "0.80"
 options: { printWidth: 60 }
 ---
 

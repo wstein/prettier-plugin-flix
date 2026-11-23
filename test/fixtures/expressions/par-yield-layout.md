@@ -1,7 +1,6 @@
 ---
 title: Parallel bindings wrap inside par
 description: "A compact par fits on one line. When it wraps, the bindings break first."
-flix: "0.80"
 options: { printWidth: 45 }
 ---
 

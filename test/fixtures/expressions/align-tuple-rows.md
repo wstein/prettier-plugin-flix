@@ -1,7 +1,6 @@
 ---
 title: "Align columns in multiline collections of literal tuples"
 description: "Text uses display width, integers align on the right, and a trailing comment counts toward the available width."
-flix: "0.80"
 options: { printWidth: 60 }
 ---
 

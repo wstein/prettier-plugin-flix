@@ -1,7 +1,6 @@
 ---
 title: Wrap at signature boundaries
 description: "Keep a short return type, record or effect set together when a clause can move to a continuation line."
-flix: "0.80"
 ---
 
 ## Input

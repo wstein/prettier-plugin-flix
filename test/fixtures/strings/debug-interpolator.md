@@ -1,7 +1,6 @@
 ---
 title: "Debug string interpolator"
 group: "String forms"
-flix: "0.80"
 source: "https://github.com/flix/flix/blob/v0.80.0/main/test/flix/Test.Exp.DebugInterpolator.flix#L3"
 ---
 

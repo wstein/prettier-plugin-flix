@@ -1,7 +1,6 @@
 ---
 title: "Wrap open row types before the pipe"
 description: "Keep a short last field or predicate intact when its record or Datalog row tail has to wrap."
-flix: "0.80"
 options: { printWidth: 60 }
 ---
 

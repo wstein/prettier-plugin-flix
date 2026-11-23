@@ -2,7 +2,6 @@
 title: "Keep one blank line after the opening brace of a declaration block"
 description: "Keep one source blank line after the opening brace of a mod, trait, instance, eff or struct. Remove the opening blank line in enums, including those that contain only comments."
 group: "Declarations"
-flix: "0.80"
 options: { printWidth: 80 }
 ---
 

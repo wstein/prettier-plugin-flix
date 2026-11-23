@@ -1,7 +1,6 @@
 ---
 title: "Applicative for with tuple patterns"
 group: "Additional language constructs"
-flix: "0.80"
 source: "https://github.com/flix/flix/blob/v0.80.0/main/test/flix/Test.Exp.ForA.flix#L160"
 ---
 

@@ -1,7 +1,6 @@
 ---
 title: "Align equals signs in multiline record literals"
 description: "Simple fields align their equals signs. A field without a comment separates the adjacent comment groups. A line comment before a separator starts a new alignment group. Short additive expressions can align. Large gaps between field names keep ordinary spacing."
-flix: "0.80"
 ---
 
 ## Input

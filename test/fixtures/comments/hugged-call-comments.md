@@ -2,7 +2,6 @@
 title: Line comments inside a call whose last argument is a block stay at their boundary
 description: "A call that usually keeps a trailing lambda close must still respect line comments between arguments."
 group: "Calls, blocks, and control flow"
-flix: "0.80"
 ---
 
 ## Input

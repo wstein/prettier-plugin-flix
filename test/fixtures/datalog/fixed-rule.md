@@ -1,7 +1,6 @@
 ---
 title: "Keep fix attached to its predicate"
 description: "The fix modifier belongs to the body atom and stays separate from the adjacent negated atom."
-flix: "0.80"
 ---
 
 ## Input

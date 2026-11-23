@@ -1,7 +1,6 @@
 ---
 title: Align comments on a function signature and body
 description: A trailing comment on the signature shares the column of the first commented lines in the function body when the whole group fits.
-flix: "0.80"
 group: "Line endings and comment placement"
 source: "https://github.com/flix/flix.dev/blob/655c94385f09855e88b333e98577194cedf91ce7/src/lib/indexExamples.js#L60"
 ---

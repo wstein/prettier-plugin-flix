@@ -1,7 +1,6 @@
 ---
 title: Append lists with a triple colon
 description: The example combines list construction with list concatenation and shows where a narrow layout can break.
-flix: "0.80"
 options: { printWidth: 80 }
 ---
 

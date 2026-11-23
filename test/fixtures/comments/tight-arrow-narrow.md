@@ -2,7 +2,6 @@
 title: A field-access arrow stays tight between comments at narrow widths
 description: "A narrow line width can wrap the signature without inserting space around the commented field-access arrow."
 group: "Whitespace-sensitive operators"
-flix: "0.80"
 ---
 
 ## Input

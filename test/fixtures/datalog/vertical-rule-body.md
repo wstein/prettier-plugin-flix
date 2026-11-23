@@ -1,7 +1,6 @@
 ---
 title: Preserve vertical Datalog rule bodies
 description: "Source-written predicate lines remain separate at wider widths, while compact rules still wrap as needed."
-flix: "0.80"
 ---
 
 ## Input

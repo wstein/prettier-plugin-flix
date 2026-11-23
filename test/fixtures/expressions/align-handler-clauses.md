@@ -1,7 +1,6 @@
 ---
 title: Align the equals signs of neighboring handler clauses
 description: "Single-line operation signatures share a column even when their lengths differ substantially."
-flix: "0.80"
 options: { printWidth: 100 }
 ---
 

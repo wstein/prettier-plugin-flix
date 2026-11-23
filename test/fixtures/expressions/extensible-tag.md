@@ -1,7 +1,6 @@
 ---
 title: "Construct an extensible variant"
 group: "Additional language constructs"
-flix: "0.80"
 source: "https://github.com/flix/flix/blob/v0.80.0/main/test/flix/Test.Exp.ExtMatch.flix#L586"
 ---
 

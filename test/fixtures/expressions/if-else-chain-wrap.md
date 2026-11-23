@@ -1,7 +1,6 @@
 ---
 title: A long else-if chain breaks every branch, not only the first
 description: "The desired output wraps each branch of a long condition. All branches use the same layout when the chain breaks."
-flix: "0.80"
 options:
   printWidth: 30
 ---

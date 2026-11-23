@@ -2,7 +2,6 @@
 title: "Keep an own-line comment inside an operand of a wrapped cons chain"
 description: "A tight cons chain that prints spaced keeps the comments inside its operands."
 group: "Operators"
-flix: "0.80"
 options: { printWidth: 100 }
 ---
 

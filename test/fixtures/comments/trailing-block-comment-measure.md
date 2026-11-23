@@ -2,7 +2,6 @@
 title: "Measure a trailing block comment the same way when it ends a line"
 description: "A block comment after = or before a closing paren must not change wrap choices between passes."
 group: "Line endings and comment placement"
-flix: "0.80"
 options: { printWidth: 40 }
 ---
 

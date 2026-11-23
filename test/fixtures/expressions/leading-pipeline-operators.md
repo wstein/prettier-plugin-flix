@@ -1,7 +1,6 @@
 ---
 title: Align operators in multiline pipelines
 description: Keep compact pipelines on one line and align leading operators when the pipeline needs to wrap.
-flix: "0.80"
 source: "https://github.com/flix/book/blob/64d81bd6984ede06442ef7b63235092b9fe3c29c/src/mutable-collections.md#L36"
 options: { printWidth: 80 }
 ---

@@ -1,7 +1,6 @@
 ---
 title: "Call a superclass constructor"
 group: "Additional language constructs"
-flix: "0.80"
 source: "https://github.com/flix/flix/blob/v0.80.0/main/test/ca/uwaterloo/flix/language/phase/TestResolver.scala#L3372"
 ---
 

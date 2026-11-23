@@ -1,7 +1,6 @@
 ---
 title: "Wrap a call before an oversized trailing lambda"
 description: "A trailing block-bodied lambda stays on the call line only when the call prefix fits."
-flix: "0.80"
 ---
 
 ## Input

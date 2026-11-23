@@ -1,7 +1,6 @@
 ---
 title: "Wrap open record types and patterns before the pipe"
 description: "Keep a short record tail with the final field and wrap long tails before the pipe."
-flix: "0.80"
 options: { printWidth: 60 }
 ---
 

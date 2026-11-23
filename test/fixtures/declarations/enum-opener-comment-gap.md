@@ -2,7 +2,6 @@
 title: "Keep a blank line after an enum opening-brace comment"
 description: "A blank line after an enum opening-brace comment separates it from the case or comment that follows."
 group: "Declarations"
-flix: "0.80"
 options: { printWidth: 80 }
 ---
 

@@ -2,7 +2,6 @@
 title: "Do not wrap a short match body only to align arrows"
 description: "When padding to the arrow column would push a compact arm body onto the next line, skip alignment. Width 37 stays unaligned; 38 must not wrap `1`; 60 may align."
 group: "Alignment"
-flix: "0.80"
 options: { printWidth: 38 }
 ---
 

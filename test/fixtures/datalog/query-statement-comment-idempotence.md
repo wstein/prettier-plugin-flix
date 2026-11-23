@@ -1,7 +1,6 @@
 ---
 title: "Keep a query stable after comments around a statement separator"
 description: "A comment lifted from the semicolon stays above the query without forcing its clauses to wrap."
-flix: "0.80"
 options: { printWidth: 60 }
 issue: "https://github.com/wstein/prettier-plugin-flix/issues/211"
 ---

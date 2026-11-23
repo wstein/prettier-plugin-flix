@@ -2,7 +2,6 @@
 title: Keep a handler call with its run block
 description: The Base Directory handler follows the closing brace at both widths. At 60 columns the handler argument wraps.
 source: "https://doc.flix.dev/filesystem.html#base-directory"
-flix: "0.80"
 options: { printWidth: 80 }
 ---
 

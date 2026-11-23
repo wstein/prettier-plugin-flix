@@ -1,7 +1,6 @@
 ---
 title: "Wrap Datalog query lists between items"
 description: "Wrap query sources and from predicates before breaking their individual arguments."
-flix: "0.80"
 options: { printWidth: 60 }
 ---
 

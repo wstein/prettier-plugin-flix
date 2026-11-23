@@ -2,7 +2,6 @@
 title: "Do not align arrows when every match arm body wraps"
 description: "With both arms wrapping, alignment padding must still fail the print-width check that includes arm indent (#154). Width 34 prints `case 100 =>` without padding."
 group: "Alignment"
-flix: "0.80"
 options: { printWidth: 34 }
 ---
 

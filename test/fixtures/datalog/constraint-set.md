@@ -1,7 +1,6 @@
 ---
 title: Constraint sets
 description: "The space or newline after a terminating dot keeps consecutive Datalog constraints distinct."
-flix: "0.80"
 ---
 
 ## Input

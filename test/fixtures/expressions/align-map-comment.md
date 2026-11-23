@@ -1,7 +1,6 @@
 ---
 title: "Map arrows with and without an inline comment"
 description: "The arrows align in both maps. The comments share a column at the default width and stay beside their entries at a narrower width. A line comment before a separator starts a new alignment group."
-flix: "0.80"
 ---
 
 ## Input

@@ -2,7 +2,6 @@
 title: Block comment in a hugged trailing-lambda match body
 description: "An end-of-line block comment after => in a match arm keeps its line break when the trailing lambda hugs the call."
 group: "Pipelines and calls"
-flix: "0.80"
 options: { printWidth: 80 }
 ---
 

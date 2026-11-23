@@ -1,7 +1,6 @@
 ---
 title: Align numeric, regex, null and interpolated tuple cells
 description: "Decimal points align vertically. Regexes, null and strings containing interpolations can also be table cells."
-flix: "0.80"
 options: { printWidth: 60 }
 ---
 

@@ -1,7 +1,6 @@
 ---
 title: "Align arrows in multiline match arms"
 description: "Keep simple match arms in a common arrow column when the rows fit. A narrower line width uses regular spacing."
-flix: "0.80"
 ---
 
 ## Input

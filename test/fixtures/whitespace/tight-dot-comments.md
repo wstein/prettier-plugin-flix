@@ -1,7 +1,6 @@
 ---
 title: A method or qualifier dot stays tight next to a comment
 description: "Keep the dot adjacent to its comment so Flix reads it as part of the method call or qualified name."
-flix: "0.80"
 ---
 
 ## Input

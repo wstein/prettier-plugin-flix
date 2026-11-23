@@ -1,7 +1,6 @@
 ---
 title: "Effect declaration and handler"
 description: "An effect operation appears in a declaration, an annotated test, and a handler with a continuation."
-flix: "0.80"
 ---
 
 ## Input

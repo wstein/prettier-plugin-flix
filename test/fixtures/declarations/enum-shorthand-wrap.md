@@ -1,7 +1,6 @@
 ---
 title: Indent continuation variants in enum shorthand
 description: "A short group fits on one line. Wrapped variants belong to the same case entry."
-flix: "0.80"
 ---
 
 ## Input

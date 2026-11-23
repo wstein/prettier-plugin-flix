@@ -1,7 +1,6 @@
 ---
 title: "Format guards, negation, and a query"
 description: "The rule has a positive atom, a negated atom, and a guard. The query projects the resulting values."
-flix: "0.80"
 ---
 
 ## Input

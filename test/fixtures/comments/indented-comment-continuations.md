@@ -2,7 +2,6 @@
 title: Indented comment continuations after a comma
 description: "Source indentation distinguishes a continuation from a comment on the next item."
 group: "Line endings and comment placement"
-flix: "0.80"
 ---
 
 ## Input

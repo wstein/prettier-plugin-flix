@@ -1,7 +1,6 @@
 ---
 title: If, else-if and else
 description: "The condition and all three branches keep their order in a compact conditional."
-flix: "0.80"
 ---
 
 ## Input

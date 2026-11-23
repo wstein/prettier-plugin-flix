@@ -2,7 +2,6 @@
 title: "Keep a block comment that ends the line after => on its own break across passes"
 description: "Match-arm alignment softens trailing block-comment breaks only while measuring arrow columns, so the printed arm still breaks after a block comment that ends its line."
 group: "Line endings and comment placement"
-flix: "0.80"
 options: { printWidth: 44 }
 ---
 

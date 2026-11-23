@@ -1,7 +1,6 @@
 ---
 title: "Reduce consecutive blank lines"
 description: "A single blank line still separates the definitions, while the extra empty lines disappear."
-flix: "0.80"
 showcase: 4
 ---
 

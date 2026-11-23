@@ -1,7 +1,6 @@
 ---
 title: "Keep trailing lambdas in pipeline steps idempotent"
 description: "A pipeline step whose last argument is a braced lambda must hug the same way on every pass and keep comments inside the lambda."
-flix: "0.80"
 options: { printWidth: 46 }
 ---
 

@@ -2,7 +2,6 @@
 title: "Record braces have no inner padding"
 description: "Record types, literals, patterns and updates print as `{x = T}` with no space after `{` or before `}`. Effect sets and schema braces keep a space. An open record that starts with `|` keeps `{ | a}`. A bare `{ x }` keeps block padding. A single-field literal `{x = 1}` stays unpadded. A source-broken record body stays vertical."
 group: "Expressions"
-flix: "0.80"
 options: { printWidth: 80 }
 ---
 

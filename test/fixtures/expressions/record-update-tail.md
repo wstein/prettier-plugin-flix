@@ -1,7 +1,6 @@
 ---
 title: "Wrap long record updates before the pipe"
 description: "Keep a short record update together and break before its base record when the last field and the base no longer fit."
-flix: "0.80"
 options: { printWidth: 60 }
 ---
 

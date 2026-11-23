@@ -2,7 +2,6 @@
 title: Block comment on a match-lambda arrow inside a trailing lambda
 description: "An end-of-line block comment after a match-lambda arrow or a match scrutinee keeps its break when the trailing lambda hugs the call."
 group: "Pipelines and calls"
-flix: "0.80"
 options: { printWidth: 80 }
 ---
 

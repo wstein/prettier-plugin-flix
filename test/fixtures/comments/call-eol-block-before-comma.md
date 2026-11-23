@@ -2,7 +2,6 @@
 title: "Do not break a list only because a block comment ends its source line before a separator"
 description: "A newline between a trailing block comment and the next `,` or `;` is not a layout signal; both passes keep the comment with the item before the separator."
 group: "Line endings and comment placement"
-flix: "0.80"
 options: { printWidth: 80 }
 ---
 

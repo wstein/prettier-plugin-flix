@@ -2,7 +2,6 @@
 title: "Wrap long function types after their arrows"
 description: "Keep short function types compact and preserve nested function types, effects, and comments."
 group: "Types and constraints"
-flix: "0.80"
 options: { printWidth: 60 }
 ---
 

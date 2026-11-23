@@ -1,7 +1,6 @@
 ---
 title: Long argument lists wrap one per line
 description: "When the call no longer fits, the formatter places one argument per line."
-flix: "0.80"
 ---
 
 ## Input

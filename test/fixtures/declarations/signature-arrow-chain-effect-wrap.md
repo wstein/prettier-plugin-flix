@@ -2,7 +2,6 @@
 title: "Keep a return type arrow chain on the signature line when only the effect set wraps"
 description: "A return type arrow chain of two or more arrows that fits after the parameters stays there when no `with` list is present and only the effect set wraps."
 group: "Types and constraints"
-flix: "0.80"
 options: { printWidth: 40 }
 ---
 

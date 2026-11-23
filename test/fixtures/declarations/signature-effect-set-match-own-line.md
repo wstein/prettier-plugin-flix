@@ -2,7 +2,6 @@
 title: "Count the gap after `match` when an own-line comment follows"
 description: "When `= match` is followed by an own-line comment before the scrutinee, the hugged-body trailer still reserves the gap before that break (#201). Widths 30 (regression vs main) and 35 (where main fails) must stay idempotent."
 group: "Calls and function signatures"
-flix: "0.80"
 options: { printWidth: 30 }
 ---
 

@@ -1,7 +1,6 @@
 ---
 title: "Align arrows in multiline maps"
 description: "The keys have different display widths, including a two-column emoji. An inline map stays compact and a narrow width can omit the padding."
-flix: "0.80"
 showcase: 6
 ---
 

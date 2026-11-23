@@ -2,7 +2,6 @@
 title: Align trailing comments with four or more slashes
 description: "Four or more slashes form a regular line comment. Exactly three slashes denote Flixdoc and retain their own spacing and attachment."
 group: "Line endings and comment placement"
-flix: "0.80"
 options: { printWidth: 40, flixVersion: "0.80.0" }
 ---
 

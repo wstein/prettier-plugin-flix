@@ -2,7 +2,6 @@
 title: "Keep an effect set with the return type when the continuation cannot hold set and body"
 description: "A break before a braced effect set must leave room for `=` and a hugged region body; otherwise the first pass joins the set to the return type."
 group: "Calls and function signatures"
-flix: "0.80"
 options: { printWidth: 40 }
 ---
 

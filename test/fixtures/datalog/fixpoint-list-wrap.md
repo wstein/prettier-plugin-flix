@@ -1,7 +1,6 @@
 ---
 title: "Wrap solve and inject at clause and list boundaries"
 description: "Break before project or into, then wrap their lists and the source lists where needed."
-flix: "0.80"
 options: { printWidth: 60 }
 ---
 

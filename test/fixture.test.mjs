@@ -5,7 +5,7 @@ import { optionsFor, parseFixture, withFlixFormat, withOutputs } from "./fixture
 const fence = "```";
 const sample = (front, body) => `---\n${front}\n---\n\n${body}`;
 const good = sample(
-    'title: Demo\nflix: "0.80"\noptions: { printWidth: 60 }',
+    'title: Demo\noptions: { printWidth: 60 }',
     `## Input\n\n${fence}flix\ndef  f(): Int32 = 1\n${fence}\n\n## Output\n\n${fence}flix\ndef f(): Int32 = 1\n${fence}\n\n${fence}flix printWidth=20 tabWidth=2\ndef f(): Int32 =\n  1\n${fence}\n`,
 );
 
@@ -37,7 +37,7 @@ test("an empty output is an empty block", () => {
 });
 
 test("status: error takes no output", () => {
-    const f = parseFixture(sample('title: Bad\nflix: "0.80"\nstatus: error', `## Input\n\n${fence}flix\ndef (\n${fence}\n`));
+    const f = parseFixture(sample('title: Bad\nstatus: error', `## Input\n\n${fence}flix\ndef (\n${fence}\n`));
     assert.equal(f.outputs.length, 0);
 });
 
@@ -46,13 +46,14 @@ const rejects = (name, text, message) =>
 
 rejects("missing front matter", "## Input\n", /must start with a ---/);
 rejects("unclosed front matter", "---\ntitle: a\n", /not closed/);
-rejects("unknown key", sample('title: a\nflix: "0.80"\nnonsense: 1', ""), /unknown front matter key "nonsense"/);
-rejects("missing title", sample('flix: "0.80"', ""), /non-empty title/);
-rejects("unquoted flix version", sample("title: a\nflix: 0.80", ""), /quoted major\.minor/);
-rejects("bad status", sample('title: a\nflix: "0.80"\nstatus: maybe', ""), /status must be one of/);
-rejects("unknown option", sample('title: a\nflix: "0.80"\noptions: { semi: true }', ""), /unknown option "semi"/);
-rejects("non-exact flixVersion in options", sample('title: a\nflix: "0.80"\noptions: { flixVersion: "0.79" }', ""), /exact Flix version/);
-const withOptions = (value) => sample(`title: a\nflix: "0.80"\noptions: ${value}`, "");
+rejects("unknown key", sample('title: a\nnonsense: 1', ""), /unknown front matter key "nonsense"/);
+rejects("missing title", sample('minVersion: "0.80.0"', ""), /non-empty title/);
+rejects("bad minVersion", sample('title: a\nminVersion: "0.80"', ""), /exact Flix version/);
+rejects("unknown flix key", sample('title: a\nflix: "0.80"', ""), /unknown front matter key "flix"/);
+rejects("bad status", sample('title: a\nstatus: maybe', ""), /status must be one of/);
+rejects("unknown option", sample('title: a\noptions: { semi: true }', ""), /unknown option "semi"/);
+rejects("non-exact flixVersion in options", sample('title: a\noptions: { flixVersion: "0.79" }', ""), /exact Flix version/);
+const withOptions = (value) => sample(`title: a\noptions: ${value}`, "");
 rejects("scalar options", withOptions("42"), /"options" must be a mapping/);
 rejects("sequence options", withOptions("[]"), /"options" must be a mapping/);
 rejects("empty options", withOptions(""), /"options" must be a mapping/);
@@ -60,14 +61,14 @@ rejects("string option value", withOptions('{ printWidth: "80" }'), /option "pri
 rejects("fractional option value", withOptions("{ tabWidth: 2.5 }"), /positive integer/);
 rejects("zero option value", withOptions("{ printWidth: 0 }"), /positive integer/);
 rejects("misspelled boolean in options", withOptions("{ useTabs: treu }"), /option "useTabs" must be true or false/);
-rejects("untagged block", sample('title: a\nflix: "0.80"', `## Input\n\n${fence}\nx\n${fence}\n`), /tagged "flix"/);
-rejects("no input", sample('title: a\nflix: "0.80"', `## Output\n\n${fence}flix\nx\n${fence}\n`), /exactly one Input block, found 0/);
-rejects("no output", sample('title: a\nflix: "0.80"', `## Input\n\n${fence}flix\nx\n${fence}\n`), /at least one Output block/);
-rejects("unclosed block", sample('title: a\nflix: "0.80"', `## Input\n\n${fence}flix\nx\n`), /not closed/);
-rejects("option on first output", sample('title: a\nflix: "0.80"', `## Input\n\n${fence}flix\nx\n${fence}\n## Output\n${fence}flix printWidth=9\nx\n${fence}\n`), /first Output block takes no options/);
-rejects("unknown section", sample('title: a\nflix: "0.80"', "## Notes\n"), /unknown section "## Notes"/);
+rejects("untagged block", sample('title: a', `## Input\n\n${fence}\nx\n${fence}\n`), /tagged "flix"/);
+rejects("no input", sample('title: a', `## Output\n\n${fence}flix\nx\n${fence}\n`), /exactly one Input block, found 0/);
+rejects("no output", sample('title: a', `## Input\n\n${fence}flix\nx\n${fence}\n`), /at least one Output block/);
+rejects("unclosed block", sample('title: a', `## Input\n\n${fence}flix\nx\n`), /not closed/);
+rejects("option on first output", sample('title: a', `## Input\n\n${fence}flix\nx\n${fence}\n## Output\n${fence}flix printWidth=9\nx\n${fence}\n`), /first Output block takes no options/);
+rejects("unknown section", sample('title: a', "## Notes\n"), /unknown section "## Notes"/);
 
-const withInfo = (info) => sample('title: a\nflix: "0.80"', `## Input\n\n${fence}flix\nx\n${fence}\n\n## Output\n\n${fence}flix\nx\n${fence}\n\n${fence}flix ${info}\nx\n${fence}\n`);
+const withInfo = (info) => sample('title: a', `## Input\n\n${fence}flix\nx\n${fence}\n\n## Output\n\n${fence}flix\nx\n${fence}\n\n${fence}flix ${info}\nx\n${fence}\n`);
 rejects("misspelled boolean", withInfo("useTabs=treu"), /option "useTabs" must be true or false, found "treu"/);
 rejects("non-numeric width", withInfo("printWidth=abc"), /option "printWidth" must be a positive integer, found "abc"/);
 rejects("fractional width", withInfo("tabWidth=2.5"), /positive integer/);
@@ -86,7 +87,7 @@ test("accepts literal booleans and integers inline", () => {
 
 test("accepts exact flixVersion inline and in front matter", () => {
     assert.deepEqual(parseFixture(withInfo("flixVersion=0.79.0")).outputs[1].options, { flixVersion: "0.79.0" });
-    const f = parseFixture(sample('title: a\nflix: "0.79"\noptions: { flixVersion: "0.79.0" }', `## Input\n\n${fence}flix\nx\n${fence}\n\n## Output\n\n${fence}flix\nx\n${fence}\n`));
+    const f = parseFixture(sample('title: a\nminVersion: "0.79.0"\nmaxVersion: "0.79.0"\noptions: { flixVersion: "0.79.0" }', `## Input\n\n${fence}flix\nx\n${fence}\n\n## Output\n\n${fence}flix\nx\n${fence}\n`));
     assert.deepEqual(f.meta.options, { flixVersion: "0.79.0" });
 });
 
@@ -110,7 +111,7 @@ test("keeps the newline convention when rewriting outputs", () => {
 });
 
 test("a todo fixture takes exactly one output block", () => {
-    const one = sample('title: a\nflix: "0.80"\nstatus: todo', `## Input\n\n${fence}flix\nx\n${fence}\n\n## Output\n\n${fence}flix\ny\n${fence}\n`);
+    const one = sample('title: a\nstatus: todo', `## Input\n\n${fence}flix\nx\n${fence}\n\n## Output\n\n${fence}flix\ny\n${fence}\n`);
     assert.equal(parseFixture(one).meta.status, "todo");
     const two = one + `\n${fence}flix printWidth=20\nz\n${fence}\n`;
     assert.throws(() => parseFixture(two, "x.md"), /status: todo fixtures take exactly one Output block/);
@@ -118,7 +119,7 @@ test("a todo fixture takes exactly one output block", () => {
 });
 
 const reference = (language, code) => `\n## Flix Format\n\n${fence}${language}\n${code}${fence}\n`;
-const versioned = good.replace('flix: "0.80"', 'flix: "0.80"\nflixFormat: "0.80.0"');
+const versioned = good.replace('options:', 'flixFormat: "0.80.0"\noptions:');
 
 test("keeps a versioned Flix Format reference independent of Prettier output", () => {
     const source = (versioned + reference("flix", "intentionally invalid Flix\n")).replaceAll("\n", "\r\n");
@@ -180,7 +181,7 @@ test("Flix Format Diagnostics and flixFormatInvalid require each other", () => {
 });
 
 test("the reference sections must follow Input and Output", () => {
-    const front = 'title: a\nflix: "0.80"\nflixFormat: "0.80.0"';
+    const front = 'title: a\nminVersion: "0.80.0"\nflixFormat: "0.80.0"';
     const input = `## Input\n\n${fence}flix\nx\n${fence}\n`;
     const output = `\n## Output\n\n${fence}flix\nx\n${fence}\n`;
     const ref = reference("flix", "x\n");
@@ -190,13 +191,13 @@ test("the reference sections must follow Input and Output", () => {
     assert.throws(() => parseFixture(sample(front, ref.trimStart() + input)), /must come after ## Input and ## Output/);
 });
 
-test("the flixFormat version must belong to the fixture's Flix release", () => {
-    assert.throws(() => parseFixture(good.replace('flix: "0.80"', 'flix: "0.80"\nflixFormat: "0.81.0"') + reference("flix", "x\n")), /same major\.minor release/);
-    assert.ok(parseFixture(good.replace('flix: "0.80"', 'flix: "0.80"\nflixFormat: "0.80.7"') + reference("flix", "x\n")));
+test("the flixFormat version must share major.minor with minVersion when set", () => {
+    assert.throws(() => parseFixture(good.replace('options:', 'minVersion: "0.80.0"\nflixFormat: "0.81.0"\noptions:') + reference("flix", "x\n")), /share major\.minor/);
+    assert.ok(parseFixture(good.replace('options:', 'minVersion: "0.80.0"\nflixFormat: "0.80.7"\noptions:') + reference("flix", "x\n")));
 });
 
 test("status: error fixtures cannot have a reference", () => {
-    const source = sample('title: Bad\nflix: "0.80"\nstatus: error\nflixFormat: "0.80.0"', `## Input\n\n${fence}flix\ndef (\n${fence}\n${reference("text", "x\n")}`);
+    const source = sample('title: Bad\nstatus: error\nflixFormat: "0.80.0"', `## Input\n\n${fence}flix\ndef (\n${fence}\n${reference("text", "x\n")}`);
     assert.throws(() => parseFixture(source), /status: error fixtures cannot have a Flix Format reference/);
 });
 

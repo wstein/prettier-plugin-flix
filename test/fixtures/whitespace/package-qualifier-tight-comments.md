@@ -1,7 +1,6 @@
 ---
 title: "Preserve tight double colons beside comments"
 description: "Keep tight use-path and glued-comment cons :: ; a long tight cons chain wraps and spaces when it no longer fits."
-flix: "0.80"
 ---
 
 ## Input

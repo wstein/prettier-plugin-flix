@@ -2,7 +2,6 @@
 title: "Arrow chain followed by an effect set and a with list keeps the effect word as the next word"
 description: "The word that follows a return type arrow chain is the start of the effect set, not of the `with` list: the chain moves to its own line when ` \\` fits after it there, even if ` with` would not."
 group: "Types and constraints"
-flix: "0.80"
 options: { printWidth: 40 }
 ---
 

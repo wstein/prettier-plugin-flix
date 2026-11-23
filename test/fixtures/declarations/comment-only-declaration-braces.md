@@ -2,7 +2,6 @@
 title: "Preserve source gaps in comment-only declaration bodies"
 description: "A comment may follow the opening brace directly or start after a blank line. A blank line between comments stays visible."
 group: "Declarations"
-flix: "0.80"
 options: { printWidth: 80 }
 ---
 

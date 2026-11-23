@@ -2,7 +2,6 @@
 title: Nested chains inside a match guard keep the normal continuation indent
 description: "A binary chain in a call argument, lambda body or parenthesized operand of a guard wraps at +4 from its own line, not the guard's deeper +8. The guard's own top-level chain still uses +8. A guarded match nested inside a guard restores the outer guard start."
 group: "Operators"
-flix: "0.80"
 options: { printWidth: 60 }
 ---
 

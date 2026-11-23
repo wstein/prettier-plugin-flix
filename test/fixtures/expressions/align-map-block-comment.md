@@ -2,7 +2,6 @@
 title: "Align map arrows when a block comment leads an entry"
 description: "A block comment before a map key must not change arrow alignment between passes, whether it sits after the opener or between entries."
 group: "Line endings and comment placement"
-flix: "0.80"
 options: { printWidth: 40 }
 ---
 

@@ -2,7 +2,6 @@
 title: "Align match arms when a block comment leads the first case"
 description: "A block comment after match { must leave the measured case head, so arrow padding matches the pass where the comment is already on its own line."
 group: "Line endings and comment placement"
-flix: "0.80"
 options: { printWidth: 40 }
 ---
 

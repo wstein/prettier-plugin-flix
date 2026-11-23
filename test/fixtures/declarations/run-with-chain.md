@@ -1,7 +1,6 @@
 ---
 title: "Align chained handlers with the first with"
 description: "The first with stays after the closing brace even when its call arguments wrap. Further clauses align with the first with. One short unbraced run can stay compact. Wrapped clauses start at the level of run."
-flix: "0.80"
 source: "https://github.com/flix/flix/blob/v0.80.0/main/test/flix/Test.Exp.RunWith.flix#L284"
 ---
 

@@ -1,7 +1,6 @@
 ---
 title: "Constrain an associated type with where"
 group: "Types and constraints"
-flix: "0.80"
 source: "https://github.com/flix/flix/blob/v0.80.0/main/test/flix/Test.Dec.AssocType.flix#L23"
 ---
 

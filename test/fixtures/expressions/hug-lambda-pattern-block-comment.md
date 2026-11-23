@@ -2,7 +2,6 @@
 title: "Block comment in a trailing-lambda match pattern"
 description: "A block comment before the closing parenthesis of a long match pattern does not change whether the trailing lambda hugs its call across passes."
 group: "Pipelines and calls"
-flix: "0.80"
 ---
 
 ## Input

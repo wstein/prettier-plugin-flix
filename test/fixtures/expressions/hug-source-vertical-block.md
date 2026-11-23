@@ -2,7 +2,6 @@
 title: "Keep source-vertical blocks inside a hugged trailing lambda"
 description: "A single-statement block that the source wrote on several lines stays vertical when its trailing lambda hugs the call."
 group: "Pipelines and calls"
-flix: "0.80"
 options: { printWidth: 100 }
 ---
 
