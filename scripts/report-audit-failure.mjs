@@ -27,7 +27,8 @@ export function reportAuditFailure(api, env) {
 
     const issues = api(["--paginate", "--slurp",
         endpoint + "?state=all&creator=github-actions%5Bbot%5D&sort=created&direction=asc&per_page=100"]).flat();
-    const issue = issues.find((item) =>
+    // Prefer the newest matching bot issue when duplicates exist.
+    const issue = issues.findLast((item) =>
         !item.pull_request && item.user?.login === "github-actions[bot]" && item.body?.includes(marker));
     if (!issue) return api(["--method", "POST", endpoint, "--input", "-"], { title, body });
 
