@@ -15,6 +15,7 @@ on:
     paths:
       - ".github/workflows/official-examples.yml"
       - "scripts/audit-flix-examples.mjs"
+      - "scripts/report-audit-failure.mjs"
       - "scripts/docs-example-findings.mjs"
       - "scripts/extract-flix-examples.mjs"
       - "scripts/review-summary.mjs"
@@ -37,6 +38,8 @@ jobs:
   audit:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    outputs:
+      artifact-url: ${{ steps.artifact.outputs.artifact-url }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -92,8 +95,32 @@ jobs:
           fi
           true
       - uses: actions/upload-artifact@v4
+        id: artifact
         if: ${{ !cancelled() }}
         with:
           name: official-flix-examples
           path: official-examples-audit/
           if-no-files-found: error
+
+  report-failure:
+    needs: audit
+    if: ${{ !cancelled() && github.event_name == 'schedule' && needs.audit.result == 'failure' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+    concurrency:
+      group: official-flix-audit-issue
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: node scripts/report-audit-failure.mjs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AUDIT_ARTIFACT_URL: ${{ needs.audit.outputs.artifact-url }}
