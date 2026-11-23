@@ -175,9 +175,8 @@ export class Printer {
         return join(literalline, lines);
     }
 
-    /** Flixdoc is exactly three slashes; `////` is an ordinary line comment (Lexer.scala). */
-    private isFlixdoc(c: Comment): boolean {
-        return c.isLine && /^\/\/\/(?!\/)/.test(c.text);
+    private isFlixdoc(comment: Comment): boolean {
+        return comment.isDoc;
     }
 
     private leadDoc(info: TokenInfo, closing: boolean, inlineGap = " "): Doc[] {
@@ -199,7 +198,7 @@ export class Printer {
     private trailDoc(info: TokenInfo, gap = " "): Doc[] {
         return info.trail.map((c) => {
             const comment = this.commentText(c);
-            const spacing = gap && c.isLine && !c.text.startsWith("///") ? LINE_COMMENT_GAP : gap;
+            const spacing = gap && c.isLine && !c.isDoc ? LINE_COMMENT_GAP : gap;
             // Line comments (and their end-of-line placement) stay in a suffix so
             // they do not affect fit. Block comments always count toward width so
             // a comment that ends a line after the first pass is measured the same

@@ -25,6 +25,8 @@ export interface Comment {
     end: number;
     /** `//` and `///` comments run to the end of the line. */
     isLine: boolean;
+    /** The selected lexer classified this comment as Flixdoc. */
+    isDoc: boolean;
     /** Newlines between the previous element (token or comment) and this comment. */
     nl: number;
     /** Newlines between this comment and the next element (comment or token). */
@@ -157,6 +159,7 @@ function buildTokenInfo(tokens: Token[], Lexer: FlixLexerClass): Map<number, Tok
                 text: (t.text ?? "").replace(/[ \t\r]+$/, ""),
                 end: t.stop + 1,
                 isLine: t.type !== Lexer.BLOCK_COMMENT,
+                isDoc: t.type === Lexer.DOC_COMMENT,
                 nl,
                 nlNext: 0,
             });
