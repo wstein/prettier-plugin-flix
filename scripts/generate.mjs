@@ -26,6 +26,7 @@ const outRoot = join(pkg, "src", "generated");
 const HELPERS = [
     "isNameCharFollow", "classifyColonColon", "classifyArrow", "classifyDot", "classifyOperator",
     "enterBrace", "exitBrace", "openInterpolation", "stripEscape", "popMode",
+    "acceptNumber", "acceptHexNumber", "acceptBlockComment",
 ];
 
 /** Grammar sources keyed by FlixGrammarId. */

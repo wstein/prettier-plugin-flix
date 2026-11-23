@@ -118,6 +118,17 @@ test("Prettier rejects an unsupported flixVersion choice", async () => {
     );
 });
 
+test("Flix 0.80 rejects uppercase definitions and malformed literals", () => {
+    for (const source of [
+        "def Upper(): Int32 = 1",
+        "def f(): Int32 = 12bad",
+        'def f(): Regex = regex"tail\\',
+    ]) {
+        assert.throws(() => parseFlix(source, { flixVersion: "0.80.0" }), SyntaxError);
+    }
+    assert.doesNotThrow(() => parseFlix("def Upper(): Int32 = 1", { flixVersion: "0.79.0" }));
+});
+
 test("recoverFormatting validates flixVersion and uses the selected grammar", async () => {
     const layout80 = { printWidth: 80, tabWidth: 4, useTabs: false, flixVersion: "0.80.0" };
     const layout79 = { printWidth: 80, tabWidth: 4, useTabs: false, flixVersion: "0.79.0" };

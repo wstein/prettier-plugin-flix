@@ -32,6 +32,9 @@ User-facing changes to Prettier Plugin for Flix. Plugin releases have their own 
 
 ### Fixes
 
+- Update the Flix 0.80.0 grammar to accept type kind ascriptions and match the
+  compiler's syntax checks for function names and numeric literals more closely.
+
 - Recognize ANTLR `*Context` class names when a bundler renames the second
   grammar's copies to `*Context2`, so the Playground dual-grammar bundle
   formats instead of falling through to a flat token dump.
