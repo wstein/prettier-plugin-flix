@@ -459,9 +459,11 @@ Record braces have no inner padding: `{x = T}`, `{x = 1 | r}` and
 (`\ { Chan }`, `#{ A(Int32) }`). An open record that starts with `|` keeps
 a leading space only (`{ | a}`). A single bare name in braces is parsed as a
 record field but printed with padding like a block (`{ x }`), as Flix does.
-A comment-only `List#{ /* c */ }`, `Array#{ /* c */ }`, or record `{ /* c */ }`
-breaks once after `{` and does not invent a blank line; a blank already in
-the source stays.
+A comment-only collection brace (`List#{}`, `Array#{}`, `Set#{}`, `Map#{}`,
+`Vector#{}`), record, block, or `#{…}` breaks once after the opener and does
+not invent a blank line. Unlike declaration braces and parameter lists, it
+also drops a blank that was already in the source, matching `flix format`
+0.80.0.
 [Record brace padding fixture](../test/fixtures/expressions/record-no-inner-pad.md) ·
 [Comment-only collection braces](../test/fixtures/expressions/brace-only-comment.md)
 
