@@ -5,7 +5,9 @@ self.addEventListener("message", async ({ data }) => {
     let formatFlixPreview;
     try {
         formatter ??= import(new URL(asset, self.location.href));
-        ({ formatFlixPreview } = await formatter);
+        const module = await formatter;
+        await module.loadFormatterGrammar(options);
+        formatFlixPreview = module.formatFlixPreview;
     } catch {
         self.postMessage({ id, failure: "load" });
         return;

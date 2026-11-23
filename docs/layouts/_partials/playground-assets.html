@@ -1,5 +1,10 @@
-{{/* The formatter dispatches on generated parser class names. */}}
-{{ $formatter := resources.Get "js/format-flix.js" | js.Build (dict "shims" (dict "prettier-plugin-flix" "formatter/index.js") "format" "esm" "target" "es2022") | fingerprint }}
+{{ $entry := resources.GetMatch "js/formatter/format-flix-*.js" }}
+{{ $formatter := $entry | resources.Copy "js/format-flix.js" | fingerprint }}
+{{ range resources.Match "js/formatter/*.js" }}
+  {{ if ne .Name $entry.Name }}
+    {{ (. | resources.Copy (printf "js/%s" (path.Base .Name))).Publish }}
+  {{ end }}
+{{ end }}
 {{ $worker := resources.Get "js/playground-worker.js" | fingerprint }}
 {{ $script := resources.Get "js/playground.js" | js.Build (dict "minify" true "format" "esm" "target" "es2022") | fingerprint }}
 {{ return (dict "formatter" $formatter "worker" $worker "script" $script) }}

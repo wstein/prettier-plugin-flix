@@ -13,9 +13,12 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
+import { build } from "esbuild";
 import { DEFAULT_FLIX_VERSION } from "../dist/flix-version.js";
 
 const docs = fileURLToPath(new URL("../docs/", import.meta.url));
+const dist = fileURLToPath(new URL("../dist", import.meta.url));
+const formatterDir = join(docs, "assets/js/formatter");
 const publicDir = join(docs, "public");
 const hugoToml = readFileSync(join(docs, "hugo.toml"), "utf8");
 const baseURL = hugoToml.match(/^baseURL\s*=\s*"([^"]+)"/m)?.[1];
@@ -24,6 +27,27 @@ if (!baseURL.endsWith("/")) throw new Error("baseURL must end with /");
 
 /** Exact Flix pins that get a versioned catalog path. Root URLs mirror the latest. */
 const versionedCatalogs = [DEFAULT_FLIX_VERSION];
+
+rmSync(formatterDir, { recursive: true, force: true });
+await build({
+    entryPoints: [join(docs, "assets/js/format-flix.js")],
+    outdir: formatterDir,
+    bundle: true,
+    splitting: true,
+    format: "esm",
+    target: "es2022",
+    // Parser dispatch depends on generated class names.
+    keepNames: true,
+    entryNames: "[name]-[hash]",
+    chunkNames: "[name]-[hash]",
+    plugins: [{
+        name: "browser-grammar",
+        setup(build) {
+            build.onResolve({ filter: /^\.\/grammar\.js$/ }, ({ resolveDir }) =>
+                resolveDir === dist ? { path: join(docs, "assets/js/browser-grammar.js") } : undefined);
+        },
+    }],
+});
 
 function runHugo({ destination, baseURL: url, flixDocVersion }) {
     const fragmentPath = join(docs, ".hugo-flix-version.toml");

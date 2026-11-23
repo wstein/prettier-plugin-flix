@@ -1,7 +1,11 @@
 import { format } from "prettier/standalone";
 import flix, { defaultOptions, recoverFormatting } from "prettier-plugin-flix";
+import { loadFormatterGrammar } from "./browser-grammar.js";
 
-export function formatFlix(source, options) {
+export { loadFormatterGrammar };
+
+export async function formatFlix(source, options) {
+    await loadFormatterGrammar(options);
     return format(source, { ...options, parser: "flix", plugins: [flix] });
 }
 
