@@ -57,13 +57,17 @@ test("recovers enum cases and struct fields around invalid entries", async () =>
     assert.equal(await recover(structSource), structSource.replace("a:Int32", "a: Int32").replace("c:Bool", "c: Bool"));
 });
 
-test("keeps unclosed comments and truncated modules intact", async () => {
-    for (const region of [
-        "/* unclosed\ndef outside():Int32=2",
-        "mod A {\n    def inside():Int32=(\n",
-    ]) {
-        assert.equal(await recover(lines("def first():Int32=1", region)), lines("def first(): Int32 = 1", region));
-    }
+for (const flixVersion of ["0.79.0", "0.80.0"]) {
+    test(`keeps unclosed comments intact under Flix ${flixVersion}`, async () => {
+        const region = lines("/* unclosed", "def outside():Int32=2");
+        const source = lines("def first():Int32=1", region);
+        assert.equal(await recover(source, { flixVersion }), lines("def first(): Int32 = 1", region));
+    });
+}
+
+test("keeps truncated modules intact", async () => {
+    const region = "mod A {\n    def inside():Int32=(\n";
+    assert.equal(await recover(lines("def first():Int32=1", region)), lines("def first(): Int32 = 1", region));
     assert.equal(await recover(""), undefined);
 });
 
