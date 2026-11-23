@@ -707,10 +707,13 @@ export class Printer {
             ]
             : [];
         if (inner.length === 0 && comments.length > 0) {
-            // Comment-only braces/parens (`List#{…}`, records, declarations, …):
-            // the first comment belongs to the closing token. Break once after the
-            // opener; keep a source blank when present. Enums still drop that blank.
-            const blankAfterOpen = !enumBody && this.blankBefore(close) ? hardline : "";
+            // Comment-only braces/parens: the first comment belongs to the closing
+            // token. Break once after the opener.
+            // Keep a source blank only for declaration braces and parameter lists.
+            // Expression braces (List#{}, records, blocks, ...) drop it, like flix format.
+            const keepSourceBlank =
+                (preserveBlankAfterOpen || openType === this.L.LPAREN) && this.blankBefore(close);
+            const blankAfterOpen = keepSourceBlank ? hardline : "";
             return [openDoc, indent([hardline, blankAfterOpen, bodyHeader, comments]), hardline, closeCore, closeTrail];
         }
 
