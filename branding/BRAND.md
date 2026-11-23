@@ -9,7 +9,7 @@ The logo is an italic white **F** built from staggered code lines on a rounded r
 | Color | Hex | Use |
 | --- | --- | --- |
 | Red | `#C8102E` | The tile in the supplied artwork and its icon variants |
-| White | `#FFFFFF` | Code lines and the small F |
+| White | `#FFFFFF` | Code lines in the full mark and small icons |
 | Warm white | `#FBF7F5` | Banner background and social title |
 | Plum | `#211820` | Social card background |
 | Dark ink | `#241A21` | Banner title |
@@ -25,15 +25,15 @@ The banner and social card use DejaVu Sans Bold for the name and DejaVu Sans Reg
 | Logo | [logo.svg](logo.svg) | [logo.png](logo.png), 1024 × 1024 | Full mark with transparent corners |
 | Banner | [banner.svg](banner.svg) | [banner.png](banner.png), 1440 × 360 | Light horizontal lockup for the README or documentation |
 | Social card | [social-preview.svg](social-preview.svg) | [social-preview.png](social-preview.png), 1200 × 630 | Dark social card with a stacked title for small share previews |
-| Favicon | [favicon.svg](favicon.svg) | [favicon.ico](favicon.ico), 16, 32 and 48 px | Simplified F for browser tabs and bookmarks |
-| Apple touch icon | | [apple-touch-icon.png](apple-touch-icon.png), 180 × 180 | Full-bleed red tile for home screens. The device supplies the corner mask. |
+| Favicon | [favicon.svg](favicon.svg) | [favicon.ico](favicon.ico), 16, 32 and 48 px | Upright F built from horizontal code segments for browser tabs, bookmarks and the documentation toolbar |
+| Apple touch icon | | [apple-touch-icon.png](apple-touch-icon.png), 180 × 180 | The code-segment icon on a full-bleed red tile. The device supplies the corner mask. |
 
-Use the full mark at 48 px or larger. Use the simplified favicon for small browser icons. For image links, use **Prettier Plugin for Flix** as the accessible name.
+Use the full mark at 48 px or larger. Use the upright F for browser chrome and compact navigation. Keep the gaps between the rows and within both crossbars visible at 16 px. For image links, use **Prettier Plugin for Flix** as the accessible name.
 
 ## Design directions
 
 | Direction | Rating | Assessment |
 | --- | --- | --- |
-| **Original mark with light and dark layouts** | **9/10** | Implemented here. The red tile stays recognizable across the README, social cards and browser tabs. The simplified favicon remains legible at 16 px. |
+| **Original mark with light and dark layouts** | **9/10** | Implemented here. The red tile stays recognizable across the README, social cards and browser tabs. The segmented favicon reads as code at 16 px. |
 | **A red background throughout** | **7/10** | Strong visual presence for a launch announcement. A full-width red banner would dominate a documentation page. |
 | **A multicolor code-line pattern** | **6/10** | More visibly references Prettier's color palette. The small icon would need a separate, simpler treatment, and the mark would sit closer to Prettier's visual identity. |
