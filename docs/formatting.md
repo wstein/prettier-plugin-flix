@@ -468,10 +468,13 @@ A standalone comment above an operator chain stays on its own line. The
 chain can still fit on one line underneath it.
 [Leading operator comments](../test/fixtures/comments/leading-operator-comments.md)
 
-Keep an ordinary trailing `//` comment at least two spaces from the code.
-Consecutive commented lines at the same level share a column when each line
-fits after alignment. A blank line, an uncommented line or a block boundary
-ends the group.
+Keep an ordinary trailing line comment at least two spaces from the code.
+Four or more slashes (`////`, `/////`, …) are ordinary line comments and join
+the same gap and alignment. Trailing Flixdoc (`///` exactly) keeps a single
+space and stays out of the alignment group. Consecutive commented lines at the
+same level share a column when each line fits after alignment. A blank line, an
+uncommented line or a block boundary ends the group.
+[Trailing slash comment kinds](../test/fixtures/comments/trailing-slash-comment-kinds.md)
 
 **Before**
 
