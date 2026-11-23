@@ -1204,13 +1204,16 @@ export class Printer {
             return this.seq(children, kind(n));
         }
 
+        // A comment lifted off the previous statement's semicolon becomes an
+        // own-line lead on the next pass. Keep its break outside the clause group.
+        const leading = this.takeLeadingOwnLineComments(keyword);
         const sourceItems = kids(sources);
         const head = sourceItems.length > 1 ? this.printFixpointList(keyword, sourceItems) : this.seq([keyword, sources], kind(n));
-        if (clauses.length === 0) return head;
+        if (clauses.length === 0) return [leading, head];
         if (!isQuery) {
             const [clauseKeyword, ...items] = clauses;
             const tail = this.printFixpointList(this.ls(clauseKeyword as TerminalNode), items);
-            return group([head, indent([this.after(lastTerm(sources), line), tail])]);
+            return [leading, group([head, indent([this.after(lastTerm(sources), line), tail])])];
         }
 
         const body = clauses.map((clause, index) => {
@@ -1222,7 +1225,7 @@ export class Printer {
         });
         // Break at the whole query's boundary first. The clauses can still
         // share a line after moving to an indented continuation.
-        return group([head, indent([this.after(lastTerm(sources), line), group(body)])]);
+        return [leading, group([head, indent([this.after(lastTerm(sources), line), group(body)])])];
     }
 
     private printFixpointList(keyword: TerminalNode, nodes: Node[]): Doc {
