@@ -264,6 +264,7 @@ pre.shiki {
   background: var(--surface);
 }
 .playground-pane-header { font-size: 0.8rem; }
+.playground-input-controls,
 .playground-preview-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem; }
 .playground-sync-scroll { display: inline-flex; align-items: center; gap: 0.25rem; }
 .playground-sync-scroll input { margin: 0; }
