@@ -55,10 +55,10 @@ def extend(previousJourneyDetailsBeforeServiceChange: {
     updated#departureStationName
 }
 
-def compact(original: { name = String }): String =
-    { name = "Flix" | original }#name
+def compact(original: {name = String}): String =
+    {name = "Flix" | original}#name
 
-def commented(original: { name = String }): String = {
+def commented(original: {name = String}): String = {
     let updated = {
         name = "Flix"  // add the display name
         | original
@@ -77,7 +77,7 @@ def blockComment(originalRecord: {
     updated#name
 }
 
-def pipeComment(original: { alpha = Int32 }): Int32 = {
+def pipeComment(original: {alpha = Int32}): Int32 = {
     let updated = {
         alpha = 1 |  // keep the base
         original
@@ -98,10 +98,9 @@ def extend(previousJourneyDetailsBeforeServiceChange: {
     updated#departureStationName
 }
 
-def compact(original: { name = String }): String =
-    { name = "Flix" | original }#name
+def compact(original: {name = String}): String = {name = "Flix" | original}#name
 
-def commented(original: { name = String }): String = {
+def commented(original: {name = String}): String = {
     let updated = {
         name = "Flix"  // add the display name
         | original
@@ -109,7 +108,7 @@ def commented(original: { name = String }): String = {
     updated#name
 }
 
-def blockComment(originalRecord: { name = String, label = String }): String = {
+def blockComment(originalRecord: {name = String, label = String}): String = {
     let updated = {
         name = "Flix",
         label = "formatter" /* keep the base */ | originalRecord
@@ -117,7 +116,7 @@ def blockComment(originalRecord: { name = String, label = String }): String = {
     updated#name
 }
 
-def pipeComment(original: { alpha = Int32 }): Int32 = {
+def pipeComment(original: {alpha = Int32}): Int32 = {
     let updated = {
         alpha = 1 |  // keep the base
         original
@@ -138,9 +137,9 @@ def extend(previousJourneyDetailsBeforeServiceChange: {
     updated#departureStationName
 }
 
-def compact(original: { name = String }): String = { name = "Flix" | original }#name
+def compact(original: {name = String}): String = {name = "Flix" | original}#name
 
-def commented(original: { name = String }): String = {
+def commented(original: {name = String}): String = {
     let updated = {
         name = "Flix"  // add the display name
         | original
@@ -148,12 +147,12 @@ def commented(original: { name = String }): String = {
     updated#name
 }
 
-def blockComment(originalRecord: { name = String, label = String }): String = {
-    let updated = { name = "Flix", label = "formatter" /* keep the base */ | originalRecord };
+def blockComment(originalRecord: {name = String, label = String}): String = {
+    let updated = {name = "Flix", label = "formatter" /* keep the base */ | originalRecord};
     updated#name
 }
 
-def pipeComment(original: { alpha = Int32 }): Int32 = {
+def pipeComment(original: {alpha = Int32}): Int32 = {
     let updated = {
         alpha = 1 |  // keep the base
         original

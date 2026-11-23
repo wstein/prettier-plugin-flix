@@ -34,25 +34,25 @@ description="Ready to use"
 ## Output
 
 ```flix
-pub def profile(): { id = Int32, name = String, active = Bool } = {
+pub def profile(): {id = Int32, name = String, active = Bool} = {
     id     = 7,  // Assigned by the server.
     name   = "Flix",
     active = true  // Active accounts can sign in.
 }
 
-pub def notedProfile(): { id = Int32, name = String, active = Bool } = {
+pub def notedProfile(): {id = Int32, name = String, active = Bool} = {
     id = 7,  // note
     // Assigned by the server.
     name   = "Flix",
     active = true  // Active accounts can sign in.
 }
 
-pub def palette(): { x = String, color = String } = {
+pub def palette(): {x = String, color = String} = {
     x     = "red",
     color = "blue" + "-green"
 }
 
-pub def item(): { x = String, description = String } = {
+pub def item(): {x = String, description = String} = {
     x = "open",
     description = "Ready to use"
 }

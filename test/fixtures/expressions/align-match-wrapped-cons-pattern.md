@@ -30,9 +30,7 @@ def e2(l: List[Int32]):
         :: rest => (if (
         x > 0
     )
-        {
-            x
-        }
+        {x}
     else {
         0 - x
     })
@@ -53,9 +51,7 @@ def e2(l: List[Int32]):
         :: rest => (if (
         x > 0
     )
-        {
-            x
-        }
+        {x}
     else {
         0 - x
     })

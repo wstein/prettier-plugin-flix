@@ -16,8 +16,8 @@ updated#name
 ## Output
 
 ```flix
-pub def rename(r: { name = String, count = Int32 }): String = {
-    let updated = { name = "Flix" | r };
+pub def rename(r: {name = String, count = Int32}): String = {
+    let updated = {name = "Flix" | r};
     updated#name
 }
 ```

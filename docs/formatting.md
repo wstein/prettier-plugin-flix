@@ -426,6 +426,12 @@ def next(xs: List[Int32]): Int32 = match xs {
 [Map alignment](../test/fixtures/expressions/align-map-entries.md) ·
 [Record alignment](../test/fixtures/expressions/align-record-fields.md)
 
+Record braces have no inner padding: `{x = T}`, `{x = 1 | r}` and
+`{x = n | _}`. Effect sets and schema braces keep a space
+(`\ { Chan }`, `#{ A(Int32) }`). An open record that starts with `|` keeps
+the space after `{` (`{ | a}`).
+[Record brace padding fixture](../test/fixtures/expressions/record-no-inner-pad.md)
+
 Record updates, open record types, record patterns, and record-row aliases
 keep their `| …` tail with the last field when they fit on one line. Start
 the tail on a new line at the field indentation when the line would exceed
@@ -586,7 +592,7 @@ at width 80, 12944 at 100 and 8827 at 160. The main kinds at widths 80 and 160:
 | --- | --- | --- |
 | The plugin breaks a line, Flix does not | 13822 | 1997 |
 | Flix breaks a line, the plugin does not (often after `=`) | 1363 | 3430 |
-| Spaces inside a line (padding before `=` and `=>`, record type braces (Flix `{x = T}`, plugin `{ x = T }`), space before a trailing comment) | 2485 | 1972 |
+| Spaces inside a line (padding before `=` and `=>`, space before a trailing comment) | 2485 | 1972 |
 | Indentation of a line that both break | 921 | 708 |
 | Blank line after `{` or before `}`, which Flix keeps and the plugin removes | 476 | 476 |
 
