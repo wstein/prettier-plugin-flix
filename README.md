@@ -1,5 +1,7 @@
 # prettier-plugin-flix
 
+![Prettier Plugin for Flix — code formatting for Flix](branding/banner.png)
+
 [![CI status on main](https://github.com/wstein/prettier-plugin-flix/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/wstein/prettier-plugin-flix/actions/workflows/ci.yml)
 [![Line coverage on main](https://img.shields.io/endpoint?url=https%3A%2F%2Fwstein.github.io%2Fprettier-plugin-flix%2Fcoverage%2Flines.json)](https://github.com/wstein/prettier-plugin-flix/actions/workflows/fixture-docs.yml?query=branch%3Amain)
 [![Branch coverage on main](https://img.shields.io/endpoint?url=https%3A%2F%2Fwstein.github.io%2Fprettier-plugin-flix%2Fcoverage%2Fbranches.json)](https://github.com/wstein/prettier-plugin-flix/actions/workflows/fixture-docs.yml?query=branch%3Amain)
