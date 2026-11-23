@@ -22,8 +22,9 @@ test("fixture inputs stay idempotent across print widths", async (t) => {
 
         await t.test(name, async () => {
             for (const printWidth of IDEMPOTENCE_PRINT_WIDTHS) {
-                const once = await fmt(fixture.input.code, { printWidth });
-                const twice = await fmt(once, { printWidth });
+                const options = { printWidth, flixVersion: fixture.meta.options?.flixVersion };
+                const once = await fmt(fixture.input.code, options);
+                const twice = await fmt(once, options);
                 assert.equal(
                     twice,
                     once,

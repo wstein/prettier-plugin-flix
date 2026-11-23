@@ -677,6 +677,24 @@ for (const override of [undefined, "54"]) {
     });
 }
 
+test("a 0.79-only fixture uses its pin in the catalog and the Playground", async ({ page }) => {
+    const path = "declarations/function-named-val-flix-0.79.md";
+    const source = "def val():Int32=40+3";
+    await page.goto(siteUrl + "playground/?fixture=" + path);
+    await expect(page.getByLabel("Flix version")).toHaveValue("0.79.0");
+    await expect(page.getByRole("textbox", { name: "Preview" })).toContainText("def val(): Int32 = 40 + 2");
+
+    await page.goto(siteUrl + "declarations/#function-named-val-flix-0.79");
+    const fixture = page.locator("#function-named-val-flix-0\\.79 [data-embedded-playground]");
+    await expect(fixture.getByLabel("Flix version")).toHaveValue("0.79.0");
+    await fixture.getByRole("textbox", { name: "Flix input" }).fill(source);
+    await expect(fixture.getByRole("textbox", { name: "Preview" })).toContainText("def val(): Int32 = 40 + 3");
+    await fixture.getByRole("link", { name: "Open in Playground" }).click();
+    await expect(page.getByLabel("Flix version")).toHaveValue("0.79.0");
+    await expect(page.getByRole("textbox", { name: "Flix input" })).toHaveText(source);
+    await expect(page.getByRole("textbox", { name: "Preview" })).toContainText("def val(): Int32 = 40 + 3");
+});
+
 test("diff, copy, use formatted, invalid width and unrecoverable input stay in sync", async ({ page, context }) => {
     await context.grantPermissions(["clipboard-read", "clipboard-write"]);
     await page.goto(siteUrl + "playground/");

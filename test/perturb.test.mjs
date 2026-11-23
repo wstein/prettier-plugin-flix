@@ -15,25 +15,25 @@ const inputs = [];
 for (const f of readdirSync(here).filter((f) => f.endsWith(".flix"))) inputs.push([f, readFileSync(join(here, f), "utf8")]);
 for (const path of findFixtures(join(here, "fixtures"))) {
     const fx = loadFixture(path);
-    if (fx.meta.status !== "error") inputs.push([path.slice(here.length + 1), fx.input.code]);
+    if (fx.meta.status !== "error") inputs.push([path.slice(here.length + 1), fx.input.code, fx.meta.options?.flixVersion]);
 }
 
-for (const [name, source] of inputs) {
+for (const [name, source, flixVersion] of inputs) {
     test(`re-spaced: ${name}`, async () => {
-        assert.deepEqual(fingerprint(source).errors, [], "the input must parse");
+        const original = fingerprint(source, flixVersion);
+        assert.deepEqual(original.errors, [], "the input must parse");
         for (const seed of SEEDS) {
-            const respaced = perturbWhitespace(source, seed);
+            const respaced = perturbWhitespace(source, seed, flixVersion);
             const label = `${name} seed ${seed}`;
-            const before = fingerprint(respaced);
+            const before = fingerprint(respaced, flixVersion);
             assert.deepEqual(before.errors, [], `${label}: the re-spaced input must parse`);
             // The re-spaced text is the reference for the formatter, so it must first be the same
             // program as the original: tokens, comments, tree shape and every token whose class
             // (a->b versus a -> b, dot versus dot-then-whitespace) depends on adjacent characters.
-            const original = fingerprint(source);
             assert.deepEqual(programProblems(original, before, { terminators: false }), [], `${label}: re-spacing must not change the program`);
-            const out = await fmt(respaced);
-            assert.deepEqual(programProblems(before, fingerprint(out)), [], `${label}: the formatter must not change the program`);
-            assert.equal(await fmt(out), out, `${label}: formatting the output again must change nothing`);
+            const out = await fmt(respaced, { flixVersion });
+            assert.deepEqual(programProblems(before, fingerprint(out, flixVersion)), [], `${label}: the formatter must not change the program`);
+            assert.equal(await fmt(out, { flixVersion }), out, `${label}: formatting the output again must change nothing`);
         }
     });
 }

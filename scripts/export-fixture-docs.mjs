@@ -104,14 +104,20 @@ for (const path of findFixtures(root)) {
         entry.groups.push(group);
     }
     entry.count++;
-    const liveOptions = { printWidth: meta.options?.printWidth ?? EMBEDDED_PRINT_WIDTH, ...playgroundIndentation };
+    const liveOptions = {
+        printWidth: meta.options?.printWidth ?? EMBEDDED_PRINT_WIDTH,
+        flixVersion: meta.options?.flixVersion,
+        ...playgroundIndentation,
+    };
     const firstOutput = outputs[0];
+    const firstOutputOptions = firstOutput && optionsFor(fixture, firstOutput);
     const displayedOutputs = outputs.map((block) => ({
         html: highlight(block.code),
         ...describeOptions(fixture, block),
     }));
     const liveOutput = meta.status !== "pass" ? undefined :
-        displayedOutputs[0].playgroundCompatible && liveOptions.printWidth === optionsFor(fixture, firstOutput).printWidth
+        displayedOutputs[0].playgroundCompatible && liveOptions.printWidth === firstOutputOptions.printWidth &&
+            (liveOptions.flixVersion ?? DEFAULT_FLIX_VERSION) === (firstOutputOptions.flixVersion ?? DEFAULT_FLIX_VERSION)
             ? firstOutput.code : await fmt(input.code, liveOptions);
     const example = {
         id: basename(relative, ".md"),
@@ -126,6 +132,7 @@ for (const path of findFixtures(root)) {
             source: input.code,
             output: liveOutput,
             printWidth: liveOptions.printWidth,
+            flixVersion: liveOptions.flixVersion,
         },
         outputs: displayedOutputs,
         reference,

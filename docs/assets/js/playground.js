@@ -213,7 +213,7 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
 
     function useExample(key, variant) {
         const fixture = Object.hasOwn(fixtures, key) ? fixtures[key] : undefined;
-        const options = variant === undefined ? undefined : fixture?.options[variant];
+        const options = variant === undefined ? { flixVersion: fixture?.options[0]?.flixVersion } : fixture?.options[variant];
         loadDraft({ source: fixture?.input ?? "", ...options });
         if (fixture) showStatus("Loading example…");
     }
@@ -476,8 +476,7 @@ function startEmbedded(embedded) {
         initial,
         onChange: ({ source, printWidth, flixVersion: version }) => {
             const widthOverride = printWidth === initial.printWidth ? undefined : printWidth;
-            const versionOverride = version === (initial.flixVersion ?? playgroundDefaultFlixVersion)
-                ? undefined : version;
+            const versionOverride = initial.flixVersion || version !== playgroundDefaultFlixVersion ? version : undefined;
             link.href = writeHandoff(originalLink, {
                 source,
                 printWidth: widthOverride,
