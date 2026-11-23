@@ -123,6 +123,8 @@ function lineCommentGroups(tokens: Token[], lines: string[], tabWidth: number, d
             lastCode = token;
             continue;
         }
+        // Flixdoc is DOC_COMMENT (exactly three slashes), not LINE_COMMENT, so it
+        // never enters this path; `////` and longer stay LINE_COMMENT and align.
         if (token.type !== L.LINE_COMMENT || lastCode?.line !== token.line || ignoredLines?.has(token.line) ||
             lastCode.type === L.ARROW_TIGHT || lastCode.type === L.COLON_COLON_TIGHT ||
             scope !== lineScope || !token.text ||
