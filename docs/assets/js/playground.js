@@ -35,6 +35,7 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
     const status = playground.querySelector(".playground-status");
     const cursorPosition = playground.querySelector("[data-cursor-position]");
     const copy = playground.querySelector(".playground-copy");
+    const useFormatted = playground.querySelector(".playground-use-formatted");
     const diff = playground.querySelector("[data-diff]");
     const formatted = playground.querySelector("[data-output]");
     const previewModes = playground.querySelectorAll("[data-preview-mode]");
@@ -46,6 +47,7 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
     let highlighter;
     let fixtures;
     let highlightingFailed = false;
+    let announceTakeOver = false;
 
     const input = createEditor(playground.querySelector("[data-input]"), queuePreview, initial?.source, showCursor, status.id);
     const output = createEditor(formatted, undefined, preview?.output);
@@ -83,10 +85,21 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
         cursorPosition.textContent = `Ln ${line.number}, Col ${column}${count}`;
     }
 
+    function syncPreviewActions() {
+        if (!preview) {
+            useFormatted.disabled = true;
+            return;
+        }
+        copy.disabled = preview.output.length === 0;
+        // Enabled when the snapshot differs from input (Formatted or Diff).
+        useFormatted.disabled = preview.output === input.view.state.doc.toString();
+    }
+
     function queuePreview() {
         const id = revision = ++nextRequest;
         clearTimeout(timer);
         copy.disabled = true;
+        useFormatted.disabled = true;
         showStatus("Formatting…");
         onChange?.(snapshot());
         timer = setTimeout(() => updatePreview(id), 250);
@@ -104,6 +117,8 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
             replaceCode(output.view, input.view.state.doc.toString());
             highlighter?.apply(output.view);
             refreshDiff();
+            copy.disabled = true;
+            useFormatted.disabled = true;
             showStatus("Enter a whole number greater than zero for line width.", true);
             return;
         }
@@ -126,6 +141,9 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
                 replaceCode(output.view, input.view.state.doc.toString());
                 highlighter?.apply(output.view);
                 refreshDiff();
+                copy.disabled = true;
+                useFormatted.disabled = true;
+                announceTakeOver = false;
                 showStatus(data.failure === "timeout"
                     ? "Formatting timed out. Edit to try again."
                     : "The formatter could not load. Edit to try again.", true);
@@ -149,10 +167,13 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
                 highlighter?.apply(output.view);
                 refreshDiff();
                 copy.disabled = source.length === 0;
+                useFormatted.disabled = true;
+                announceTakeOver = false;
                 showStatus("Not formatted. " + where + readableDiagnostic(message), true);
                 return;
             }
             showStatus("Partially formatted. Error. " + where + readableDiagnostic(message), true);
+            announceTakeOver = false;
         } else if (input.view.contentDOM.hasAttribute("aria-invalid")) input.markError();
         previewSource = input.view.state.doc;
         preview = { source: previewSource.toString(), output: data.output };
@@ -160,8 +181,15 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
         // Remap after layout so Sync survives wrapping that changes the preview height.
         highlighter?.apply(output.view);
         refreshDiff();
-        copy.disabled = data.output.length === 0;
-        if (!data.error) showStatus(highlightingFailed ? "Syntax highlighting could not load." : "");
+        syncPreviewActions();
+        if (!data.error) {
+            if (announceTakeOver) {
+                announceTakeOver = false;
+                showStatus("Input updated from formatted preview.");
+            } else {
+                showStatus(highlightingFailed ? "Syntax highlighting could not load." : "");
+            }
+        }
         requestAnimationFrame(() => syncFromInput());
     }
 
@@ -364,6 +392,17 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
         }
     });
 
+    useFormatted.addEventListener("click", () => {
+        if (!preview || preview.output === input.view.state.doc.toString()) return;
+        // Use the preview snapshot so Diff mode works while the Formatted pane is hidden.
+        const code = preview.output;
+        if (select) select.value = "";
+        announceTakeOver = true;
+        // Keep history so the previous input is one undo step (unlike load/replace helpers).
+        input.view.dispatch({ changes: { from: 0, to: input.view.state.doc.length, insert: code } });
+        input.view.focus();
+    });
+
     async function fetchFixtures(url) {
         const response = await fetch(url);
         if (!response.ok) throw new Error("The fixture data is unavailable.");
@@ -408,7 +447,7 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
     }
 
     if (initial) {
-        if (preview) copy.disabled = preview.output.length === 0;
+        if (preview) syncPreviewActions();
         else queuePreview();
     }
     if (select) void loadExamples();
