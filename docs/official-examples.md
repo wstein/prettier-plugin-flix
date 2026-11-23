@@ -142,6 +142,10 @@ Each row records the case, its outcome and a hash covering the extracted
 source, formatted bytes and any parse diagnostics. Changes to unrelated prose
 can pass if they leave the examples unchanged.
 
+A failed scheduled run opens or updates one tracking issue with a link to the
+run and, if uploaded, its audit artifact. Later failures update the same
+issue, reopening it if needed. Close it once the underlying failure is resolved.
+
 1. Download the artifact and open `drift.json` for the cases that triggered the
    alert. Inspect source links in `report.json` and layout changes in `findings.md`.
 2. Review new formatting with the plan above. Use `--reviews` to require a
