@@ -96,7 +96,9 @@ function recoverySlices(source: string, layout: Layout): Slice[] {
     for (const ch of source) offsets.push(offsets[offsets.length - 1] + ch.length);
     const startOf = (token: Token) => offsets[token.start];
     const endOf = (token: Token) => offsets[token.stop + 1];
-    const unclosedComment = tokens.find((token) => token.type === L.SLASH && source.startsWith("/*", startOf(token)));
+    const unclosedComment = tokens.find((token) =>
+        lexer.vocabulary.getSymbolicName(token.type) === "UNTERMINATED_BLOCK_COMMENT" ||
+        (token.type === L.SLASH && source.startsWith("/*", startOf(token))));
     const limit = unclosedComment ? startOf(unclosedComment) : source.length;
     const code = tokens.filter((token) => token.channel === 0 && token.type !== L.EOF && startOf(token) < limit);
     const pairs = matchingDelimiters(code, closers);

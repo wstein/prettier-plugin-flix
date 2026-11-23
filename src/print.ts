@@ -15,6 +15,9 @@ const ttype = (t: TerminalNode): number => t.symbol.type;
 const kind = (n: Node): string => (isTerm(n) ? "<token>" : n.constructor.name.replace(/Context\d*$/, ""));
 const kids = (n: Node): Node[] => (isTerm(n) ? [] : ((n.children ?? []) as Node[]));
 
+/** Flix 0.80 places types without a kind ascription inside a single-child rule. */
+const withoutTypeWrapper = (n: Node): Node => kind(n) === "UnascribedType" ? kids(n)[0] : n;
+
 function firstTerm(n: Node): TerminalNode | null {
     if (isTerm(n)) return n;
     for (const c of kids(n)) {
@@ -401,9 +404,10 @@ export class Printer {
         const pk = a.parent ? kind(a.parent as Node) : "";
         if (t === this.L.RPAREN) return pk === "ArgumentList" || pk === "ParenPrimary";
         if (t === this.L.RBRACK) return pk === "IndexExpr" || pk === "TypeArgs";
-        // Operator definitions: `def +(a, b)`, `use A.{+}`.
+        // Operator definitions and imports: `def <><(a, b)`, `use A.{<><}`.
         const gp = a.parent?.parent ? kind(a.parent.parent as Node) : "";
-        return pk === "GenericOperator" && (gp === "DefinitionName" || gp === "UseName");
+        return (pk === "GenericOperator" || pk === "UserDefinedOperator") &&
+            (gp === "DefinitionName" || gp === "UseName");
     }
 
     // ------------------------------------------------------------- sequences
@@ -1403,7 +1407,7 @@ export class Printer {
     private printDefinitionHead(n: ParserRuleContext, children: Node[], arrowIndex: number): Doc {
         const head = children.slice(0, arrowIndex);
         const typeIndex = head.findIndex((child) => kind(child) === "TypeAndEffect");
-        const type = typeIndex < 0 ? undefined : kids(head[typeIndex])[0];
+        const type = typeIndex < 0 ? undefined : withoutTypeWrapper(kids(head[typeIndex])[0]);
         const schema = type && kind(type) === "SimpleType" ? kids(type)[0] : undefined;
         const arrow = children[arrowIndex] as TerminalNode;
         // Reserve lead comments on `=` plus ` = body...`, not only ` =`, so a block
@@ -1547,7 +1551,7 @@ export class Printer {
         const parentKind = kind(n);
         const typeIndex = children.findIndex((child) => kind(child) === "TypeAndEffect");
         if (this.flat > 0 || typeIndex < 0) return this.seq(children, parentKind);
-        const type = kids(children[typeIndex])[0];
+        const type = withoutTypeWrapper(kids(children[typeIndex])[0]);
         const clauses = children.slice(typeIndex + 1);
         const hasEffect = kind(type) === "EffectAnnotatedType";
         if (!hasEffect && clauses.length === 0 && kind(type) !== "ApplyType") return this.seq(children, parentKind);
