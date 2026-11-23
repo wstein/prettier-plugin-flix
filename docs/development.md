@@ -121,13 +121,15 @@ exported fixture JSON are shared across builds. Only `baseURL` and
 default to that pin. Search, chapter nav, and asset URLs stay inside the
 catalog via RelPermalink. Root URLs mirror the latest pin (`0.80.0`);
 `/flix/0.80.0/` is the same catalog under an explicit version prefix.
-`/flix/0.79.0/` is for readers on the older grammar.
+`/flix/0.79.0/` is for readers on the older grammar. Unpinned fixtures still
+bake their static preview with the plugin default; when the catalog selects a
+different pin, Live re-formats under that pin instead of keeping the bake.
 
 **Switcher.** The toolbar Flix control rewrites the path between the root
 catalog (latest) and `/flix/<version>/...`, keeping the page after the prefix.
-Fixtures authored for a non-default major.minor, or that pin `flixVersion`,
-show a badge. Prefer those when checking older syntax; most fixtures target
-`0.80`.
+Fixtures that pin `flixVersion`, or whose `flix` major.minor differs from the
+catalog pin, show a badge. Prefer pinned 0.79 cases when checking older syntax;
+most fixtures target `0.80`.
 
 `npm run docs:build` runs one Hugo build for the root and one for each
 versioned catalog, stages them in the system temporary directory, then

@@ -9,7 +9,9 @@ The plugin parses Flix **0.80.0** (default) and **0.79.0**. The published
 fixture catalog keeps shared style-guide and chapter pages, and exposes each
 pin under `/flix/<version>/` with a toolbar switcher. Editors in the 0.79
 catalog default to that grammar; most fixtures still target 0.80 - prefer cases
-that pin `flixVersion: 0.79.0` when checking older syntax.
+that pin `flixVersion: 0.79.0` when checking older syntax. Live preview follows
+the selected pin, so 0.80-only syntax such as module-level `val` errors under
+0.79 until you switch the control.
 
 ## Line width and indentation
 

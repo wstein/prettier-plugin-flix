@@ -727,6 +727,22 @@ test("a 0.79-only fixture uses its pin in the catalog and the Playground", async
     await expect(page.getByRole("textbox", { name: "Preview" })).toContainText("def val(): Int32 = 40 + 3");
 });
 
+test("the 0.79 catalog Live-formats unpinned 0.80-only syntax under 0.79", async ({ page }) => {
+    await page.goto(siteUrl + "flix/0.79.0/declarations/#module-value");
+    const article = page.locator("#module-value");
+    await expect(article.locator(".fixture-flix")).toHaveText("Flix 0.80");
+    const fixture = article.locator("[data-embedded-playground]");
+    await expect(fixture.getByLabel("Flix version")).toHaveValue("0.79.0");
+    await expect(fixture.getByRole("textbox", { name: "Flix input" })).toHaveText("val answer:Int32=42");
+    const status = fixture.getByRole("status", { includeHidden: true });
+    await expect(status).toContainText(/Not formatted|Unexpected input 'val'/);
+    await expect(fixture.getByRole("textbox", { name: "Preview" })).toHaveText("val answer:Int32=42");
+
+    await fixture.getByLabel("Flix version").selectOption("0.80.0");
+    await expect(fixture.getByRole("textbox", { name: "Preview" })).toHaveText("val answer: Int32 = 42");
+    await expect(status).not.toHaveAttribute("data-error");
+});
+
 test("diff, copy, use formatted, invalid width and unrecoverable input stay in sync", async ({ page, context }) => {
     await context.grantPermissions(["clipboard-read", "clipboard-write"]);
     await page.goto(siteUrl + "playground/");
