@@ -4,11 +4,13 @@
 {{ $handoff := printf "%s?%s" $playground (querify "fixture" .path) }}
 <article id="{{ .id }}" class="fixture">
   {{ if $.group }}<h3><a href="#{{ .id }}">{{ .title }}</a></h3>{{ else }}<h2><a href="#{{ .id }}">{{ .title }}</a></h2>{{ end }}
-  {{ $parts := split site.Data.playground.defaultFlixVersion "." }}
-  {{ $defaultMajorMinor := printf "%s.%s" (index $parts 0) (index $parts 1) }}
+  {{ $catalogPin := site.Data.playground.defaultFlixVersion }}
+  {{ with site.Params.flixDocVersion }}{{ if ne . "" }}{{ $catalogPin = . }}{{ end }}{{ end }}
+  {{ $parts := split $catalogPin "." }}
+  {{ $catalogMajorMinor := printf "%s.%s" (index $parts 0) (index $parts 1) }}
   {{ if .flixVersion }}
   <p class="fixture-links"><span class="fixture-flix">flixVersion {{ .flixVersion }}</span></p>
-  {{ else if and .flix (ne .flix $defaultMajorMinor) }}
+  {{ else if and .flix (ne .flix $catalogMajorMinor) }}
   <p class="fixture-links"><span class="fixture-flix">Flix {{ .flix }}</span></p>
   {{ end }}
   {{ if or (ne .status "pass") $.showcase }}

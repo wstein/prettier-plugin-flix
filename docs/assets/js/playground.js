@@ -447,7 +447,12 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
     }
 
     if (initial) {
-        if (preview) syncPreviewActions();
+        // Unpinned fixtures bake their preview with the plugin default. Versioned
+        // catalogs select an older pin, so re-run instead of showing that bake as
+        // a successful Live preview under the wrong grammar.
+        const selected = flixVersion?.value || playgroundDefaultFlixVersion;
+        const bakedFor = initial.flixVersion ?? playgroundDefaultFlixVersion;
+        if (preview && selected === bakedFor) syncPreviewActions();
         else queuePreview();
     }
     if (select) void loadExamples();
