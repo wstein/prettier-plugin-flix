@@ -1,6 +1,6 @@
 ---
 title: "Comment-only collection and record braces stay tight"
-description: "A comment inside `List#{}`, `Array#{}`, `Set#{}`, `Map#{}`, `Vector#{}`, a record, a block, or `(…)` does not invent a blank line after the opener. Expression braces also drop a source blank there, matching flix format 0.80.0; declaration braces and parameter lists still keep one."
+description: "A comment inside `List#{}`, `Array#{}`, `Set#{}`, `Map#{}`, `Vector#{}`, a record, `#{…}`, or `(…)` does not invent a blank line after the opener. Expression and schema braces and parameter lists also drop a source blank there, matching flix format 0.80.0; declaration braces still keep one."
 group: "Other constructs"
 minVersion: "0.80.0"
 options: { printWidth: 80 }
@@ -45,8 +45,16 @@ def records(): Unit =
         /* gap */
     }
 
-def blocks(): Unit = {
-    /* c */
+def schemas(): Unit =
+    discard #{ /* c */ };
+    discard #{
+
+        /* gap */
+    }
+
+type alias SchemaGap = #{
+
+    /* gap */
 }
 
 def params(
@@ -110,8 +118,16 @@ def records(): Unit =
         /* gap */
     }
 
-def blocks(): Unit = {
-    /* c */
+def schemas(): Unit =
+    discard #{
+        /* c */
+    };
+    discard #{
+        /* gap */
+    }
+
+type alias SchemaGap = #{
+    /* gap */
 }
 
 def params(
@@ -119,7 +135,6 @@ def params(
 ): Unit = ()
 
 def paramsGap(
-
     /* gap */
 ): Unit = ()
 ```
@@ -173,8 +188,16 @@ def records(): Unit =
         /* gap */
     }
 
-def blocks(): Unit = {
-    /* c */
+def schemas(): Unit =
+    discard #{
+        /* c */
+    };
+    discard #{
+        /* gap */
+    }
+
+type alias SchemaGap = #{
+    /* gap */
 }
 
 def params(
@@ -182,7 +205,6 @@ def params(
 ): Unit = ()
 
 def paramsGap(
-
     /* gap */
 ): Unit = ()
 ```

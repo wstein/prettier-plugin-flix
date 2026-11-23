@@ -709,10 +709,10 @@ export class Printer {
         if (inner.length === 0 && comments.length > 0) {
             // Comment-only braces/parens: the first comment belongs to the closing
             // token. Break once after the opener.
-            // Keep a source blank only for declaration braces and parameter lists.
-            // Expression braces (List#{}, records, blocks, ...) drop it, like flix format.
-            const keepSourceBlank =
-                (preserveBlankAfterOpen || openType === this.L.LPAREN) && this.blankBefore(close);
+            // Keep a source blank only for declaration braces (BLANK_AFTER_BRACE).
+            // Expression braces, schema #{…}, and (…)/parameter lists drop it,
+            // matching flix format.
+            const keepSourceBlank = preserveBlankAfterOpen && this.blankBefore(close);
             const blankAfterOpen = keepSourceBlank ? hardline : "";
             return [openDoc, indent([hardline, blankAfterOpen, bodyHeader, comments]), hardline, closeCore, closeTrail];
         }

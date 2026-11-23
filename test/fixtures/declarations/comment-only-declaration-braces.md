@@ -1,6 +1,6 @@
 ---
 title: "Preserve source gaps in comment-only declaration bodies"
-description: "A comment may follow the opening brace directly or start after a blank line. A blank line between comments stays visible."
+description: "A comment may follow the opening brace directly or start after a blank line. A blank line between comments stays visible. Comment-only parameter lists drop a source blank after `(`, matching flix format."
 group: "Declarations"
 options: { printWidth: 80 }
 ---
@@ -132,7 +132,6 @@ struct MixedStruct[r] {
 }
 
 pub def noParams(
-
     /* The parameter list is empty. */
 ): Unit = ()
 ```
@@ -199,7 +198,6 @@ struct MixedStruct[r] {
 }
 
 pub def noParams(
-
     /* The parameter list is empty. */
 ): Unit = ()
 ```
