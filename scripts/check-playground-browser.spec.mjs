@@ -753,9 +753,13 @@ test("the Playground example menu filters by Flix version ranges", async ({ page
     // From-version only: module-level val is listed under 0.80, hidden under 0.79.
     await expect(examples.locator("option", { hasText: "Module-level value" })).toHaveCount(1);
     await expect(examples.locator("option", { hasText: "Function named val" })).toHaveCount(0);
+    await examples.selectOption({ label: "Module-level value" });
+    await expect(examples).toHaveValue("declarations/module-value.md");
 
     await version.selectOption("0.79.0");
     await expect(examples.locator("option", { hasText: "Module-level value" })).toHaveCount(0);
+    // Selection clears when the current example is outside the new pin.
+    await expect(examples).toHaveValue("");
     // Inclusive from–to: the 0.79-only pin appears under 0.79 and not under 0.80.
     await expect(examples.locator("option", { hasText: "Function named val" })).toHaveCount(1);
     await expect(examples.locator("optgroup[label='Version pins']")).toHaveCount(1);

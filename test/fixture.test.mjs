@@ -49,6 +49,8 @@ rejects("unclosed front matter", "---\ntitle: a\n", /not closed/);
 rejects("unknown key", sample('title: a\nnonsense: 1', ""), /unknown front matter key "nonsense"/);
 rejects("missing title", sample('minVersion: "0.80.0"', ""), /non-empty title/);
 rejects("bad minVersion", sample('title: a\nminVersion: "0.80"', ""), /exact Flix version/);
+rejects("bad maxVersion", sample('title: a\nmaxVersion: "0.80"', ""), /exact Flix version/);
+rejects("minVersion after maxVersion", sample('title: a\nminVersion: "0.80.0"\nmaxVersion: "0.79.0"', ""), /minVersion 0\.80\.0 is after maxVersion 0\.79\.0/);
 rejects("unknown flix key", sample('title: a\nflix: "0.80"', ""), /unknown front matter key "flix"/);
 rejects("bad status", sample('title: a\nstatus: maybe', ""), /status must be one of/);
 rejects("unknown option", sample('title: a\noptions: { semi: true }', ""), /unknown option "semi"/);
