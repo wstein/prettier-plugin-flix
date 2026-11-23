@@ -52,6 +52,7 @@ function bindVersionSwitcher() {
     const current = picker.dataset.current || latest;
     if (!latest) return;
 
+    picker.closest("label").hidden = false;
     if ([...picker.options].some((option) => option.value === current)) {
         picker.value = current;
     }
