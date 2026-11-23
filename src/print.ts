@@ -682,6 +682,11 @@ export class Printer {
             if (this.hasLineTrail(open)) return [openDoc, hardline, closeCore, closeTrail];
             return [openDoc, closeCore, closeTrail];
         }
+        if (inner.length === 0 && BLANK_AFTER_BRACE.has(parentKind)) {
+            // In a comment-only block the first comment belongs to the closing token.
+            const blankAfterOpen = this.blankBefore(close) ? hardline : "";
+            return [openDoc, indent([hardline, blankAfterOpen, comments]), hardline, closeCore, closeTrail];
+        }
 
         const leadingSline = padLeading ? line : softline;
         const trailingSline = padTrailing ? line : softline;

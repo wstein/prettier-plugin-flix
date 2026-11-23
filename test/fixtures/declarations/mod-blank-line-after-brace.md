@@ -46,6 +46,21 @@ mod Docs {
 mod Empty {
 
 }
+mod BlockComment {
+
+    /* First member. */
+    pub def member(): Int32 = 1
+}
+mod OnlyComment {
+
+
+    // Keep the blank line above this comment.
+}
+mod TightComment {
+    /* No blank line above this comment. */
+
+    // Keep the separation between comments.
+}
 trait Show2[a] {
 
     pub def show(x: a): String
@@ -104,6 +119,20 @@ mod Docs {
     def i(): Int32 = 9
 }
 mod Empty {}
+mod BlockComment {
+
+    /* First member. */
+    pub def member(): Int32 = 1
+}
+mod OnlyComment {
+
+    // Keep the blank line above this comment.
+}
+mod TightComment {
+    /* No blank line above this comment. */
+
+    // Keep the separation between comments.
+}
 trait Show2[a] {
 
     pub def show(x: a): String
@@ -160,6 +189,20 @@ mod Docs {
     def i(): Int32 = 9
 }
 mod Empty {}
+mod BlockComment {
+
+    /* First member. */
+    pub def member(): Int32 = 1
+}
+mod OnlyComment {
+
+    // Keep the blank line above this comment.
+}
+mod TightComment {
+    /* No blank line above this comment. */
+
+    // Keep the separation between comments.
+}
 trait Show2[a] {
 
     pub def show(x: a): String
