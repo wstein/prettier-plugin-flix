@@ -20,10 +20,15 @@
   <link rel="apple-touch-icon" href="{{ "branding/apple-touch-icon.png" | relURL }}" sizes="180x180">
   {{ $themeScript := resources.Get "js/site-theme.js" | fingerprint }}
   <script src="{{ $themeScript.RelPermalink }}" integrity="{{ $themeScript.Data.Integrity }}"></script>
+  {{ $flixVersionScript := resources.Get "js/site-flix-version.js" | fingerprint }}
+  <script src="{{ $flixVersionScript.RelPermalink }}" integrity="{{ $flixVersionScript.Data.Integrity }}"></script>
   {{ $stylesheet := resources.Get "css/catalog.css" | minify | fingerprint }}
   <link rel="stylesheet" href="{{ $stylesheet.RelPermalink }}" integrity="{{ $stylesheet.Data.Integrity }}">
 </head>
 <body{{ if $isPlayground }} class="playground-page"{{ end }}>
+  {{ $latestFlix := site.Data.playground.defaultFlixVersion }}
+  {{ $currentFlix := $latestFlix }}
+  {{ with site.Params.flixDocVersion }}{{ if ne . "" }}{{ $currentFlix = . }}{{ end }}{{ end }}
   <header class="site-header">
     <nav class="site-toolbar" aria-label="Site">
       <a class="site-brand" href="{{ site.Home.RelPermalink }}">
@@ -38,6 +43,13 @@
       {{ end }}
       {{ end }}
       {{ partialCached "site-search.html" . "catalog-index" }}
+      <label class="site-flix-version">Flix
+        <select id="site-flix-version" data-base-url="{{ site.BaseURL }}" data-latest="{{ $latestFlix }}" data-current="{{ $currentFlix }}" aria-label="Flix syntax version for this catalog">
+          {{ range site.Data.playground.supportedFlixVersions }}
+          <option value="{{ . }}"{{ if eq . $currentFlix }} selected{{ end }}>{{ . }}{{ if eq . $latestFlix }} (latest){{ end }}</option>
+          {{ end }}
+        </select>
+      </label>
       <label class="site-theme">Theme
         <select id="site-theme">
           <option value="system">System</option>

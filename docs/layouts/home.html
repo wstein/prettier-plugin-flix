@@ -1,6 +1,22 @@
 {{ define "main" }}
+{{ $latestFlix := site.Data.playground.defaultFlixVersion }}
+{{ $currentFlix := $latestFlix }}
+{{ with site.Params.flixDocVersion }}{{ if ne . "" }}{{ $currentFlix = . }}{{ end }}{{ end }}
 <h1>{{ site.Title }} · Test Catalog</h1>
 <p>Compare Flix inputs with their expected Prettier output and, where available, the built-in Flix formatter.</p>
+{{ if ne $currentFlix $latestFlix }}
+<aside class="version-notice" role="note">
+  <p>
+    You are reading the catalog for Flix <strong>{{ $currentFlix }}</strong>.
+    The style guide and chapter pages are shared with {{ $latestFlix }}; this tree defaults the Playground and embedded editors to {{ $currentFlix }}.
+    Most fixtures were authored for {{ $latestFlix }}—prefer cases that pin <code>flixVersion: {{ $currentFlix }}</code> when checking older syntax, and switch to {{ $latestFlix }} for the default plugin behavior.
+  </p>
+  {{ $rootHome := strings.TrimSuffix (printf "flix/%s/" $currentFlix) site.BaseURL }}
+  <p><a href="{{ $rootHome }}">Open the {{ $latestFlix }} catalog (latest)</a></p>
+</aside>
+{{ else }}
+<p class="version-summary">Catalog for Flix {{ $currentFlix }} (plugin default). Use the Flix control in the toolbar for {{ delimit (site.Data.playground.supportedFlixVersions) " or " }}.</p>
+{{ end }}
 <p><a href="{{ (site.GetPage "playground").RelPermalink }}">Try the Playground</a> · <a href="{{ (site.GetPage "formatting").RelPermalink }}">Read the formatting style</a></p>
 <h2>Chapters</h2>
 <ul class="chapters">

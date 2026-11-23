@@ -28,7 +28,10 @@ body { margin: 0; color: var(--foreground); line-height: 1.55; }
 .site-brand img { flex: none; width: 1.25rem; height: 1.25rem; }
 .site-playground { padding-inline-start: 0.8rem; border-inline-start: 1px solid var(--border); }
 .site-playground[aria-current="page"] { color: var(--foreground); font-weight: 600; }
-.site-theme { display: flex; align-items: center; gap: 0.35rem; margin-inline-start: auto; }
+.site-flix-version,
+.site-theme { display: flex; align-items: center; gap: 0.35rem; }
+.site-theme { margin-inline-start: auto; }
+.site-flix-version select,
 .site-theme select {
   padding: 0.15rem 0.35rem;
   border: 1px solid var(--border);
@@ -36,6 +39,24 @@ body { margin: 0; color: var(--foreground); line-height: 1.55; }
   background: var(--code-background);
   color: inherit;
   font: inherit;
+}
+.version-notice {
+  margin: 1rem 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.35rem;
+  background: var(--surface);
+}
+.version-notice p { margin: 0.35rem 0; }
+.version-summary { color: light-dark(#4a5568, #a0aec0); font-size: 0.95rem; }
+.fixture-flix {
+  display: inline-block;
+  padding: 0.1rem 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 0.25rem;
+  background: var(--surface);
+  font-size: 0.8rem;
+  font-weight: 600;
 }
 main { min-width: 0; padding-block: 1rem 4rem; }
 .site-shell, body:not(.playground-page) .site-toolbar {

@@ -395,27 +395,85 @@ test("sync anchors match indented module members so Sync does not stay 1:1", () 
     assert.equal(mapSyncedLine(3, before, after), 7);
 });
 
-test("the latest Flix pin also publishes under /flix/<version>/ while root URLs stay", async () => {
-    const version = "0.80.0";
+test("each supported Flix pin publishes under /flix/<version>/ while root URLs stay", async () => {
     const rootGuide = await readFile(new URL("formatting/index.html", site), "utf8");
-    const versionGuide = await readFile(new URL(`flix/${version}/formatting/index.html`, site), "utf8");
-    const versionPlayground = await readFile(new URL(`flix/${version}/playground/index.html`, site), "utf8");
-    const versionHome = await readFile(new URL(`flix/${version}/index.html`, site), "utf8");
+    const rootHome = await readFile(new URL("index.html", site), "utf8");
     assert.match(rootGuide, /<h1[^>]*>Flix formatting style<\/h1>/);
-    assert.match(versionGuide, /<h1[^>]*>Flix formatting style<\/h1>/);
-    assert.match(versionPlayground, /data-flix-version/);
-    assert.match(versionPlayground, /<option[^>]*value=(?:"0\.80\.0"|0\.80\.0)[^>]*selected/);
-    // Versioned pages keep navigation and assets inside their catalog.
-    assert.match(versionHome, new RegExp(`/flix/${version.replace(/\./g, "\\.")}/formatting/`));
-    assert.match(versionHome, new RegExp(`/flix/${version.replace(/\./g, "\\.")}/playground/`));
-    const prefix = `/prettier-plugin-flix/flix/${version}/`;
+    assert.match(rootHome, /id=(?:"site-flix-version"|site-flix-version)/);
+    assert.match(rootHome, /data-latest=(?:"0\.80\.0"|0\.80\.0)/);
+    assert.match(rootHome, /data-current=(?:"0\.80\.0"|0\.80\.0)/);
+    assert.match(rootHome, /site-flix-version\./);
+
     const urlAttributes = /\s(href|src|data-(?:examples|formatter|index|linked-fixtures|worker))\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/g;
-    for (const [pageName, html] of [["home", versionHome], ["formatting", versionGuide], ["playground", versionPlayground]]) {
-        for (const [, attribute, doubleQuoted, singleQuoted, unquoted] of html.matchAll(urlAttributes)) {
-            const url = doubleQuoted ?? singleQuoted ?? unquoted;
-            if (url.startsWith("/") && !url.startsWith("//")) {
-                assert.ok(url.startsWith(prefix), `Versioned ${pageName} has ${attribute} outside its catalog: ${url}`);
+    for (const version of ["0.79.0", "0.80.0"]) {
+        const versionGuide = await readFile(new URL(`flix/${version}/formatting/index.html`, site), "utf8");
+        const versionPlayground = await readFile(new URL(`flix/${version}/playground/index.html`, site), "utf8");
+        const versionHome = await readFile(new URL(`flix/${version}/index.html`, site), "utf8");
+        assert.match(versionGuide, /<h1[^>]*>Flix formatting style<\/h1>/);
+        assert.match(versionPlayground, /data-flix-version/);
+        assert.match(
+            versionPlayground,
+            new RegExp(`<option[^>]*value=(?:"${version.replace(/\./g, "\\.")}"|${version.replace(/\./g, "\\.")})[^>]*selected`),
+        );
+        const escaped = version.replace(/\./g, "\\.");
+        assert.match(versionHome, /id=(?:"site-flix-version"|site-flix-version)/);
+        assert.match(versionHome, new RegExp(`data-current=(?:"${escaped}"|${escaped})`));
+        assert.match(versionHome, new RegExp(`/flix/${escaped}/formatting/`));
+        assert.match(versionHome, new RegExp(`/flix/${escaped}/playground/`));
+        if (version === "0.79.0") {
+            assert.match(versionHome, /You are reading the catalog for Flix/);
+            assert.match(versionHome, /Open the 0\.80\.0 catalog/);
+            const comments = await readFile(new URL(`flix/${version}/comments/index.html`, site), "utf8");
+            assert.match(comments, /flixVersion 0\.79\.0/);
+        }
+        const siteRoot = "/prettier-plugin-flix/";
+        const prefix = `${siteRoot}flix/${version}/`;
+        for (const [pageName, html] of [["home", versionHome], ["formatting", versionGuide], ["playground", versionPlayground]]) {
+            for (const [, attribute, doubleQuoted, singleQuoted, unquoted] of html.matchAll(urlAttributes)) {
+                const url = doubleQuoted ?? singleQuoted ?? unquoted;
+                if (url.startsWith("/") && !url.startsWith("//")) {
+                    // Stay inside this catalog, except explicit cross-catalog links
+                    // (root / other /flix/<version>/ trees) for the version switcher.
+                    const inCatalog = url.startsWith(prefix);
+                    const crossCatalog = url === siteRoot ||
+                        url.startsWith(siteRoot) && (
+                            /^\/prettier-plugin-flix\/flix\/\d+\.\d+\.\d+(?:\/|$)/.test(url) ||
+                            !url.slice(siteRoot.length).startsWith("flix/")
+                        );
+                    assert.ok(
+                        inCatalog || crossCatalog,
+                        `Versioned ${pageName} (${version}) has ${attribute} outside its catalog: ${url}`,
+                    );
+                }
             }
         }
     }
+});
+
+test("the Flix version switcher keeps the page path when changing catalogs", async () => {
+    const script = await readFile(new URL("../docs/assets/js/site-flix-version.js", import.meta.url), "utf8");
+    assert.match(script, /catalogRest/);
+    assert.match(script, /urlForVersion/);
+    assert.match(script, /flix\/\$\{version\}\//);
+    // Mirror the rewrite rules from site-flix-version.js.
+    function catalogRest(pathname, basePath) {
+        let rest = pathname.startsWith(basePath) ? pathname.slice(basePath.length) : pathname.replace(/^\//, "");
+        rest = rest.replace(/^flix\/\d+\.\d+\.\d+(?:\/|$)/, "");
+        return rest;
+    }
+    function urlForVersion(basePath, latest, version, rest) {
+        const suffix = rest.startsWith("/") ? rest.slice(1) : rest;
+        if (version === latest) return `${basePath}${suffix}`;
+        return `${basePath}flix/${version}/${suffix}`;
+    }
+    const base = "/prettier-plugin-flix/";
+    assert.equal(catalogRest(`${base}formatting/`, base), "formatting/");
+    assert.equal(catalogRest(`${base}flix/0.79.0/formatting/`, base), "formatting/");
+    assert.equal(catalogRest(`${base}flix/0.80.0/playground/`, base), "playground/");
+    assert.equal(urlForVersion(base, "0.80.0", "0.79.0", "formatting/"), `${base}flix/0.79.0/formatting/`);
+    assert.equal(urlForVersion(base, "0.80.0", "0.80.0", "comments/"), `${base}comments/`);
+    assert.equal(
+        urlForVersion(base, "0.80.0", "0.80.0", catalogRest(`${base}flix/0.79.0/comments/`, base)),
+        `${base}comments/`,
+    );
 });
