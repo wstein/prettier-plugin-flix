@@ -96,7 +96,7 @@ const BINARY = new Set([
 /** Own-separator nodes: they emit their trailing space or newline themselves. */
 const SELF_SPACED = new Set(["DeclPrefix", "AnnotationList", "ModifierList"]);
 /** Declaration blocks whose blank line after `{` stays, as in the built-in Flix formatter. */
-const BLANK_AFTER_BRACE = new Set(["ModDeclaration", "TraitDeclaration", "InstanceDeclaration", "EnumDeclarationTail"]);
+const BLANK_AFTER_BRACE = new Set(["ModDeclaration", "TraitDeclaration", "InstanceDeclaration", "EffDeclaration", "StructDeclaration"]);
 const DECLARATION_BLOCKS = new Set(["ModDeclaration", "TraitDeclaration", "InstanceDeclaration", "EffDeclaration"]);
 
 export class Printer {
@@ -677,19 +677,31 @@ export class Printer {
         const padLeading = braces && (!wantsNoPad || openRecordBar);
         const padTrailing = braces && !wantsNoPad;
         const comments = this.takeClosingComments(close);
-        const openDoc = this.tok(open);
         const closeCore = this.tokCore(close);
         const closeTrail = this.tokTrail(close);
         const closeDoc = closeCore;
 
         if (inner.length === 0 && comments.length === 0) {
+            const openDoc = this.tok(open);
             if (this.hasLineTrail(open)) return [openDoc, hardline, closeCore, closeTrail];
             return [openDoc, closeCore, closeTrail];
         }
-        if (inner.length === 0 && BLANK_AFTER_BRACE.has(parentKind)) {
+        const preserveBlankAfterOpen = openType === this.L.LBRACE && BLANK_AFTER_BRACE.has(parentKind);
+        const enumBody = openType === this.L.LBRACE && parentKind === "EnumDeclarationTail";
+        const openTrail = enumBody ? this.info(open)?.trail ?? [] : [];
+        const lastOpenComment = openTrail.at(-1);
+        // A gap after an opener comment separates body content. It is not an
+        // opening blank line, which enums drop.
+        const moveOpenComments = lastOpenComment?.isLine && !this.isFlixdoc(lastOpenComment) &&
+            lastOpenComment.nlNext >= 2;
+        const openDoc = moveOpenComments ? this.tokCore(open) : this.tok(open);
+        const bodyHeader = moveOpenComments
+            ? [join(" ", openTrail.map((comment) => this.commentText(comment))), hardline, hardline]
+            : [];
+        if (inner.length === 0 && (preserveBlankAfterOpen || enumBody)) {
             // In a comment-only block the first comment belongs to the closing token.
-            const blankAfterOpen = this.blankBefore(close) ? hardline : "";
-            return [openDoc, indent([hardline, blankAfterOpen, comments]), hardline, closeCore, closeTrail];
+            const blankAfterOpen = preserveBlankAfterOpen && this.blankBefore(close) ? hardline : "";
+            return [openDoc, indent([hardline, blankAfterOpen, bodyHeader, comments]), hardline, closeCore, closeTrail];
         }
 
         const leadingSline = padLeading ? line : softline;
@@ -751,10 +763,10 @@ export class Printer {
                 }
             });
             const vertical = sourceMultiline || comments.length > 0;
-            const blankAfterOpen = sourceMultiline && BLANK_AFTER_BRACE.has(parentKind) &&
+            const blankAfterOpen = sourceMultiline && preserveBlankAfterOpen &&
                 this.blankBefore(firstTerm(entries[0][0]));
             return [group([
-                openDoc, indent([vertical ? hardline : firstSline, blankAfterOpen ? hardline : "", docs, tail]),
+                openDoc, indent([vertical ? hardline : firstSline, blankAfterOpen ? hardline : "", bodyHeader, docs, tail]),
                 vertical ? hardline : lastSline, closeDoc,
             ], { id: layoutId, shouldBreak: vertical }), closeTrail];
         }

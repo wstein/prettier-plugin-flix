@@ -12,6 +12,11 @@ test("reports syntax errors with a location", async () => {
     await assert.rejects(fmt("def ("), (e) => e instanceof SyntaxError && e.loc.start.line === 1);
 });
 
+test("does not move a misplaced Flixdoc comment onto an enum case", async () => {
+    const source = "enum Doc { /// Documentation.\n\n    case Yellow\n}\n";
+    assert.equal(await fmt(source), "enum Doc { /// Documentation.\n    case Yellow\n}\n");
+});
+
 test("preserves access-dot token classes beside comments", async () => {
     const path = join(here, "fixtures", "whitespace", "tight-dot-comments.md");
     const { input } = loadFixture(path);
