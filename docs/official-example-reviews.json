@@ -6,5 +6,81 @@
   "book.library-effects.filesystem.backup": {
     "digest": "8b215807221235ca8e7529a2553fedc0c8f4a3e4005a2f01101c59c775f7a161",
     "reason": "Use the actual indentation of each match to place its arrows. The long message in the inner match starts below the arrow so the indented line fits."
+  },
+  "book.library-effects.console.the-console-module": {
+    "digest": "afa185ff450688b77680716a7ec14b7bd29ca4884f954d51f33bd27afb8da305",
+    "reason": "Record braces drop inner padding (`{default = Bool}`). The shorter signature then wraps `with ToString[a]` onto the next line under the return type."
+  },
+  "book.traits.higher-kinded-types.the-flix-kinds-02": {
+    "digest": "fab0c6a10f4a3f2b037cc8671d755ff7f058ef4ee15f1a93853a0630faa4f109",
+    "reason": "Record braces drop inner padding. The body moves under the signature once the line no longer fits at 80 columns."
+  },
+  "book.introduction-to-flix.introduction.returns-the-area-of-the-polymorphic-reco": {
+    "digest": "0780b0890eb184509bd70a047c740f69defbea26cc3ad80e8745d2f37f824edc",
+    "reason": "Record braces drop inner padding; type-parameter colons stay tight (`a: RecordRow`). Short calls and `main` join onto one line when they fit."
+  },
+  "book.control-structures.pattern-matching.matching-on-records": {
+    "digest": "d3795d3b6dbfc10616468925d2ab39431325ba958af3b078cca88b496cc89f2e",
+    "reason": "Record type and pattern braces drop inner padding, matching Flix (`{radius = Int32}`, `{height, width}`)."
+  },
+  "book.control-structures.pattern-matching.matching-on-records-02": {
+    "digest": "880032f8386f987df6f634d52a35a88d3c216d8f560909cbfa232ed5ad53d9e1",
+    "reason": "Record type and pattern braces drop inner padding (`{height = Int32 | a}`, `{height | _}`)."
+  },
+  "book.control-structures.pattern-matching.matching-on-records-03": {
+    "digest": "d804342ba326452aeba7081e6506ec6102a9d0e41476023f130bd801b52635b7",
+    "reason": "Record type and pattern braces drop inner padding (`{height = Int32 | a}`, `{height}`)."
+  },
+  "book.control-structures.pattern-matching.matching-on-records-04": {
+    "digest": "0796106da3d181b02081fa8fbdd6eac807fdbecdb2effdbf8f19af8eb0232f9a",
+    "reason": "Record pattern braces drop inner padding (`{height | _}`, `{height}`)."
+  },
+  "book.control-structures.pattern-matching.matching-on-records-05": {
+    "digest": "161190f64693ebac04a8b5b063b00307876c8d3276474db954df718392b7ccbd",
+    "reason": "Record type and pattern braces drop inner padding in the signature and match arms."
+  },
+  "book.control-structures.pattern-matching.matching-on-records-06": {
+    "digest": "7c206df32ecae896396250059f024fea89c02d6eda49d318359238453e4412c3",
+    "reason": "Record type and pattern braces drop inner padding in the signature and renamed match arms."
+  },
+  "book.control-structures.pattern-matching.let-pattern-match-04": {
+    "digest": "fb7a89eef1562c79008149d3b3aec2532508fdb8ac9f5610b69b4fafde77c89a",
+    "reason": "Record pattern braces drop inner padding (`{height | _}`)."
+  },
+  "book.immutable-data.records.record-literals": {
+    "digest": "90d46d335455b85f914df04e0beb14209036d1628005021b2abc1ab1b9e094af",
+    "reason": "Record literal braces drop inner padding (`{x = 1, y = 2}`), matching Flix."
+  },
+  "book.immutable-data.records.record-literals-02": {
+    "digest": "6e24ce37abebdc55e03ae703a4f06f9ad8694030117d4a776063149c8b4a1bed",
+    "reason": "Record literal braces drop inner padding (`{y = 2, x = 1}`), matching Flix."
+  },
+  "book.immutable-data.records.label-access": {
+    "digest": "15acb96e8af06da4148eb550c6b6e2967b10c7e22f437253be2a1dcd4c47a03a",
+    "reason": "Record literal braces drop inner padding before label access."
+  },
+  "book.immutable-data.records.label-update": {
+    "digest": "1adec4c27c431cc04eb0d75a45ebd18cb406e9a7ec348370828fb0c5d4e7c36f",
+    "reason": "Record literal and update braces drop inner padding (`{x = 3 | p1}`)."
+  },
+  "book.immutable-data.records.record-extension": {
+    "digest": "f496a7a7de7c77fa19af55280d5d8cab3f33520084bfe5c198c6a5e7bcde97e5",
+    "reason": "Record braces drop inner padding. The extension keeps a space after `+` (`{+ z = 3 | p1}`), as the formatter already did."
+  },
+  "book.immutable-data.records.record-restriction": {
+    "digest": "5f615906fefa89df1bcf28deee9a0e2777daaab177cf14db25d87ffca1b052bd",
+    "reason": "Record braces drop inner padding. The restriction keeps a space after `-` (`{- y | p1}`), as the formatter already did."
+  },
+  "book.immutable-data.records.named-parameters": {
+    "digest": "12018d303a51d60aab7fb01e338274a13d42eaa3f53f48a2af9e9d597589a808",
+    "reason": "Record braces drop inner padding in named parameter types. The shorter heads still wrap the parameter list at 80 columns."
+  },
+  "book.advanced-features.type-level-programming.we-can-use-a-phantom-type-level-boolean": {
+    "digest": "f75740a4889c7c61549b441fbe11304d8ee3352a244172237ce5ffe0c406f69e",
+    "reason": "Record braces drop inner padding. Short single-expression bodies join the signature; a long return type wraps before the body."
+  },
+  "website.front-page.record.record-example": {
+    "digest": "008f4db85c7f7f3fd8a30bd7d9932a7ce8f151427af72f65cce21ec1173622bb",
+    "reason": "Normalize spacing around record braces already without inner padding, and join the short `area` body onto one line when it fits."
   }
 }
