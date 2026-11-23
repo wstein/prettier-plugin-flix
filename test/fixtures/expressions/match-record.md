@@ -18,7 +18,7 @@ def duplicateLabels01(): Unit \ Assert = match { a = false, a = true } {
 
 ```flix
 @Test
-def duplicateLabels01(): Unit \ Assert = match { a = false, a = true } {
-    case { a = x, a = y } => assertTrue((not x) and y)
+def duplicateLabels01(): Unit \ Assert = match {a = false, a = true} {
+    case {a = x, a = y} => assertTrue((not x) and y)
 }
 ```

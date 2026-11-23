@@ -65,8 +65,16 @@ function nextTerm(n: Node): TerminalNode | null {
 /** Characters that make up user operators; two adjacent runs of them would lex as one token. */
 const OP_CHARS = "+-*<>=!&|^$";
 
-/** Brace lists printed without inner padding: `use A.{b, c}`, `List#{1, 2}`. */
-const NO_PAD = new Set(["UseClause", "ImportClause", "CollectionLiteral"]);
+/**
+ * Brace lists printed without inner padding: `use A.{b, c}`, `List#{1, 2}`,
+ * and records `{x = T}` / `{x = 1 | r}` (Flix `flatPad` is empty for records).
+ * Effect sets and schema braces keep a space. An open record that starts with
+ * `|` keeps the space after `{` (`{ | a}`).
+ */
+const NO_PAD = new Set([
+    "UseClause", "ImportClause", "CollectionLiteral",
+    "RecordType", "RecordPattern", "RecordOperation",
+]);
 /** Bracket lists whose items are separated by `;` rather than `,`. */
 const SEMI_LISTS = new Set(["ForFragments", "ParYieldExpr"]);
 /** Brace lists whose items are whole rules laid out one per line. */
@@ -652,7 +660,10 @@ export class Printer {
         const inner = children.slice(i + 1, j);
         const openType = ttype(open);
         const braces = openType === this.L.LBRACE || openType === this.L.HASH_LBRACE || openType === this.L.HASH_BAR;
-        const pad = braces && !NO_PAD.has(parentKind);
+        // Open record `{ | a}`: Flix keeps a space after `{` before the pipe.
+        const firstInner = inner.length > 0 ? firstTerm(inner[0]) : null;
+        const openRecordBar = NO_PAD.has(parentKind) && firstInner !== null && ttype(firstInner) === this.L.BAR;
+        const pad = braces && (!NO_PAD.has(parentKind) || openRecordBar);
         const comments = this.takeClosingComments(close);
         const openDoc = this.tok(open);
         const closeCore = this.tokCore(close);

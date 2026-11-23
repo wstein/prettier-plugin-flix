@@ -19,7 +19,7 @@ pub def lookup(m: Map[a, b], k: a): Option[b] with Order[a], ToString[b], Eq[b],
 
 ```flix
 eff Console {
-    def confirm(p: a, default: { default = Bool }): Bool \ Console
+    def confirm(p: a, default: {default = Bool}): Bool \ Console
         with ToString[a]
 }
 def wait(rx: Receiver[Int32], n: Int32, tx: Sender[List[Int32]]): Unit
@@ -30,9 +30,8 @@ pub def lookup(m: Map[a, b], k: a): Option[b]
 
 ```flix printWidth=50
 eff Console {
-    def confirm(p: a, default: {
-        default = Bool
-    }): Bool \ Console with ToString[a]
+    def confirm(p: a, default: {default = Bool}):
+        Bool \ Console with ToString[a]
 }
 def wait(
     rx: Receiver[Int32],
@@ -47,7 +46,7 @@ pub def lookup(m: Map[a, b], k: a): Option[b]
 
 ```flix printWidth=60
 eff Console {
-    def confirm(p: a, default: { default = Bool }): Bool
+    def confirm(p: a, default: {default = Bool}): Bool
         \ Console with ToString[a]
 }
 def wait(
@@ -62,7 +61,7 @@ pub def lookup(m: Map[a, b], k: a): Option[b]
 
 ```flix printWidth=70
 eff Console {
-    def confirm(p: a, default: { default = Bool }): Bool \ Console
+    def confirm(p: a, default: {default = Bool}): Bool \ Console
         with ToString[a]
 }
 def wait(rx: Receiver[Int32], n: Int32, tx: Sender[List[Int32]]): Unit

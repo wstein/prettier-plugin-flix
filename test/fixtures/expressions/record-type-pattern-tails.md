@@ -64,8 +64,8 @@ def fromPattern(journey: {
         } => name
     }
 
-def compact(r: { name = String | a }): String = match r {
-    case { name | _ } => name
+def compact(r: {name = String | a}): String = match r {
+    case {name | _} => name
 }
 
 def commented(r: {
@@ -82,7 +82,7 @@ def pipeCommented(r: {
     name = String |  // keep the tail
     a
 }): String = match r {
-    case { name = n | /* rest */ _ } => n
+    case {name = n | /* rest */ _} => n
 }
 
 def eighty(r: {
@@ -133,8 +133,8 @@ def fromPattern(journey: {
         } => name
     }
 
-def compact(r: { name = String | a }): String = match r {
-    case { name | _ } => name
+def compact(r: {name = String | a}): String = match r {
+    case {name | _} => name
 }
 
 def commented(r: {
@@ -151,7 +151,7 @@ def pipeCommented(r: {
     name = String |  // keep the tail
     a
 }): String = match r {
-    case { name = n | /* rest */ _ } => n
+    case {name = n | /* rest */ _} => n
 }
 
 def eighty(r: {
@@ -200,8 +200,8 @@ def fromPattern(journey: {
         } => name
     }
 
-def compact(r: { name = String | a }): String = match r {
-    case { name | _ } => name
+def compact(r: {name = String | a}): String = match r {
+    case {name | _} => name
 }
 
 def commented(r: {
@@ -218,7 +218,7 @@ def pipeCommented(r: {
     name = String |  // keep the tail
     a
 }): String = match r {
-    case { name = n | /* rest */ _ } => n
+    case {name = n | /* rest */ _} => n
 }
 
 def eighty(r: {

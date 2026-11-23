@@ -31,7 +31,7 @@ pub def a(): Map[String, Int32] = Map#{
     /* c */ "sync" => 120  // Sync attempts are cheap.
 }
 
-pub def f(): { id = Int32, name = String, active = Bool } = {
+pub def f(): {id = Int32, name = String, active = Bool} = {
     id = 7,  // note
     /* Assigned */ name   = "Flix",
     active = true  // Active accounts can sign in.
@@ -63,11 +63,7 @@ pub def a(): Map[String, Int32] = Map#{
     /* c */ "sync" => 120  // Sync attempts are cheap.
 }
 
-pub def f(): {
-    id = Int32,
-    name = String,
-    active = Bool
-} = {
+pub def f(): {id = Int32, name = String, active = Bool} = {
     id = 7,  // note
     /* Assigned */ name   = "Flix",
     active = true  // Active accounts can sign in.

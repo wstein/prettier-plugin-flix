@@ -54,11 +54,11 @@ pub def paren2(_f: t1 -> t2 -> t): String -> (String -> String)
 
 pub def paren3(_f: t1 -> t2 -> t): (String -> String, String -> String) ->
         String with Order[t1], Order[t2], Order[t] = _ -> ""
-pub def rec1(_f: t1 -> t2 -> t): { f = String -> String } -> String
+pub def rec1(_f: t1 -> t2 -> t): {f = String -> String} -> String
     with Order[t1], Order[t2], Order[t] = _ -> ""
 
-pub def rec2(_f: t1 -> t2 -> t): String -> { f = String -> String, g = Int32 }
-    with Order[t1], Order[t2], Order[t] = _ -> { f = _ -> "", g = 1 }
+pub def rec2(_f: t1 -> t2 -> t): String -> {f = String -> String, g = Int32}
+    with Order[t1], Order[t2], Order[t] = _ -> {f = _ -> "", g = 1}
 ```
 
 ```flix printWidth=60
@@ -91,14 +91,14 @@ pub def paren3(_f: t1 -> t2 -> t): (
     String -> String,
     String -> String
 ) -> String with Order[t1], Order[t2], Order[t] = _ -> ""
-pub def rec1(_f: t1 -> t2 -> t): { f = String -> String } ->
+pub def rec1(_f: t1 -> t2 -> t): {f = String -> String} ->
         String with Order[t1], Order[t2], Order[t] = _ -> ""
 
 pub def rec2(_f: t1 -> t2 -> t): String ->
-        { f = String -> String, g = Int32 } with
+        {f = String -> String, g = Int32} with
         Order[t1],
         Order[t2],
-        Order[t] = _ -> { f = _ -> "", g = 1 }
+        Order[t] = _ -> {f = _ -> "", g = 1}
 ```
 
 ```flix printWidth=100
@@ -118,9 +118,9 @@ pub def paren2(_f: t1 -> t2 -> t): String -> (String -> String)
 
 pub def paren3(_f: t1 -> t2 -> t): (String -> String, String -> String) -> String
     with Order[t1], Order[t2], Order[t] = _ -> ""
-pub def rec1(_f: t1 -> t2 -> t): { f = String -> String } -> String
+pub def rec1(_f: t1 -> t2 -> t): {f = String -> String} -> String
     with Order[t1], Order[t2], Order[t] = _ -> ""
 
-pub def rec2(_f: t1 -> t2 -> t): String -> { f = String -> String, g = Int32 }
-    with Order[t1], Order[t2], Order[t] = _ -> { f = _ -> "", g = 1 }
+pub def rec2(_f: t1 -> t2 -> t): String -> {f = String -> String, g = Int32}
+    with Order[t1], Order[t2], Order[t] = _ -> {f = _ -> "", g = 1}
 ```

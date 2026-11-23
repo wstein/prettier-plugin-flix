@@ -19,12 +19,12 @@ def h(x: Int32): String = "a ${{ aaaaaaaaaaaaaaaa = 1, bbbbbbbbbbbbbbbbbbb = 2, 
 def f(x: Int32): String =
     "a ${(g: (Aaaaaaaaaaaaaa, Bbbbbbbbbbbbbbb, Cccccccccccccc) -> Ddddddddddddddd -> Eeeeeeeeeeeeee)} b"
 def h(x: Int32): String =
-    "a ${{ aaaaaaaaaaaaaaaa = 1, bbbbbbbbbbbbbbbbbbb = 2, cccccccccccccccccc = 3 | rrrrrrrrrrrrrrrrr }} b"
+    "a ${{aaaaaaaaaaaaaaaa = 1, bbbbbbbbbbbbbbbbbbb = 2, cccccccccccccccccc = 3 | rrrrrrrrrrrrrrrrr}} b"
 ```
 
 ```flix printWidth=60
 def f(x: Int32): String =
     "a ${(g: (Aaaaaaaaaaaaaa, Bbbbbbbbbbbbbbb, Cccccccccccccc) -> Ddddddddddddddd -> Eeeeeeeeeeeeee)} b"
 def h(x: Int32): String =
-    "a ${{ aaaaaaaaaaaaaaaa = 1, bbbbbbbbbbbbbbbbbbb = 2, cccccccccccccccccc = 3 | rrrrrrrrrrrrrrrrr }} b"
+    "a ${{aaaaaaaaaaaaaaaa = 1, bbbbbbbbbbbbbbbbbbb = 2, cccccccccccccccccc = 3 | rrrrrrrrrrrrrrrrr}} b"
 ```
