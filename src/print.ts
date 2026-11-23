@@ -368,7 +368,11 @@ export class Printer {
         const sa = this.src(a);
         const sb = this.src(b);
         if (OP_CHARS.includes(sa.charAt(sa.length - 1)) && OP_CHARS.includes(sb.charAt(0))) return " ";
-        if (ta === this.L.DOT_WS && this.isAccessDot(a)) return " ";
+        if (ta === this.L.DOT_WS && this.isAccessDot(a)) {
+            // An own-line comment already separates the dot from the next token.
+            // A space before its hard break still counts toward Prettier's group fit.
+            return (this.info(b)?.lead[0]?.nl ?? 0) > 0 ? "" : " ";
+        }
         if (tb === this.L.COMMA || tb === this.L.SEMI || tb === this.L.RPAREN || tb === this.L.RBRACK || tb === this.L.COLON) return "";
         if (ta === this.L.LPAREN || ta === this.L.LBRACK || ta === this.L.HASH_LPAREN) return "";
         if (ta === this.L.DOT || ta === this.L.DOT_WS || tb === this.L.DOT || tb === this.L.DOT_WS) return "";
