@@ -743,6 +743,37 @@ test("the 0.79 catalog Live-formats unpinned 0.80-only syntax under 0.79", async
     await expect(status).not.toHaveAttribute("data-error");
 });
 
+test("the Playground example menu filters by Flix version ranges", async ({ page }) => {
+    await page.goto(siteUrl + "playground/");
+    const examples = page.getByLabel("Example");
+    const version = page.getByLabel("Flix version");
+    await expect(examples).toBeEnabled();
+    await expect(version).toHaveValue("0.80.0");
+
+    // From-version only: module-level val is listed under 0.80, hidden under 0.79.
+    await expect(examples.locator("option", { hasText: "Module-level value" })).toHaveCount(1);
+    await expect(examples.locator("option", { hasText: "Function named val" })).toHaveCount(0);
+
+    await version.selectOption("0.79.0");
+    await expect(examples.locator("option", { hasText: "Module-level value" })).toHaveCount(0);
+    // Inclusive from–to: the 0.79-only pin appears under 0.79 and not under 0.80.
+    await expect(examples.locator("option", { hasText: "Function named val" })).toHaveCount(1);
+    await expect(examples.locator("optgroup[label='Version pins']")).toHaveCount(1);
+
+    await version.selectOption("0.80.0");
+    await expect(examples.locator("option", { hasText: "Function named val" })).toHaveCount(0);
+    await expect(examples.locator("optgroup[label='Version pins']")).toHaveCount(0);
+    await expect(examples.locator("option", { hasText: "Module-level value" })).toHaveCount(1);
+});
+
+test("the Syntax errors chapter still loads fixtures", async ({ page }) => {
+    await page.goto(siteUrl + "errors/");
+    await expect(page.getByRole("heading", { name: "Syntax errors", exact: true })).toBeVisible();
+    await expect(page.locator("article.fixture").first()).toBeVisible();
+    await expect(page.getByRole("navigation", { name: "Documentation" })
+        .getByRole("link", { name: "Syntax errors" })).toHaveAttribute("aria-current", "page");
+});
+
 test("diff, copy, use formatted, invalid width and unrecoverable input stay in sync", async ({ page, context }) => {
     await context.grantPermissions(["clipboard-read", "clipboard-write"]);
     await page.goto(siteUrl + "playground/");

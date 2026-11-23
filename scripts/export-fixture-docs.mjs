@@ -3,6 +3,7 @@ import { basename } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createHighlighter } from "shiki";
 import { flixThemes } from "../docs/assets/js/flix-themes.js";
+import { readExampleEntry } from "../docs/assets/js/playground-example-versions.js";
 import {
     playgroundDefaultFlixVersion,
     playgroundFlixVersions,
@@ -34,6 +35,8 @@ const playground = {
             examples: [
                 ["Departure board", "strings/itinerary.md"],
                 ["Checkout and shipping", "declarations/checkout.md"],
+                // Module-level `val` is 0.80+ syntax (from-version only).
+                ["Module-level value", "declarations/module-value.md", { minVersion: "0.80.0" }],
             ],
         },
         {
@@ -41,6 +44,16 @@ const playground = {
             examples: [
                 ["Currency quote", "declarations/rate-quote.md"],
                 ["Parallel scoreboard", "expressions/scoreboard.md"],
+            ],
+        },
+        {
+            title: "Version pins",
+            examples: [
+                // `val` as a function name only under 0.79 (inclusive from–to).
+                ["Function named val", "declarations/function-named-val-flix-0.79.md", {
+                    minVersion: "0.79.0",
+                    maxVersion: "0.79.0",
+                }],
             ],
         },
     ],
@@ -161,14 +174,24 @@ await mkdir(destination, { recursive: true });
 await writeFile(new URL("formattingHighlight.json", destination), JSON.stringify(formattingHighlight) + "\n");
 await writeFile(new URL("fixtures.json", destination), JSON.stringify(chapters, null, 2) + "\n");
 const examples = {};
+const groups = [];
 for (const group of playground.groups) {
-    for (const [title, path] of group.examples) {
+    const entries = [];
+    for (const raw of group.examples) {
+        const { label: title, path, minVersion, maxVersion } = readExampleEntry(raw);
         if (!passingFixtures.has(path)) throw new Error(`Playground example must be a passing fixture: ${path}`);
         const fixture = playgroundFixtures[path];
-        examples[path] = { ...fixture, title };
+        examples[path] = {
+            ...fixture,
+            title,
+            ...(minVersion !== undefined ? { minVersion } : {}),
+            ...(maxVersion !== undefined ? { maxVersion } : {}),
+        };
+        entries.push([title, path]);
         // Preserve deep links that used the old standalone example filenames.
         playgroundFixtures[`examples/${basename(path, ".md")}.flix`] = fixture;
     }
+    groups.push({ title: group.title, examples: entries });
 }
 if (!Object.hasOwn(examples, playground.defaultFixture)) throw new Error("The default playground fixture must be a menu example.");
 if (playgroundDefaultFlixVersion !== DEFAULT_FLIX_VERSION) {
@@ -178,7 +201,9 @@ if (playgroundFlixVersions.join(",") !== [...SUPPORTED_FLIX_VERSIONS].join(","))
     throw new Error("Playground Flix versions must match SUPPORTED_FLIX_VERSIONS.");
 }
 await writeFile(new URL("playground.json", destination), JSON.stringify({
-    ...playground, defaultOptions,
+    ...playground,
+    groups,
+    defaultOptions,
     embeddedPrintWidth: EMBEDDED_PRINT_WIDTH,
     defaultFlixVersion: playgroundDefaultFlixVersion,
     supportedFlixVersions: playgroundFlixVersions,
