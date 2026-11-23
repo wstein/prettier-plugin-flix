@@ -17,6 +17,10 @@ enum Quiet { // An empty enum.
 
     /* Reserved. */
 }
+enum MixedQuiet { /* First. */ // Second.
+
+    /* Reserved. */
+}
 enum Mixed { /* First. */ // Second.
 
     case Blue
@@ -47,6 +51,12 @@ enum Quiet {
 
     /* Reserved. */
 }
+enum MixedQuiet {
+    /* First. */
+    // Second.
+
+    /* Reserved. */
+}
 enum Mixed {
     /* First. */ // Second.
 
@@ -72,6 +82,12 @@ enum Color {
 }
 enum Quiet {
     // An empty enum.
+
+    /* Reserved. */
+}
+enum MixedQuiet {
+    /* First. */
+    // Second.
 
     /* Reserved. */
 }
