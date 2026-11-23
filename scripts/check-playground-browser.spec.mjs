@@ -639,7 +639,7 @@ test("diff, copy, use formatted, invalid width and unrecoverable input stay in s
     const width = page.getByLabel("Line width");
     const status = page.locator("[data-full-playground]").getByRole("status", { includeHidden: true });
     const copy = page.locator(".playground-preview-header").getByRole("button", { name: "Copy", exact: true });
-    const useFormatted = page.locator(".playground-preview-header").getByRole("button", { name: "Use formatted" });
+    const useFormatted = page.locator(".playground-input-header").getByRole("button", { name: "Use formatted" });
 
     await input.fill("def chosen():Int32=42");
     await expect(preview).toHaveText("def chosen(): Int32 = 42");

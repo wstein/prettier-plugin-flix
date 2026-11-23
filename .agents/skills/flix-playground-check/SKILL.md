@@ -40,7 +40,7 @@ worker timing, or navigation.
   clears and the full preview returns.
 - **Controls and appearance.** When changing the toolbar or layout, check
   the affected controls in both editor modes. Verify the Formatted/Diff
-  toggle, **Use formatted** (including from Diff, with undo), Clear, Copy,
+  toggle, **Use formatted** on the input header (including from Diff, with undo), Clear, Copy,
   and dark mode or a narrow viewport when relevant.
 
 Keep new Playground examples backed by tested Markdown fixtures. Change the
