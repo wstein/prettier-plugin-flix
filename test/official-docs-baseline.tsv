@@ -10,7 +10,7 @@ book.additional-information.for-llms.effect-handler-syntax-run-with-handler	layo
 book.additional-information.for-llms.effect-syntax-uses-not	needs-context	-	5342ff511e64836fa1ea9da9ad1ca36cd711e719742147e61d764099448c7882
 book.additional-information.for-llms.effects-can-have-type-parameters	needs-context	-	682e4412d8701090f37fee5410f25c1334745b9c3f962caadd6868895652570e
 book.additional-information.for-llms.java-types-must-be-imported	unchanged	-	326e6d73b28efa069bfbc743eea420945f18c0128dd7b01e4bda0b0c5b32d641
-book.additional-information.for-llms.modules-are-private-and-public-modules-g	layout-change	blank-lines	587d30a1c159272966a7da66fb9d195172fe9e3995d9b2c679e4307d0ad4a18b
+book.additional-information.for-llms.modules-are-private-and-public-modules-g	unchanged	-	8c4c7636866cff454d42ab20745bc6675eadfbf07ee28462fed9197024f13ea7
 book.additional-information.for-llms.modules-are-private-and-public-modules-g-02	unchanged	-	2efd111d84ab62b6a09d645da7343d493a5a4af19b5dfd1eed89f24c600abdc2
 book.additional-information.for-llms.modules-are-private-and-public-modules-g-03	layout-change	wrapping	9733bdff42d81fff85fda471765b73584064cd36fae549aa75bcf659c54595b4
 book.additional-information.for-llms.no-do-keyword-for-effect-operations	unchanged	-	4133ca8342b9a2c90560b27f2cd3d34913f827383076e8898f67f2b8e71ebd1f
@@ -211,7 +211,7 @@ book.everyday-programming.tail-recursion.the-tailrec-annotation	unchanged	-	b7d7
 book.everyday-programming.tail-recursion.the-tailrec-annotation-02	unchanged	-	bc4c0b50feb46ca498001d748ee01ebc16a418ed2f391ee916469968447b5acf
 book.everyday-programming.type-ascriptions.kind-ascriptions	layout-change	wrapping	a8ddff8c6d9af08d52078783076f3a45ce5809468c37650de4a28aa3b9e075cd
 book.everyday-programming.type-ascriptions.kind-ascriptions-02	unchanged	-	105bd9624b561ff475132e84a3cbde65f2e3130f70e1c0fd649980c874576836
-book.everyday-programming.type-ascriptions.kind-ascriptions-03	layout-change	blank-lines	4602d10d231e09e4b7edefae8cd040b2d693232bfabce106e50d40c8fa55001a
+book.everyday-programming.type-ascriptions.kind-ascriptions-03	unchanged	-	6062dea2c0862e50eb43ddf854e196f1be46fe166238779d8cb5170a6578de73
 book.everyday-programming.type-ascriptions.type-ascriptions	layout-change	spacing	83b2259f15a328a9d779dfcfecf5bdda02926cf1f2f126255043c06b28da94c9
 book.everyday-programming.type-ascriptions.type-ascriptions-02	unchanged	-	ee9df6d435f89744e1b5b601c5f0500cf40c429c493c949e01d617e8915a6747
 book.fixpoints.fixpoints.injecting-facts-into-datalog	unchanged	-	eca6040a38ddfd546c3aaffef8491305f1e93d1f9ccc6417a204e23c7ef205e9
@@ -416,7 +416,7 @@ book.modules.declaring-modules.a-module-is-declared-once	unchanged	-	6be0ffa4928
 book.modules.declaring-modules.accessibility	layout-change	spacing	40e7bfcb35aff234438055ce94c9152c5a7248e050da1a2309631638b4fb21b9
 book.modules.declaring-modules.accessibility-02	layout-change	spacing	52ac0c004016067ef30b6c208b2c499ec94079cd76c39a809354e0dd977b6db4
 book.modules.declaring-modules.accessibility-03	layout-change	spacing	5ddee38bee1e072f91a8e0aa5e3fdff892e2b40cb194fc18aac1aa5ca2e3c772
-book.modules.declaring-modules.declaring-modules	layout-change	blank-lines	85582623441678e5d74c5aa1a3c8ed66f29536cc3ee4a6fd2ad41b573697ec06
+book.modules.declaring-modules.declaring-modules	unchanged	-	aa788944d5f50813cd8297736967c7c834efe6e3f52981e6143abac482774504
 book.modules.declaring-modules.nested-modules	unchanged	-	3680f3d48ba37423ad0778b60456c56340c670b7e41954e4e0d429679bf090db
 book.modules.declaring-modules.nested-modules-02	layout-change	wrapping	8cc53786b30160ca8114c539ca023b18e14376d401414ff6afa23a8e60887540
 book.modules.declaring-modules.nested-modules-03	layout-change	wrapping	aa411b7c0765d33dedd96ea1e3304740b8c3ef2195d5fdd89ae01f215a0a985e
