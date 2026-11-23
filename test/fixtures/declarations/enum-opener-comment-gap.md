@@ -11,7 +11,7 @@ options: { printWidth: 80 }
 ```flix
 enum Color { // Available colors.
 
-    case Red
+    case Red, Green
 }
 enum Quiet { // An empty enum.
 
@@ -44,7 +44,7 @@ mod Ordinary { // Module header.
 enum Color {
     // Available colors.
 
-    case Red
+    case Red, Green
 }
 enum Quiet {
     // An empty enum.
@@ -78,7 +78,7 @@ mod Ordinary {  // Module header.
 enum Color {
     // Available colors.
 
-    case Red
+    case Red, Green
 }
 enum Quiet {
     // An empty enum.
