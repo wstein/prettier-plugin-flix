@@ -63,8 +63,10 @@ struct MixedStruct[r] {
     // Second comment.
 }
 
-def f(): Unit = ()
-def emptyCall(): Unit = f(/* argument list */)
+pub def noParams(
+
+    /* The parameter list is empty. */
+): Unit = ()
 ```
 
 ## Output
@@ -130,8 +132,10 @@ struct MixedStruct[r] {
     // Second comment.
 }
 
-def f(): Unit = ()
-def emptyCall(): Unit = f( /* argument list */)
+pub def noParams(
+
+    /* The parameter list is empty. */
+): Unit = ()
 ```
 
 ```flix printWidth=40
@@ -195,7 +199,8 @@ struct MixedStruct[r] {
     // Second comment.
 }
 
-def f(): Unit = ()
-def emptyCall(): Unit =
-    f( /* argument list */)
+pub def noParams(
+
+    /* The parameter list is empty. */
+): Unit = ()
 ```
