@@ -124,7 +124,7 @@ catalog via RelPermalink. Root URLs mirror the latest pin (`0.80.0`);
 `/flix/0.79.0/` is for readers on the older grammar.
 
 **Switcher.** The toolbar Flix control rewrites the path between the root
-catalog (latest) and `/flix/<version>/…`, keeping the page after the prefix.
+catalog (latest) and `/flix/<version>/...`, keeping the page after the prefix.
 Fixtures authored for a non-default major.minor, or that pin `flixVersion`,
 show a badge. Prefer those when checking older syntax; most fixtures target
 `0.80`.
