@@ -5,6 +5,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ if .IsHome }}{{ site.Title }} · Test Catalog{{ else }}{{ .Title }} · {{ site.Title }}{{ end }}</title>
+  <link rel="icon" href="{{ "branding/favicon.ico" | relURL }}" sizes="16x16 32x32 48x48">
+  <link rel="icon" href="{{ "branding/favicon.svg" | relURL }}" type="image/svg+xml" sizes="any">
+  <link rel="apple-touch-icon" href="{{ "branding/apple-touch-icon.png" | relURL }}" sizes="180x180">
   {{ $themeScript := resources.Get "js/site-theme.js" | fingerprint }}
   <script src="{{ $themeScript.RelPermalink }}" integrity="{{ $themeScript.Data.Integrity }}"></script>
   {{ $stylesheet := resources.Get "css/catalog.css" | minify | fingerprint }}
