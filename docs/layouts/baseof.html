@@ -1,10 +1,20 @@
 {{ $isPlayground := eq .Type "playground" }}
+{{ $pageTitle := printf "%s · %s" .Title site.Title }}
+{{ if .IsHome }}{{ $pageTitle = printf "%s · Test Catalog" site.Title }}{{ end }}
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ if .IsHome }}{{ site.Title }} · Test Catalog{{ else }}{{ .Title }} · {{ site.Title }}{{ end }}</title>
+  <title>{{ $pageTitle }}</title>
+  <meta property="og:title" content="{{ $pageTitle }}">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="{{ .Permalink }}">
+  <meta property="og:description" content="{{ .Description | default "Format Flix source files with Prettier." }}">
+  <meta property="og:image" content="{{ "branding/social-preview.png" | absURL }}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Prettier Plugin for Flix. Code formatting for Flix.">
   <link rel="icon" href="{{ "branding/favicon.ico" | relURL }}" sizes="16x16 32x32 48x48">
   <link rel="icon" href="{{ "branding/favicon.svg" | relURL }}" type="image/svg+xml" sizes="any">
   <link rel="apple-touch-icon" href="{{ "branding/apple-touch-icon.png" | relURL }}" sizes="180x180">
@@ -16,7 +26,10 @@
 <body{{ if $isPlayground }} class="playground-page"{{ end }}>
   <header class="site-header">
     <nav class="site-toolbar" aria-label="Site">
-      <a href="{{ site.Home.RelPermalink }}">{{ site.Title }}</a>
+      <a class="site-brand" href="{{ site.Home.RelPermalink }}">
+        <img src="{{ "branding/favicon.svg" | relURL }}" alt="" width="20" height="20">
+        {{ site.Title }}
+      </a>
       {{ with site.GetPage "playground" }}
       {{ if $isPlayground }}
       <h1 class="playground-title"><a class="site-playground" href="{{ .RelPermalink }}" aria-current="page">{{ .Title }}</a></h1>

@@ -24,6 +24,8 @@ body { margin: 0; color: var(--foreground); line-height: 1.55; }
   font-size: 0.9rem;
 }
 .site-toolbar a:first-child { font-weight: 700; }
+.site-brand { display: inline-flex; align-items: center; gap: 0.35rem; }
+.site-brand img { flex: none; width: 1.25rem; height: 1.25rem; }
 .site-playground { padding-inline-start: 0.8rem; border-inline-start: 1px solid var(--border); }
 .site-playground[aria-current="page"] { color: var(--foreground); font-weight: 600; }
 .site-theme { display: flex; align-items: center; gap: 0.35rem; margin-inline-start: auto; }
