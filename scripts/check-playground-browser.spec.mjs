@@ -11,6 +11,8 @@ const contentTypes = {
     ".html": "text/html",
     ".js": "text/javascript",
     ".json": "application/json",
+    ".png": "image/png",
+    ".svg": "image/svg+xml",
     ".wasm": "application/wasm",
 };
 
@@ -57,6 +59,33 @@ test.afterAll(async () => {
 test.use({
     browserName: "chromium",
     launchOptions: { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH },
+});
+
+test("catalog and Playground publish share previews and keep the mobile brand link compact", async ({ page }) => {
+    const deployedOrigin = "https://wstein.github.io";
+    await page.setViewportSize({ width: 320, height: 760 });
+
+    for (const [path, catalogPath] of [
+        ["", ""],
+        ["formatting/", ""],
+        ["flix/0.80.0/playground/", "flix/0.80.0/"],
+    ]) {
+        await page.goto(siteUrl + path);
+        await expect(page.locator('meta[property="og:title"]')).toHaveAttribute("content", await page.title());
+        await expect(page.locator('meta[property="og:url"]')).toHaveAttribute("content", deployedOrigin + basePath + path);
+        const image = basePath + catalogPath + "branding/social-preview.png";
+        await expect(page.locator('meta[property="og:image"]')).toHaveAttribute("content", deployedOrigin + image);
+        expect((await page.request.get(new URL(image, siteUrl).href)).ok()).toBe(true);
+
+        const toolbar = page.getByRole("navigation", { name: "Site" });
+        const brand = toolbar.getByRole("link", { name: "Prettier Plugin for Flix", exact: true });
+        const logo = brand.locator("img");
+        await expect(logo).toHaveAttribute("alt", "");
+        await expect(logo).toHaveAttribute("src", basePath + catalogPath + "branding/favicon.svg");
+        await expect(logo).toHaveJSProperty("naturalWidth", 32);
+        expect((await logo.boundingBox()).width).toBe(20);
+        expect(await toolbar.evaluate((element) => element.scrollWidth)).toBeLessThanOrEqual(320);
+    }
 });
 
 test("inline search finds both documentation pages and still finds fixtures", async ({ page }) => {
