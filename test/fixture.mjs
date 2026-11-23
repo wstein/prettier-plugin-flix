@@ -2,7 +2,8 @@
 //
 //   ---                         front matter (YAML)
 //   title: Short description
-//   flix: "0.80"                Flix release the case was written for
+//   minVersion: "0.80.0"        optional inclusive lower pin (absent = no lower bound)
+//   maxVersion: "0.80.0"        optional inclusive upper pin (absent = no upper bound)
 //   options: { printWidth: 80 } optional Prettier options for every block
 //   status: pass                pass | todo (one Output block) | error
 //   ---
@@ -16,7 +17,7 @@
 //   ```
 //   ```flix printWidth=40   further blocks: same input, other options
 //   ## Flix Format              optional reference from the built-in `flix format`; needs
-//   ```flix | ```text          front matter flixFormat: "0.80.0" (same major.minor as flix).
+//   ```flix | ```text          front matter flixFormat: "0.80.0".
 //   ...                         `flix`: its output; `text`: a summary (header and first message line
 //   ```                         per error) of why it declined the input
 //   ## Flix Format Diagnostics  exactly when front matter says flixFormatInvalid: true (the flix
@@ -30,7 +31,10 @@ import { join, relative } from "node:path";
 import YAML from "yaml";
 
 export const STATUSES = ["pass", "todo", "error"];
-const META_KEYS = new Set(["title", "description", "group", "showcase", "flix", "options", "status", "issue", "message", "source", "tags", "flixFormat", "flixFormatInvalid"]);
+const META_KEYS = new Set([
+    "title", "description", "group", "showcase", "minVersion", "maxVersion",
+    "options", "status", "issue", "message", "source", "tags", "flixFormat", "flixFormatInvalid",
+]);
 const OPTION_TYPES = {
     printWidth: "number",
     tabWidth: "number",
@@ -39,6 +43,11 @@ const OPTION_TYPES = {
     flixVersion: "string",
 };
 const FLIX_VERSION = /^\d+\.\d+\.\d+$/;
+
+function majorMinor(version) {
+    const [major, minor] = version.split(".");
+    return `${major}.${minor}`;
+}
 
 const fail = (file, line, msg) => {
     throw new Error(`${file}${line ? `:${line}` : ""}: ${msg}`);
@@ -118,8 +127,12 @@ export function parseFixture(text, file = "<fixture>") {
     if ("showcase" in meta && (!Number.isSafeInteger(meta.showcase) || meta.showcase < 1)) {
         fail(file, 2, 'front matter "showcase" must be a positive integer');
     }
-    if (typeof meta.flix !== "string" || !/^\d+\.\d+$/.test(meta.flix)) fail(file, 2, 'front matter "flix" must be a quoted major.minor string such as "0.80"');
-    if ("flixFormat" in meta && (typeof meta.flixFormat !== "string" || !/^\d+\.\d+\.\d+$/.test(meta.flixFormat))) {
+    for (const key of ["minVersion", "maxVersion"]) {
+        if (key in meta && (typeof meta[key] !== "string" || !FLIX_VERSION.test(meta[key]))) {
+            fail(file, 2, `front matter "${key}" must be an exact Flix version such as "0.80.0"`);
+        }
+    }
+    if ("flixFormat" in meta && (typeof meta.flixFormat !== "string" || !FLIX_VERSION.test(meta.flixFormat))) {
         fail(file, 2, 'front matter "flixFormat" must be a quoted major.minor.patch version');
     }
     meta.status ??= "pass";
@@ -197,8 +210,9 @@ export function parseFixture(text, file = "<fixture>") {
         if (!meta.flixFormat) fail(file, referenceHeading, 'Flix Format requires a "flixFormat" version');
         if (meta.status === "error") fail(file, referenceHeading, "status: error fixtures cannot have a Flix Format reference");
         if (refs.length !== 1) fail(file, referenceHeading, "Flix Format requires exactly one block");
-        if (!meta.flixFormat.startsWith(meta.flix + ".")) {
-            fail(file, 2, `"flixFormat" ${meta.flixFormat} must belong to the same major.minor release as flix "${meta.flix}"`);
+        const rangePin = meta.minVersion ?? meta.maxVersion;
+        if (rangePin && majorMinor(meta.flixFormat) !== majorMinor(rangePin)) {
+            fail(file, 2, `"flixFormat" ${meta.flixFormat} must share major.minor with ${meta.minVersion ? "minVersion" : "maxVersion"} "${rangePin}"`);
         }
     } else if (meta.flixFormat) {
         fail(file, 2, 'a "flixFormat" version requires a Flix Format section');

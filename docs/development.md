@@ -127,11 +127,11 @@ different pin, Live re-formats under that pin instead of keeping the bake.
 
 **Switcher.** The toolbar Flix control rewrites the path between the root
 catalog (latest) and `/flix/<version>/...`, keeping the page after the prefix.
-Fixtures that pin `flixVersion`, or whose `flix` major.minor differs from the
-catalog pin, show a badge. Prefer pinned 0.79 cases when checking older syntax;
-most fixtures target `0.80`.
+Fixtures that pin `flixVersion`, or that set `minVersion` / `maxVersion`, show a
+badge. Prefer pinned 0.79 cases when checking older syntax; most fixtures omit
+the range and apply under every supported pin.
 
-**Playground examples.** Curated menu entries may carry `minVersion` /
+**Playground examples.** Fixture front matter may carry `minVersion` /
 `maxVersion` (from-version, or an inclusive from–to range). The standalone
 Playground hides incompatible examples when its Flix version control changes —
 syntax-pin filtering only, not a feature matrix.

@@ -2,7 +2,6 @@
 title: "Keep commented function-type wraps idempotent"
 description: "A block comment before ), after a parameter, or after -> must not change arrow wraps between passes."
 group: "Types and constraints"
-flix: "0.80"
 options: { printWidth: 40 }
 ---
 

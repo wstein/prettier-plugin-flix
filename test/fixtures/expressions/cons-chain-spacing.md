@@ -2,7 +2,6 @@
 title: "Normalize cons chains: tight when every :: is tight and fits, otherwise spaced"
 description: "Rule A for :: in expressions and patterns. ::: stays spaced. use paths stay tight."
 group: "Operators"
-flix: "0.80"
 options: { printWidth: 100 }
 ---
 

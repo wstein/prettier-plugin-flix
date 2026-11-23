@@ -437,10 +437,10 @@ test("each supported Flix pin publishes under /flix/<version>/ while root URLs s
             assert.match(versionHome, /Open the 0\.80\.0 catalog/);
             const comments = await readFile(new URL(`flix/${version}/comments/index.html`, site), "utf8");
             assert.match(comments, /flixVersion 0\.79\.0/);
-            // Shared 0.80-authored fixtures stay in the tree but badge against this catalog.
+            // Range-bounded fixtures stay in the tree and badge their pin range.
             const declarations = await readFile(new URL(`flix/${version}/declarations/index.html`, site), "utf8");
             assert.match(declarations, /id=(?:"module-value"|module-value)/);
-            assert.match(declarations, /fixture-flix[^>]*>Flix 0\.80/);
+            assert.match(declarations, /fixture-flix[^>]*>Flix ≥0\.80\.0/);
             assert.match(
                 declarations,
                 /id=(?:"module-value-flix-version"|module-value-flix-version)[\s\S]*?<option[^>]*value=(?:"0\.79\.0"|0\.79\.0)[^>]*selected/,

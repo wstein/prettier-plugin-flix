@@ -1,7 +1,6 @@
 ---
 title: Keep pipelines compact after a comment
 description: A comment above a pipeline stays on its own line. The pipeline breaks only when its code needs the extra space.
-flix: "0.80"
 options: { printWidth: 80 }
 ---
 

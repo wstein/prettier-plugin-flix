@@ -2,7 +2,6 @@
 title: "Arrow chain and the effect set share the signature line up to the print width"
 description: "A return type arrow chain whose line on the signature stays within the print width keeps its place when only the effect set wraps; one column more moves the chain to its own line."
 group: "Types and constraints"
-flix: "0.80"
 options: { printWidth: 50 }
 ---
 

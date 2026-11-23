@@ -1,6 +1,5 @@
 ---
 title: Block comments at the end of a line stay with the preceding code
-flix: "0.80"
 ---
 
 ## Input

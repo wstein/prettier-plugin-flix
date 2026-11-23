@@ -2,7 +2,6 @@
 title: "Parallel scoreboard"
 description: "Format parallel score calculations and guarded match arms."
 group: "Playground examples"
-flix: "0.80"
 ---
 
 ## Input

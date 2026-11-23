@@ -2,7 +2,6 @@
 title: "Count a lead block comment on `=` when aligning schema rows"
 description: "Schema row alignment reserves the same equals trailer as signatures, including a block comment between the closing brace and `=`. Width 43 stays vertically broken; 83 keeps row alignment."
 group: "Calls and function signatures"
-flix: "0.80"
 options: { printWidth: 43 }
 ---
 

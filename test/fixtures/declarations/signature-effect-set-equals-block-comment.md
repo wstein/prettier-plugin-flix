@@ -2,7 +2,6 @@
 title: "Keep signature breaks stable when a block comment sits before `=`"
 description: "A block comment between a braced effect set and `=` must count in the trailer width so the first pass matches the second (#92 comment-site)."
 group: "Calls and function signatures"
-flix: "0.80"
 options: { printWidth: 60 }
 ---
 

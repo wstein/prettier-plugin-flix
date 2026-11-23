@@ -2,7 +2,6 @@
 title: "Arrow chain and the next word share the line up to the print width"
 description: "A return type arrow chain on its own continuation line keeps the first word of the `with` list on its line when the chain and the word fill the print width, and wraps at each arrow when they exceed it by one column."
 group: "Types and constraints"
-flix: "0.80"
 options: { printWidth: 80 }
 ---
 

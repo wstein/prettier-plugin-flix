@@ -1,7 +1,6 @@
 ---
 title: Let chain and match arms
 description: "The let binding and the match cases are indented as separate parts of the function body."
-flix: "0.80"
 ---
 
 ## Input

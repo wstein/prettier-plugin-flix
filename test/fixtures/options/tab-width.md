@@ -1,7 +1,6 @@
 ---
 title: tabWidth sets the indentation
 description: "The default output indents by four spaces. The alternate output uses two."
-flix: "0.80"
 ---
 
 ## Input

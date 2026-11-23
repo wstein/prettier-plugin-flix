@@ -2,7 +2,6 @@
 title: "Run-with after a block comment in a multi-statement match arm"
 description: "The handler of a run block that ends in a block comment keeps its closing parenthesis on its own line when the match arm is measured for arrow alignment."
 group: "Line endings and comment placement"
-flix: "0.80"
 options: { printWidth: 60 }
 ---
 

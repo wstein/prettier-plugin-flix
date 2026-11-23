@@ -1,7 +1,6 @@
 ---
 title: "Inject facts from a Vector"
 description: "An inject expression turns collection elements into unary facts. The query filters them with a where clause."
-flix: "0.80"
 ---
 
 ## Input

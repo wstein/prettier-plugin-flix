@@ -2,7 +2,6 @@
 title: "Align after a line comment before the comma when the next entry has a block lead"
 description: "A line trail before the comma plus an inline block lead on the next entry must split and measure the same way on both passes."
 group: "Line endings and comment placement"
-flix: "0.80"
 options: { printWidth: 80 }
 ---
 

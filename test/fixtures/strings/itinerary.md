@@ -2,7 +2,6 @@
 title: "Departure board"
 description: "Filter Unicode station names, interpolate time estimates, and assemble the board through Java interop."
 group: "Playground examples"
-flix: "0.80"
 ---
 
 ## Input

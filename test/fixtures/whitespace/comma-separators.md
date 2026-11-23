@@ -1,7 +1,6 @@
 ---
 title: Keep commas after entries in wrapped lists
 description: Commas follow each entry that has another entry after it. The Flix 0.80 compiler rejects a comma after the final entry in both use lists and function calls.
-flix: "0.80"
 ---
 
 ## Input

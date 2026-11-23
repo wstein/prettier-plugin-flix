@@ -35,8 +35,8 @@ const playground = {
             examples: [
                 ["Departure board", "strings/itinerary.md"],
                 ["Checkout and shipping", "declarations/checkout.md"],
-                // Module-level `val` is 0.80+ syntax (from-version only).
-                ["Module-level value", "declarations/module-value.md", { minVersion: "0.80.0" }],
+                // Ranges come from fixture frontmatter (minVersion / maxVersion).
+                ["Module-level value", "declarations/module-value.md"],
             ],
         },
         {
@@ -49,11 +49,7 @@ const playground = {
         {
             title: "Version pins",
             examples: [
-                // `val` as a function name only under 0.79 (inclusive from–to).
-                ["Function named val", "declarations/function-named-val-flix-0.79.md", {
-                    minVersion: "0.79.0",
-                    maxVersion: "0.79.0",
-                }],
+                ["Function named val", "declarations/function-named-val-flix-0.79.md"],
             ],
         },
     ],
@@ -136,7 +132,8 @@ for (const path of findFixtures(root)) {
         id: basename(relative, ".md"),
         path: relative,
         chapter,
-        flix: meta.flix,
+        minVersion: meta.minVersion,
+        maxVersion: meta.maxVersion,
         flixVersion: liveOptions.flixVersion,
         upstreamUrl: typeof meta.source === "string" && meta.source.startsWith("https://") ? meta.source : undefined,
         title: meta.title,
@@ -159,6 +156,8 @@ for (const path of findFixtures(root)) {
         title: meta.title,
         input: input.code,
         options: outputs.length > 0 ? outputs.map((block) => optionsFor(fixture, block)) : [meta.options],
+        ...(meta.minVersion !== undefined ? { minVersion: meta.minVersion } : {}),
+        ...(meta.maxVersion !== undefined ? { maxVersion: meta.maxVersion } : {}),
     };
 }
 
@@ -178,15 +177,12 @@ const groups = [];
 for (const group of playground.groups) {
     const entries = [];
     for (const raw of group.examples) {
-        const { label: title, path, minVersion, maxVersion } = readExampleEntry(raw);
+        // Menu labels stay in the exporter; version ranges come from fixture frontmatter.
+        const { label: title, path } = readExampleEntry(raw);
         if (!passingFixtures.has(path)) throw new Error(`Playground example must be a passing fixture: ${path}`);
         const fixture = playgroundFixtures[path];
-        examples[path] = {
-            ...fixture,
-            title,
-            ...(minVersion !== undefined ? { minVersion } : {}),
-            ...(maxVersion !== undefined ? { maxVersion } : {}),
-        };
+        if (!fixture) throw new Error(`Playground example fixture missing: ${path}`);
+        examples[path] = { ...fixture, title };
         entries.push([title, path]);
         // Preserve deep links that used the old standalone example filenames.
         playgroundFixtures[`examples/${basename(path, ".md")}.flix`] = fixture;

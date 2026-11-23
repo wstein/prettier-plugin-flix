@@ -1,7 +1,6 @@
 ---
 title: "Wrap long trait constraint lists between constraints"
 description: "Keep each constraint together when a long with clause wraps."
-flix: "0.80"
 options: { printWidth: 60 }
 ---
 

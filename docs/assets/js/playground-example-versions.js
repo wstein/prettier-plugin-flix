@@ -64,9 +64,6 @@ export function readExampleEntry(entry) {
     if (maxVersion !== undefined && typeof maxVersion !== "string") {
         throw new Error(`Playground example ${path}: maxVersion must be a string`);
     }
-    if (maxVersion !== undefined && minVersion === undefined) {
-        throw new Error(`Playground example ${path}: maxVersion requires minVersion`);
-    }
     if (minVersion !== undefined && maxVersion !== undefined && compareFlixVersions(minVersion, maxVersion) > 0) {
         throw new Error(`Playground example ${path}: minVersion ${minVersion} is after maxVersion ${maxVersion}`);
     }

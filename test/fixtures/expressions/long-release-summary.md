@@ -1,7 +1,6 @@
 ---
 title: "Wrap a dense release summary"
 description: "The input packs an entire definition onto one line. With printWidth set to 80, the formatter wraps the signature, bindings, and final expression."
-flix: "0.80"
 showcase: 2
 options: { printWidth: 80 }
 ---

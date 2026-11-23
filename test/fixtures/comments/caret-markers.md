@@ -1,7 +1,6 @@
 ---
 title: Keep standalone carets under their code
 description: "A standalone caret annotation follows the token it marks, including when a signature wraps. Ordinary comments use the surrounding indentation."
-flix: "0.80"
 group: "Line endings and comment placement"
 source: "https://github.com/flix/book/blob/64d81bd6984ede06442ef7b63235092b9fe3c29c/src/effect-polymorphism.md#L10"
 ---

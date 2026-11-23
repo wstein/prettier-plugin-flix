@@ -1,7 +1,6 @@
 ---
 title: Align neighboring line-end comments
 description: "Share a comment column across adjacent code rows when the extra padding and the full comments fit. Blank lines, uncommented code and nested blocks end a group."
-flix: "0.80"
 group: "Line endings and comment placement"
 source: "https://github.com/flix/book/blob/64d81bd6984ede06442ef7b63235092b9fe3c29c/src/traits.md#L177"
 ---

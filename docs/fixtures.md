@@ -9,7 +9,8 @@ Formatter behavior is specified by Markdown fixtures in `test/fixtures/<area>/<c
 ````markdown
 ---
 title: Let chain and match arms
-flix: "0.80"               # Flix release the case was written for (quoted major.minor)
+minVersion: "0.80.0"       # optional inclusive lower pin (omit for no lower bound)
+maxVersion: "0.80.0"       # optional inclusive upper pin (omit for no upper bound)
 options: { printWidth: 80 } # optional Prettier options: printWidth, tabWidth, useTabs, flixVersion
 status: pass               # pass (default) | todo | error
 ---
@@ -40,6 +41,7 @@ def f(x: Option[Int32]): Int32 = {
 ````
 
 - Exactly one `## Input` block. `## Output` has one block per option set; the first uses the front matter options, later ones add `key=value` options to the info string. `flixVersion` is an exact pin such as `"0.79.0"`; program-preservation checks use the same pin.
+- Optional `minVersion` / `maxVersion` are exact pins (`"0.80.0"`). Either may be omitted: no `minVersion` means no lower bound, no `maxVersion` means no upper bound. The Playground example menu hides cases outside the selected pin.
 - Every fixture is also checked with the [program-preservation checks](development.md#verification): the output must keep the program (tokens, comments, tree shape, token classes) and formatting it again must change nothing.
 - `status: todo` records one known gap, so it takes exactly one Output block (split a case with several gaps, or with one option set already right, into separate fixtures). The Output block holds the *desired* result, the test passes while the formatter still differs, and fails as soon as it matches, so the status cannot go stale. Optional `issue` explains or links it.
 - `status: error` has no Output block; the input must fail with a `SyntaxError`. Optional `message` is a regular expression for the error text.
@@ -47,12 +49,12 @@ def f(x: Option[Int32]): Int32 = {
 
 After changing the printer, `npm run test:update` rewrites the Output blocks of `status: pass` fixtures from the formatter's actual output. Review the diff: it is the review of the formatting change. The loader rejects unknown keys, options and sections, so typos fail loudly.
 
-A fixture can also record the built-in Flix formatter as an independent reference. Set `flixFormat: "0.80.0"` in front matter (the same major.minor release as `flix`) and add a `## Flix Format` section with one block after `## Output`:
+A fixture can also record the built-in Flix formatter as an independent reference. Set `flixFormat: "0.80.0"` in front matter (when `minVersion` or `maxVersion` is set, it must share that pin's major.minor) and add a `## Flix Format` section with one block after `## Output`:
 
 ````markdown
 ---
 title: ...
-flix: "0.80"
+minVersion: "0.80.0"
 flixFormat: "0.80.0"
 flixFormatInvalid: true   # only if the Flix output fails to type-check
 ---

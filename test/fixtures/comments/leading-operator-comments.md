@@ -1,7 +1,6 @@
 ---
 title: "Keep a fitting operator chain after a standalone comment"
 description: "Standalone comments above an operator chain leave the chain free to fit on one line."
-flix: "0.80"
 ---
 
 ## Input

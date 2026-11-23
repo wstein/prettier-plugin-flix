@@ -1,7 +1,6 @@
 ---
 title: Align match arrows above mixed body lengths
 description: "Align the case heads even when one case contains multiple statements."
-flix: "0.80"
 ---
 
 ## Input

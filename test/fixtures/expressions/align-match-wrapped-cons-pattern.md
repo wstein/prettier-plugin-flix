@@ -2,7 +2,6 @@
 title: "Align match arms when a tight cons pattern wraps"
 description: "A tight cons pattern that does not fit in its arm prints spaced and broken, so the other arms keep a single space before the arrow."
 group: "Operators"
-flix: "0.80"
 options: { printWidth: 24 }
 ---
 

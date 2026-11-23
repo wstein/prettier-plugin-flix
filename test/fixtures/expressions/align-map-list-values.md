@@ -1,7 +1,6 @@
 ---
 title: "Align map arrows next to list literals"
 description: "The header map aligns its arrows when the lists fit on one line. A narrow width wraps the list values and uses one space around each arrow."
-flix: "0.80"
 ---
 
 ## Input

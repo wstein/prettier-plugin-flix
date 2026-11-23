@@ -2,7 +2,6 @@
 title: Attach Flixdoc to its declaration
 description: "Remove blank lines between a Flixdoc block and the declaration or its annotations; keep one blank between separate declarations. Only exact `///` is Flixdoc; the last lead comment decides attachment."
 group: "Line endings and comment placement"
-flix: "0.80"
 ---
 
 ## Input

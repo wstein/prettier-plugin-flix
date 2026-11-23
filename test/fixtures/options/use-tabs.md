@@ -1,7 +1,6 @@
 ---
 title: Indent nested blocks with tabs
 description: The default uses spaces. The alternate emits literal tabs at each nesting level.
-flix: "0.80"
 ---
 
 ## Input

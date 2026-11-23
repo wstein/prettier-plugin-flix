@@ -2,7 +2,6 @@
 title: "Transit routes"
 description: "Show facts, recursive reachability, and a query over short train trips."
 group: "Playground examples"
-flix: "0.80"
 ---
 
 ## Input

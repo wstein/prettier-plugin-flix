@@ -2,7 +2,6 @@
 title: "Keep source-vertical blocks in a match arm with a trailing block comment"
 description: "A trailing block comment inside an arm body must not collapse the blocks of that arm onto one line."
 group: "Line endings and comment placement"
-flix: "0.80"
 options: { printWidth: 100 }
 ---
 

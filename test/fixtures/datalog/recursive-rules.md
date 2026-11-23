@@ -1,7 +1,6 @@
 ---
 title: "Combine facts with recursive path rules"
 description: "The base rule derives paths for direct edges. The recursive rule extends paths by one edge. The formatter keeps each rule terminator distinct."
-flix: "0.80"
 showcase: 1
 ---
 

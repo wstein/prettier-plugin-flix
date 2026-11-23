@@ -1,7 +1,6 @@
 ---
 title: "Datalog predicate lambda"
 group: "Predicate expressions"
-flix: "0.80"
 source: "https://github.com/flix/flix/blob/v0.80.0/main/test/flix/Test.Exp.Fixpoint.Lambda.flix#L117"
 ---
 

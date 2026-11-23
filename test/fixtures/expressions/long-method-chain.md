@@ -1,7 +1,6 @@
 ---
 title: "Keep method dots attached in long calls"
 description: "A long method chain can wrap inside argument lists while its method dots stay tight."
-flix: "0.80"
 options: { printWidth: 60 }
 ---
 

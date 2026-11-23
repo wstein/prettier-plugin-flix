@@ -2,7 +2,6 @@
 title: Wrap a cons chain in a match guard deeper than the arm body
 description: "A cons chain that opens a guard wraps with the same continuation indent as other guard operators. A cons chain nested inside a guard expression does not take that deeper indent."
 group: "Operators"
-flix: "0.80"
 options: { printWidth: 40 }
 ---
 

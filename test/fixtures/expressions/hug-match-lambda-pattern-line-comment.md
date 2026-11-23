@@ -2,7 +2,6 @@
 title: Line comment after a nested match-lambda pattern in a trailing lambda
 description: "A line comment after the pattern of a match lambda keeps the arrow on the next line when the trailing lambda hugs the call."
 group: "Pipelines and calls"
-flix: "0.80"
 options: { printWidth: 80 }
 ---
 

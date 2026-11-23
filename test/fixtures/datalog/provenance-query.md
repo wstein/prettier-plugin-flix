@@ -1,7 +1,6 @@
 ---
 title: "Solve and query with provenance"
 description: "The fixture covers psolve and pquery, including the with clause that selects provenance predicates."
-flix: "0.80"
 ---
 
 ## Input

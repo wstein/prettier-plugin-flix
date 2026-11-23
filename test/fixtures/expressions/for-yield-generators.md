@@ -2,7 +2,6 @@
 title: Keep dependent for-yield generators readable
 description: "Wrap between generators when the complete expression exceeds the line width. Keep a short yield expression together."
 source: "https://github.com/flix/flix.dev/blob/655c94385f09855e88b333e98577194cedf91ce7/src/lib/indexExamples.js#L269"
-flix: "0.80"
 ---
 
 ## Input

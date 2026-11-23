@@ -1,7 +1,6 @@
 ---
 title: "Preserve blank lines between declarations"
 description: "Keep declarations together where the source has no gap, and reduce consecutive blank lines to one."
-flix: "0.80"
 ---
 
 ## Input

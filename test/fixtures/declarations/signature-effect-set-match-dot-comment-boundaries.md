@@ -2,7 +2,6 @@
 title: "Preserve spacing across access dots with or without comments"
 description: "The first own-line comment drives the break even when an inline block comment follows. A bare access dot keeps its separating space."
 group: "Calls and function signatures"
-flix: "0.80"
 options: { printWidth: 40 }
 ---
 

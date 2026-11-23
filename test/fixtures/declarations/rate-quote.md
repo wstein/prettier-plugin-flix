@@ -2,7 +2,6 @@
 title: "Currency quote"
 description: "Format a trait, an associated type, an effect handler, and a deterministic quote test."
 group: "Playground examples"
-flix: "0.80"
 ---
 
 ## Input

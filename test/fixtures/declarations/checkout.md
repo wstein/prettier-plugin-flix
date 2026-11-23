@@ -2,7 +2,6 @@
 title: "Checkout and shipping"
 description: "Format a checkout module, shipping rules, and receipt tests."
 group: "Playground examples"
-flix: "0.80"
 ---
 
 ## Input

@@ -1,7 +1,6 @@
 ---
 title: "Kind ascriptions and custom operator definitions"
 group: "Types and constraints"
-flix: "0.80"
 ---
 
 ## Input

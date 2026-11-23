@@ -2,7 +2,6 @@
 title: "A single return type arrow keeps the ordinary signature wrap"
 description: "A return type with one arrow does not move to its own continuation line; it wraps as it does without the arrow chain rule."
 group: "Types and constraints"
-flix: "0.80"
 options: { printWidth: 80 }
 ---
 

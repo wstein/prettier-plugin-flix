@@ -1,7 +1,6 @@
 ---
 title: Keep a guarded match arm together at the width boundary
 description: "The case pattern and guard fit exactly at 59 columns. At 58 columns the guard wraps one level deeper than the arm body. The body starts below the arrow at both widths."
-flix: "0.80"
 options: { printWidth: 59 }
 ---
 

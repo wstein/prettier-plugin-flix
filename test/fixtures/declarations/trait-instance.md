@@ -1,7 +1,6 @@
 ---
 title: "Trait and instance with an associated type"
 description: "Compare the indentation of trait signatures, associated types, and their instance implementations."
-flix: "0.80"
 ---
 
 ## Input

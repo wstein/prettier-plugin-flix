@@ -2,7 +2,6 @@
 title: "Count the hugged body after a schema-row effect set like a braced set"
 description: "A `#{ ... }` effect set is braced like `{ ... }`, so a break before it reserves room for `=` and a hugged region body (#92)."
 group: "Calls and function signatures"
-flix: "0.80"
 options: { printWidth: 50 }
 ---
 

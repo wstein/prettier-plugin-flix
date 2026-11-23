@@ -1,7 +1,6 @@
 ---
 title: Wrap mixed operators in a match guard deeper than the arm body
 description: "A guard with +, == or |> wraps with a deeper continuation indent than the body under =>. A wrapped body after a wrapped guard keeps the body indent. Compact when the whole guard fits."
-flix: "0.80"
 options: { printWidth: 75 }
 ---
 

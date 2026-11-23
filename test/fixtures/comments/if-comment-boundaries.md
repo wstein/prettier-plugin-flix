@@ -2,7 +2,6 @@
 title: Line comments after the condition, before else and after else keep their place
 description: "Three placements exercise the boundary after the condition and on either side of else."
 group: "Calls, blocks, and control flow"
-flix: "0.80"
 ---
 
 ## Input

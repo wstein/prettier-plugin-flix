@@ -2,7 +2,6 @@
 title: A file with only a comment keeps it and ends with one newline
 description: "A file with no declarations still preserves its comment and ends with one newline."
 group: "Line endings and comment placement"
-flix: "0.80"
 ---
 
 ## Input

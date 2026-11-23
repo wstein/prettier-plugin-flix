@@ -2,9 +2,10 @@
 title: Align handler clause equals under Flix 0.79.0
 description: "layoutSource must reparse with flixVersion 0.79.0 and bind that grammar's HandlerExprContext; otherwise neighboring def clauses lose their shared `=` column (#224 post-merge)."
 group: "Calls and function signatures"
-flix: "0.79"
 options: { printWidth: 80, flixVersion: "0.79.0" }
 issue: "https://github.com/wstein/prettier-plugin-flix/pull/224"
+minVersion: "0.79.0"
+maxVersion: "0.79.0"
 ---
 
 ## Input

@@ -2,7 +2,6 @@
 title: "Keep an own-line comment on its own line after a block comment in a match arm"
 description: "A block comment that ends its line in a match pattern must not pull the following own-line comment onto the same line."
 group: "Line endings and comment placement"
-flix: "0.80"
 options: { printWidth: 100 }
 ---
 

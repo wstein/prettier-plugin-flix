@@ -2,7 +2,6 @@
 title: Block comments around a field-access arrow stay glued to it
 description: "Block comments can touch a field-access arrow on either side. Keeping those boundaries tight preserves the token class."
 group: "Whitespace-sensitive operators"
-flix: "0.80"
 ---
 
 ## Input

@@ -1,7 +1,6 @@
 ---
 title: "Keep a space between the arity slash and a block comment"
 description: "A block comment after `/` must not glue into `//`, or the arity no longer parses."
-flix: "0.80"
 options: { printWidth: 60 }
 ---
 

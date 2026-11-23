@@ -730,7 +730,7 @@ test("a 0.79-only fixture uses its pin in the catalog and the Playground", async
 test("the 0.79 catalog Live-formats unpinned 0.80-only syntax under 0.79", async ({ page }) => {
     await page.goto(siteUrl + "flix/0.79.0/declarations/#module-value");
     const article = page.locator("#module-value");
-    await expect(article.locator(".fixture-flix")).toHaveText("Flix 0.80");
+    await expect(article.locator(".fixture-flix")).toHaveText("Flix ≥0.80.0");
     const fixture = article.locator("[data-embedded-playground]");
     await expect(fixture.getByLabel("Flix version")).toHaveValue("0.79.0");
     await expect(fixture.getByRole("textbox", { name: "Flix input" })).toHaveText("val answer:Int32=42");

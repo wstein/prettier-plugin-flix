@@ -2,7 +2,6 @@
 title: "Keep a return type arrow chain on one line when it fits"
 description: "A return type arrow chain moves to its own continuation line as a whole, and a short with list follows on the next line in the same column."
 group: "Types and constraints"
-flix: "0.80"
 options: { printWidth: 80 }
 ---
 

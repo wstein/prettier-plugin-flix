@@ -2,7 +2,6 @@
 title: "Align match arms in a trailing lambda the same way on every pass"
 description: "A lambda that a pass moves next to its call measures its match arms at the same indentation as the lambda printed in place."
 group: "Pipelines and calls"
-flix: "0.80"
 options: { printWidth: 110 }
 ---
 
