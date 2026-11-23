@@ -1,6 +1,6 @@
 import { CharStream, CommonTokenStream, ParserRuleContext, TerminalNode, type ParseTree, type Token } from "antlr4ng";
 import { doc, util, type Doc } from "prettier";
-import { defaultGrammar, grammarForId, type FlixLexerClass } from "./grammar.js";
+import { grammarForId, type FlixLexerClass } from "./grammar.js";
 import { ignoredDeclarationEnd, parseFlix, type FlixRoot } from "./parse.js";
 import { alignTupleFields } from "./TupleColumns.res.mjs";
 
@@ -11,12 +11,12 @@ const CARET = /^\/\/[ \t]*\^+/;
 export const LINE_COMMENT_GAP = "  ";
 
 /** Active lexer constants for the grammar of the tree being laid out. */
-let L: FlixLexerClass = defaultGrammar().Lexer;
-let OPEN = new Set([L.LPAREN, L.LBRACK, L.LBRACE, L.HASH_LBRACE, L.HASH_LPAREN, L.HASH_BAR, L.INTERPOLATION_START]);
-let CLOSE = new Set([L.RPAREN, L.RBRACK, L.RBRACE, L.BAR_HASH, L.INTERPOLATION_END]);
-let TABLE_COLLECTIONS = new Set([L.VECTOR_HASH, L.LIST_HASH, L.ARRAY_HASH, L.SET_HASH]);
-let DefDeclarationContext: abstract new (...args: never[]) => object = defaultGrammar().DefDeclarationContext;
-let HandlerExprContext: abstract new (...args: never[]) => object = defaultGrammar().HandlerExprContext;
+let L: FlixLexerClass;
+let OPEN: Set<number>;
+let CLOSE: Set<number>;
+let TABLE_COLLECTIONS: Set<number>;
+let DefDeclarationContext: abstract new (...args: never[]) => object;
+let HandlerExprContext: abstract new (...args: never[]) => object;
 
 function bindGrammar(grammarId: FlixRoot["grammarId"]): void {
     const grammar = grammarForId(grammarId);

@@ -15,10 +15,6 @@ source = "assets"
 target = "assets"
 
 [[module.mounts]]
-source = "../dist"
-target = "assets/formatter"
-
-[[module.mounts]]
 source = "syntax"
 target = "assets/syntax"
 

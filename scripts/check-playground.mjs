@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFile, stat } from "node:fs/promises";
+import { readFile, readdir, stat } from "node:fs/promises";
 import { basename } from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadFixture, optionsFor } from "../test/fixture.mjs";
@@ -24,10 +24,19 @@ const formatterAsset = basename(asset[1] ?? asset[2]);
 const formatterUrl = new URL(`js/${formatterAsset}`, site);
 const { formatFlix, formatFlixPreview } = await import(formatterUrl);
 
-test("the published formatter bundle is at most 2 MiB uncompressed", async () => {
+test("the published formatter and one selected grammar are at most 2 MiB uncompressed", async () => {
     const maxBytes = 2 * 1024 * 1024;
-    const { size } = await stat(formatterUrl);
-    assert.ok(size <= maxBytes, `${formatterAsset} is ${size} bytes (maximum ${maxBytes} bytes)`);
+    const dir = new URL("js/", site);
+    const files = await readdir(dir);
+    const bytes = async (names) => (await Promise.all(names.map(async (name) =>
+        (await stat(new URL(name, dir))).size))).reduce((sum, size) => sum + size, 0);
+    const shared = await bytes([formatterAsset, ...files.filter((name) => /^chunk-[A-Z0-9]+\.js$/.test(name))]);
+    for (const pin of ["079", "080"]) {
+        const grammar = files.filter((name) => name.startsWith("grammar-" + pin + "-"));
+        assert.equal(grammar.length, 1, "Expected one published chunk for grammar " + pin);
+        const size = shared + await bytes(grammar);
+        assert.ok(size <= maxBytes, `Formatter with ${grammar[0]} is ${size} bytes (maximum ${maxBytes} bytes)`);
+    }
 });
 
 test("the published worker loads the published formatter and replies to requests", async () => {

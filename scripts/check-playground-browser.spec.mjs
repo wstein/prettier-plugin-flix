@@ -18,7 +18,8 @@ const contentTypes = {
 
 let server;
 let siteUrl;
-let unavailableFormatter = false;
+let unavailableFormatter;
+const requestedGrammars = new Set();
 
 // Keep the same base path as GitHub Pages so fixture URLs and worker imports
 // exercise the files that will actually be deployed.
@@ -27,7 +28,9 @@ test.beforeAll(async () => {
     server = createServer(async (request, response) => {
         try {
             const path = decodeURIComponent(new URL(request.url, "http://localhost").pathname);
-            if (unavailableFormatter && /\/format-flix\.[a-f0-9]+\.js$/.test(path)) {
+            const grammar = path.match(/\/grammar-(079|080)-[A-Z0-9]+\.js$/);
+            if (grammar) requestedGrammars.add(grammar[1]);
+            if (unavailableFormatter?.test(path)) {
                 response.writeHead(404).end();
                 return;
             }
@@ -783,17 +786,40 @@ test("a line-width error clears the input diagnostic", async ({ page }) => {
     await expect(input).not.toHaveAttribute("aria-invalid");
 });
 
-for (const failure of ["load", "timeout"]) {
+for (const [version, pin, otherVersion, otherPin] of [
+    ["0.79.0", "079", "0.80.0", "080"],
+    ["0.80.0", "080", "0.79.0", "079"],
+]) {
+    test("a cold Playground loads only the selected grammar " + version, async ({ page }) => {
+        requestedGrammars.clear();
+        const source = "def f():Int32=1";
+        const hash = new URLSearchParams({ code: Buffer.from(source).toString("base64url"), flixVersion: version });
+        await page.goto(siteUrl + "playground/#" + hash);
+        const preview = page.getByRole("textbox", { name: "Preview" });
+        await expect(preview).toHaveText("def f(): Int32 = 1");
+        expect([...requestedGrammars]).toEqual([pin]);
+
+        await page.getByLabel("Flix version").selectOption(otherVersion);
+        const otherSource = otherPin === "080" ? "val n:Int32=2" : "def val():Int32=2";
+        const expected = otherPin === "080" ? "val n: Int32 = 2" : "def val(): Int32 = 2";
+        await page.getByRole("textbox", { name: "Flix input" }).fill(otherSource);
+        await expect(preview).toHaveText(expected);
+        expect([...requestedGrammars]).toEqual([pin, otherPin]);
+    });
+}
+
+for (const failure of ["load", "grammar load", "timeout"]) {
     test(`the Playground can retry after a formatter ${failure} failure`, async ({ page }) => {
         const workerAsset = /\/playground-worker\.[a-f0-9]+\.js$/;
-        if (failure === "load") unavailableFormatter = true;
+        if (failure === "load") unavailableFormatter = /\/format-flix\.[a-f0-9]+\.js$/;
+        else if (failure === "grammar load") unavailableFormatter = /\/grammar-080-[A-Z0-9]+\.js$/;
         else await page.route(workerAsset, (route) => route.fulfill({ contentType: "text/javascript", body: "" }));
         const status = page.locator("[data-full-playground]").getByRole("status", { includeHidden: true });
         try {
             await page.goto(siteUrl + "playground/");
-            await expect(status).toContainText(failure === "load" ? "The formatter could not load" : "Formatting timed out", { timeout: 12000 });
+            await expect(status).toContainText(failure === "timeout" ? "Formatting timed out" : "The formatter could not load", { timeout: 12000 });
         } finally {
-            unavailableFormatter = false;
+            unavailableFormatter = undefined;
             if (failure === "timeout") await page.unroute(workerAsset);
         }
         await page.getByRole("textbox", { name: "Flix input" }).fill("def retry():Int32=1");
