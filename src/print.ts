@@ -706,9 +706,11 @@ export class Printer {
                 hardline, hardline,
             ]
             : [];
-        if (inner.length === 0 && (preserveBlankAfterOpen || enumBody)) {
-            // In a comment-only block the first comment belongs to the closing token.
-            const blankAfterOpen = preserveBlankAfterOpen && this.blankBefore(close) ? hardline : "";
+        if (inner.length === 0 && comments.length > 0) {
+            // Comment-only braces/parens (`List#{…}`, records, declarations, …):
+            // the first comment belongs to the closing token. Break once after the
+            // opener; keep a source blank when present. Enums still drop that blank.
+            const blankAfterOpen = !enumBody && this.blankBefore(close) ? hardline : "";
             return [openDoc, indent([hardline, blankAfterOpen, bodyHeader, comments]), hardline, closeCore, closeTrail];
         }
 
