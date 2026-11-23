@@ -32,6 +32,7 @@
   {{/* Site root for the version switcher: strip /flix/<pin>/ from a versioned baseURL. */}}
   {{ $siteRoot := site.BaseURL }}
   {{ with site.Params.flixDocVersion }}{{ if ne . "" }}{{ $siteRoot = strings.TrimSuffix (printf "flix/%s/" .) site.BaseURL }}{{ end }}{{ end }}
+  {{ $siteRootPath := (urls.Parse $siteRoot).Path }}
   {{ $catalogRest := strings.TrimPrefix site.Home.RelPermalink .RelPermalink }}
   <header class="site-header">
     <nav class="site-toolbar" aria-label="Site">
@@ -47,7 +48,7 @@
       {{ end }}
       {{ end }}
       {{ partialCached "site-search.html" . "catalog-index" }}
-      <label class="site-flix-version">Flix
+      <label class="site-flix-version" hidden>Flix
         <select id="site-flix-version" data-base-url="{{ $siteRoot }}" data-latest="{{ $latestFlix }}" data-current="{{ $currentFlix }}" aria-label="Flix syntax version for this catalog">
           {{ range site.Data.playground.supportedFlixVersions }}
           <option value="{{ . }}"{{ if eq . $currentFlix }} selected{{ end }}>{{ . }}{{ if eq . $latestFlix }} (latest){{ end }}</option>
@@ -58,9 +59,9 @@
         Flix
         {{ range site.Data.playground.supportedFlixVersions }}
         {{ if eq . $latestFlix }}
-        <a href="{{ printf "%s%s" $siteRoot $catalogRest }}"{{ if eq . $currentFlix }} aria-current="page"{{ end }}>{{ . }} (latest)</a>
+        <a href="{{ printf "%s%s" $siteRootPath $catalogRest }}"{{ if eq . $currentFlix }} aria-current="page"{{ end }}>{{ . }} (latest)</a>
         {{ else }}
-        <a href="{{ printf "%sflix/%s/%s" $siteRoot . $catalogRest }}"{{ if eq . $currentFlix }} aria-current="page"{{ end }}>{{ . }}</a>
+        <a href="{{ printf "%sflix/%s/%s" $siteRootPath . $catalogRest }}"{{ if eq . $currentFlix }} aria-current="page"{{ end }}>{{ . }}</a>
         {{ end }}
         {{ end }}
       </noscript>

@@ -91,6 +91,35 @@ test("catalog and Playground publish share previews and keep the mobile brand li
     }
 });
 
+test("the catalog switcher preserves the page, query, and fragment in both directions", async ({ page }) => {
+    const suffix = "formatting/?from=guide#line-width-and-indentation";
+    const picker = page.getByLabel("Flix syntax version for this catalog");
+    for (const prefix of ["", "flix/0.80.0/"]) {
+        await page.goto(siteUrl + prefix + suffix);
+        await expect(picker).toHaveValue("0.80.0");
+        await picker.selectOption("0.79.0");
+        await expect(page).toHaveURL(siteUrl + "flix/0.79.0/" + suffix);
+        await expect(picker).toHaveValue("0.79.0");
+        await picker.selectOption("0.80.0");
+        await expect(page).toHaveURL(siteUrl + suffix);
+    }
+});
+
+test("catalog version links work with JavaScript disabled", async ({ browser }) => {
+    const context = await browser.newContext({ javaScriptEnabled: false });
+    try {
+        const page = await context.newPage();
+        await page.goto(siteUrl + "flix/0.79.0/formatting/");
+        await expect(page.getByLabel("Flix syntax version for this catalog")).toBeHidden();
+        await page.getByRole("link", { name: "0.80.0 (latest)", exact: true }).click();
+        await expect(page).toHaveURL(siteUrl + "formatting/");
+        await page.getByRole("link", { name: "0.79.0", exact: true }).click();
+        await expect(page).toHaveURL(siteUrl + "flix/0.79.0/formatting/");
+    } finally {
+        await context.close();
+    }
+});
+
 test("inline search finds both documentation pages and still finds fixtures", async ({ page }) => {
     await page.goto(siteUrl);
     const search = page.getByRole("search", { name: "Catalog" });
