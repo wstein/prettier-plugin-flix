@@ -123,6 +123,8 @@ for (const path of findFixtures(root)) {
         id: basename(relative, ".md"),
         path: relative,
         chapter,
+        flix: meta.flix,
+        flixVersion: liveOptions.flixVersion,
         upstreamUrl: typeof meta.source === "string" && meta.source.startsWith("https://") ? meta.source : undefined,
         title: meta.title,
         description: meta.description,

@@ -110,17 +110,30 @@ For layout decisions, prefer the [Flix language documentation](https://doc.flix.
 ## Versioned fixture documentation
 
 The Pages site keeps stable root URLs such as `/formatting/` and `/playground/` and
-also publishes the same catalog under `/flix/<exact-version>/`, aligned with
-`flixVersion` / [`src/flix-version.ts`](../src/flix-version.ts). `npm run docs:build`
-runs one Hugo build for the root and one for each versioned catalog (currently
-`0.80.0`). It stages the results in the system temporary directory. Once all builds
-succeed, it assembles them in `docs/public` for a single Pages deploy. Each
-build sets `params.flixDocVersion` so embedded editors and the Playground
-default to that pin. Search and chapter links use the build's `baseURL` to
-stay inside the catalog. Each catalog has its own `sitemap.xml`. The root
-sitemap covers the root catalog. Add new tested pins to
-`scripts/build-docs-site.mjs` when they need their own catalog. Root URLs
-serve as the primary entry points until a version switcher is available.
+also publishes the same catalog under `/flix/<exact-version>/` for every pin in
+`SUPPORTED_FLIX_VERSIONS` ([`src/flix-version.ts`](../src/flix-version.ts)),
+currently `0.79.0` and `0.80.0`. This is one site with per-version subtrees, not
+separate deployments.
+
+**Shared vs split.** Hugo content (`docs/content/`), the style guide, and the
+exported fixture JSON are shared across builds. Only `baseURL` and
+`params.flixDocVersion` change per tree: embedded editors and the Playground
+default to that pin. Search, chapter nav, and asset URLs stay inside the
+catalog via RelPermalink. Root URLs mirror the latest pin (`0.80.0`);
+`/flix/0.80.0/` is the same catalog under an explicit version prefix.
+`/flix/0.79.0/` is for readers on the older grammar.
+
+**Switcher.** The toolbar Flix control rewrites the path between the root
+catalog (latest) and `/flix/<version>/…`, keeping the page after the prefix.
+Fixtures authored for a non-default major.minor, or that pin `flixVersion`,
+show a badge. Prefer those when checking older syntax; most fixtures target
+`0.80`.
+
+`npm run docs:build` runs one Hugo build for the root and one for each
+versioned catalog, stages them in the system temporary directory, then
+assembles `docs/public` for a single Pages deploy. Each catalog has its own
+`sitemap.xml`. New tested pins join `SUPPORTED_FLIX_VERSIONS` and then appear
+automatically under `/flix/<version>/`.
 
 ## Verify the Playground in Chromium
 

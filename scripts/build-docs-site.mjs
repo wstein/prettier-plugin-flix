@@ -1,12 +1,11 @@
 /**
  * Publish the fixture catalog once at the site root (stable URLs) and once under
- * /flix/<version>/ for each syntax pin that has its own docs tree.
+ * /flix/<version>/ for each supported Flix syntax pin.
  *
  * One Hugo invocation per version keeps RelPermalink, search, and sidebar links
  * inside that catalog. GitHub Pages deploys the merged docs/public tree.
- *
- * Start with the latest pin only; add further versions (and a switcher) when their
- * fixtures and Playground defaults are ready.
+ * Shared Markdown and fixture data feed every build; only baseURL and
+ * params.flixDocVersion differ. The toolbar switcher moves between catalogs.
  */
 import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -14,7 +13,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 import { build } from "esbuild";
-import { DEFAULT_FLIX_VERSION } from "../dist/flix-version.js";
+import { DEFAULT_FLIX_VERSION, SUPPORTED_FLIX_VERSIONS } from "../dist/flix-version.js";
 
 const docs = fileURLToPath(new URL("../docs/", import.meta.url));
 const dist = fileURLToPath(new URL("../dist", import.meta.url));
@@ -26,7 +25,7 @@ if (!baseURL) throw new Error("docs/hugo.toml must set baseURL");
 if (!baseURL.endsWith("/")) throw new Error("baseURL must end with /");
 
 /** Exact Flix pins that get a versioned catalog path. Root URLs mirror the latest. */
-const versionedCatalogs = [DEFAULT_FLIX_VERSION];
+const versionedCatalogs = [...SUPPORTED_FLIX_VERSIONS];
 
 rmSync(formatterDir, { recursive: true, force: true });
 await build({
