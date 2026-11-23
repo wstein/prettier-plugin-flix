@@ -1,6 +1,6 @@
 ---
 title: "Keep one blank line after the opening brace of a declaration block"
-description: "A blank line after the brace of a mod, trait, instance or enum stays, as in the built-in Flix formatter; several blank lines become one, and none is added."
+description: "Keep one source blank line after the opening brace of a mod, trait, instance, eff or struct. Remove the opening blank line in enums, including those that contain only comments."
 group: "Declarations"
 flix: "0.80"
 options: { printWidth: 80 }
@@ -75,12 +75,37 @@ instance Show2[Int32] {
 instance Bare[Int32] {
     pub def bare(x: Int32): String = "x"
 }
+eff Signal {
+
+    // Trigger the signal.
+    def ping(): Unit
+}
+eff TightSignal {
+    def ping(): Unit
+}
+struct Board[r] {
+
+
+    x: Int32
+}
+struct TightBoard[r] {
+    x: Int32
+}
 enum Color {
 
     case Red, Green
 }
 enum Plain {
     case Blue
+}
+enum Commented {
+
+    /* First case. */
+    case Ready
+}
+enum OnlyComment {
+
+    // An empty enum.
 }
 ```
 
@@ -147,12 +172,33 @@ instance Show2[Int32] {
 instance Bare[Int32] {
     pub def bare(x: Int32): String = "x"
 }
-enum Color {
+eff Signal {
 
+    // Trigger the signal.
+    def ping(): Unit
+}
+eff TightSignal {
+    def ping(): Unit
+}
+struct Board[r] {
+
+    x: Int32
+}
+struct TightBoard[r] {
+    x: Int32
+}
+enum Color {
     case Red, Green
 }
 enum Plain {
     case Blue
+}
+enum Commented {
+    /* First case. */
+    case Ready
+}
+enum OnlyComment {
+    // An empty enum.
 }
 ```
 
@@ -217,11 +263,32 @@ instance Show2[Int32] {
 instance Bare[Int32] {
     pub def bare(x: Int32): String = "x"
 }
-enum Color {
+eff Signal {
 
+    // Trigger the signal.
+    def ping(): Unit
+}
+eff TightSignal {
+    def ping(): Unit
+}
+struct Board[r] {
+
+    x: Int32
+}
+struct TightBoard[r] {
+    x: Int32
+}
+enum Color {
     case Red, Green
 }
 enum Plain {
     case Blue
+}
+enum Commented {
+    /* First case. */
+    case Ready
+}
+enum OnlyComment {
+    // An empty enum.
 }
 ```

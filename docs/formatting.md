@@ -275,16 +275,17 @@ header may keep a blank line before the code.
 [Declaration spacing fixture](../test/fixtures/declarations/block-spacing.md) ·
 [Flixdoc attachment](../test/fixtures/comments/attach-flixdoc.md)
 
-A blank line directly after the `{` of a `mod`, `trait`, `instance` or `enum`
-stays, and several become one. The formatter never adds one, and it keeps the
-blank line before a comment or Flixdoc that follows it. Flix does the same
-(`PrettyPrinter`, v0.80.0) and does not depend on the length of the block. The
-Flix standard library has 249 such blocks (179 `mod`, 21 `trait`, 49
-`instance`, no `enum`); `flix format` leaves all of them, and in the standard
-library no block length separates blocks with a blank line from those without
-(`mod`: 9 of 10 blocks of 6 to 15 lines, 70 % of blocks over 100 lines). A blank
-line before the closing `}` is still removed.
-[Blank line after the brace fixture](../test/fixtures/declarations/mod-blank-line-after-brace.md)
+Keep one source blank line directly after the `{` of a `mod`, `trait`,
+`instance`, `eff`, or `struct`, including before a comment or Flixdoc.
+Several blank lines become one. Following `flix format` 0.80.0, remove the
+opening blank line in enums, including enum bodies that contain only comments.
+If an end-of-line comment after an enum's opening brace is followed by a blank
+line and more body content, indent the comment inside the enum and keep the gap
+after it. The plugin removes a blank line before the closing `}`. Flix 0.80.0
+keeps that gap in declarations that preserve opening blank lines.
+[Blank line after the brace fixture](../test/fixtures/declarations/mod-blank-line-after-brace.md) ·
+[Comment-only declarations](../test/fixtures/declarations/comment-only-declaration-braces.md) ·
+[Enum opener comments](../test/fixtures/declarations/enum-opener-comment-gap.md)
 
 ```flix
 mod Shapes {
@@ -619,9 +620,8 @@ This section describes the output. It does not change a rule and promises no
 match with `flix format`. The idempotence guarantee for `printWidth` of 40 or
 more (see [Supported print widths](#supported-print-widths)) is unchanged.
 
-The row about the blank line after `{` counts the plugin before the rule
-above: the plugin now keeps that blank line in `mod`, `trait`, `instance` and
-`enum` blocks and removes it elsewhere.
+The row about blank lines after `{` predates the current rule for
+`mod`, `trait`, `instance`, `eff`, `struct`, and enum bodies.
 
 ## Sources and limits
 
