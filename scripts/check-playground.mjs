@@ -5,6 +5,12 @@ import { basename } from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadFixture, optionsFor } from "../test/fixture.mjs";
 import { Text } from "@codemirror/state";
+import {
+    compareFlixVersions,
+    exampleSupportsVersion,
+    filterExampleGroups,
+    readExampleEntry,
+} from "../docs/assets/js/playground-example-versions.js";
 import { readHandoff, writeHandoff } from "../docs/assets/js/playground-link.js";
 import { fetchSource, sourceReference } from "../docs/assets/js/playground-source.js";
 import { playgroundIndentation } from "../docs/assets/js/playground-options.js";
@@ -215,13 +221,14 @@ test("all curated examples match their fixtures in the published browser bundle"
         const fixture = loadFixture(fileURLToPath(new URL(`../test/fixtures/${path}`, import.meta.url)));
         assert.equal(input, fixture.input.code, path);
         assert.deepEqual(options, fixture.outputs.map((block) => optionsFor(fixture, block)), path);
-        const original = fingerprint(input);
+        const flixVersion = options[0]?.flixVersion;
+        const original = fingerprint(input, flixVersion);
         assert.deepEqual(original.errors, [], path);
         for (const [index, block] of fixture.outputs.entries()) {
             const settings = options[index];
             const output = await formatFlix(input, settings);
             assert.equal(output, block.code, path);
-            assert.deepEqual(programProblems(original, fingerprint(output)), [], path);
+            assert.deepEqual(programProblems(original, fingerprint(output, settings.flixVersion)), [], path);
             assert.equal(await formatFlix(output, settings), output, path);
         }
     }
@@ -532,4 +539,76 @@ test("the Flix version switcher keeps the page path when changing catalogs", asy
         }),
         null,
     );
+});
+
+test("Playground example version ranges filter the menu by selected pin", async () => {
+    assert.equal(compareFlixVersions("0.79.0", "0.80.0"), -1);
+    assert.equal(compareFlixVersions("0.80.0", "0.80.0"), 0);
+
+    // From-version only (minVersion).
+    assert.equal(exampleSupportsVersion({ minVersion: "0.80.0" }, "0.80.0"), true);
+    assert.equal(exampleSupportsVersion({ minVersion: "0.80.0" }, "0.79.0"), false);
+
+    // Inclusive from–to range.
+    assert.equal(exampleSupportsVersion({ minVersion: "0.79.0", maxVersion: "0.79.0" }, "0.79.0"), true);
+    assert.equal(exampleSupportsVersion({ minVersion: "0.79.0", maxVersion: "0.79.0" }, "0.80.0"), false);
+
+    assert.deepEqual(
+        readExampleEntry(["Module-level value", "declarations/module-value.md", { minVersion: "0.80.0" }]),
+        { label: "Module-level value", path: "declarations/module-value.md", minVersion: "0.80.0" },
+    );
+    assert.deepEqual(
+        readExampleEntry(["Function named val", "declarations/function-named-val-flix-0.79.md", {
+            minVersion: "0.79.0",
+            maxVersion: "0.79.0",
+        }]),
+        {
+            label: "Function named val",
+            path: "declarations/function-named-val-flix-0.79.md",
+            minVersion: "0.79.0",
+            maxVersion: "0.79.0",
+        },
+    );
+
+    const groups = [
+        {
+            title: "Everyday programs",
+            examples: [
+                ["Checkout", "declarations/checkout.md"],
+                ["Module-level value", "declarations/module-value.md"],
+            ],
+        },
+        {
+            title: "Version pins",
+            examples: [["Function named val", "declarations/function-named-val-flix-0.79.md"]],
+        },
+    ];
+    const fixtures = {
+        "declarations/checkout.md": {},
+        "declarations/module-value.md": { minVersion: "0.80.0" },
+        "declarations/function-named-val-flix-0.79.md": { minVersion: "0.79.0", maxVersion: "0.79.0" },
+    };
+    assert.deepEqual(filterExampleGroups(groups, fixtures, "0.79.0"), [
+        { title: "Everyday programs", examples: [["Checkout", "declarations/checkout.md"]] },
+        {
+            title: "Version pins",
+            examples: [["Function named val", "declarations/function-named-val-flix-0.79.md"]],
+        },
+    ]);
+    assert.deepEqual(filterExampleGroups(groups, fixtures, "0.80.0"), [
+        {
+            title: "Everyday programs",
+            examples: [
+                ["Checkout", "declarations/checkout.md"],
+                ["Module-level value", "declarations/module-value.md"],
+            ],
+        },
+    ]);
+
+    const published = JSON.parse(await readFile(new URL("../docs/data/playground.json", import.meta.url), "utf8"));
+    assert.equal(published.fixtures["declarations/module-value.md"].minVersion, "0.80.0");
+    assert.equal(published.fixtures["declarations/module-value.md"].maxVersion, undefined);
+    assert.equal(published.fixtures["declarations/function-named-val-flix-0.79.md"].minVersion, "0.79.0");
+    assert.equal(published.fixtures["declarations/function-named-val-flix-0.79.md"].maxVersion, "0.79.0");
+    assert.ok(published.groups.some((group) => group.title === "Version pins"));
 });

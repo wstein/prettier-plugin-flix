@@ -131,6 +131,11 @@ Fixtures that pin `flixVersion`, or whose `flix` major.minor differs from the
 catalog pin, show a badge. Prefer pinned 0.79 cases when checking older syntax;
 most fixtures target `0.80`.
 
+**Playground examples.** Curated menu entries may carry `minVersion` /
+`maxVersion` (from-version, or an inclusive from–to range). The standalone
+Playground hides incompatible examples when its Flix version control changes —
+syntax-pin filtering only, not a feature matrix.
+
 `npm run docs:build` runs one Hugo build for the root and one for each
 versioned catalog, stages them in the system temporary directory, then
 assembles `docs/public` for a single Pages deploy. Each catalog has its own

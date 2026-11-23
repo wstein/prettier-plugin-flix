@@ -1,5 +1,6 @@
 import { countColumn, Transaction } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
+import { filterExampleGroups } from "./playground-example-versions.js";
 import { renderDiff } from "./playground-diff.js";
 import { createEditor, createFlixHighlighter } from "./playground-editor.js";
 import { readHandoff, writeHandoff } from "./playground-link.js";
@@ -46,6 +47,7 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
     let preview = initial?.output === undefined ? undefined : { source: initial.source, output: initial.output };
     let highlighter;
     let fixtures;
+    let exampleGroups = [];
     let highlightingFailed = false;
     let announceTakeOver = false;
 
@@ -220,7 +222,14 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
 
     function loadDraft({ source, printWidth: width = defaultWidth, flixVersion: version = defaultFlixVersion }) {
         printWidth.value = width;
-        if (flixVersion) flixVersion.value = version;
+        if (flixVersion) {
+            const previous = flixVersion.value;
+            flixVersion.value = version;
+            // Programmatic pin changes do not fire `change`; keep the menu in sync.
+            if (select && fixtures && previous !== flixVersion.value) {
+                fillExampleMenu(flixVersion.value || playgroundDefaultFlixVersion);
+            }
+        }
         updateColumnGuides();
         replaceCode(input.view, source);
         queuePreview();
@@ -378,7 +387,10 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
         updateColumnGuides();
         queuePreview();
     });
-    flixVersion?.addEventListener("change", queuePreview);
+    flixVersion?.addEventListener("change", () => {
+        if (select && fixtures) fillExampleMenu(flixVersion.value || playgroundDefaultFlixVersion);
+        queuePreview();
+    });
 
     copy.addEventListener("click", async () => {
         try {
@@ -409,25 +421,41 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
         return response.json();
     }
 
+    function fillExampleMenu(version) {
+        const previous = select.value;
+        // Remove whole groups so empty optgroups do not linger after filtering.
+        for (const group of select.querySelectorAll("optgroup")) group.remove();
+        for (const { title, examples } of filterExampleGroups(exampleGroups, fixtures, version)) {
+            const group = document.createElement("optgroup");
+            group.label = title;
+            for (const [label, path] of examples) group.append(new Option(label, path));
+            select.append(group);
+        }
+        // Drop the selection when the current example is outside this pin — do not
+        // leave a hidden option selected, and do not swap the editor contents.
+        if (previous && [...select.options].some((option) => option.value === previous)) {
+            select.value = previous;
+        } else {
+            select.value = "";
+        }
+    }
+
     async function loadExamples() {
         if (revision === 0) showStatus("Loading examples…");
         try {
             const data = await fetchFixtures(playground.dataset.examples);
             fixtures = data.fixtures;
+            exampleGroups = data.groups;
             const params = new URLSearchParams(location.search);
             const requested = params.get("fixture");
             const variant = params.has("variant") ? Number(params.get("variant")) : undefined;
-            for (const { title, examples } of data.groups) {
-                const group = document.createElement("optgroup");
-                group.label = title;
-                for (const [label, path] of examples) group.append(new Option(label, path));
-                select.append(group);
-            }
+            fillExampleMenu(flixVersion?.value || playgroundDefaultFlixVersion);
             select.disabled = false;
             // Keep any edits made while the examples or linked fixture loaded.
             if (revision !== 0) return;
             if (Object.hasOwn(fixtures, requested)) {
                 useExample(requested, variant);
+                if ([...select.options].some((option) => option.value === requested)) select.value = requested;
                 return;
             }
             if (requested) {
@@ -439,8 +467,14 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
                     return;
                 }
             }
-            select.value = data.defaultFixture;
-            useExample(data.defaultFixture);
+            const version = flixVersion?.value || playgroundDefaultFlixVersion;
+            const visible = filterExampleGroups(exampleGroups, fixtures, version)
+                .flatMap(({ examples }) => examples.map(([, path]) => path));
+            const initialExample = visible.includes(data.defaultFixture) ? data.defaultFixture : visible[0];
+            if (initialExample) {
+                select.value = initialExample;
+                useExample(initialExample);
+            }
         } catch {
             if (revision === 0) showStatus("Examples could not load. Paste Flix code to get started.", true);
         }
