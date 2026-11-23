@@ -32,6 +32,9 @@ User-facing changes to Prettier Plugin for Flix. Plugin releases have their own 
 
 ### Fixes
 
+- Give trailing comments that start with four or more slashes the usual
+  two-space minimum and group alignment. Existing files may reformat.
+
 - Update the Flix 0.80.0 grammar to accept type kind ascriptions and match the
   compiler's syntax checks for function names and numeric literals more closely.
 
