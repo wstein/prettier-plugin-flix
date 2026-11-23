@@ -429,7 +429,8 @@ def next(xs: List[Int32]): Int32 = match xs {
 Record braces have no inner padding: `{x = T}`, `{x = 1 | r}` and
 `{x = n | _}`. Effect sets and schema braces keep a space
 (`\ { Chan }`, `#{ A(Int32) }`). An open record that starts with `|` keeps
-the space after `{` (`{ | a}`).
+a leading space only (`{ | a}`). A single bare name in braces is parsed as a
+record field but printed with padding like a block (`{ x }`), as Flix does.
 [Record brace padding fixture](../test/fixtures/expressions/record-no-inner-pad.md)
 
 Record updates, open record types, record patterns, and record-row aliases

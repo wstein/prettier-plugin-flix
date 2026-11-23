@@ -8,8 +8,9 @@ User-facing changes to Prettier Plugin for Flix. Plugin releases have their own 
 
 - Print record types, literals, patterns and updates without inner brace
   padding (`{x = T}`, `{x = 1 | r}`), matching Flix. Effect sets and schema
-  braces keep a space; an open record `{ | a}` keeps the space after `{`.
-  Existing files with padded record braces may reformat on upgrade.
+  braces keep a space; an open record keeps a leading space only (`{ | a}`);
+  a bare `{ x }` keeps block padding. Existing files with padded record
+  braces may reformat on upgrade.
 - Indent a wrapped match-arm guard one level deeper than the arm body.
 - Indent a wrapped `with` constraint list one level deeper than the body,
   members, or continued arrow parameters. Existing Flix files with wrapped

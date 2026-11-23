@@ -65,16 +65,15 @@ function nextTerm(n: Node): TerminalNode | null {
 /** Characters that make up user operators; two adjacent runs of them would lex as one token. */
 const OP_CHARS = "+-*<>=!&|^$";
 
+/** Brace lists printed without inner padding: `use A.{b, c}`, `List#{1, 2}`. */
+const NO_PAD = new Set(["UseClause", "ImportClause", "CollectionLiteral"]);
 /**
- * Brace lists printed without inner padding: `use A.{b, c}`, `List#{1, 2}`,
- * and records `{x = T}` / `{x = 1 | r}` (Flix `flatPad` is empty for records).
- * Effect sets and schema braces keep a space. An open record that starts with
- * `|` keeps the space after `{` (`{ | a}`).
+ * Record braces without inner padding (`{x = T}`, `{x = 1 | r}`), matching Flix
+ * `flatPad`. Effect sets and schema braces keep a space. A single bare field
+ * `{ x }` is parsed as RecordOperation but printed with padding like a block.
+ * An open record that starts with `|` keeps a leading space only (`{ | a}`).
  */
-const NO_PAD = new Set([
-    "UseClause", "ImportClause", "CollectionLiteral",
-    "RecordType", "RecordPattern", "RecordOperation",
-]);
+const RECORD_NO_PAD = new Set(["RecordType", "RecordPattern", "RecordOperation"]);
 /** Bracket lists whose items are separated by `;` rather than `,`. */
 const SEMI_LISTS = new Set(["ForFragments", "ParYieldExpr"]);
 /** Brace lists whose items are whole rules laid out one per line. */
@@ -660,10 +659,17 @@ export class Printer {
         const inner = children.slice(i + 1, j);
         const openType = ttype(open);
         const braces = openType === this.L.LBRACE || openType === this.L.HASH_LBRACE || openType === this.L.HASH_BAR;
-        // Open record `{ | a}`: Flix keeps a space after `{` before the pipe.
+        // Bare `{ x }` is RecordOperation in the grammar; Flix still prints it with padding.
+        const recordFields = inner.filter((n) => !isTerm(n) && kind(n) === "RecordOpField");
+        const recordHasBar = inner.some((n) => isTerm(n) && ttype(n) === this.L.BAR);
+        const blockLikeRecord = parentKind === "RecordOperation" && !recordHasBar && recordFields.length === 1 &&
+            kids(recordFields[0]).every((n) => !isTerm(n) || (ttype(n) !== this.L.EQUAL && ttype(n) !== this.L.PLUS && ttype(n) !== this.L.MINUS));
+        const wantsNoPad = (NO_PAD.has(parentKind) || RECORD_NO_PAD.has(parentKind)) && !blockLikeRecord;
+        // Open record `{ | a}`: Flix keeps a space after `{` only, not before `}`.
         const firstInner = inner.length > 0 ? firstTerm(inner[0]) : null;
-        const openRecordBar = NO_PAD.has(parentKind) && firstInner !== null && ttype(firstInner) === this.L.BAR;
-        const pad = braces && (!NO_PAD.has(parentKind) || openRecordBar);
+        const openRecordBar = wantsNoPad && RECORD_NO_PAD.has(parentKind) && firstInner !== null && ttype(firstInner) === this.L.BAR;
+        const padLeading = braces && (!wantsNoPad || openRecordBar);
+        const padTrailing = braces && !wantsNoPad;
         const comments = this.takeClosingComments(close);
         const openDoc = this.tok(open);
         const closeCore = this.tokCore(close);
@@ -675,12 +681,14 @@ export class Printer {
             return [openDoc, closeCore, closeTrail];
         }
 
-        const sline = pad ? line : softline;
-        const flatSline: Doc = this.flat > 0 ? (pad ? " " : "") : sline;
+        const leadingSline = padLeading ? line : softline;
+        const trailingSline = padTrailing ? line : softline;
+        const flatLeading: Doc = this.flat > 0 ? (padLeading ? " " : "") : leadingSline;
+        const flatTrailing: Doc = this.flat > 0 ? (padTrailing ? " " : "") : trailingSline;
         const innerLast = inner.length > 0 ? lastTerm(inner[inner.length - 1]) : null;
-        const firstSline = this.after(open, flatSline);
+        const firstSline = this.after(open, flatLeading);
         const compactHandlerClose = this.handlerArgumentOpeners.has(open.symbol.tokenIndex) && comments.length === 0;
-        const lastSline = this.after(innerLast, compactHandlerClose ? "" : flatSline);
+        const lastSline = this.after(innerLast, compactHandlerClose ? "" : flatTrailing);
         const tail: Doc[] = comments.flatMap((c) => [hardline, c]);
 
         const ruleKids = inner.filter((n) => !isTerm(n));
@@ -775,8 +783,11 @@ export class Printer {
             ...items.flatMap((it) => (it.length > 0 ? [firstTerm(it[0]), lastTerm(it[it.length - 1])] : [])),
         ];
         const commentAtBoundary = boundaryTokens.some((t) => t !== null && this.hasComment(t));
+        // Records must not hug: a nested `{...}` field would otherwise keep the
+        // whole record on one line and overflow. Calls/collections still may.
         const hugCandidate =
-            !pad && comments.length === 0 && !commentAtBoundary && sepType === this.L.COMMA && lastTok !== null && ttype(lastTok) === this.L.RBRACE &&
+            !padLeading && !RECORD_NO_PAD.has(parentKind) && comments.length === 0 && !commentAtBoundary &&
+            sepType === this.L.COMMA && lastTok !== null && ttype(lastTok) === this.L.RBRACE &&
             !items.slice(0, -1).some((it) => it.length > 0 && lastTerm(it[it.length - 1]) !== null && ttype(lastTerm(it[it.length - 1])!) === this.L.RBRACE);
         const canRelaxLambda = hugCandidate && finalArgument && kind(finalArgument) === "LambdaExpr";
         // Hug alternatives are built from copies that have not yet taken the comments, so
@@ -831,7 +842,13 @@ export class Printer {
             list.push(quiet ? ifBreak(this.src(trailingTok), "") : this.tok(trailingTok));
         }
         list.push(...tail);
-        const preserveMultiline = (pad && openType === this.L.LBRACE) || (isMap && aligned);
+        // Keep a source-broken `{` body vertical for padded braces and for
+        // no-pad record `{...}` forms. Do not use `wantsNoPad` alone:
+        // CollectionLiteral braces are also no-pad (`Array#{...}`) and should
+        // still flatten when short enough.
+        const preserveMultiline =
+            ((padLeading || RECORD_NO_PAD.has(parentKind)) && openType === this.L.LBRACE) ||
+            (isMap && aligned);
         const innerFirst = inner.length > 0 ? firstTerm(inner[0]) : null;
         const forceBreak = preserveMultiline && this.flat === 0 &&
             innerFirst !== null && innerFirst.symbol.line > open.symbol.line;
