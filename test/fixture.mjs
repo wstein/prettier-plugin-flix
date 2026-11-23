@@ -29,6 +29,7 @@
 import { readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import YAML from "yaml";
+import { compareFlixVersions } from "../docs/assets/js/playground-example-versions.js";
 
 export const STATUSES = ["pass", "todo", "error"];
 const META_KEYS = new Set([
@@ -131,6 +132,10 @@ export function parseFixture(text, file = "<fixture>") {
         if (key in meta && (typeof meta[key] !== "string" || !FLIX_VERSION.test(meta[key]))) {
             fail(file, 2, `front matter "${key}" must be an exact Flix version such as "0.80.0"`);
         }
+    }
+    if (meta.minVersion !== undefined && meta.maxVersion !== undefined &&
+        compareFlixVersions(meta.minVersion, meta.maxVersion) > 0) {
+        fail(file, 2, `front matter minVersion ${meta.minVersion} is after maxVersion ${meta.maxVersion}`);
     }
     if ("flixFormat" in meta && (typeof meta.flixFormat !== "string" || !FLIX_VERSION.test(meta.flixFormat))) {
         fail(file, 2, 'front matter "flixFormat" must be a quoted major.minor.patch version');

@@ -544,6 +544,9 @@ test("the Flix version switcher keeps the page path when changing catalogs", asy
 test("Playground example version ranges filter the menu by selected pin", async () => {
     assert.equal(compareFlixVersions("0.79.0", "0.80.0"), -1);
     assert.equal(compareFlixVersions("0.80.0", "0.80.0"), 0);
+    // Numeric parts, not lexicographic strings (0.9 < 0.10).
+    assert.equal(compareFlixVersions("0.9.0", "0.10.0"), -1);
+    assert.equal(compareFlixVersions("0.10.0", "0.9.0"), 1);
 
     // From-version only (minVersion).
     assert.equal(exampleSupportsVersion({ minVersion: "0.80.0" }, "0.80.0"), true);
