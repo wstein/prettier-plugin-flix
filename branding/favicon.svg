@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" role="img" aria-labelledby="title desc">
+  <title id="title">Prettier Plugin for Flix</title>
+  <desc id="desc">A compact slanted white F made of five horizontal strokes on a red tile.</desc>
+  <rect width="16" height="16" rx="3.5" fill="#C8102E"/>
+  <g fill="#FFFFFF" transform="translate(-0.35, 0)">
+    <rect x="4.8" y="1.6" width="8.2" height="2" rx="1"/>
+    <rect x="4.3" y="4.3" width="3" height="2" rx="1"/>
+    <rect x="3.8" y="7.0" width="7.2" height="2" rx="1"/>
+    <rect x="3.3" y="9.7" width="3" height="2" rx="1"/>
+    <rect x="2.8" y="12.4" width="3" height="2" rx="1"/>
+  </g>
+</svg>

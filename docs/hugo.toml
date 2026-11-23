@@ -21,3 +21,8 @@ target = "assets/formatter"
 [[module.mounts]]
 source = "syntax"
 target = "assets/syntax"
+
+[[module.mounts]]
+source = "../branding"
+target = "static/branding"
+includeFiles = ["favicon.ico", "favicon.svg", "apple-touch-icon.png", "social-preview.png"]

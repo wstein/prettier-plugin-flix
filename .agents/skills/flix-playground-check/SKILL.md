@@ -39,9 +39,9 @@ worker timing, or navigation.
   invalid source stays intact. Correct the error and check that the marker
   clears and the full preview returns.
 - **Controls and appearance.** When changing the toolbar or layout, check
-  the affected controls in both editor modes. Verify the formatted and diff
-  views, clear and undo if affected, and dark mode or a narrow viewport when
-  relevant.
+  the affected controls in both editor modes. Verify the Formatted/Diff
+  toggle, **Use formatted** on the input header (including from Diff, with undo), Clear, Copy,
+  and dark mode or a narrow viewport when relevant.
 
 Keep new Playground examples backed by tested Markdown fixtures. Change the
 fixture, exporter, or site source rather than the generated bundle. Report

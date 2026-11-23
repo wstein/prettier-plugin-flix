@@ -11,6 +11,8 @@ const contentTypes = {
     ".html": "text/html",
     ".js": "text/javascript",
     ".json": "application/json",
+    ".png": "image/png",
+    ".svg": "image/svg+xml",
     ".wasm": "application/wasm",
 };
 
@@ -57,6 +59,33 @@ test.afterAll(async () => {
 test.use({
     browserName: "chromium",
     launchOptions: { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH },
+});
+
+test("catalog and Playground publish share previews and keep the mobile brand link compact", async ({ page }) => {
+    const deployedOrigin = "https://wstein.github.io";
+    await page.setViewportSize({ width: 320, height: 760 });
+
+    for (const [path, catalogPath] of [
+        ["", ""],
+        ["formatting/", ""],
+        ["flix/0.80.0/playground/", "flix/0.80.0/"],
+    ]) {
+        await page.goto(siteUrl + path);
+        await expect(page.locator('meta[property="og:title"]')).toHaveAttribute("content", await page.title());
+        await expect(page.locator('meta[property="og:url"]')).toHaveAttribute("content", deployedOrigin + basePath + path);
+        const image = basePath + catalogPath + "branding/social-preview.png";
+        await expect(page.locator('meta[property="og:image"]')).toHaveAttribute("content", deployedOrigin + image);
+        expect((await page.request.get(new URL(image, siteUrl).href)).ok()).toBe(true);
+
+        const toolbar = page.getByRole("navigation", { name: "Site" });
+        const brand = toolbar.getByRole("link", { name: "Prettier Plugin for Flix", exact: true });
+        const logo = brand.locator("img");
+        await expect(logo).toHaveAttribute("alt", "");
+        await expect(logo).toHaveAttribute("src", basePath + catalogPath + "branding/favicon.svg");
+        await expect(logo).toHaveJSProperty("naturalWidth", 16);
+        expect((await logo.boundingBox()).width).toBe(20);
+        expect(await toolbar.evaluate((element) => element.scrollWidth)).toBeLessThanOrEqual(320);
+    }
 });
 
 test("inline search finds both documentation pages and still finds fixtures", async ({ page }) => {
@@ -631,27 +660,39 @@ for (const override of [undefined, "54"]) {
     });
 }
 
-test("diff, copy, invalid width and unrecoverable input stay in sync", async ({ page, context }) => {
+test("diff, copy, use formatted, invalid width and unrecoverable input stay in sync", async ({ page, context }) => {
     await context.grantPermissions(["clipboard-read", "clipboard-write"]);
     await page.goto(siteUrl + "playground/");
     const input = page.getByRole("textbox", { name: "Flix input" });
     const preview = page.getByRole("textbox", { name: "Preview" });
     const width = page.getByLabel("Line width");
     const status = page.locator("[data-full-playground]").getByRole("status", { includeHidden: true });
-    const copy = page.locator(".playground-preview-header").getByRole("button", { name: "Copy output" });
+    const copy = page.locator(".playground-preview-header").getByRole("button", { name: "Copy", exact: true });
+    const useFormatted = page.locator(".playground-input-header").getByRole("button", { name: "Use formatted" });
 
     await input.fill("def chosen():Int32=42");
     await expect(preview).toHaveText("def chosen(): Int32 = 42");
+    await expect(useFormatted).toBeEnabled();
     await copy.click();
     expect(await page.evaluate(() => navigator.clipboard.readText())).toBe("def chosen(): Int32 = 42\n");
     await page.getByRole("button", { name: "Diff", exact: true }).click();
     const diff = page.getByRole("region", { name: "Formatting differences" });
     await expect(diff.getByText("Removed line 1:", { exact: true })).toHaveCount(1);
     await expect(diff.getByText("Added line 1:", { exact: true })).toHaveCount(1);
+    // Diff mode still takes over from the preview snapshot.
+    await useFormatted.click();
+    await expect(input).toHaveText("def chosen(): Int32 = 42");
+    await expect(status).toContainText("Input updated from formatted preview.");
+    await expect(useFormatted).toBeDisabled();
+    await input.focus();
+    await input.press("ControlOrMeta+z");
+    await expect(input).toHaveText("def chosen():Int32=42");
+    await expect(useFormatted).toBeEnabled();
     await width.fill("0");
     await expect(width).toHaveAttribute("aria-invalid", "true");
     await expect(width).toHaveAccessibleErrorMessage(/whole number/);
     await expect(copy).toBeDisabled();
+    await expect(useFormatted).toBeDisabled();
     await expect(diff).toHaveText("No formatted preview is available.");
     await page.getByRole("button", { name: "Formatted", exact: true }).click();
     await expect(preview).toHaveText("def chosen():Int32=42");
@@ -662,10 +703,11 @@ test("diff, copy, invalid width and unrecoverable input stay in sync", async ({ 
     await input.fill("def");
     await expect(status).toContainText("Not formatted. Line 1, column 4. Unexpected end of input.");
     await expect(diff).toHaveText("No formatted preview is available.");
+    await expect(useFormatted).toBeDisabled();
     await page.getByRole("button", { name: "Formatted", exact: true }).click();
     await expect(preview).toHaveText("def");
     await expect(copy).toBeEnabled();
-    await page.locator(".playground-input-header").getByRole("button", { name: "Clear input" }).click();
+    await page.locator(".playground-input-header").getByRole("button", { name: "Clear", exact: true }).click();
     await expect(input).toBeEmpty();
     await expect(status).toBeEmpty();
 });
