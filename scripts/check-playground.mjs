@@ -402,6 +402,9 @@ test("each supported Flix pin publishes under /flix/<version>/ while root URLs s
     assert.match(rootHome, /id=(?:"site-flix-version"|site-flix-version)/);
     assert.match(rootHome, /data-latest=(?:"0\.80\.0"|0\.80\.0)/);
     assert.match(rootHome, /data-current=(?:"0\.80\.0"|0\.80\.0)/);
+    // Site root, not a versioned catalog baseURL.
+    assert.match(rootHome, /data-base-url=(?:"https:\/\/wstein\.github\.io\/prettier-plugin-flix\/"|https:\/\/wstein\.github\.io\/prettier-plugin-flix\/)/);
+    assert.doesNotMatch(rootHome, /data-base-url=[^>\s]*flix\/0\./);
     assert.match(rootHome, /site-flix-version\./);
 
     const urlAttributes = /\s(href|src|data-(?:examples|formatter|index|linked-fixtures|worker))\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/g;
@@ -418,6 +421,8 @@ test("each supported Flix pin publishes under /flix/<version>/ while root URLs s
         const escaped = version.replace(/\./g, "\\.");
         assert.match(versionHome, /id=(?:"site-flix-version"|site-flix-version)/);
         assert.match(versionHome, new RegExp(`data-current=(?:"${escaped}"|${escaped})`));
+        assert.match(versionHome, /data-base-url=(?:"https:\/\/wstein\.github\.io\/prettier-plugin-flix\/"|https:\/\/wstein\.github\.io\/prettier-plugin-flix\/)/);
+        assert.doesNotMatch(versionHome, /data-base-url=[^>\s]*flix\/0\./);
         assert.match(versionHome, new RegExp(`/flix/${escaped}/formatting/`));
         assert.match(versionHome, new RegExp(`/flix/${escaped}/playground/`));
         if (version === "0.79.0") {
@@ -451,29 +456,72 @@ test("each supported Flix pin publishes under /flix/<version>/ while root URLs s
 });
 
 test("the Flix version switcher keeps the page path when changing catalogs", async () => {
-    const script = await readFile(new URL("../docs/assets/js/site-flix-version.js", import.meta.url), "utf8");
-    assert.match(script, /catalogRest/);
-    assert.match(script, /urlForVersion/);
-    assert.match(script, /flix\/\$\{version\}\//);
-    // Mirror the rewrite rules from site-flix-version.js.
-    function catalogRest(pathname, basePath) {
-        let rest = pathname.startsWith(basePath) ? pathname.slice(basePath.length) : pathname.replace(/^\//, "");
-        rest = rest.replace(/^flix\/\d+\.\d+\.\d+(?:\/|$)/, "");
-        return rest;
-    }
-    function urlForVersion(basePath, latest, version, rest) {
-        const suffix = rest.startsWith("/") ? rest.slice(1) : rest;
-        if (version === latest) return `${basePath}${suffix}`;
-        return `${basePath}flix/${version}/${suffix}`;
-    }
+    const {
+        catalogRest,
+        navigateTarget,
+        resolveBasePath,
+        urlForVersion,
+    } = await import("../docs/assets/js/site-flix-version.js");
+    const siteRoot = "https://wstein.github.io/prettier-plugin-flix/";
     const base = "/prettier-plugin-flix/";
+    const versioned079 = `${siteRoot}flix/0.79.0/`;
+    const versioned080 = `${siteRoot}flix/0.80.0/`;
+
+    assert.equal(resolveBasePath(siteRoot), base);
+    assert.equal(resolveBasePath(versioned079), base);
+    assert.equal(resolveBasePath(versioned080), base);
+
     assert.equal(catalogRest(`${base}formatting/`, base), "formatting/");
     assert.equal(catalogRest(`${base}flix/0.79.0/formatting/`, base), "formatting/");
     assert.equal(catalogRest(`${base}flix/0.80.0/playground/`, base), "playground/");
     assert.equal(urlForVersion(base, "0.80.0", "0.79.0", "formatting/"), `${base}flix/0.79.0/formatting/`);
     assert.equal(urlForVersion(base, "0.80.0", "0.80.0", "comments/"), `${base}comments/`);
+
+    // Root catalog -> 0.79
     assert.equal(
-        urlForVersion(base, "0.80.0", "0.80.0", catalogRest(`${base}flix/0.79.0/comments/`, base)),
-        `${base}comments/`,
+        navigateTarget({
+            baseURL: siteRoot,
+            href: `${siteRoot}formatting/`,
+            pathname: `${base}formatting/`,
+            latest: "0.80.0",
+            current: "0.80.0",
+            version: "0.79.0",
+        }),
+        `${base}flix/0.79.0/formatting/`,
+    );
+    // 0.79 catalog -> latest (root), including when data-base-url was wrongly versioned
+    assert.equal(
+        navigateTarget({
+            baseURL: versioned079,
+            href: `${versioned079}formatting/`,
+            pathname: `${base}flix/0.79.0/formatting/`,
+            latest: "0.80.0",
+            current: "0.79.0",
+            version: "0.80.0",
+        }),
+        `${base}formatting/`,
+    );
+    // Explicit /flix/0.80.0/ -> 0.79 (must not nest /flix/0.80.0/flix/0.79.0/)
+    assert.equal(
+        navigateTarget({
+            baseURL: versioned080,
+            href: `${versioned080}playground/`,
+            pathname: `${base}flix/0.80.0/playground/`,
+            latest: "0.80.0",
+            current: "0.80.0",
+            version: "0.79.0",
+        }),
+        `${base}flix/0.79.0/playground/`,
+    );
+    assert.equal(
+        navigateTarget({
+            baseURL: versioned079,
+            href: `${versioned079}formatting/`,
+            pathname: `${base}flix/0.79.0/formatting/`,
+            latest: "0.80.0",
+            current: "0.79.0",
+            version: "0.79.0",
+        }),
+        null,
     );
 });

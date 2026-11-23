@@ -21,7 +21,7 @@
   {{ $themeScript := resources.Get "js/site-theme.js" | fingerprint }}
   <script src="{{ $themeScript.RelPermalink }}" integrity="{{ $themeScript.Data.Integrity }}"></script>
   {{ $flixVersionScript := resources.Get "js/site-flix-version.js" | fingerprint }}
-  <script src="{{ $flixVersionScript.RelPermalink }}" integrity="{{ $flixVersionScript.Data.Integrity }}"></script>
+  <script type="module" src="{{ $flixVersionScript.RelPermalink }}" integrity="{{ $flixVersionScript.Data.Integrity }}"></script>
   {{ $stylesheet := resources.Get "css/catalog.css" | minify | fingerprint }}
   <link rel="stylesheet" href="{{ $stylesheet.RelPermalink }}" integrity="{{ $stylesheet.Data.Integrity }}">
 </head>
@@ -29,6 +29,10 @@
   {{ $latestFlix := site.Data.playground.defaultFlixVersion }}
   {{ $currentFlix := $latestFlix }}
   {{ with site.Params.flixDocVersion }}{{ if ne . "" }}{{ $currentFlix = . }}{{ end }}{{ end }}
+  {{/* Site root for the version switcher: strip /flix/<pin>/ from a versioned baseURL. */}}
+  {{ $siteRoot := site.BaseURL }}
+  {{ with site.Params.flixDocVersion }}{{ if ne . "" }}{{ $siteRoot = strings.TrimSuffix (printf "flix/%s/" .) site.BaseURL }}{{ end }}{{ end }}
+  {{ $catalogRest := strings.TrimPrefix site.Home.RelPermalink .RelPermalink }}
   <header class="site-header">
     <nav class="site-toolbar" aria-label="Site">
       <a class="site-brand" href="{{ site.Home.RelPermalink }}">
@@ -44,12 +48,22 @@
       {{ end }}
       {{ partialCached "site-search.html" . "catalog-index" }}
       <label class="site-flix-version">Flix
-        <select id="site-flix-version" data-base-url="{{ site.BaseURL }}" data-latest="{{ $latestFlix }}" data-current="{{ $currentFlix }}" aria-label="Flix syntax version for this catalog">
+        <select id="site-flix-version" data-base-url="{{ $siteRoot }}" data-latest="{{ $latestFlix }}" data-current="{{ $currentFlix }}" aria-label="Flix syntax version for this catalog">
           {{ range site.Data.playground.supportedFlixVersions }}
           <option value="{{ . }}"{{ if eq . $currentFlix }} selected{{ end }}>{{ . }}{{ if eq . $latestFlix }} (latest){{ end }}</option>
           {{ end }}
         </select>
       </label>
+      <noscript class="site-flix-version-fallback">
+        Flix
+        {{ range site.Data.playground.supportedFlixVersions }}
+        {{ if eq . $latestFlix }}
+        <a href="{{ printf "%s%s" $siteRoot $catalogRest }}"{{ if eq . $currentFlix }} aria-current="page"{{ end }}>{{ . }} (latest)</a>
+        {{ else }}
+        <a href="{{ printf "%sflix/%s/%s" $siteRoot . $catalogRest }}"{{ if eq . $currentFlix }} aria-current="page"{{ end }}>{{ . }}</a>
+        {{ end }}
+        {{ end }}
+      </noscript>
       <label class="site-theme">Theme
         <select id="site-theme">
           <option value="system">System</option>
