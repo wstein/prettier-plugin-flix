@@ -744,12 +744,18 @@ export class Printer {
             const layoutId = Symbol();
             const entryDocs = this.alignMatchRules(ruleKids, layoutId) ?? entries.map((entry) => {
                 if (entry.length > 1 && kind(entry[0]) === "EnumCase") {
-                    return group([
-                        this.print(this.ls(entry[0])),
-                        indent(entry.slice(1).map((item, i) => [
-                            this.after(lastTerm(entry[i]), line), this.print(this.ls(item)),
-                        ])),
-                    ]);
+                    const first = this.ls(entry[0]);
+                    // An opener comment leads the first case on the next pass.
+                    // Keep its hardlines outside the group that fits the cases.
+                    return [
+                        this.takeLeadingOwnLineComments(firstTerm(first)),
+                        group([
+                            this.print(first),
+                            indent(entry.slice(1).map((item, i) => [
+                                this.after(lastTerm(entry[i]), line), this.print(this.ls(item)),
+                            ])),
+                        ]),
+                    ];
                 }
                 return this.seq([this.ls(entry[0]), ...entry.slice(1)], kind(entry[0]));
             });
