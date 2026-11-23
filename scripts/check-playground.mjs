@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import { basename } from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadFixture, optionsFor } from "../test/fixture.mjs";
@@ -20,7 +20,15 @@ const site = new URL("../docs/public/", import.meta.url);
 const page = await readFile(new URL("playground/index.html", site), "utf8");
 const asset = page.match(/\bdata-formatter=(?:"([^"]+)"|([^\s>]+))/);
 assert.ok(asset, "Playground page links to its formatter bundle");
-const { formatFlix, formatFlixPreview } = await import(new URL(`js/${basename(asset[1] ?? asset[2])}`, site));
+const formatterAsset = basename(asset[1] ?? asset[2]);
+const formatterUrl = new URL(`js/${formatterAsset}`, site);
+const { formatFlix, formatFlixPreview } = await import(formatterUrl);
+
+test("the published formatter bundle is at most 2 MiB uncompressed", async () => {
+    const maxBytes = 2 * 1024 * 1024;
+    const { size } = await stat(formatterUrl);
+    assert.ok(size <= maxBytes, `${formatterAsset} is ${size} bytes (maximum ${maxBytes} bytes)`);
+});
 
 test("the published worker loads the published formatter and replies to requests", async () => {
     const workerAsset = page.match(/\bdata-worker=(?:"([^"]+)"|([^\s>]+))/);
@@ -38,7 +46,7 @@ test("the published worker loads the published formatter and replies to requests
     };
     try {
         await import(workerUrl);
-        await receive({ data: { id: 7, asset: basename(asset[1] ?? asset[2]), source: "def worker():Int32=7", options: {} } });
+        await receive({ data: { id: 7, asset: formatterAsset, source: "def worker():Int32=7", options: {} } });
         assert.deepEqual(await reply.promise, { id: 7, output: "def worker(): Int32 = 7\n" });
     } finally {
         delete globalThis.self;
