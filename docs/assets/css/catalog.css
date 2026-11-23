@@ -54,6 +54,8 @@ body:not(.playground-page) .site-toolbar { padding-inline: 0; }
   align-self: start;
   position: sticky;
   top: 1rem;
+  max-block-size: calc(100dvh - 2rem);
+  overflow-y: auto;
   padding-inline-end: 1rem;
   border-inline-end: 1px solid var(--border);
 }
@@ -62,10 +64,16 @@ body:not(.playground-page) .site-toolbar { padding-inline: 0; }
 .chapter-nav-groups { display: grid; gap: 0.65rem; }
 .chapter-nav-group-title { margin: 0 0 0.15rem; font-size: 0.8rem; font-weight: 650; }
 .chapter-nav .chapter-nav-links { padding-inline-start: 0.35rem; }
+.chapter-nav .chapter-nav-subsections {
+  margin-inline-start: 0.45rem;
+  padding-inline-start: 0.35rem;
+  border-inline-start: 1px solid var(--border);
+  font-size: 0.9rem;
+}
 .chapter-nav a { display: block; padding: 0.25rem 0.45rem; border-radius: 0.3rem; }
 .chapter-nav a[aria-current="page"] { background: var(--surface); font-weight: 700; }
 @media (max-width: 60rem), (max-height: 32rem) {
-  .chapter-nav { position: static; }
+  .chapter-nav { position: static; max-block-size: none; overflow-y: visible; }
 }
 @media (max-width: 60rem) {
   .site-shell { grid-template-columns: minmax(0, 1fr); gap: 1rem; }

@@ -135,13 +135,17 @@ test("the catalog gives embedded editors room and aligns the header with the cha
     await page.setViewportSize({ width: 1600, height: 900 });
     await page.goto(siteUrl + "examples/");
     await expect(heading).toBeVisible();
-    const guide = chapters.getByRole("list", { name: "Guide" });
-    await expect(guide.getByRole("link")).toHaveText(["Formatting style", "Before and after"]);
+    const guide = chapters.getByRole("list", { name: "Start here" });
+    await expect(guide.getByRole("link")).toHaveText(["Formatting style", "Before and after", "Playground"]);
     await expect(guide.getByRole("link", { name: "Before and after" })).toHaveAttribute("aria-current", "page");
-    await expect(chapters.getByRole("list", { name: "Language fixtures" }).getByRole("link"))
-        .toHaveText(["Datalog", "Declarations", "Expressions", "Strings"]);
-    await expect(chapters.getByRole("list", { name: "Formatter behavior" }).getByRole("link"))
-        .toHaveText(["Comments", "Options", "Syntax errors", "Whitespace-sensitive syntax"]);
+    const constructs = chapters.getByRole("list", { name: "By construct" });
+    await expect(constructs.locator(":scope > li > a")).toHaveText(["Declarations", "Expressions", "Datalog", "Strings"]);
+    await expect(constructs.getByRole("list", { name: "Declarations" }).getByRole("link"))
+        .toHaveText(["Modules and members", "Signatures and effect sets", "Types and constraints"]);
+    await expect(constructs.getByRole("list", { name: "Expressions" }).getByRole("link"))
+        .toHaveText(["Calls and pipelines", "Operators and control flow", "Alignment", "Other constructs"]);
+    await expect(chapters.getByRole("list", { name: "Cross-cutting" }).getByRole("link"))
+        .toHaveText(["Comments", "Whitespace-sensitive syntax", "Syntax errors", "Options"]);
     await expect(fixture.getByRole("textbox", { name: "Flix input" })).toBeVisible();
     expect((await siteLink.boundingBox()).x).toBeCloseTo((await chapters.boundingBox()).x, 0);
     expect((await input.boundingBox()).y).toBeCloseTo((await preview.boundingBox()).y, 0);
@@ -151,6 +155,19 @@ test("the catalog gives embedded editors room and aligns the header with the cha
         await expect(guide.getByRole("link", { name: "Formatting style" })).toBeVisible();
         expect((await preview.boundingBox()).y).toBeGreaterThan((await input.boundingBox()).y);
         expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+    }
+
+    for (const catalog of ["", "flix/0.80.0/"]) {
+        await page.goto(siteUrl + catalog + "examples/");
+        for (const chapter of ["Declarations", "Expressions"]) {
+            const links = constructs.getByRole("list", { name: chapter }).getByRole("link");
+            const sections = await links.evaluateAll((items) => items.map(({ href, textContent }) => [href, textContent]));
+            for (const [href, title] of sections) {
+                expect(href).toContain(siteUrl + catalog + chapter.toLowerCase() + "/#");
+                await page.goto(href);
+                await expect(page.locator(":target")).toHaveText(title);
+            }
+        }
     }
 });
 
