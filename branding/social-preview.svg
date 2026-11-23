@@ -1,35 +1,33 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
   <title id="title">Prettier Plugin for Flix</title>
-  <desc id="desc">Code formatting for Flix. The original red tile accompanies the title on a dark plum background.</desc>
+  <desc id="desc">Code formatting for Flix. The red code-line mark accompanies the title on a dark plum background.</desc>
   <rect width="1200" height="630" fill="#211820"/>
   <g fill="#34272F"><rect x="858" y="517" width="176" height="9" rx="4.5"/><rect x="1045" y="517" width="95" height="9" rx="4.5"/><rect x="899" y="546" width="118" height="9" rx="4.5"/><rect x="1028" y="546" width="112" height="9" rx="4.5"/><rect x="934" y="575" width="206" height="9" rx="4.5"/></g>
   <g transform="translate(102 199) scale(0.45312500)">
     <rect width="512" height="512" rx="96" fill="#C8102E"/>
-  <g fill="#FFFFFF" transform="translate(-8, 0)">
-    <rect x="192" y="88" width="114" height="16" rx="8"/>
-    <rect x="314" y="88" width="84" height="16" rx="8"/>
-    <rect x="188" y="112" width="82" height="16" rx="8"/>
-    <rect x="278" y="112" width="116" height="16" rx="8"/>
-    <rect x="184" y="136" width="136" height="16" rx="8"/>
-    <rect x="328" y="136" width="56" height="16" rx="8"/>
-    <rect x="180" y="160" width="62" height="16" rx="8"/>
-    <rect x="176" y="184" width="62" height="16" rx="8"/>
-    <rect x="172" y="208" width="62" height="16" rx="8"/>
-    <rect x="168" y="232" width="62" height="16" rx="8"/>
-    <rect x="238" y="232" width="48" height="16" rx="8"/>
-    <rect x="294" y="232" width="68" height="16" rx="8"/>
-    <rect x="164" y="256" width="62" height="16" rx="8"/>
-    <rect x="234" y="256" width="84" height="16" rx="8"/>
-    <rect x="326" y="256" width="32" height="16" rx="8"/>
-    <rect x="160" y="280" width="62" height="16" rx="8"/>
-    <rect x="230" y="280" width="56" height="16" rx="8"/>
-    <rect x="294" y="280" width="52" height="16" rx="8"/>
-    <rect x="156" y="304" width="62" height="16" rx="8"/>
-    <rect x="152" y="328" width="62" height="16" rx="8"/>
-    <rect x="148" y="352" width="62" height="16" rx="8"/>
-    <rect x="144" y="376" width="62" height="16" rx="8"/>
-    <rect x="140" y="400" width="62" height="16" rx="8"/>
-  </g>
+    <g fill="#FFFFFF" transform="translate(-8, 0)">
+      <rect x="192" y="88" width="114" height="16" rx="8"/>
+      <rect x="314" y="88" width="84" height="16" rx="8"/>
+      <rect x="188" y="112" width="82" height="16" rx="8"/>
+      <rect x="278" y="112" width="116" height="16" rx="8"/>
+      <rect x="184" y="136" width="136" height="16" rx="8"/>
+      <rect x="328" y="136" width="56" height="16" rx="8"/>
+      <rect x="180" y="160" width="62" height="16" rx="8"/>
+      <rect x="176" y="184" width="62" height="16" rx="8"/>
+      <rect x="172" y="208" width="62" height="16" rx="8"/>
+      <rect x="168" y="232" width="124" height="16" rx="8"/>
+      <rect x="300" y="232" width="62" height="16" rx="8"/>
+      <rect x="164" y="256" width="44" height="16" rx="8"/>
+      <rect x="216" y="256" width="96" height="16" rx="8"/>
+      <rect x="320" y="256" width="38" height="16" rx="8"/>
+      <rect x="160" y="280" width="86" height="16" rx="8"/>
+      <rect x="254" y="280" width="92" height="16" rx="8"/>
+      <rect x="156" y="304" width="62" height="16" rx="8"/>
+      <rect x="152" y="328" width="62" height="16" rx="8"/>
+      <rect x="148" y="352" width="62" height="16" rx="8"/>
+      <rect x="144" y="376" width="62" height="16" rx="8"/>
+      <rect x="140" y="400" width="62" height="16" rx="8"/>
+    </g>
   </g>
   <g fill="#FBF7F5" transform="translate(405 285) scale(0.03759766 -0.03759766)">
     <path transform="translate(0.00 0)" d="M188 1493H827Q1112 1493 1264.5 1366.5Q1417 1240 1417 1006Q1417 771 1264.5 644.5Q1112 518 827 518H573V0H188ZM573 1214V797H786Q898 797 959.0 851.5Q1020 906 1020 1006Q1020 1106 959.0 1160.0Q898 1214 786 1214Z"/>
