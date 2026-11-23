@@ -82,7 +82,7 @@ test("catalog and Playground publish share previews and keep the mobile brand li
         const logo = brand.locator("img");
         await expect(logo).toHaveAttribute("alt", "");
         await expect(logo).toHaveAttribute("src", basePath + catalogPath + "branding/favicon.svg");
-        await expect(logo).toHaveJSProperty("naturalWidth", 32);
+        await expect(logo).toHaveJSProperty("naturalWidth", 16);
         expect((await logo.boundingBox()).width).toBe(20);
         expect(await toolbar.evaluate((element) => element.scrollWidth)).toBeLessThanOrEqual(320);
     }

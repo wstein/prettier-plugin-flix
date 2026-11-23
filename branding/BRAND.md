@@ -25,10 +25,10 @@ The banner and social card use DejaVu Sans Bold for the name and DejaVu Sans Reg
 | Logo | [logo.svg](logo.svg) | [logo.png](logo.png), 1024 × 1024 | Full mark with transparent corners |
 | Banner | [banner.svg](banner.svg) | [banner.png](banner.png), 1440 × 360 | Light horizontal lockup for the README or documentation |
 | Social card | [social-preview.svg](social-preview.svg) | [social-preview.png](social-preview.png), 1200 × 630 | Dark social card with a stacked title for small share previews |
-| Favicon | [favicon.svg](favicon.svg) | [favicon.ico](favicon.ico), 16, 32 and 48 px | Upright F built from horizontal code segments for browser tabs, bookmarks and the documentation toolbar |
-| Apple touch icon | | [apple-touch-icon.png](apple-touch-icon.png), 180 × 180 | The code-segment icon on a full-bleed red tile. The device supplies the corner mask. |
+| Favicon | [favicon.svg](favicon.svg), native 16 × 16 | [favicon.ico](favicon.ico), 16, 32 and 48 px | Compact slanted F made of five horizontal strokes for tabs, bookmarks and the documentation toolbar |
+| Apple touch icon | | [apple-touch-icon.png](apple-touch-icon.png), 180 × 180 | Full mark on a full-bleed red tile. The device supplies the corner mask. |
 
-Use the full mark at 48 px or larger. Use the upright F for browser chrome and compact navigation. Keep the gaps between the rows and within both crossbars visible at 16 px. For image links, use **Prettier Plugin for Flix** as the accessible name.
+Use the full mark for banners, share cards and home-screen icons. Use the compact F for browser chrome and navigation. Keep the five horizontal strokes separated at 16 px. For image links, use **Prettier Plugin for Flix** as the accessible name.
 
 ## Design directions
 
