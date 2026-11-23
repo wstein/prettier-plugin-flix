@@ -695,8 +695,13 @@ export class Printer {
         const moveOpenComments = lastOpenComment?.isLine && !this.isFlixdoc(lastOpenComment) &&
             lastOpenComment.nlNext >= 2;
         const openDoc = moveOpenComments ? this.tokCore(open) : this.tok(open);
+        // The closing token owns all comments on the next pass in a comment-only
+        // body. Match the one-comment-per-line layout of takeClosingComments.
         const bodyHeader = moveOpenComments
-            ? [join(" ", openTrail.map((comment) => this.commentText(comment))), hardline, hardline]
+            ? [
+                join(inner.length === 0 ? hardline : " ", openTrail.map((comment) => this.commentText(comment))),
+                hardline, hardline,
+            ]
             : [];
         if (inner.length === 0 && (preserveBlankAfterOpen || enumBody)) {
             // In a comment-only block the first comment belongs to the closing token.
