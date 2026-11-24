@@ -374,6 +374,27 @@ Fixtures: `expressions/align-map-entries.md`, `expressions/align-tuple-literals.
 
 ---
 
+## Binary operators (`+`, `and`, `:::`, …)
+
+**Built-in:** Leading break before wrapped infix operators (`+`, `-`, `*`,
+`/`, `and`, `or`, `==`, `:::`, `<+>`, …) via `PrettyPrinter.prettyBinary`
+(`line <> opDoc <> …`). A line comment after the operator keeps a trailing
+form.
+
+**Plugin:** Same leading layout ([#274](https://github.com/wstein/prettier-plugin-flix/issues/274)).
+Pipelines `|>` / `!>` were already leading. An own-line or trailing comment
+after the operator keeps a trailing break so formatting stays idempotent.
+
+**Justification:** Match flix format and the stdlib’s live leading-operator
+style; no Scala/Haskell mandate required beyond agreeing that wrapped infix
+ops should stay readable.
+
+Fixtures: `expressions/operator-chain.md`, `expressions/leading-binary-and-or.md`,
+`expressions/leading-binary-mult-angled.md`,
+`comments/binary-operator-comment-after.md`.
+
+---
+
 ## Pipelines, lambdas, and method dots
 
 **Built-in:** Different `|>` / lambda breaks; may space `.` before a comment.
@@ -545,6 +566,7 @@ inside comments is not a reference behavior.
 | Built-in **style** vs FP operators (list cons spaces, arrow/comprehension width) | Follow **Scala and/or Haskell** *and* Flix book examples where they agree (spaced `::`) |
 | Prettier-only features (comment align, `prettier-ignore`, print width) | Cite Scala `align` / `format: off` / `maxColumn` (and Haskell column limits) |
 | Flix-only constructs with clear book layout (`par`/`yield`, compact record `\|`, Datalog `query`/`select`, pipeline `\|>`) | Cite **[doc.flix.dev](https://doc.flix.dev/) / [flix.dev](https://flix.dev/)** as the internal style reference; do not invent an external analogue |
+| Wrapped binary operators (`+`, `and`, `:::`, …) | Match **flix format**: leading operators ([#274](https://github.com/wstein/prettier-plugin-flix/issues/274)) |
 | Barely specified upstream (declaration blanks) | Record both outputs; do **not** claim a Flix-book or Scala/Haskell mandate |
 | Wrapped `with` indent | Match **flix format**: one level under `with`, same column as the body ([#273](https://github.com/wstein/prettier-plugin-flix/issues/273)) |
 

@@ -77,10 +77,10 @@ use Foo::// keep glued
     Bar.next
 
 def imported(): Int32 =
-    before() +
-        after() +
-        spaced() +
-        next()
+    before()
+        + after()
+        + spaced()
+        + next()
 
 def cons(): List[Int32] =
     1/* head */::/* tail */2 :: Nil

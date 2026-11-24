@@ -43,9 +43,9 @@ type alias CommentedRow[
 ```flix printWidth=30
 pub def concatenate():
     List[Int32] = /* note */
-    (1::2::Nil) :::
-        (3::4::Nil) :::
-        Nil
+    (1::2::Nil)
+        ::: (3::4::Nil)
+        ::: Nil
 
 def pair(value: Int32): (
     Int32,

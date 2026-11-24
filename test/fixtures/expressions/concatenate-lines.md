@@ -16,21 +16,19 @@ header + "\n" + location + "\n" + verification + "\n" + guide
 
 ```flix
 def summary(): String = {
-    header + "\n" +
-        location + "\n" +
-        verification + "\n" +
-        guide
+    header + "\n" + location + "\n"
+        + verification
+        + "\n" + guide
 }
 ```
 
 ```flix printWidth=18
 def summary(): String = {
-    header +
-        "\n" +
-        location +
-        "\n" +
-        verification +
-        "\n" +
-        guide
+    header + "\n"
+        + location
+        + "\n"
+        + verification
+        + "\n"
+        + guide
 }
 ```
