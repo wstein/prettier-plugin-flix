@@ -91,7 +91,7 @@ const flix = async (cwd, ...cmd) => {
 /** The Flix version the jar reports; with --pin it must equal the pinned upstream tag. */
 async function jarVersion() {
     const r = await flix(root, "--version");
-    const version = /\b(\d+\.\d+\.\d+)\b/.exec(strip(r.out))?.[1];
+    const version = r.status === 0 ? /\b(\d+\.\d+\.\d+)\b/.exec(strip(r.out))?.[1] : undefined;
     if (!version) fail(`cannot read a Flix version from \`${jar} --version\`: ${strip(r.out).slice(0, 200)}`);
     if (pinFile) {
         const tag = JSON.parse(readFileSync(pinFile, "utf8")).upstream.tag.replace(/^v/, "");
