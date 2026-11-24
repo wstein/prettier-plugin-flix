@@ -3,7 +3,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { readFileSync, mkdtempSync, writeFileSync, rmSync } from "node:fs";
-import { join, dirname } from "node:path";
+import { basename, join, dirname } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import {
@@ -241,13 +241,15 @@ test("combined and standalone sweeps export compatible configurations", (t) => {
     const work = mkdtempSync(join(tmpdir(), "sweep-export-"));
     t.after(() => rmSync(work, { recursive: true, force: true }));
     const input = join(work, "sample.flix");
+    const silent = join(work, "silent.flix");
     writeFileSync(input, "def sample(): Int32 = 1\n");
+    writeFileSync(silent, "");
     const script = fileURLToPath(new URL("../scripts/review-sweep.mjs", import.meta.url));
     const cwd = dirname(dirname(script));
     const base = execFileSync("git", ["rev-parse", "HEAD"], { cwd, encoding: "utf8" }).trim();
     const run = (command, output, extra = []) => execFileSync(process.execPath, [
         script, command, "--no-repo", "--widths", "40", "--every", "6",
-        "--seed", "7", "--export", output, ...extra, input,
+        "--seed", "7", "--export", output, ...extra, input, silent,
     ], { cwd, env: { ...process.env, TMPDIR: work, TEMP: work, TMP: work, FLIX_STDLIB_DIR: "" } });
     const read = (path) => parseResultDocument(readFileSync(path, "utf8"), path);
 
@@ -263,9 +265,11 @@ test("combined and standalone sweeps export compatible configurations", (t) => {
         assert.equal(combined.config.base, command === "regression" ? base : null);
         assert.equal(combined.config.every, command === "sites" ? 6 : null);
         assert.equal(combined.config.seed, 7);
-        assert.equal(names.length, 1);
-        assert.match(names[0], /sample\.flix$/);
-        assert.equal(combined.corpus.inputCount, 1);
+        assert.deepEqual(names.map((name) => basename(name)), ["sample.flix", "silent.flix"]);
+        assert.equal(combined.corpus.inputCount, 2);
+        if (command === "sites") {
+            assert.ok(combined.cases.every(({ file }) => basename(file) === "sample.flix"));
+        }
         assert.equal(combined.corpus.fingerprint, corpusFingerprint(names));
         assert.ok(combined.cases.length > 0);
     }
