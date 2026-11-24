@@ -554,7 +554,7 @@ book.traits.essential-traits.the-order-trait	layout-change	blank-lines	373c7ffbc
 book.traits.essential-traits.the-order-trait-02	unchanged	-	18cd6d1585101cadbf14d5f5c19a37e128f0c40789316b838ed864e155e6d6ef
 book.traits.essential-traits.the-to-string-trait	unchanged	-	ca7fbc6ecc4cc49d88c9cfc8d22a929eaacbbf1e98e42c0f6aa0c20057660854
 book.traits.essential-traits.the-to-string-trait-02	unchanged	-	ff0abdaedf2017a202329b0e8909a3f6a5bd6c8d9734555d137223fcacad640d
-book.traits.essential-traits.the-to-string-trait-03	layout-change	wrapping	e1cdc99eaa86e33966903443c9e0573debd3882dbe651c7b1ca71342ab81259f
+book.traits.essential-traits.the-to-string-trait-03	layout-change	wrapping	372ba6610b7927d35b06275da0e8cea9468597ea212307b123d9ffb7b1d783fb
 book.traits.higher-kinded-types.higher-kinded-types	unchanged	-	16b90397ed04b8ef0912a4802444679d0d504ca019f21657224bd291b0b57219
 book.traits.higher-kinded-types.higher-kinded-types-02	unchanged	-	362f2573e1792897f976d5bd0e40bb7b486eb524265cd7f03245ac15a668744e
 book.traits.higher-kinded-types.higher-kinded-types-03	layout-change	wrapping	4c0b155fbb6dade9d7371d9fd6f3f86ed87dc08fa608546beb44e7bc0d3bb6d4

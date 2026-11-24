@@ -98,5 +98,9 @@
   "website.front-page.hkt.hkt-example": {
     "digest": "ac088d065be240c37176dff96d40b8d618e4f97f9a5401d7d8a32913c3364a9f",
     "reason": "Keep the blank line after the opening brace of the trait, as in the source and in the built-in Flix formatter; the plugin removed it before. The kind annotation spacing and the removed blank line before the closing brace are unchanged."
+  },
+  "book.traits.essential-traits.the-to-string-trait-03": {
+    "digest": "b438992d650d624a6488b0bb46366bd70d8d19fc78473cd34bdacad57bd90ea6",
+    "reason": "Break before each + so the ToString chain is leading, matching flix format prettyBinary / the plugin binary-operator rule. The book used a trailing + continuation."
   }
 }
