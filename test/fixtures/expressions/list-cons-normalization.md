@@ -12,6 +12,11 @@ use pkg::Mod
 
 def xs(): List[Int32] = 1::2::Nil
 
+def head(): Int32 = match 1::Nil {
+    case x::xs => x
+    case Nil => 0
+}
+
 def guarded(xs: List[Int32]): Int32 = match xs {
     case x::y::_ => x
     case _ => 0
@@ -32,6 +37,11 @@ use pkg::Mod
 
 def xs(): List[Int32] = 1 :: 2 :: Nil
 
+def head(): Int32 = match 1 :: Nil {
+    case x :: xs => x
+    case Nil     => 0
+}
+
 def guarded(xs: List[Int32]): Int32 = match xs {
     case x :: y :: _ => x
     case _           => 0
@@ -50,6 +60,11 @@ def note(): List[Int32] = 1::// keep
 use pkg::Mod
 
 def xs(): List[Int32] = 1 :: 2 :: Nil
+
+def head(): Int32 = match 1 :: Nil {
+    case x :: xs => x
+    case Nil     => 0
+}
 
 def guarded(
     xs: List[Int32]
