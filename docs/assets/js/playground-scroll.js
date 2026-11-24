@@ -1,8 +1,4 @@
-import { Chunk } from "@codemirror/merge";
-
-function buildDiffChunks(before, after) {
-    return Chunk.build(before, after, { scanLimit: 500, timeout: 50 });
-}
+import { buildDiffChunks } from "./playground-diff-chunks.js";
 
 function lineIndex(doc, position) {
     // A chunk may end one position past the document when it includes its last line.
@@ -64,9 +60,8 @@ export function matchDeclarationAnchors(before, after) {
  * Map a (possibly fractional) line using matched declaration anchors as fixed points.
  * Returns null when there are no pairs so callers can fall back to diff mapping.
  */
-export function mapLineByAnchors(line, pairs, from, to) {
-    if (!pairs.length) return null;
-    const points = pairs.map((pair) => [pair[from], pair[to]]).sort((a, b) => a[0] - b[0]);
+export function mapLineByAnchors(line, points) {
+    if (!points.length) return null;
     for (const [source, target] of points) {
         if (line === source) return target;
     }
@@ -93,7 +88,8 @@ function buildLineChanges(before, after) {
 /** Map a source line onto the target document, preferring declaration anchors. */
 export function mapSyncedLine(line, before, after, from = 0, to = 1) {
     const pairs = matchDeclarationAnchors(declarationAnchors(before), declarationAnchors(after));
-    const anchored = mapLineByAnchors(line, pairs, from, to);
+    const points = pairs.map((pair) => [pair[from], pair[to]]).sort((a, b) => a[0] - b[0]);
+    const anchored = mapLineByAnchors(line, points);
     if (anchored !== null) return anchored;
     return mapLine(line, buildLineChanges(before, after), from, to);
 }
@@ -103,7 +99,7 @@ export function linkEditorScroll(input, output, canSync) {
     const lastTop = views.map((view) => view.scrollDOM.scrollTop);
     let documents;
     let changes;
-    let pairs;
+    let points;
 
     function sync(from) {
         const to = 1 - from;
@@ -117,13 +113,17 @@ export function linkEditorScroll(input, output, canSync) {
             documents = current;
             const [before, after] = documents;
             changes = buildLineChanges(before, after);
-            pairs = matchDeclarationAnchors(declarationAnchors(before), declarationAnchors(after));
+            const pairs = matchDeclarationAnchors(declarationAnchors(before), declarationAnchors(after));
+            points = [
+                pairs,
+                pairs.map(([a, b]) => [b, a]).sort((a, b) => a[0] - b[0]),
+            ];
         }
 
         const height = Math.max(0, source.scrollDOM.scrollTop - source.documentPadding.top);
         const block = source.lineBlockAtHeight(height);
         const line = lineIndex(source.state.doc, block.from) + (height - block.top) / block.height;
-        const anchored = mapLineByAnchors(line, pairs, from, to);
+        const anchored = mapLineByAnchors(line, points[from]);
         const mapped = Math.max(0, Math.min(
             target.state.doc.lines - 1,
             anchored !== null ? anchored : mapLine(line, changes, from, to),

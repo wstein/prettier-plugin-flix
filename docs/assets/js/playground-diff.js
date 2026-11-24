@@ -1,10 +1,7 @@
-import { Chunk } from "@codemirror/merge";
 import { Text } from "@codemirror/state";
 import { flixTokenStyle } from "./playground-editor.js";
 
-export function buildDiffChunks(before, after) {
-    return Chunk.build(before, after, { scanLimit: 500, timeout: 50 });
-}
+import { buildDiffChunks } from "./playground-diff-chunks.js";
 
 export function renderDiff(container, { source, output }, tokenize) {
     if (source === output) {

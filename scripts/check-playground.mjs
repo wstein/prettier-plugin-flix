@@ -453,7 +453,7 @@ test("sync anchors pair declarations by kind and name across uneven wrapping", (
     ]);
     const pairs = matchDeclarationAnchors(declarationAnchors(before), declarationAnchors(after));
     assert.deepEqual(pairs, [[0, 0], [1, 17], [2, 19]]);
-    assert.equal(mapLineByAnchors(2, pairs, 0, 1), 19);
+    assert.equal(mapLineByAnchors(2, pairs), 19);
     assert.equal(mapSyncedLine(2, before, after), 19);
     assert.equal(mapSyncedLine(19, after, before, 0, 1), 2);
 });
@@ -462,12 +462,19 @@ test("sync anchors fall back to diff mapping when no declarations match", () => 
     const before = Text.of(["1 + 2", "3 + 4"]);
     const after = Text.of(["1 + 2", "3", "+", "4"]);
     assert.equal(declarationAnchors(before).length, 0);
-    assert.equal(mapLineByAnchors(1, [], 0, 1), null);
-    assert.equal(typeof mapSyncedLine(1, before, after), "number");
+    assert.equal(mapLineByAnchors(1, []), null);
+    assert.equal(mapSyncedLine(1, before, after), 1);
+    assert.equal(mapSyncedLine(2, after, before), 1 + 1 / 3);
 });
 
 test("sync anchors match indented module members so Sync does not stay 1:1", () => {
     // Column-0-only anchors would keep only `mod` and map every later line to itself.
+    const aliases = Text.of(["mod M {", "\tpub type alias T = Int32", "}"]);
+    assert.deepEqual(declarationAnchors(aliases), [
+        { line: 0, key: "mod\0M" },
+        { line: 1, key: "alias\0T" },
+    ]);
+
     const before = Text.of([
         "pub mod M {",
         "    pub def early(): Int32 = 1",

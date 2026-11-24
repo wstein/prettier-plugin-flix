@@ -352,6 +352,7 @@ test("sync scroll remaps after a preview replace without another scroll", async 
     ];
     await input.fill(lines.join("\n") + "\n");
     await width.fill("100");
+    await expect(preview).toContainText("def checkpoint39(): Int32 = 39");
     await expect(status).toHaveText("");
     await expect(toggle).toBeChecked();
     const topLine = (editor) => editor.evaluate((content) => {
