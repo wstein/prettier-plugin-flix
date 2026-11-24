@@ -461,9 +461,10 @@ a leading space only (`{ | a}`). A single bare name in braces is parsed as a
 record field but printed with padding like a block (`{ x }`), as Flix does.
 A comment-only collection brace (`List#{}`, `Array#{}`, `Set#{}`, `Map#{}`,
 `Vector#{}`), record, schema `#{…}`, or `(…)` (parameter lists, calls, unit,
-and tuple patterns) breaks once after the opener and does not invent a blank
-line. Unlike declaration braces, it also drops a blank that was already in
-the source, matching `flix format` 0.80.0.
+and tuple patterns) breaks once after the opener and drops any blank line
+there. Declaration braces preserve one source blank. This follows
+`flix format` 0.80.0 where it retains the comment. The plugin also preserves
+comments in empty call argument lists.
 [Record brace padding fixture](../test/fixtures/expressions/record-no-inner-pad.md) ·
 [Comment-only collection braces](../test/fixtures/expressions/brace-only-comment.md)
 
