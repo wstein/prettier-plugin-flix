@@ -1,6 +1,6 @@
 ---
 title: "Comment-only collection and record braces stay tight"
-description: "A comment inside `List#{}`, `Array#{}`, `Set#{}`, `Map#{}`, `Vector#{}`, a record, `#{…}`, or `(…)` (parameter lists, calls, unit, tuple patterns) does not invent a blank line after the opener. Those forms also drop a source blank there, matching flix format 0.80.0; declaration braces still keep one."
+description: "A comment inside `List#{}`, `Array#{}`, `Set#{}`, `Map#{}`, `Vector#{}`, a record, `#{…}`, or `(…)` (parameter lists, calls, unit, tuple patterns) does not invent a blank line after the opener. Those forms also drop a source blank there. Declaration braces still keep one."
 group: "Other constructs"
 minVersion: "0.80.0"
 options: { printWidth: 80 }
