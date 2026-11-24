@@ -18,6 +18,16 @@ const kids = (n: Node): Node[] => (isTerm(n) ? [] : ((n.children ?? []) as Node[
 /** Flix 0.80 places types without a kind ascription inside a single-child rule. */
 const withoutTypeWrapper = (n: Node): Node => kind(n) === "UnascribedType" ? kids(n)[0] : n;
 
+function isTupleLiteral(node: Node): boolean {
+    while (!isTerm(node)) {
+        if (kind(node) === "TuplePrimary") return true;
+        const children = kids(node);
+        if (children.length !== 1) return false;
+        node = children[0];
+    }
+    return false;
+}
+
 function firstTerm(n: Node): TerminalNode | null {
     if (isTerm(n)) return n;
     for (const c of kids(n)) {
@@ -796,6 +806,8 @@ export class Printer {
         }
         const collection = children[i - 1];
         const isMap = parentKind === "CollectionLiteral" && isTerm(collection) && ttype(collection) === this.L.MAP_HASH;
+        const tupleRows = parentKind === "CollectionLiteral" && !isMap &&
+            items.length > 1 && items.every((item) => item.length === 1 && isTupleLiteral(item[0]));
         const layoutId = Symbol();
         const alignable = isMap || parentKind === "RecordOperation";
         const mayAlign = alignable &&
@@ -849,7 +861,7 @@ export class Printer {
         // After a separator the next item starts on a new line if a comment ends the line there.
         const sepAfters = split.seps.slice(0, docs.length - 1).map((t, k) => {
             const next = items[k + 1][0];
-            if (alignable && next && this.blankBefore(firstTerm(next))) return [hardline, hardline];
+            if ((alignable || tupleRows) && next && this.blankBefore(firstTerm(next))) return [hardline, hardline];
             return this.hasLineTrail(t) || (itemLast(items[k]) !== null && this.hasLineTrail(itemLast(items[k])!))
                 ? hardline : this.flat > 0 ? " " : line;
         });

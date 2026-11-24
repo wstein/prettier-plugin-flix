@@ -442,11 +442,16 @@ has no point, align at the end of its mantissa. Other literals, including
 strings with single-line interpolations, align on the left. A nested tuple or
 collection can also occupy a column when it fits on one line. Align the start
 of the nested value and use ordinary formatting inside it.
-Padding must fit the available width. If a trailing comment already extends
-past the target, align the values when the code before that comment still fits.
-Compact collections stay inline.
+A blank line between tuple entries starts a new alignment group. Multiple
+blank lines reduce to one. A standalone comment directly above a tuple stays
+with that row and shares its alignment group.
+Padding is checked per group against the available width. If a trailing
+comment already extends past the target, align the values when the code
+before that comment still fits. Compact collections stay inline.
 
 [Tuple-row fixture](../test/fixtures/expressions/align-tuple-rows.md) ·
+[Tuple-row groups](../test/fixtures/expressions/align-tuple-row-groups.md) ·
+[Tuple rows with leading comments](../test/fixtures/expressions/align-tuple-rows-leading-comment.md) ·
 [Literal types in tuple rows](../test/fixtures/expressions/align-tuple-literals.md) ·
 [Map block comments](../test/fixtures/expressions/align-map-block-comment.md) ·
 [Match leading block comment](../test/fixtures/expressions/match-leading-block-comment.md) ·
