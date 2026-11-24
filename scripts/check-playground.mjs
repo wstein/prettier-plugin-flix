@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { cp, mkdir, mkdtemp, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
-import { basename, join } from "node:path";
+import { basename, join, relative } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { loadFixture, optionsFor } from "../test/fixture.mjs";
@@ -26,6 +26,92 @@ import { fingerprint, fmt, programProblems } from "../test/lib.mjs";
 import { publishFixtureCatalogs } from "./publish-fixture-catalogs.mjs";
 
 const site = new URL("../docs/public/", import.meta.url);
+const siteRootPath = "/prettier-plugin-flix/";
+const siteOrigin = "https://wstein.github.io";
+
+/** Recursively list HTML files under `dir`. */
+async function listHtmlFiles(dir) {
+    const out = [];
+    for (const entry of await readdir(dir, { withFileTypes: true })) {
+        const path = join(dir, entry.name);
+        if (entry.isDirectory()) out.push(...await listHtmlFiles(path));
+        else if (entry.name.endsWith(".html")) out.push(path);
+    }
+    return out;
+}
+
+/** Collect `id` attribute values from an HTML document. */
+function htmlIds(html) {
+    return new Set([...html.matchAll(/\bid=(?:"([^"]+)"|'([^']+)'|([^\s>]+))/g)]
+        .map((match) => match[1] ?? match[2] ?? match[3]));
+}
+
+/**
+ * Resolve a catalog `href` with a hash to a public-dir HTML file and fragment.
+ * Supports root-relative `/prettier-plugin-flix/…` and absolute site URLs.
+ */
+function resolveCatalogHashLink(href, fromFile, publicDir) {
+    if (!href || !href.includes("#")) return null;
+    const hashIndex = href.indexOf("#");
+    const pathPart = href.slice(0, hashIndex);
+    const hash = href.slice(hashIndex + 1);
+    if (!hash) return null;
+
+    let catalogPath;
+    if (pathPart === "" || pathPart === "#") {
+        catalogPath = relative(publicDir, fromFile).replace(/\\/g, "/");
+    } else if (pathPart.startsWith(siteRootPath)) {
+        catalogPath = pathPart.slice(siteRootPath.length);
+    } else if (pathPart.startsWith(siteOrigin + siteRootPath)) {
+        catalogPath = pathPart.slice((siteOrigin + siteRootPath).length);
+    } else if (pathPart.startsWith(siteOrigin + "/")) {
+        return null;
+    } else if (pathPart.startsWith("/")) {
+        return null;
+    } else {
+        return null;
+    }
+
+    const normalized = catalogPath.replace(/\/?(?:index\.html)?$/, "/");
+    const target = join(publicDir, normalized, "index.html");
+    return { target, hash, catalogPath: normalized };
+}
+
+/**
+ * Return catalog hash links under `publicDir` whose fragment id is missing on
+ * the target page. Used to keep version-filtered fixture links from going dead.
+ */
+export async function missingCatalogAnchors(publicDir) {
+    const files = await listHtmlFiles(publicDir);
+    const idsByFile = new Map();
+    for (const file of files) {
+        idsByFile.set(file, htmlIds(await readFile(file, "utf8")));
+    }
+    const missing = [];
+    const hrefPattern = /\bhref=(?:"([^"]+)"|'([^']+)'|([^\s>]+))/g;
+    for (const file of files) {
+        const html = await readFile(file, "utf8");
+        for (const match of html.matchAll(hrefPattern)) {
+            const href = match[1] ?? match[2] ?? match[3];
+            const resolved = resolveCatalogHashLink(href, file, publicDir);
+            if (!resolved) continue;
+            const ids = idsByFile.get(resolved.target);
+            if (!ids) {
+                missing.push({ file: relative(publicDir, file), href, reason: "missing-page" });
+                continue;
+            }
+            if (!ids.has(resolved.hash)) {
+                missing.push({
+                    file: relative(publicDir, file),
+                    href,
+                    hash: resolved.hash,
+                    target: resolved.catalogPath,
+                });
+            }
+        }
+    }
+    return missing;
+}
 const page = await readFile(new URL("playground/index.html", site), "utf8");
 const asset = page.match(/\bdata-formatter=(?:"([^"]+)"|([^\s>]+))/);
 assert.ok(asset, "Playground page links to its formatter bundle");
@@ -472,26 +558,36 @@ test("each supported Flix pin publishes under /flix/<version>/ while root URLs s
             }
         }
 
-        // Same-tree fixture anchors on the style guide must exist on the chapter page.
-        const chapterHtml = new Map();
-        for (const match of versionGuide.matchAll(/href=(?:"([^"]*#([^"]+))"|'([^']*#([^']+))')/g)) {
-            const url = match[1] ?? match[3];
-            const hash = match[2] ?? match[4];
-            if (!url.startsWith(prefix) || !hash || hash.startsWith("group-")) continue;
-            const chapterPath = url.slice(prefix.length).replace(/#.*$/, "");
-            if (!chapterHtml.has(chapterPath)) {
-                chapterHtml.set(
-                    chapterPath,
-                    await readFile(new URL(`flix/${version}/${chapterPath}index.html`, site), "utf8"),
-                );
-            }
-            const html = chapterHtml.get(chapterPath);
-            assert.match(
-                html,
-                new RegExp(`id=(?:"${hash.replace(/\./g, "\\.")}"|${hash.replace(/\./g, "\\.")})(?:\\s|>)`),
-                `formatting (${version}) links to missing #${hash} in ${chapterPath}`,
-            );
-        }
+    }
+
+    // Every catalog hash link in the published tree must resolve to an existing id.
+    const publicDir = fileURLToPath(site);
+    const missing = await missingCatalogAnchors(publicDir);
+    assert.deepEqual(missing, [], `dead catalog anchors:\n${missing.map((row) => JSON.stringify(row)).join("\n")}`);
+});
+
+test("a same-tree link to a filtered fixture is reported as a dead catalog anchor", async () => {
+    const publicDir = fileURLToPath(site);
+    const guidePath = join(publicDir, "flix/0.79.0/formatting/index.html");
+    const guide = await readFile(guidePath, "utf8");
+    const before = await missingCatalogAnchors(publicDir);
+    assert.equal(before.length, 0, "published site must start with zero dead catalog anchors");
+
+    // Mutate the cross-catalog brace-only-comment retarget back into a same-tree
+    // 0.79 link (the F1 failure mode before version-aware style-guide links).
+    const deadHref = "/prettier-plugin-flix/flix/0.79.0/expressions/#brace-only-comment";
+    const mutant = guide
+        .replaceAll("https://wstein.github.io/prettier-plugin-flix/expressions/#brace-only-comment", deadHref)
+        .replaceAll("/prettier-plugin-flix/expressions/#brace-only-comment", deadHref);
+    assert.match(mutant, /flix\/0\.79\.0\/expressions\/#brace-only-comment/);
+    await writeFile(guidePath, mutant);
+    try {
+        const after = await missingCatalogAnchors(publicDir);
+        assert.equal(after.length, 1, "old same-tree brace-only-comment link must be the sole dead anchor");
+        assert.equal(after[0].hash, "brace-only-comment");
+        assert.match(after[0].href, /flix\/0\.79\.0\/expressions\/#brace-only-comment/);
+    } finally {
+        await writeFile(guidePath, guide);
     }
 });
 
@@ -532,7 +628,12 @@ test("filtered catalog groups, cross-version anchors and build staging stay cons
 
     const older = join(publicDir, "flix/0.79.0");
     const declarations = await readFile(join(older, "declarations/index.html"), "utf8");
-    assert.doesNotMatch(declarations, /#group-declarations\b|id=["']?group-declarations\b/);
+    // Empty filtered groups disappear from both the page body and the chapter-nav subsections.
+    assert.doesNotMatch(declarations, /id=["']?group-declarations\b/);
+    assert.doesNotMatch(
+        declarations,
+        /chapter-nav-subsections[^>]*>[\s\S]*?#group-declarations\b/,
+    );
     assert.match(declarations, /#group-types-and-constraints\b/);
     const olderGuide = await readFile(join(older, "formatting/index.html"), "utf8");
     const rootGuide = await readFile(join(publicDir, "formatting/index.html"), "utf8");
@@ -542,6 +643,33 @@ test("filtered catalog groups, cross-version anchors and build staging stay cons
     assert.match(olderExpressions, /id=["']?record-no-inner-pad\b/);
     assert.match(olderGuide, /\/prettier-plugin-flix\/expressions\/#brace-only-comment/);
     assert.match(rootExpressions, /id=["']?brace-only-comment\b/);
+});
+
+test("publishFixtureCatalogs removes staging when Hugo fails", async (t) => {
+    const scratch = await mkdtemp(join(tmpdir(), "flix-catalog-hugo-fail-"));
+    t.after(() => rm(scratch, { recursive: true, force: true }));
+    const docs = join(scratch, "docs");
+    const sourceDataDir = join(scratch, "data");
+    const tempDirectory = join(scratch, "staging-parent");
+    const publicDir = join(scratch, "public");
+    await mkdir(docs);
+    await mkdir(join(docs, "layouts"));
+    await mkdir(sourceDataDir);
+    await mkdir(tempDirectory);
+    await writeFile(join(sourceDataDir, "fixtures.json"), "{}\n");
+    // Invalid TOML forces Hugo to exit non-zero; finally must still remove staging.
+    await writeFile(join(docs, "hugo.toml"), "baseURL = \"https://example.test/\"\nthis is not = valid toml [[[\n");
+    assert.throws(
+        () => publishFixtureCatalogs({
+            docs,
+            baseURL: "https://wstein.github.io/prettier-plugin-flix/",
+            publicDir,
+            sourceDataDir,
+            tempDirectory,
+        }),
+        /Hugo failed|Could not start Hugo/,
+    );
+    assert.deepEqual(await readdir(tempDirectory), []);
 });
 
 test("the Flix version switcher keeps the page path when changing catalogs", async () => {
