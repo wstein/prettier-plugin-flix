@@ -13,12 +13,14 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 import { build } from "esbuild";
+import { filterFixtureCatalog } from "../docs/assets/js/playground-example-versions.js";
 import { DEFAULT_FLIX_VERSION, SUPPORTED_FLIX_VERSIONS } from "../dist/flix-version.js";
 
 const docs = fileURLToPath(new URL("../docs/", import.meta.url));
 const dist = fileURLToPath(new URL("../dist", import.meta.url));
 const formatterDir = join(docs, "assets/js/formatter");
 const publicDir = join(docs, "public");
+const fixturesPath = join(docs, "data/fixtures.json");
 const hugoToml = readFileSync(join(docs, "hugo.toml"), "utf8");
 const baseURL = hugoToml.match(/^baseURL\s*=\s*"([^"]+)"/m)?.[1];
 if (!baseURL) throw new Error("docs/hugo.toml must set baseURL");
@@ -26,6 +28,16 @@ if (!baseURL.endsWith("/")) throw new Error("baseURL must end with /");
 
 /** Exact Flix pins that get a versioned catalog path. Root URLs mirror the latest. */
 const versionedCatalogs = [...SUPPORTED_FLIX_VERSIONS];
+const allFixtures = JSON.parse(readFileSync(fixturesPath, "utf8"));
+
+function withCatalogFixtures(version, run) {
+    writeFileSync(fixturesPath, `${JSON.stringify(filterFixtureCatalog(allFixtures, version), null, 2)}\n`);
+    try {
+        run();
+    } finally {
+        writeFileSync(fixturesPath, `${JSON.stringify(allFixtures, null, 2)}\n`);
+    }
+}
 
 rmSync(formatterDir, { recursive: true, force: true });
 await build({
@@ -83,14 +95,19 @@ function runHugo({ destination, baseURL: url, flixDocVersion }) {
 const staging = mkdtempSync(join(tmpdir(), "flix-docs-public-"));
 try {
     const rootDest = join(staging, "root");
-    runHugo({ destination: rootDest, baseURL, flixDocVersion: DEFAULT_FLIX_VERSION });
+    // Root mirrors the latest pin, so omit fixtures that only apply to older pins.
+    withCatalogFixtures(DEFAULT_FLIX_VERSION, () => {
+        runHugo({ destination: rootDest, baseURL, flixDocVersion: DEFAULT_FLIX_VERSION });
+    });
 
     for (const version of versionedCatalogs) {
         const versionDest = join(staging, `flix-${version}`);
-        runHugo({
-            destination: versionDest,
-            baseURL: `${baseURL}flix/${version}/`,
-            flixDocVersion: version,
+        withCatalogFixtures(version, () => {
+            runHugo({
+                destination: versionDest,
+                baseURL: `${baseURL}flix/${version}/`,
+                flixDocVersion: version,
+            });
         });
     }
 

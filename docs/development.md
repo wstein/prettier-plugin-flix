@@ -124,17 +124,20 @@ catalog via RelPermalink. Root URLs mirror the latest pin (`0.80.0`);
 `/flix/0.79.0/` is for readers on the older grammar. Unpinned fixtures still
 bake their static preview with the plugin default; when the catalog selects a
 different pin, Live re-formats under that pin instead of keeping the bake.
+Fixtures whose `minVersion` / `maxVersion` exclude the catalog pin are omitted
+from that tree (and from root when they only apply to an older pin), so
+0.80-only cases such as module-level `val` do not appear under `/flix/0.79.0/`.
 
 **Switcher.** The toolbar Flix control rewrites the path between the root
 catalog (latest) and `/flix/<version>/...`, keeping the page after the prefix.
 Fixtures that pin `flixVersion`, or that set `minVersion` / `maxVersion`, show a
-badge. Prefer pinned 0.79 cases when checking older syntax; most fixtures omit
-the range and apply under every supported pin.
+badge when they are in range. Prefer pinned 0.79 cases when checking older
+syntax; most fixtures omit the range and apply under every supported pin.
 
 **Playground examples.** Fixture front matter may carry `minVersion` /
 `maxVersion` (from-version, or an inclusive from–to range). The standalone
-Playground hides incompatible examples when its Flix version control changes —
-syntax-pin filtering only, not a feature matrix.
+Playground and each versioned catalog use the same range filter — syntax-pin
+filtering only, not a feature matrix.
 
 `npm run docs:build` runs one Hugo build for the root and one for each
 versioned catalog, stages them in the system temporary directory, then

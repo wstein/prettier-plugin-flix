@@ -1,11 +1,14 @@
 /**
- * Version ranges for curated Playground examples.
+ * Version ranges for curated Playground examples and versioned catalog pages.
  *
  * - `minVersion` alone: available from that pin onward (from-version).
  * - `minVersion` + `maxVersion`: inclusive from–to range.
  * - Neither: available under every supported pin.
  *
  * This is syntax-pin filtering only — not a language feature matrix.
+ * The standalone Playground menu and each `/flix/<version>/` catalog tree
+ * use the same predicate so out-of-range fixtures (e.g. module-level `val`
+ * under 0.79) do not appear as broken examples.
  */
 
 /** @param {string} version */
@@ -48,6 +51,28 @@ export function filterExampleGroups(groups, fixtures, version) {
         const kept = examples.filter(([, path]) => exampleSupportsVersion(fixtures[path], version));
         return kept.length > 0 ? [{ title, examples: kept }] : [];
     });
+}
+
+/**
+ * Drop fixtures whose minVersion / maxVersion exclude `version`, and recount.
+ * Used when Hugo builds each `/flix/<version>/` (and root) catalog tree.
+ *
+ * @param {Record<string, { count: number, groups: { title: string, fixtures: object[] }[] }>} chapters
+ * @param {string} version
+ */
+export function filterFixtureCatalog(chapters, version) {
+    const filtered = {};
+    for (const [chapter, entry] of Object.entries(chapters)) {
+        const groups = entry.groups.flatMap((group) => {
+            const fixtures = group.fixtures.filter((fixture) => exampleSupportsVersion(fixture, version));
+            return fixtures.length > 0 ? [{ ...group, fixtures }] : [];
+        });
+        filtered[chapter] = {
+            count: groups.reduce((n, group) => n + group.fixtures.length, 0),
+            groups,
+        };
+    }
+    return filtered;
 }
 
 /**
