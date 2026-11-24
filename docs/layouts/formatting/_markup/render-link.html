@@ -3,8 +3,54 @@
 {{- $repository := "https://github.com/wstein/prettier-plugin-flix/blob/main/" -}}
 {{- if strings.HasPrefix $href $fixturePrefix -}}
   {{- $fixture := strings.TrimPrefix $fixturePrefix $href -}}
-  {{- $chapter := site.GetPage (path.Dir $fixture) -}}
-  {{- $href = printf "%s#%s" $chapter.RelPermalink (path.BaseName $fixture) -}}
+  {{- $chapterName := path.Dir $fixture -}}
+  {{- $id := path.BaseName $fixture -}}
+  {{- $chapter := site.GetPage $chapterName -}}
+  {{- $present := false -}}
+  {{- with index site.Data.fixtures $chapterName -}}
+    {{- range .groups -}}
+      {{- range .fixtures -}}
+        {{- if eq .id $id }}{{ $present = true }}{{ end -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+  {{- if $present -}}
+    {{- $href = printf "%s#%s" $chapter.RelPermalink $id -}}
+  {{- else -}}
+    {{/* Out of range for this catalog pin: point at a tree that still lists the fixture. */ -}}
+    {{- $latest := site.Data.playground.defaultFlixVersion -}}
+    {{- $siteRoot := site.BaseURL -}}
+    {{- with site.Params.flixDocVersion -}}
+      {{- if ne . "" -}}
+        {{- $siteRoot = strings.TrimSuffix (printf "flix/%s/" .) site.BaseURL -}}
+      {{- end -}}
+    {{- end -}}
+    {{- $meta := index site.Data.playgroundFixtures $fixture -}}
+    {{- $target := "" -}}
+    {{- $candidates := slice $latest -}}
+    {{- range site.Data.playground.supportedFlixVersions -}}
+      {{- if ne . $latest }}{{ $candidates = $candidates | append . }}{{ end -}}
+    {{- end -}}
+    {{- range $candidate := $candidates -}}
+      {{- if eq $target "" -}}
+        {{- $ok := true -}}
+        {{- with $meta.minVersion -}}
+          {{- if lt (partial "compare-flix-version.html" (dict "a" $candidate "b" .)) 0 }}{{ $ok = false }}{{ end -}}
+        {{- end -}}
+        {{- with $meta.maxVersion -}}
+          {{- if gt (partial "compare-flix-version.html" (dict "a" $candidate "b" .)) 0 }}{{ $ok = false }}{{ end -}}
+        {{- end -}}
+        {{- if $ok }}{{ $target = $candidate }}{{ end -}}
+      {{- end -}}
+    {{- end -}}
+    {{- if eq $target $latest -}}
+      {{- $href = printf "%s%s/#%s" $siteRoot $chapterName $id -}}
+    {{- else if ne $target "" -}}
+      {{- $href = printf "%sflix/%s/%s/#%s" $siteRoot $target $chapterName $id -}}
+    {{- else -}}
+      {{- $href = print $repository "test/fixtures/" $fixture -}}
+    {{- end -}}
+  {{- end -}}
 {{- else if eq $href "../README.md" -}}
   {{- $href = print $repository "README.md" -}}
 {{- else if eq $href "official-examples.md" -}}

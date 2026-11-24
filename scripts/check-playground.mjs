@@ -444,6 +444,9 @@ test("each supported Flix pin publishes under /flix/<version>/ while root URLs s
             assert.doesNotMatch(declarations, /fixture-flix[^>]*>Flix ≥0\.80\.0/);
             assert.match(declarations, /id=(?:"function-named-val-flix-0\.79"|function-named-val-flix-0\.79)/);
             assert.match(declarations, /fixture-flix[^>]*>flixVersion 0\.79\.0/);
+            // Style-guide links to out-of-range fixtures leave this tree for the latest catalog.
+            assert.match(versionGuide, /\/prettier-plugin-flix\/expressions\/#brace-only-comment/);
+            assert.doesNotMatch(versionGuide, /\/flix\/0\.79\.0\/expressions\/#brace-only-comment/);
         }
         const siteRoot = "/prettier-plugin-flix/";
         const prefix = `${siteRoot}flix/${version}/`;
@@ -465,6 +468,27 @@ test("each supported Flix pin publishes under /flix/<version>/ while root URLs s
                     );
                 }
             }
+        }
+
+        // Same-tree fixture anchors on the style guide must exist on the chapter page.
+        const chapterHtml = new Map();
+        for (const match of versionGuide.matchAll(/href=(?:"([^"]*#([^"]+))"|'([^']*#([^']+))')/g)) {
+            const url = match[1] ?? match[3];
+            const hash = match[2] ?? match[4];
+            if (!url.startsWith(prefix) || !hash || hash.startsWith("group-")) continue;
+            const chapterPath = url.slice(prefix.length).replace(/#.*$/, "");
+            if (!chapterHtml.has(chapterPath)) {
+                chapterHtml.set(
+                    chapterPath,
+                    await readFile(new URL(`flix/${version}/${chapterPath}index.html`, site), "utf8"),
+                );
+            }
+            const html = chapterHtml.get(chapterPath);
+            assert.match(
+                html,
+                new RegExp(`id=(?:"${hash.replace(/\./g, "\\.")}"|${hash.replace(/\./g, "\\.")})(?:\\s|>)`),
+                `formatting (${version}) links to missing #${hash} in ${chapterPath}`,
+            );
         }
     }
 });
