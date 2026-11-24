@@ -1,6 +1,6 @@
 ---
 title: "Separate a wrapped with list from a wrapped function return type"
-description: "A fitting arrow return stays on one line above a fitting with list; when both wrap, the deeper with-list indent keeps constraints below the arrow parameters."
+description: "A fitting arrow return stays on one line above a fitting with list. A wrapped constraint list uses one indent from the declaration even when the result type wraps."
 group: "Types and constraints"
 options: { printWidth: 80 }
 ---

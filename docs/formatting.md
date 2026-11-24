@@ -191,27 +191,35 @@ still wrap if that constraint alone needs more room. A line comment after a
 comma stays with the preceding constraint.
 
 Like `where` clauses in the Rust guide, a wrapped list puts each constraint
-on its own line. Unlike Rust, `with` stays at the end of the signature line,
-the list has no trailing comma, and the `=` or `{` follows the last
-constraint. Wrapped constraints are indented **once** under `with`—the same
-column as the body after `=`—so they do not spend an extra indent of width.
-A wrapped function return type still breaks at its own arrow boundaries; when
-both the return type and `with` wrap, constraints stay one indent under the
-`with` line rather than a second level below the body.
+on its own line. The list has no trailing comma, and `=` or `{` follows the
+last constraint. The constraints are indented one level from the declaration,
+which is also the column of a function body that starts below `=`. This holds
+when the return type wraps and the last part of that type ends in `with`.
 
-When the signature does not fit on one line but the whole `with` list does,
-the `with` line starts one level below `def`. A short body can follow `=` on
-that line, as in the fixture at widths 70 and 80. If the body moves to the
-next line, it starts in the same column as `with`, as in
+When the signature needs a break but the entire constraint list still fits,
+`with` and the list can move together to a continuation line. A short body can
+follow `=` on that line. A body that moves to the next line starts in the same
+column as the continuation, as in
 [Flix's Boxable example](https://github.com/flix/flix/blob/v0.80.0/main/src/library/Fixpoint3/Boxable.flix#L168-L170).
-When the constraints themselves wrap, each starts one level under `with` (and
-shares the body column after `=`), as shown in the trait constraint fixture.
-At width 60:
+
+At width 60, the trait constraint fixture shows the list and body sharing a
+column:
 
 ```flix
-pub def lookup(m: Map[a, b], k: a): Option[b]
-    with Order[a], ToString[b], Eq[b], Hash[a] =
-    Map.get(k, m)
+pub def render[a: Type, b: Type, c: Type, d: Type] (
+    first: a,
+    second: b,
+    third: c,
+    fourth: d
+): String with
+    ToString[a],
+    ToString[b],
+    ToString[c],
+    ToString[d] =
+    ToString.toString(first) +
+        ToString.toString(second) +
+        ToString.toString(third) +
+        ToString.toString(fourth)
 ```
 
 [Signature boundaries fixture](../test/fixtures/declarations/signature-boundaries.md) ·
