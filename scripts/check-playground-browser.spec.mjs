@@ -268,6 +268,42 @@ test("both editors move their column guide with the configured width and horizon
     for (const editor of editors) await expect(editor).toHaveCSS("background-position-x", "-1px");
 });
 
+test("the column guide is reachable with short lines and in the diff", async ({ page }) => {
+    await page.setViewportSize({ width: 900, height: 850 });
+    await page.goto(siteUrl + "playground/");
+    const input = page.getByRole("textbox", { name: "Flix input" });
+    const preview = page.getByRole("textbox", { name: "Preview" });
+    await page.getByLabel("Line width").fill("160");
+    await input.fill("def short():Int32=1");
+    await expect(preview).toHaveText("def short(): Int32 = 1");
+
+    for (const editor of [input, preview]) {
+        const guide = await editor.evaluate((content) => {
+            const scroller = content.closest(".cm-scroller");
+            const x = parseFloat(getComputedStyle(content).backgroundPositionX);
+            scroller.scrollLeft = scroller.scrollWidth;
+            const area = content.getBoundingClientRect();
+            const visible = scroller.getBoundingClientRect();
+            return x > 0 && x < area.width && area.left + x < visible.right && scroller.scrollLeft > 0;
+        });
+        expect(guide).toBe(true);
+    }
+
+    await page.getByRole("button", { name: "Diff", exact: true }).click();
+    const row = page.locator(".playground-diff .diff-added").first();
+    await expect(row).toBeVisible();
+    const guide = await row.evaluate((line) => {
+        const scroller = line.closest(".playground-diff");
+        const style = getComputedStyle(line);
+        const x = parseFloat(style.backgroundPositionX);
+        scroller.scrollLeft = scroller.scrollWidth;
+        const area = line.getBoundingClientRect();
+        return style.backgroundImage !== "none" && x > 0 && x < area.width &&
+            area.left + x < scroller.getBoundingClientRect().right && scroller.scrollLeft > 0;
+    });
+    expect(guide).toBe(true);
+});
+
 test("sync scroll follows matching code in both directions across formatting changes", async ({ page }) => {
     await page.setViewportSize({ width: 1450, height: 850 });
     await page.goto(siteUrl + "playground/");

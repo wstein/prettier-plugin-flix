@@ -63,6 +63,8 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
         const width = printWidth.validity.valid ? printWidth.valueAsNumber : undefined;
         input.setColumnGuide(width);
         output.setColumnGuide(width);
+        if (width === undefined) diff.style.removeProperty("--playground-guide-position");
+        else diff.style.setProperty("--playground-guide-position", `calc(2.4em + ${width}ch)`);
     }
 
     function replaceCode(view, code) {
