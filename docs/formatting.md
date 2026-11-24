@@ -216,10 +216,10 @@ pub def render[a: Type, b: Type, c: Type, d: Type] (
     ToString[b],
     ToString[c],
     ToString[d] =
-    ToString.toString(first) +
-        ToString.toString(second) +
-        ToString.toString(third) +
-        ToString.toString(fourth)
+    ToString.toString(first)
+        + ToString.toString(second)
+        + ToString.toString(third)
+        + ToString.toString(fourth)
 ```
 
 [Signature boundaries fixture](../test/fixtures/declarations/signature-boundaries.md) ·
@@ -303,9 +303,6 @@ each continuation. A `::` with a glued comment keeps its tight class. Package
 qualifiers in a `use` always stay tight and never wrap.
 [Cons spacing](../test/fixtures/expressions/cons-chain-spacing.md) ·
 [Tight comments](../test/fixtures/whitespace/package-qualifier-tight-comments.md)
-
-String concatenation has its own rule. When it fits, `+ "\n" +` stays with the
-preceding text so the separator is easy to associate with that line.
 
 [Pipeline fixture](../test/fixtures/expressions/leading-pipeline-operators.md) ·
 [Cons chain](../test/fixtures/expressions/long-cons-chain.md) ·
