@@ -86,7 +86,11 @@ const fakeJava = join(work, "fake-java.sh");
 writeFileSync(fakeJava, `#!/bin/sh
 cmd="$3"
 if [ "$cmd" = "--version" ]; then
-  if [ "$FAKE_MODE" = version-error ]; then echo "Error: Unable to access jarfile $2" >&2; exit 1; fi
+  case "$FAKE_MODE" in
+    version-error) echo "Error: Unable to access jarfile $2" >&2; exit 1;;
+    version-path) echo "Loading jarfile $2"; exit 0;;
+    version-stderr) echo "The Flix Programming Language 0.80.0" >&2; exit 0;;
+  esac
   echo "The Flix Programming Language \${FAKE_FLIX_VERSION:-0.80.0}"
   exit 0
 fi
@@ -145,16 +149,25 @@ test("a compiler that cannot be started is a broken run", () => {
     assert.match(r.stderr, /harness failure/);
 });
 
-test("a failed version command cannot satisfy the pin with a version from the jar path", { skip: !posix }, () => {
-    const versionedJar = join(work, "flix-0.80.0.jar");
-    writeFileSync(versionedJar, "not a jar");
-    const log = join(work, "failed-version-project.log");
-    writeFileSync(log, "");
-    const r = runFake([versionedJar, sources, "--pin", fakePin], { FAKE_MODE: "version-error", FAKE_LOG: log });
-    assert.equal(r.status, 2, r.stdout + r.stderr);
-    assert.match(r.stderr, /cannot read a Flix version.*Unable to access jarfile/s);
-    assert.equal(readFileSync(log, "utf8"), "");
-});
+for (const [mode, message] of [
+    ["version-error", /Unable to access jarfile/],
+    ["version-path", /Loading jarfile/],
+    ["version-stderr", /The Flix Programming Language/],
+]) {
+    test(`rejects unusable compiler version output (${mode})`, { skip: !posix }, () => {
+        const versionedJar = join(work, "flix-0.80.0.jar");
+        writeFileSync(versionedJar, "not a jar");
+        const log = join(work, `${mode}-project.log`);
+        writeFileSync(log, "");
+        const r = runFake([versionedJar, sources, "--pin", fakePin, "--jobs", "1"], {
+            FAKE_MODE: mode, FAKE_LOG: log,
+        });
+        assert.equal(r.status, 2, r.stdout + r.stderr);
+        assert.match(r.stderr, /cannot read a Flix version/);
+        assert.match(r.stderr, message);
+        assert.equal(readFileSync(log, "utf8"), "");
+    });
+}
 
 test("the jar's version must equal the pinned tag", { skip: !posix }, () => {
     const r = runFake([fakeJar, sources, "--pin", fakePin], { FAKE_FLIX_VERSION: "0.81.0" });
