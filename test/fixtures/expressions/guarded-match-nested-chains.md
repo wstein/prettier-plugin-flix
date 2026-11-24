@@ -27,34 +27,34 @@ def f(
     lastConnectionAvailable: Bool,
     ys: List[Int32]
 ): Int32 = match x {
-    case 1 if stationOpen and
-            lastConnectionAvailable and
-            someVeryLongArgumentNameHere => 1
+    case 1 if stationOpen
+            and lastConnectionAvailable
+            and someVeryLongArgumentNameHere => 1
     case 2 if checkTheRoute(
-        stationOpen and
-            lastConnectionAvailable and
-            someVeryLongArgumentNameHere,
+        stationOpen
+            and lastConnectionAvailable
+            and someVeryLongArgumentNameHere,
         anotherLongArgumentName
     ) => 2
     case 3 if List.exists(
         y ->
-            y +
-                someLongConstantValueName +
-                anotherLongConstantValueName >
-                100000,
+            y
+                + someLongConstantValueName
+                + anotherLongConstantValueName
+                > 100000,
         ys
     ) => 3
     case 4 if (
-        stationOpen and
-            lastConnectionAvailable and
-            someVeryLongArgumentNameHere
+        stationOpen
+            and lastConnectionAvailable
+            and someVeryLongArgumentNameHere
     ) => 4
     case 5 if (match x {
         case 6 if stationOpen => true
         case _                => false
-    }) and
-            lastConnectionAvailable and
-            stationOpen => 5
+    })
+            and lastConnectionAvailable
+            and stationOpen => 5
     case _ => 0
 }
 ```

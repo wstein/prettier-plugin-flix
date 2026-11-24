@@ -38,8 +38,8 @@ def fare(
     lastConnectionAvailable: Bool,
     eligibleForDiscount: Bool
 ): String = match routeServed {
-    case true if stationOpen and
-            lastConnectionAvailable =>
+    case true if stationOpen
+            and lastConnectionAvailable =>
         if (eligibleForDiscount)
             "discounted"
         else

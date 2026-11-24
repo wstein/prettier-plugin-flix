@@ -25,15 +25,15 @@ def f(
     case x :: _ if x
             :: firstValueOfList
             :: secondValueOfList
-            :: thirdValueOfList ==
-            ys => 1
-    case x :: _ if x > 0 and
-            (
+            :: thirdValueOfList
+            == ys => 1
+    case x :: _ if x > 0
+            and (
                 firstValueOfList
                     :: secondValueOfList
                     :: thirdValueOfList
-            ) ==
-                ys => 2
+            )
+                == ys => 2
     case _ => 0
 }
 ```

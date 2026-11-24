@@ -227,6 +227,44 @@ pub def render[a: Type, b: Type, c: Type, d: Type] (
 [Trait constraint fixture](../test/fixtures/declarations/trait-constraint-lists.md) ·
 [Arrow return with list fixture](../test/fixtures/declarations/arrow-return-with-list.md)
 
+## Binary operators
+
+Binary operators that wrap—`+`, `-`, `*`, `/`, `and`, `or`, `==`, `:::`, and
+other infix forms—break **before** the operator so the continuation starts
+with the operator (leading), not after it (trailing):
+
+```flix
+ToString.toString(first)
+    + ToString.toString(second)
+    + ToString.toString(third)
+
+veryLongNameAAAAAAAA
+    and veryLongNameBBBBBBBB
+    and veryLongNameCCCCCCCC
+```
+
+This matches `flix format` (`PrettyPrinter.prettyBinary`:
+`line <> opDoc <> …`) and live reformatting of trailing chains into leading
+ones. Pipelines `|>` / `!>` were already leading; list cons `::` already wraps
+with a leading `::` when spaced.
+
+When a line comment trails the operator, or an own-line comment sits between
+the operator and the next operand, that link keeps a **trailing** break
+(`op` then newline) so the comment stays attached and a second format pass is
+idempotent. Further links without such a comment still lead.
+[Comment after operator](../test/fixtures/comments/binary-operator-comment-after.md) ·
+[Adjacent line comments](../test/fixtures/comments/adjacent-line-comments.md)
+
+String concatenation keeps a related special case: when it fits, `+ "\n"` stays
+with the preceding text so the newline separator is easy to associate with that
+line; further `+` links still lead on later lines.
+[String concatenation](../test/fixtures/expressions/concatenate-lines.md) ·
+[Operator chain](../test/fixtures/expressions/operator-chain.md) ·
+[Leading `and` / `or`](../test/fixtures/expressions/leading-binary-and-or.md) ·
+[Leading `*` `/` `<+>`](../test/fixtures/expressions/leading-binary-mult-angled.md) ·
+[Mixed-operator guard](../test/fixtures/expressions/guarded-match-mixed-operators.md) ·
+[flix format PrettyPrinter](https://github.com/flix/flix/blob/v0.80.0/main/src/ca/uwaterloo/flix/tools/fmt/PrettyPrinter.scala)
+
 ## Pipelines
 
 A pipeline using `|>` or `!>` stays on one line when it fits. In a multiline

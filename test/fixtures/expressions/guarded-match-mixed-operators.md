@@ -29,20 +29,20 @@ def f(
     case true if firstCondition
             |> Int32.abs
             |> Int32.max(secondCondition)
-            |> Int32.max(thirdCondition) >
-            9 => 2
-    case false if firstCondition +
-            secondCondition +
-            thirdCondition +
-            firstCondition +
-            secondCondition >
-            0 =>
-        firstCondition +
-            secondCondition +
-            thirdCondition +
-            firstCondition +
-            secondCondition +
-            thirdCondition
+            |> Int32.max(thirdCondition)
+            > 9 => 2
+    case false if firstCondition
+            + secondCondition
+            + thirdCondition
+            + firstCondition
+            + secondCondition
+            > 0 =>
+        firstCondition
+            + secondCondition
+            + thirdCondition
+            + firstCondition
+            + secondCondition
+            + thirdCondition
     case _ => 0
 }
 ```
@@ -54,25 +54,25 @@ def f(
     secondCondition: Int32,
     thirdCondition: Int32
 ): Int32 = match x {
-    case _ if firstCondition + secondCondition + thirdCondition ==
-            0 => 1
+    case _ if firstCondition + secondCondition + thirdCondition
+            == 0 => 1
     case true if firstCondition
             |> Int32.abs
             |> Int32.max(secondCondition)
-            |> Int32.max(thirdCondition) >
-            9 => 2
-    case false if firstCondition +
-            secondCondition +
-            thirdCondition +
-            firstCondition +
-            secondCondition >
-            0 =>
-        firstCondition +
-            secondCondition +
-            thirdCondition +
-            firstCondition +
-            secondCondition +
-            thirdCondition
+            |> Int32.max(thirdCondition)
+            > 9 => 2
+    case false if firstCondition
+            + secondCondition
+            + thirdCondition
+            + firstCondition
+            + secondCondition
+            > 0 =>
+        firstCondition
+            + secondCondition
+            + thirdCondition
+            + firstCondition
+            + secondCondition
+            + thirdCondition
     case _ => 0
 }
 ```

@@ -1782,12 +1782,29 @@ export class Printer {
             return [leading, group([first, pipeContinuation(steps)])];
         }
 
+        // Break before the operator so continuations are leading (`\n + x`), matching
+        // flix format's prettyBinary rather than trailing (`+ \n x`). An own-line comment
+        // after the operator keeps a trailing form so the comment stays attached and
+        // formatting stays idempotent (flix format does the same when afterOp is present).
         const links = ops.map((op, i) => {
             const breakPoint = this.flat > 0 ? " " : line;
             const operand = operands[i + 1];
+            const opTerm = lastTerm(op);
+            const operandFirst = firstTerm(operand);
+            const commentAfterOp = (opTerm !== null && this.hasLineTrail(opTerm)) ||
+                (operandFirst !== null && (this.info(operandFirst)?.lead[0]?.nl ?? 0) > 0);
+            if (commentAfterOp) {
+                return {
+                    before: this.after(lastTerm(operands[i]), " "),
+                    operator: this.print(op),
+                    after: this.after(lastTerm(op), hardline),
+                    operand: this.print(this.ls(operand)),
+                };
+            }
             return {
-                operator: [this.after(lastTerm(operands[i]), " "), this.print(op)],
-                after: this.after(lastTerm(op), breakPoint),
+                before: this.after(lastTerm(operands[i]), breakPoint),
+                operator: this.print(this.ls(op)),
+                after: this.after(lastTerm(op), " "),
                 operand: this.print(this.ls(operand)),
             };
         });
@@ -1797,28 +1814,28 @@ export class Printer {
         const continuation = this.matchGuardStart !== null && firstTerm(n) === this.matchGuardStart
             ? (value: Doc) => indent(indent(value))
             : indent;
+        const linkDoc = ({ before, operator, after, operand }: typeof links[number]): Doc =>
+            [before, operator, after, operand];
         if (k !== "AddExpr" || !ops.every((op) => isTerm(op) && ttype(op) === this.L.PLUS)) {
-            return [leading, group([first, continuation(links.map(({ operator, after, operand }) => [operator, after, operand]))])];
+            return [leading, group([first, continuation(links.map(linkDoc))])];
         }
 
-        // A newline literal acts as a separator. Keep it with the preceding text when that
-        // segment fits, while retaining the ordinary break points at narrower widths.
+        // A newline literal acts as a separator. Keep `+ "\n"` with the preceding text when
+        // that segment fits; the next `+ operand` starts a new leading-operator segment.
         const segments: Doc[][] = [[first]];
-        for (const [i, { operator, after, operand }] of links.entries()) {
-            const segment = segments[segments.length - 1];
-            segment.push(operator);
+        for (const [i, link] of links.entries()) {
             const left = firstTerm(operands[i]);
             const right = lastTerm(operands[i]);
             const newline = i > 0 && left && right && right.symbol.stop - left.symbol.start === 3 &&
                 this.root.codePoints.slice(left.symbol.start, right.symbol.stop + 1).join("") === '"\\n"';
-            if (newline) segments.push([after, operand]);
-            else segment.push(after, operand);
+            if (newline) segments.push([link.before, link.operator, link.after, link.operand]);
+            else segments[segments.length - 1].push(link.before, link.operator, link.after, link.operand);
         }
         const [head, ...tail] = segments;
         if (tail.length === 0) return [leading, group([first, continuation(head.slice(1))])];
         return [leading, group([
             group([head[0], continuation(head.slice(1))]),
-            continuation(tail.map(([before, ...parts]) => [before, group(parts)])),
+            continuation(tail.map((parts) => group(parts))),
         ])];
     }
 
@@ -1829,7 +1846,7 @@ export class Printer {
 
     /**
      * ConsExpr/ConsPattern may mix `::` (cons) and `:::` (append). Only maximal `::` runs follow
-     * Rule A; `:::` stays spaced with a trailing break.
+     * Rule A; `:::` stays spaced with a leading break before the operator.
      */
     private printConsExprOrPattern(operands: Node[], ops: Node[]): Doc {
         if (ops.every((op) => this.isConsColonColon(op))) return this.printConsChain(operands, ops);
@@ -1847,11 +1864,28 @@ export class Printer {
                 ? this.print(this.ls(operands[start]))
                 : this.printConsChain(segOperands, segOps));
             if (append && op !== null) {
-                parts.push(
-                    this.after(lastTerm(operands[i]), " "),
-                    this.print(op),
-                    this.after(lastTerm(op), breakPoint),
-                );
+                // Leading `:::` matches binary ops. An own-line comment after the
+                // operator keeps a trailing break so the comment does not join with a
+                // single space and then re-gap to LINE_COMMENT_GAP on the next pass.
+                const opTerm = lastTerm(op);
+                const nextFirst = firstTerm(operands[i + 1]);
+                const commentAfterOp = (opTerm !== null && this.hasLineTrail(opTerm)) ||
+                    (nextFirst !== null && (this.info(nextFirst)?.lead[0]?.nl ?? 0) > 0);
+                if (commentAfterOp) {
+                    parts.push(
+                        this.after(lastTerm(operands[i]), " "),
+                        this.print(op),
+                        this.after(lastTerm(op), hardline),
+                    );
+                } else {
+                    // `ls(op)` marks the operator as a line start so a lead comment on
+                    // the continuation does not insert an extra hardline (blank line).
+                    parts.push(
+                        this.after(lastTerm(operands[i]), breakPoint),
+                        this.print(this.ls(op)),
+                        this.after(lastTerm(op), " "),
+                    );
+                }
                 start = i + 1;
             }
         }

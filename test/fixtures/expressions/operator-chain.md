@@ -1,6 +1,6 @@
 ---
-title: Operator chains wrap after the operator
-description: "A long addition chain wraps after operators without changing the operand order."
+title: Operator chains wrap before the operator
+description: "A long addition chain wraps before each operator so the continuation is leading."
 ---
 
 ## Input
@@ -13,9 +13,9 @@ def total(): Int32 = alphaAlphaAlpha + betaBetaBeta + gammaGammaGamma + deltaDel
 
 ```flix
 def total(): Int32 =
-    alphaAlphaAlpha +
-        betaBetaBeta +
-        gammaGammaGamma +
-        deltaDeltaDelta +
-        epsilonEpsilon
+    alphaAlphaAlpha
+        + betaBetaBeta
+        + gammaGammaGamma
+        + deltaDeltaDelta
+        + epsilonEpsilon
 ```

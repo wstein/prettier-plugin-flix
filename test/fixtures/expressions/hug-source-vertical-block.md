@@ -67,8 +67,8 @@ def sign(l: List[Int32]): List[Int32] =
 def compact(l: List[Int32]): List[Int32] = l |> List.map(x -> { x + 1 })
 
 def group(f: (a, a) -> Bool, l: List[a]): List[a] =
-    (Nil, l) ||>
-        List.foldLeft(acc -> value -> {
+    (Nil, l)
+        ||> List.foldLeft(acc -> value -> {
             groupWithHelper(value, f, acc)
         })
 
@@ -103,8 +103,8 @@ def compact(l: List[Int32]): List[Int32] =
 
 def group(f: (a, a) -> Bool, l: List[a]):
     List[a] =
-    (Nil, l) ||>
-        List.foldLeft(acc -> value -> {
+    (Nil, l)
+        ||> List.foldLeft(acc -> value -> {
             groupWithHelper(value, f, acc)
         })
 
@@ -150,8 +150,8 @@ def compact(l: List[Int32]): List[Int32] =
     l |> List.map(x -> { x + 1 })
 
 def group(f: (a, a) -> Bool, l: List[a]): List[a] =
-    (Nil, l) ||>
-        List.foldLeft(acc -> value -> {
+    (Nil, l)
+        ||> List.foldLeft(acc -> value -> {
             groupWithHelper(value, f, acc)
         })
 

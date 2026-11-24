@@ -24,18 +24,20 @@ def f(
     midLabel: String,
     rightLabel: String
 ): String = match flag {
-    case true if leftLabel + "\n" +
-            midLabel + rightLabel + leftLabel + midLabel !=
-            "" => leftLabel
-    case false if leftLabel +
-            rightLabel +
-            midLabel +
-            leftLabel +
-            rightLabel +
-            midLabel +
-            "\n" +
-            midLabel !=
-            "" => rightLabel
+    case true if leftLabel + "\n"
+            + midLabel
+            + rightLabel
+            + leftLabel
+            + midLabel
+            != "" => leftLabel
+    case false if leftLabel
+            + rightLabel
+            + midLabel
+            + leftLabel
+            + rightLabel
+            + midLabel
+            + "\n" + midLabel
+            != "" => rightLabel
     case _ => midLabel
 }
 ```
