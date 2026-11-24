@@ -1,0 +1,15 @@
+{{- $href := .Destination -}}
+{{- $fixturePrefix := "../test/fixtures/" -}}
+{{- $repository := "https://github.com/wstein/prettier-plugin-flix/blob/main/" -}}
+{{- if strings.HasPrefix $href $fixturePrefix -}}
+  {{- $fixture := strings.TrimPrefix $fixturePrefix $href -}}
+  {{- $chapter := site.GetPage (path.Dir $fixture) -}}
+  {{- $href = printf "%s#%s" $chapter.RelPermalink (path.BaseName $fixture) -}}
+{{- else if eq $href "formatting.md" -}}
+  {{- $href = (site.GetPage "formatting").RelPermalink -}}
+{{- else if strings.HasPrefix $href "formatting.md#" -}}
+  {{- $href = printf "%s#%s" (site.GetPage "formatting").RelPermalink (strings.TrimPrefix "formatting.md#" $href) -}}
+{{- else if eq $href "../README.md" -}}
+  {{- $href = print $repository "README.md" -}}
+{{- end -}}
+<a href="{{ $href }}"{{ with .Title }} title="{{ . }}"{{ end }}>{{ .Text }}</a>
