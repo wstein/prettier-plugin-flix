@@ -93,7 +93,11 @@
             {{ $page := site.GetPage . }}
             <li>
               <a href="{{ $page.RelPermalink }}"{{ if eq $page.RelPermalink $current }} aria-current="page"{{ end }}>{{ $page.LinkTitle }}</a>
-              {{ with $page.Params.chapterGroups }}
+              {{ $fixtureGroups := slice }}
+              {{ with index site.Data.fixtures $page.Section }}
+                {{ range .groups }}{{ $fixtureGroups = $fixtureGroups | append .title }}{{ end }}
+              {{ end }}
+              {{ with where ($page.Params.chapterGroups | default slice) "fixtureGroup" "in" $fixtureGroups }}
               <ul class="chapter-nav-subsections" aria-label="{{ $page.LinkTitle }}">
                 {{ range . }}
                 <li><a href="{{ $page.RelPermalink }}#group-{{ .fixtureGroup | anchorize }}">{{ .title }}</a></li>

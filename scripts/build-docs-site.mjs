@@ -4,8 +4,8 @@
  *
  * One Hugo invocation per version keeps RelPermalink, search, and sidebar links
  * inside that catalog. GitHub Pages deploys the merged docs/public tree.
- * Shared Markdown and fixture data feed every build; only baseURL and
- * params.flixDocVersion differ. The toolbar switcher moves between catalogs.
+ * Shared Markdown and version-filtered fixture data feed each build. The
+ * toolbar switcher moves between catalogs.
  */
 import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -30,15 +30,6 @@ if (!baseURL.endsWith("/")) throw new Error("baseURL must end with /");
 const versionedCatalogs = [...SUPPORTED_FLIX_VERSIONS];
 const allFixtures = JSON.parse(readFileSync(fixturesPath, "utf8"));
 
-function withCatalogFixtures(version, run) {
-    writeFileSync(fixturesPath, `${JSON.stringify(filterFixtureCatalog(allFixtures, version), null, 2)}\n`);
-    try {
-        run();
-    } finally {
-        writeFileSync(fixturesPath, `${JSON.stringify(allFixtures, null, 2)}\n`);
-    }
-}
-
 rmSync(formatterDir, { recursive: true, force: true });
 await build({
     entryPoints: [join(docs, "assets/js/format-flix.js")],
@@ -60,54 +51,50 @@ await build({
     }],
 });
 
-function runHugo({ destination, baseURL: url, flixDocVersion }) {
-    const fragmentPath = join(docs, ".hugo-flix-version.toml");
-    const fragment = [
-        `# Generated for docs build; not committed.`,
+function runHugo({ destination, baseURL: url, flixDocVersion, dataDir, fragmentPath }) {
+    const fixtures = filterFixtureCatalog(allFixtures, flixDocVersion);
+    writeFileSync(join(dataDir, "fixtures.json"), JSON.stringify(fixtures) + "\n");
+    writeFileSync(fragmentPath, [
+        `dataDir = ${JSON.stringify(dataDir)}`,
         "[params]",
-        `flixDocVersion = "${flixDocVersion ?? ""}"`,
+        `flixDocVersion = "${flixDocVersion}"`,
         "",
-    ].join("\n");
-    writeFileSync(fragmentPath, fragment);
-    try {
-        const result = spawnSync(
-            "hugo",
-            [
-                "--minify",
-                "--destination", destination,
-                "--baseURL", url,
-                "--config", "hugo.toml,.hugo-flix-version.toml",
-            ],
-            { stdio: "inherit", cwd: docs, env: process.env },
-        );
-        if (result.error) {
-            throw new Error(`Could not start Hugo for ${url}: ${result.error.message}`, { cause: result.error });
-        }
-        if (result.status !== 0) {
-            const reason = result.signal ? `signal ${result.signal}` : `exit ${result.status}`;
-            throw new Error(`Hugo failed for ${url} (${reason})`);
-        }
-    } finally {
-        rmSync(fragmentPath, { force: true });
+    ].join("\n"));
+
+    const result = spawnSync(
+        "hugo",
+        [
+            "--minify",
+            "--destination", destination,
+            "--baseURL", url,
+            "--config", `hugo.toml,${fragmentPath}`,
+        ],
+        { stdio: "inherit", cwd: docs, env: process.env },
+    );
+    if (result.error) {
+        throw new Error(`Could not start Hugo for ${url}: ${result.error.message}`, { cause: result.error });
+    }
+    if (result.status !== 0) {
+        const reason = result.signal ? `signal ${result.signal}` : `exit ${result.status}`;
+        throw new Error(`Hugo failed for ${url} (${reason})`);
     }
 }
 
 const staging = mkdtempSync(join(tmpdir(), "flix-docs-public-"));
 try {
-    const rootDest = join(staging, "root");
-    // Root mirrors the latest pin, so omit fixtures that only apply to older pins.
-    withCatalogFixtures(DEFAULT_FLIX_VERSION, () => {
-        runHugo({ destination: rootDest, baseURL, flixDocVersion: DEFAULT_FLIX_VERSION });
-    });
+    const dataDir = join(staging, "data");
+    const fragmentPath = join(staging, "catalog.toml");
+    cpSync(join(docs, "data"), dataDir, { recursive: true });
 
+    const rootDest = join(staging, "root");
+    runHugo({ destination: rootDest, baseURL, flixDocVersion: DEFAULT_FLIX_VERSION, dataDir, fragmentPath });
     for (const version of versionedCatalogs) {
-        const versionDest = join(staging, `flix-${version}`);
-        withCatalogFixtures(version, () => {
-            runHugo({
-                destination: versionDest,
-                baseURL: `${baseURL}flix/${version}/`,
-                flixDocVersion: version,
-            });
+        runHugo({
+            destination: join(staging, `flix-${version}`),
+            baseURL: `${baseURL}flix/${version}/`,
+            flixDocVersion: version,
+            dataDir,
+            fragmentPath,
         });
     }
 

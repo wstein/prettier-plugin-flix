@@ -730,7 +730,12 @@ test("a 0.79-only fixture uses its pin in the 0.79 catalog and the Playground", 
 test("the 0.79 catalog omits 0.80-only fixtures and the 0.80 catalog keeps them", async ({ page }) => {
     await page.goto(siteUrl + "flix/0.79.0/declarations/");
     await expect(page.locator("#module-value")).toHaveCount(0);
-    await expect(page.getByText("A module-level value uses declaration wrapping")).toHaveCount(0);
+    const search = page.getByRole("search", { name: "Catalog" });
+    const searchInput = search.getByRole("searchbox");
+    const moduleValueResult = search.locator('a[href$="/declarations/#module-value"]');
+    await searchInput.fill("A module-level value uses declaration wrapping");
+    await expect(search.getByRole("status")).toHaveText(/\bresults?\b/i);
+    await expect(moduleValueResult).toHaveCount(0);
 
     await page.goto(siteUrl + "flix/0.80.0/declarations/#module-value");
     const article = page.locator("#module-value");
@@ -738,7 +743,10 @@ test("the 0.79 catalog omits 0.80-only fixtures and the 0.80 catalog keeps them"
     const fixture = article.locator("[data-embedded-playground]");
     await expect(fixture.getByLabel("Flix version")).toHaveValue("0.80.0");
     await expect(fixture.getByRole("textbox", { name: "Preview" })).toHaveText("val answer: Int32 = 42");
+    await searchInput.fill("A module-level value uses declaration wrapping");
+    await expect(moduleValueResult).toHaveAttribute("href", basePath + "flix/0.80.0/declarations/#module-value");
 });
+
 test("the Playground example menu filters by Flix version ranges", async ({ page }) => {
     await page.goto(siteUrl + "playground/");
     const examples = page.getByLabel("Example");
