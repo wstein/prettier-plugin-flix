@@ -1066,7 +1066,10 @@ test("returning to a copied partial preview restores its diagnostic", async ({ c
     await first.getByRole("button", { name: "Copy" }).click();
     await expect(status).toHaveText("Copied to clipboard.");
     await reveal(last);
-    await last.getByLabel("Line width").focus();
+    const lastWidth = last.getByLabel("Line width");
+    await expect(lastWidth).toBeVisible();
+    await lastWidth.focus();
+    await expect(lastWidth).toBeFocused();
     await expect(first.locator(".cm-editor")).toHaveCount(0);
 
     await reveal(first);
