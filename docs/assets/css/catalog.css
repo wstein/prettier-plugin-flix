@@ -8,7 +8,7 @@
   --link: light-dark(#1953a2, #9cc7ff);
   --code-background: light-dark(#fff, #1e1e1e);
   --code-foreground: light-dark(#000, #d4d4d4);
-  --code-column-guide: light-dark(#dce2eb, #434b58);
+  --code-column-guide: light-dark(#7e8da2, #8190a4);
   --catalog-width: min(104rem, calc(100% - 2 * clamp(1rem, 2vw, 2rem)));
 }
 :root[data-theme="light"] { color-scheme: light; }
@@ -245,6 +245,9 @@ pre.shiki {
 .playground-editor .cm-line { padding-inline-start: var(--playground-code-inset); }
 .playground-editor .cm-content {
   padding-block: 0.55rem;
+  min-inline-size: calc(var(--playground-guide-position, -1px) + 1px);
+}
+:is(.playground-editor .cm-content, .diff-line) {
   background-image: linear-gradient(var(--code-column-guide), var(--code-column-guide));
   background-repeat: no-repeat;
   background-size: 1px 100%;
@@ -345,7 +348,7 @@ pre.shiki {
 .playground-diff-empty { padding-inline: 0.75rem; }
 pre.playground-diff-code {
   width: max-content;
-  min-width: 100%;
+  min-width: max(100%, calc(var(--playground-guide-position, -1px) + 1px));
   margin: 0;
   padding: 0.55rem 0;
   border: 0;
@@ -356,8 +359,8 @@ pre.playground-diff-code {
 }
 .diff-line { display: flex; min-height: 1.55em; padding-inline-end: 0.75rem; }
 .diff-marker { display: inline-block; width: 2.4em; flex-shrink: 0; text-align: center; user-select: none; }
-.diff-removed { background: light-dark(#ffebe9, #442520); }
-.diff-added { background: light-dark(#dafbe1, #1c382a); }
+.diff-removed { background-color: light-dark(#ffebe9, #442520); }
+.diff-added { background-color: light-dark(#dafbe1, #1c382a); }
 .diff-ending { margin-inline-start: 0.75rem; font: italic 0.75rem system-ui, sans-serif; user-select: none; }
 
 [data-embedded-playground] :is(.playground-editor .cm-editor, .playground-diff) {
