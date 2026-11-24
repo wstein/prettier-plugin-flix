@@ -1,4 +1,4 @@
-import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
+import { defaultKeymap, history, historyField, historyKeymap } from "@codemirror/commands";
 import { indentUnit } from "@codemirror/language";
 import { EditorState, StateEffect, StateField } from "@codemirror/state";
 import { Decoration, EditorView, drawSelection, keymap, lineNumbers } from "@codemirror/view";
@@ -35,42 +35,42 @@ const errorMarks = StateField.define({
 const errorLine = Decoration.line({ class: "flix-error-line" });
 const errorCharacter = Decoration.mark({ class: "flix-error-character" });
 
-export function createEditor(parent, onEdit, doc = "", onCursor, diagnosticId) {
+export function createEditor(parent, onEdit, doc = "", onCursor, diagnosticId, savedState) {
     const { tabWidth } = playgroundIndentation;
-    const view = new EditorView({
-        parent,
-        doc,
-        extensions: [
-            lineNumbers(),
-            drawSelection(),
-            highlighting,
-            EditorState.tabSize.of(tabWidth),
-            indentUnit.of(" ".repeat(tabWidth)),
-            EditorView.contentAttributes.of({
-                "aria-labelledby": `${parent.id}-label`,
-                spellcheck: "false",
-                autocapitalize: "off",
-                ...(onEdit ? {} : { tabindex: "0", "aria-readonly": "true" }),
+    const extensions = [
+        lineNumbers(),
+        drawSelection(),
+        highlighting,
+        EditorState.tabSize.of(tabWidth),
+        indentUnit.of(" ".repeat(tabWidth)),
+        EditorView.contentAttributes.of({
+            "aria-labelledby": `${parent.id}-label`,
+            spellcheck: "false",
+            autocapitalize: "off",
+            ...(onEdit ? {} : { tabindex: "0", "aria-readonly": "true" }),
+        }),
+        ...(onEdit ? [
+            errorMarks,
+            EditorView.contentAttributes.compute([errorMarks], (state) =>
+                state.field(errorMarks).invalid ? { "aria-invalid": "true", "aria-errormessage": diagnosticId } : {},
+            ),
+            history(),
+            keymap.of([...defaultKeymap, ...historyKeymap]),
+            EditorView.updateListener.of((update) => {
+                if (update.docChanged || update.selectionSet) {
+                    onCursor?.(update.state);
+                }
+                if (update.docChanged) onEdit();
             }),
-            ...(onEdit ? [
-                errorMarks,
-                EditorView.contentAttributes.compute([errorMarks], (state) =>
-                    state.field(errorMarks).invalid ? { "aria-invalid": "true", "aria-errormessage": diagnosticId } : {},
-                ),
-                history(),
-                keymap.of([...defaultKeymap, ...historyKeymap]),
-                EditorView.updateListener.of((update) => {
-                    if (update.docChanged || update.selectionSet) {
-                        onCursor?.(update.state);
-                    }
-                    if (update.docChanged) onEdit();
-                }),
-            ] : [EditorState.readOnly.of(true), EditorView.editable.of(false)]),
-        ],
-    });
+        ] : [EditorState.readOnly.of(true), EditorView.editable.of(false)]),
+    ];
+    const state = savedState ? EditorState.fromJSON(savedState, { extensions }, { history: historyField })
+        : EditorState.create({ doc, extensions });
+    const view = new EditorView({ parent, state });
 
     return {
         view,
+        saveState: () => view.state.toJSON({ history: historyField }),
         setColumnGuide(width) {
             const style = view.contentDOM.style;
             if (width === undefined) style.removeProperty("--playground-guide-position");

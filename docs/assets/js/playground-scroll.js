@@ -94,7 +94,7 @@ export function mapSyncedLine(line, before, after, from = 0, to = 1) {
     return mapLine(line, buildLineChanges(before, after), from, to);
 }
 
-export function linkEditorScroll(input, output, canSync) {
+export function linkEditorScroll(input, output, canSync, signal) {
     const views = [input, output];
     const lastTop = views.map((view) => view.scrollDOM.scrollTop);
     let documents;
@@ -143,7 +143,7 @@ export function linkEditorScroll(input, output, canSync) {
             if (top === lastTop[index]) return;
             lastTop[index] = top;
             sync(index);
-        }, { passive: true });
+        }, { passive: true, signal });
     });
 
     return () => sync(0);

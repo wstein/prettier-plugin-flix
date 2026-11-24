@@ -363,7 +363,7 @@ pre.playground-diff-code {
 .diff-added { background-color: light-dark(#dafbe1, #1c382a); }
 .diff-ending { margin-inline-start: 0.75rem; font: italic 0.75rem system-ui, sans-serif; user-select: none; }
 
-[data-embedded-playground] :is(.playground-editor .cm-editor, .playground-diff) {
+[data-embedded-playground] :is(.playground-editor .cm-editor, .playground-editor:empty, .playground-diff) {
   height: clamp(13rem, calc(var(--source-lines) * 1.36rem + 1.2rem), 27rem);
 }
 

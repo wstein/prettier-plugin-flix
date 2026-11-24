@@ -23,13 +23,15 @@ function readableDiagnostic(message) {
     );
 }
 
-function mountWorkbench(playground, { initial, onChange } = {}) {
+function mountWorkbench(playground, { initial, onChange, saved } = {}) {
+    const lifetime = new AbortController();
+    const { signal } = lifetime;
     const select = playground.querySelector("#playground-example");
     const printWidth = playground.querySelector("[data-print-width]");
     const flixVersion = playground.querySelector("[data-flix-version]");
     const defaultWidth = Number(printWidth.defaultValue);
     const defaultFlixVersion = flixVersion?.value || playgroundDefaultFlixVersion;
-    if (initial) {
+    if (initial && !saved) {
         printWidth.value = initial.printWidth ?? defaultWidth;
         if (flixVersion) flixVersion.value = initial.flixVersion ?? defaultFlixVersion;
     }
@@ -43,20 +45,25 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
     const scrollToggle = playground.querySelector("[data-sync-scroll]");
 
     let timer;
+    let cancelRequest;
     let revision = 0;
-    let preview = initial?.output === undefined ? undefined : { source: initial.source, output: initial.output };
+    let previewRevision = 0;
+    const initialOutput = saved ? saved.output : initial?.output;
+    let preview = initialOutput === undefined ? undefined : {
+        source: saved?.input.doc ?? initial.source, output: initialOutput,
+    };
     let highlighter;
     let fixtures;
     let exampleGroups = [];
     let highlightingFailed = false;
     let announceTakeOver = false;
 
-    const input = createEditor(playground.querySelector("[data-input]"), queuePreview, initial?.source, showCursor, status.id);
+    const input = createEditor(playground.querySelector("[data-input]"), queuePreview, initial?.source, showCursor, status.id, saved?.input);
     const output = createEditor(formatted, undefined, preview?.output);
     let previewSource = preview ? input.view.state.doc : undefined;
-    const syncFromInput = linkEditorScroll(input.view, output.view, () =>
-        scrollToggle.checked && !formatted.hidden && preview && previewSource === input.view.state.doc);
-    scrollToggle.addEventListener("change", syncFromInput);
+    const canSync = () => scrollToggle.checked && !formatted.hidden && preview && previewSource === input.view.state.doc;
+    const syncFromInput = linkEditorScroll(input.view, output.view, canSync, signal);
+    scrollToggle.addEventListener("change", syncFromInput, { signal });
     updateColumnGuides();
 
     function updateColumnGuides() {
@@ -102,6 +109,8 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
     function queuePreview() {
         const id = revision = ++nextRequest;
         clearTimeout(timer);
+        cancelRequest?.();
+        cancelRequest = undefined;
         copy.disabled = true;
         useFormatted.disabled = true;
         showStatus("Formatting…");
@@ -128,7 +137,7 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
         }
         printWidth.removeAttribute("aria-invalid");
         printWidth.removeAttribute("aria-errormessage");
-        requestFormat(playground.dataset.worker, {
+        cancelRequest = requestFormat(playground.dataset.worker, {
             id,
             asset: playground.dataset.formatter,
             source: input.view.state.doc.toString(),
@@ -138,7 +147,8 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
                 ...playgroundIndentation,
             },
         }, (data) => {
-            if (id !== revision) return;
+            if (signal.aborted || id !== revision) return;
+            previewRevision = id;
             if (data.failure) {
                 // Drop the previous snapshot so Formatted and Diff are not stale.
                 preview = undefined;
@@ -194,7 +204,7 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
                 showStatus(highlightingFailed ? "Syntax highlighting could not load." : "");
             }
         }
-        requestAnimationFrame(() => syncFromInput());
+        requestAnimationFrame(() => { if (!signal.aborted) syncFromInput(); });
     }
 
     function refreshDiff() {
@@ -212,7 +222,7 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
             scrollToggle.disabled = showDiff;
             if (!showDiff) syncFromInput();
             refreshDiff();
-        });
+        }, { signal });
     }
 
     function useExample(key, variant) {
@@ -390,32 +400,33 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
         select.addEventListener("change", () => setReference(undefined));
     }
 
-    select?.addEventListener("change", () => useExample(select.value));
+    select?.addEventListener("change", () => useExample(select.value), { signal });
     playground.querySelector(".playground-clear")?.addEventListener("click", () => {
         if (select) select.value = "";
         input.view.dispatch({ changes: { from: 0, to: input.view.state.doc.length, insert: "" } });
         input.view.focus();
-    });
+    }, { signal });
     printWidth.addEventListener("input", () => {
         updateColumnGuides();
         queuePreview();
-    });
+    }, { signal });
     flixVersion?.addEventListener("change", () => {
         if (select && fixtures) fillExampleMenu(flixVersion.value || playgroundDefaultFlixVersion);
         queuePreview();
-    });
+    }, { signal });
 
     copy.addEventListener("click", async () => {
         try {
             await navigator.clipboard.writeText(output.view.state.doc.toString());
-            showStatus("Copied to clipboard.");
+            if (!signal.aborted) showStatus("Copied to clipboard.");
         } catch {
+            if (signal.aborted) return;
             const { view } = output;
             view.focus();
             view.dispatch({ selection: { anchor: 0, head: view.state.doc.length } });
             showStatus("Output selected. Use your copy shortcut.");
         }
-    });
+    }, { signal });
 
     useFormatted.addEventListener("click", () => {
         if (!preview || preview.output === input.view.state.doc.toString()) return;
@@ -426,7 +437,7 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
         // Keep history so the previous input is one undo step (unlike load/replace helpers).
         input.view.dispatch({ changes: { from: 0, to: input.view.state.doc.length, insert: code } });
         input.view.focus();
-    });
+    }, { signal });
 
     async function fetchFixtures(url) {
         const response = await fetch(url);
@@ -493,7 +504,20 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
         }
     }
 
-    if (initial) {
+    if (saved) {
+        showStatus("");
+        showCursor(input.view.state);
+        if (preview) {
+            syncPreviewActions();
+            refreshDiff();
+        } else queuePreview();
+        requestAnimationFrame(() => {
+            if (signal.aborted) return;
+            for (const [index, { view }] of [input, output].entries()) {
+                view.scrollDOM.scrollTo(saved.scroll[index]);
+            }
+        });
+    } else if (initial) {
         // Unpinned fixtures bake their preview with the plugin default. Versioned
         // catalogs select an older pin, so re-run instead of showing that bake as
         // a successful Live preview under the wrong grammar.
@@ -505,52 +529,104 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
     if (select) void loadExamples();
     highlighterPromise ??= createFlixHighlighter();
     void highlighterPromise.then((flix) => {
+        if (signal.aborted) return;
         highlighter = flix;
         highlighter.apply(input.view);
         highlighter.apply(output.view);
         refreshDiff();
     }).catch(() => {
+        if (signal.aborted) return;
         highlightingFailed = true;
         if (preview && !status.textContent) showStatus("Syntax highlighting could not load.");
     });
+
+    return () => {
+        lifetime.abort();
+        clearTimeout(timer);
+        cancelRequest?.();
+        const saved = {
+            input: input.saveState(),
+            output: previewRevision === revision && !status.hasAttribute("data-error") ? preview?.output : undefined,
+            scroll: [input, output].map(({ view }) => ({
+                top: view.scrollDOM.scrollTop, left: view.scrollDOM.scrollLeft, behavior: "instant",
+            })),
+        };
+        input.view.destroy();
+        output.view.destroy();
+        diff.replaceChildren();
+        return saved;
+    };
 }
 
 const page = document.querySelector("[data-full-playground]");
 if (page) mountWorkbench(page, { initial: readHandoff(location.hash) });
 
-function startEmbedded(embedded) {
+function embeddedWorkbench(embedded) {
+    const article = embedded.closest(".fixture");
     const link = embedded.querySelector(".playground-handoff");
     const originalLink = link.href;
-    const initial = JSON.parse(embedded.dataset.initial);
-    const lines = Math.max(initial.source.split("\n").length, (initial.output ?? "").split("\n").length);
-    embedded.style.setProperty("--source-lines", lines);
-    mountWorkbench(embedded, {
-        initial,
-        onChange: ({ source, printWidth, flixVersion: version }) => {
-            const widthOverride = printWidth === initial.printWidth ? undefined : printWidth;
-            const versionOverride = initial.flixVersion || version !== playgroundDefaultFlixVersion ? version : undefined;
-            link.href = writeHandoff(originalLink, {
-                source,
-                printWidth: widthOverride,
-                flixVersion: versionOverride,
+    let initial;
+    let dispose;
+    let saved;
+    return {
+        embedded,
+        nearViewport: false,
+        mount() {
+            if (dispose) return;
+            if (!initial) {
+                initial = JSON.parse(embedded.dataset.initial);
+                const lines = Math.max(initial.source.split("\n").length, (initial.output ?? "").split("\n").length);
+                embedded.style.setProperty("--source-lines", lines);
+                embedded.hidden = false;
+                embedded.previousElementSibling.hidden = true;
+                article.querySelector("[data-static-links]").hidden = true;
+            }
+            dispose = mountWorkbench(embedded, {
+                initial,
+                saved,
+                onChange: ({ source, printWidth, flixVersion: version }) => {
+                    const widthOverride = printWidth === initial.printWidth ? undefined : printWidth;
+                    const versionOverride = initial.flixVersion || version !== playgroundDefaultFlixVersion ? version : undefined;
+                    link.href = writeHandoff(originalLink, { source, printWidth: widthOverride, flixVersion: versionOverride });
+                },
             });
+            saved = undefined;
         },
-    });
-    embedded.hidden = false;
-    embedded.previousElementSibling.hidden = true;
-    embedded.closest(".fixture").querySelector("[data-static-links]").hidden = true;
+        suspend() {
+            if (!dispose) return;
+            const unmount = dispose;
+            dispose = undefined;
+            saved = unmount();
+        },
+    };
 }
 
-// Keep long chapters light by starting an editor when its fixture approaches the viewport.
 const embeddedEditors = document.querySelectorAll("[data-embedded-playground]");
 if (embeddedEditors.length > 0) {
+    const workbenches = new Map();
     const observer = new IntersectionObserver((entries) => {
         for (const { target, isIntersecting } of entries) {
-            if (!isIntersecting) continue;
-            observer.unobserve(target);
-            startEmbedded(target.querySelector("[data-embedded-playground]"));
+            const workbench = workbenches.get(target);
+            workbench.nearViewport = isIntersecting;
+            if (isIntersecting) workbench.mount();
+            else if (!workbench.embedded.contains(document.activeElement)) workbench.suspend();
         }
     }, { rootMargin: "600px 0px" });
 
-    for (const embedded of embeddedEditors) observer.observe(embedded.closest(".fixture"));
+    for (const embedded of embeddedEditors) {
+        const article = embedded.closest(".fixture");
+        workbenches.set(article, embeddedWorkbench(embedded));
+        observer.observe(article);
+    }
+
+    // Focus can enter a suspended toolbar before the intersection callback.
+    document.addEventListener("focusin", (event) => {
+        const workbench = workbenches.get(event.target.closest(".fixture"));
+        if (workbench?.embedded.contains(event.target)) workbench.mount();
+    });
+    document.addEventListener("focusout", (event) => {
+        const workbench = workbenches.get(event.target.closest(".fixture"));
+        if (workbench && !workbench.nearViewport && workbench.embedded.contains(event.target) &&
+            !workbench.embedded.contains(event.relatedTarget)) workbench.suspend();
+    });
 }
