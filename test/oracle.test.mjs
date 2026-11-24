@@ -59,15 +59,23 @@ test("rejects a missing jar with its absolute path", () => {
 
 test("checks the digest of a relative jar path and then runs it by absolute path", (t) => {
     if (spawnSync("java", ["-version"]).status !== 0) return t.skip("java is not installed");
+    const versionedDir = join(work, "release-0.2.0");
+    mkdirSync(versionedDir);
+    writeFileSync(join(versionedDir, "fake.jar"), "not a jar");
     const pin = join(work, "pin.json");
-    writeFileSync(pin, JSON.stringify({ oracleArtifact: { sha256: createHash("sha256").update("not a jar").digest("hex") } }));
-    const r = run(["fake.jar", "sources", "--pin", pin], work);
+    writeFileSync(pin, JSON.stringify({
+        upstream: { tag: "v0.80.0" },
+        oracleArtifact: { sha256: createHash("sha256").update("not a jar").digest("hex") },
+    }));
+    const r = run([join("release-0.2.0", "fake.jar"), "sources", "--pin", pin], work);
     // The digest matched through the relative path, and Java then reached the file from the
     // throwaway project's directory: it complains about the content, not about a missing file.
     assert.equal(r.status, 2, r.stderr);
     assert.doesNotMatch(r.stderr, /Unable to access jarfile/);
     assert.doesNotMatch(r.stderr, /does not match the pinned/);
+    assert.match(r.stderr, /cannot read a Flix version/);
     assert.match(r.stderr, /corrupt jarfile|Invalid or corrupt/i);
+    assert.doesNotMatch(r.stderr, /the jar reports Flix/);
 });
 
 // ---- the comparison itself, driven by a fake `java` so no compiler is needed ----
@@ -77,7 +85,11 @@ test("checks the digest of a relative jar path and then runs it by absolute path
 const fakeJava = join(work, "fake-java.sh");
 writeFileSync(fakeJava, `#!/bin/sh
 cmd="$3"
-if [ "$cmd" = "--version" ]; then echo "The Flix Programming Language \${FAKE_FLIX_VERSION:-0.80.0}"; exit 0; fi
+if [ "$cmd" = "--version" ]; then
+  if [ "$FAKE_MODE" = version-error ]; then echo "Error: Unable to access jarfile $2" >&2; exit 1; fi
+  echo "The Flix Programming Language \${FAKE_FLIX_VERSION:-0.80.0}"
+  exit 0
+fi
 if [ -n "$FAKE_LOG" ] && [ -f flix.toml ]; then cat flix.toml >> "$FAKE_LOG"; fi
 dir=$(basename "$PWD")
 case "$FAKE_MODE" in
@@ -131,6 +143,17 @@ test("a compiler that cannot be started is a broken run", () => {
     const r = spawnSync(process.execPath, [script, fakeJar, sources], { encoding: "utf8", env: { ...process.env, FLIX_ORACLE_JAVA: join(work, "no-such-java") } });
     assert.equal(r.status, 2, r.stdout + r.stderr);
     assert.match(r.stderr, /harness failure/);
+});
+
+test("a failed version command cannot satisfy the pin with a version from the jar path", { skip: !posix }, () => {
+    const versionedJar = join(work, "flix-0.80.0.jar");
+    writeFileSync(versionedJar, "not a jar");
+    const log = join(work, "failed-version-project.log");
+    writeFileSync(log, "");
+    const r = runFake([versionedJar, sources, "--pin", fakePin], { FAKE_MODE: "version-error", FAKE_LOG: log });
+    assert.equal(r.status, 2, r.stdout + r.stderr);
+    assert.match(r.stderr, /cannot read a Flix version.*Unable to access jarfile/s);
+    assert.equal(readFileSync(log, "utf8"), "");
 });
 
 test("the jar's version must equal the pinned tag", { skip: !posix }, () => {
