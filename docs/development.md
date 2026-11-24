@@ -354,6 +354,22 @@ The Official Flix examples workflow appends the **audit (layout)** section to th
 links the run artifact. It does not fail the job if the summary step errors. Sweep new/fixed counts appear
 when you pass `--base` / `--candidate` exports (local command above, or a future sweep workflow).
 
+## Review rules (optional Flix Datalog)
+
+`analysis/review-rules/` is an opt-in prototype ([#209](https://github.com/wstein/prettier-plugin-flix/issues/209))
+that expresses two advisory checks as Flix Datalog over a sweep export, known-failure lists, and
+official-example approvals. It is not a release gate. See
+[analysis/review-rules/README.md](../analysis/review-rules/README.md).
+
+```sh
+npm run review:rules -- \
+  --sweep export.json \
+  --known test/known-idempotence-failures.json \
+  --audit path/to/official-examples-audit \
+  --reviews docs/official-example-reviews.json \
+  --compare-tooling
+```
+
 ## Width heatmap (optional R)
 
 `analysis/width-heatmap/` plots before-and-after sweep exports across print widths (fixture or repro on

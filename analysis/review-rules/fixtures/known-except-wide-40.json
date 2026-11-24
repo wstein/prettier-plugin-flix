@@ -1,0 +1,12 @@
+{
+  "failures": [
+    {
+      "file": "wide.flix",
+      "width": 40,
+      "form": "plain",
+      "token": "-",
+      "kind": "not-idempotent",
+      "issue": "#0"
+    }
+  ]
+}

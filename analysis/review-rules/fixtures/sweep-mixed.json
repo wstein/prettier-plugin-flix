@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "command": "idempotence",
+  "createdAt": "2026-11-24T12:00:00.000Z",
+  "formatter": {
+    "revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "dirty": false
+  },
+  "corpus": {
+    "revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "inputCount": 3,
+    "inputs": ["wide.flix", "narrow.flix", "skip.flix"],
+    "fingerprint": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+  },
+  "config": {
+    "widths": [20, 40, 60],
+    "every": null,
+    "shard": null,
+    "base": null,
+    "only": null,
+    "repo": true,
+    "seed": null
+  },
+  "cases": [
+    {
+      "id": "wide.flix|60|plain|-",
+      "file": "wide.flix",
+      "width": 60,
+      "status": "fail",
+      "kind": "not-idempotent",
+      "reason": "not idempotent"
+    },
+    {
+      "id": "wide.flix|40|plain|-",
+      "file": "wide.flix",
+      "width": 40,
+      "status": "fail",
+      "kind": "not-idempotent",
+      "reason": "not idempotent"
+    },
+    {
+      "id": "narrow.flix|20|plain|-",
+      "file": "narrow.flix",
+      "width": 20,
+      "status": "fail",
+      "kind": "not-idempotent",
+      "reason": "not idempotent (unsupported width)"
+    },
+    {
+      "id": "skip.flix|40|plain|-",
+      "file": "skip.flix",
+      "width": 40,
+      "status": "skipped",
+      "reason": "variant does not parse"
+    },
+    {
+      "id": "ok.flix|40|plain|-",
+      "file": "ok.flix",
+      "width": 40,
+      "status": "pass"
+    }
+  ]
+}

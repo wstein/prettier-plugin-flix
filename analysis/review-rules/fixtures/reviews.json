@@ -1,0 +1,10 @@
+{
+  "book.example.approved": {
+    "digest": "1111111111111111111111111111111111111111111111111111111111111111",
+    "reason": "Accepted spacing change for the book example."
+  },
+  "book.example.stale": {
+    "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "reason": "Stale approval for an older digest; current layout differs."
+  }
+}

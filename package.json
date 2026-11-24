@@ -37,6 +37,7 @@
     "review:summary": "node scripts/review-summary.mjs",
     "review:pairs": "node scripts/comment-pairs.mjs",
     "review:kinds": "node scripts/comment-kinds-report.mjs",
+    "review:rules": "node analysis/review-rules/run.mjs",
     "test:update": "npm run build && UPDATE_FIXTURES=1 node --test test/fixtures.test.mjs",
     "test:docs-examples": "npm run build && node scripts/audit-flix-examples.mjs"
   },
