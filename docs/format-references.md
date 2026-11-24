@@ -259,11 +259,14 @@ Fixture: `declarations/module-value.md`.
 **Built-in:** `def f [a: Type] (x: a)` / `eff E [a]` — space before `[`
 ([#13763](https://github.com/flix/flix/issues/13763)); wrapped `with`
 constraints indent once under `with` (same column as the body after `=`).
+`flix format` 0.80.0 never introduces that wrap itself on compact input.
 
-**Plugin today:** Type parameters are tight on the name (`def f[a: Type]`),
-then a space before the parameter list: `def f[a: Type] (x: a)`. Effect
-headers stay fully tight: `eff E[a]`. Wrapped `with` lists currently indent
-**twice** under `with` (deeper than flix format).
+**Plugin:** Type parameters are tight on the name (`def f[a: Type]`), then a
+space before the parameter list: `def f[a: Type] (x: a)`. Effect headers stay
+fully tight: `eff E[a]`. Wrapped `with` lists indent **once** under `with`,
+sharing the body column after `=` — same depth as flix format when a list is
+already wrapped ([#273](https://github.com/wstein/prettier-plugin-flix/issues/273) /
+this change). Older plugin builds indented twice; that deeper nesting is gone.
 
 **Justification (Scala) for tight `[`:** Type parameters are tight:
 `def f[A](x: A)`. scalafmt does not insert `f [A]`. That stays an external
@@ -271,10 +274,10 @@ justification for the plugin against [#13763](https://github.com/flix/flix/issue
 The space before `(x: …)` is the plugin’s own parameter-list rule, not a claim
 that the whole signature is glued.
 
-**`with` indent — temporary divergence:** [#275](https://github.com/wstein/prettier-plugin-flix/pull/275)
-changes the plugin to one indent under `with`, matching flix format and the
-body column after `=`. Until that lands, do not treat the deeper list as a
-settled style choice.
+**`with` indent:** No Scala/Haskell mandate for Flix `with` depth. Aligning with
+flix format’s single indent is the chosen rule: the stdlib has no wrapped
+`with` lists to cite, and the cost is reformatting files that already wrap
+(see the Changelog trailer on this PR).
 
 **Flix docs (internal — `with`):** Almost only **inline / flat** forms; no
 multi-line `with` block with a prescribed indent depth.
@@ -287,8 +290,7 @@ multi-line `with` block with a prescribed indent depth.
   `instance Eq[(a1, a2)] with Eq[a1], Eq[a2]`
 
 **Open point:** [#13763](https://github.com/flix/flix/issues/13763) (space before
-`[` only). Indent depth under `with` tracks [#275](https://github.com/wstein/prettier-plugin-flix/pull/275)
-rather than a Flix-book convention.
+`[` only). Indent depth under `with` is settled as one level with the body.
 
 Fixtures: `declarations/trait-constraint-lists.md`, `declarations/long-function-types.md`,
 `declarations/row-type-tails.md`.
@@ -545,7 +547,8 @@ inside comments is not a reference behavior.
 | Built-in **style** vs FP operators (list cons spaces, arrow/comprehension width) | Follow **Scala and/or Haskell** *and* Flix book examples where they agree (spaced `::`) |
 | Prettier-only features (comment align, `prettier-ignore`, print width) | Cite Scala `align` / `format: off` / `maxColumn` (and Haskell column limits) |
 | Flix-only constructs with clear book layout (`par`/`yield`, compact record `\|`, Datalog `query`/`select`, pipeline `\|>`) | Cite **[doc.flix.dev](https://doc.flix.dev/) / [flix.dev](https://flix.dev/)** as the internal style reference; do not invent an external analogue |
-| Barely specified upstream (declaration blanks; `with` indent until [#275](https://github.com/wstein/prettier-plugin-flix/pull/275)) | Record both outputs; do **not** claim a Flix-book or Scala/Haskell mandate |
+| Barely specified upstream (declaration blanks) | Record both outputs; do **not** claim a Flix-book or Scala/Haskell mandate |
+| Wrapped `with` indent | Match **flix format**: one level under `with`, same column as the body ([#273](https://github.com/wstein/prettier-plugin-flix/issues/273)) |
 
 ## Related pages
 
