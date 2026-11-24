@@ -1845,8 +1845,8 @@ export class Printer {
     }
 
     /**
-     * ConsExpr/ConsPattern may mix `::` (cons) and `:::` (append). Only maximal `::` runs follow
-     * Rule A; `:::` stays spaced with a leading break before the operator.
+     * Format each `::` run separately in chains that also contain list append.
+     * `:::` stays spaced and starts its continuation line.
      */
     private printConsExprOrPattern(operands: Node[], ops: Node[]): Doc {
         if (ops.every((op) => this.isConsColonColon(op))) return this.printConsChain(operands, ops);
@@ -1892,81 +1892,37 @@ export class Printer {
         return group([parts[0], indent(parts.slice(1))]);
     }
 
-    /**
-     * Cons chains (`::` in expressions and patterns): a chain stays tight only when every
-     * operator is tight and the chain fits; otherwise the whole chain is spaced. A `::` with a
-     * glued comment keeps its tight class.
-     */
+    /** List cons is spaced, except where a glued comment requires a tight operator. */
     private printConsChain(operands: Node[], ops: Node[]): Doc {
         const first = this.print(operands[0]);
         // A chain that opens a match-arm guard wraps one level deeper than the arm body.
         const continuation = this.matchGuardStart !== null && firstTerm(operands[0]) === this.matchGuardStart
             ? (value: Doc) => indent(indent(value))
             : indent;
-        const glued = ops.map((op, i) =>
-            isTerm(op) && ttype(op) === this.L.COLON_COLON_TIGHT && this.consHasGluedComment(op, operands[i + 1]));
-        const chainTight = ops.every((op) => isTerm(op) && ttype(op) === this.L.COLON_COLON_TIGHT);
-        const forcedBreak = ops.some((op) => isTerm(op) && this.hasLineTrail(op));
-
-        const tightLink = (i: number): Doc => {
-            const op = ops[i];
+        const breakPoint = this.flat > 0 ? " " : line;
+        const links = ops.map((op, i): Doc => {
             const operand = operands[i + 1];
-            // The enclosing `indent` already positions a break after a glued line comment.
-            return [
-                this.after(lastTerm(operands[i]), ""),
-                this.print(op),
-                this.after(lastTerm(op as TerminalNode), ""),
-                this.print(this.ls(operand)),
-            ];
-        };
-
-        const spacedLink = (i: number): Doc => {
-            if (glued[i]) return tightLink(i);
-            const op = ops[i];
-            const operand = operands[i + 1];
-            const breakPoint = this.flat > 0 ? " " : line;
-            const firstOperand = firstTerm(operand);
-            const hasOwnLineCommentBefore = (this.info(op as TerminalNode)?.lead[0]?.nl ?? 0) > 0;
-            const hasOwnLineCommentAfter = firstOperand !== null && (this.info(firstOperand)?.lead[0]?.nl ?? 0) > 0;
-            const before = hasOwnLineCommentBefore ? hardline : breakPoint;
-            const afterOp = hasOwnLineCommentAfter ? hardline : " ";
-            return [
-                this.after(lastTerm(operands[i]), before),
-                this.print(this.ls(op)),
-                this.after(lastTerm(op as TerminalNode), afterOp),
-                this.print(this.ls(operand)),
-            ];
-        };
-
-        if (chainTight && (forcedBreak || this.flat > 0)) {
-            // A glued line comment forces a break while the chain stays tight; flat mode
-            // also keeps a fully tight chain glued.
-            return group([first, continuation(ops.map((_, i) => tightLink(i)))]);
-        }
-        if (chainTight) {
-            // Both forms print every operand. The second print must still see the own-line
-            // comments that the first print took, or the form that is chosen loses them.
-            const consumedBefore = new Set(this.consumed);
-            const tightFlat: Doc = [first, ...ops.map((_, i) => {
-                const op = ops[i];
-                const operand = operands[i + 1];
+            if (isTerm(op) && ttype(op) === this.L.COLON_COLON_TIGHT && this.consHasGluedComment(op, operand)) {
+                // The enclosing indent positions a break after a glued line comment.
                 return [
                     this.after(lastTerm(operands[i]), ""),
                     this.print(op),
-                    this.after(lastTerm(op as TerminalNode), ""),
-                    this.print(operand),
+                    this.after(op, ""),
+                    this.print(this.ls(operand)),
                 ];
-            })];
-            const consumedByTight = this.consumed;
-            this.consumed = consumedBefore;
-            const spaced = group([first, continuation(ops.map((_, i) => spacedLink(i)))]);
-            for (const index of consumedByTight) this.consumed.add(index);
-            // A forced break inside an operand ends the fit check at that line, so the rest
-            // of a tight chain could pass the width: treat such a chain as not fitting.
-            if (willBreak(tightFlat)) return spaced;
-            return conditionalGroup([tightFlat, spaced]);
-        }
-        return group([first, continuation(ops.map((_, i) => spacedLink(i)))]);
+            }
+
+            const firstOperand = firstTerm(operand);
+            const hasOwnLineCommentBefore = (this.info(op as TerminalNode)?.lead[0]?.nl ?? 0) > 0;
+            const hasOwnLineCommentAfter = firstOperand !== null && (this.info(firstOperand)?.lead[0]?.nl ?? 0) > 0;
+            return [
+                this.after(lastTerm(operands[i]), hasOwnLineCommentBefore ? hardline : breakPoint),
+                this.print(this.ls(op)),
+                this.after(lastTerm(op), hasOwnLineCommentAfter ? hardline : " "),
+                this.print(this.ls(operand)),
+            ];
+        });
+        return group([first, continuation(links)]);
     }
 
     /** True when a tight `::` has a comment with no whitespace between the comment and the operator. */

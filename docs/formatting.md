@@ -245,8 +245,8 @@ veryLongNameAAAAAAAA
 
 This matches `flix format` (`PrettyPrinter.prettyBinary`:
 `line <> opDoc <> …`) and live reformatting of trailing chains into leading
-ones. Pipelines `|>` / `!>` were already leading; list cons `::` already wraps
-with a leading `::` when spaced.
+ones. Pipelines `|>` / `!>` and wrapped list cons chains also start their
+continuations with the operator.
 
 When a line comment trails the operator, or an own-line comment sits between
 the operator and the next operand, that link keeps a **trailing** break
@@ -295,12 +295,13 @@ def countSmallValues(
         |> List.length
 ```
 
-A cons chain is the longest run of operands joined by `::` in an expression
-or pattern (`:::` is list append and stays spaced). The chain stays tight only
-when every `::` is tight and the whole chain fits; otherwise it is printed
-fully spaced, and a tight chain that does not fit wraps with a leading `::` on
-each continuation. A `::` with a glued comment keeps its tight class. Package
-qualifiers in a `use` always stay tight and never wrap.
+Use spaces around list cons in expressions and patterns. For example,
+`1::2::Nil` becomes `1 :: 2 :: Nil` and `case x::xs => x` becomes
+`case x :: xs => x`. A wrapped chain starts each continuation with `::`.
+Keep a cons operator tight when a comment is glued to it, such as
+`x::// note`. Package qualifiers such as `use pkg::Mod` stay tight, and list
+append `:::` stays spaced.
+[Cons normalization](../test/fixtures/expressions/list-cons-normalization.md) ·
 [Cons spacing](../test/fixtures/expressions/cons-chain-spacing.md) ·
 [Tight comments](../test/fixtures/whitespace/package-qualifier-tight-comments.md)
 
@@ -712,8 +713,9 @@ reviewed differences against the official examples.
   characters on both sides. A line comment that immediately follows a dot
   stays attached, with the name on the next line. A long method chain can
   wrap inside an argument list. A chain of argument-free calls may exceed
-  the configured width. Cons `::` may loosen from tight to spaced when a
-  chain wraps or was mixed; `use` path qualifiers must stay tight.
+  the configured width. The formatter normalizes list cons to the spaced
+  form and preserves the class of package qualifiers and other sensitive
+  tokens. A cons operator with a glued comment stays tight.
   [Method chain fixture](../test/fixtures/expressions/long-method-chain.md) ·
   [Comments beside dots](../test/fixtures/whitespace/tight-dot-comments.md) ·
   [Cons spacing](../test/fixtures/expressions/cons-chain-spacing.md) ·

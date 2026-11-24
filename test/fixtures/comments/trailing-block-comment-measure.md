@@ -21,7 +21,9 @@ type alias CommentedRow[r: RecordRow] = /* note */ (name = String, description =
 pub def concatenate(): List[
     Int32
 ] = /* note */
-    (1::2::Nil) ::: (3::4::Nil) ::: Nil
+    (1 :: 2 :: Nil)
+        ::: (3 :: 4 :: Nil)
+        ::: Nil
 
 def pair(value: Int32): (Int32, Int32) =
     (
@@ -43,8 +45,8 @@ type alias CommentedRow[
 ```flix printWidth=30
 pub def concatenate():
     List[Int32] = /* note */
-    (1::2::Nil)
-        ::: (3::4::Nil)
+    (1 :: 2 :: Nil)
+        ::: (3 :: 4 :: Nil)
         ::: Nil
 
 def pair(value: Int32): (
@@ -71,7 +73,7 @@ type alias CommentedRow[
 ```
 
 ```flix printWidth=100
-pub def concatenate(): List[Int32] = /* note */ (1::2::Nil) ::: (3::4::Nil) ::: Nil
+pub def concatenate(): List[Int32] = /* note */ (1 :: 2 :: Nil) ::: (3 :: 4 :: Nil) ::: Nil
 
 def pair(value: Int32): (Int32, Int32) = (Int32.abs(Int32.abs(value) /* note */), Int32.abs(value))
 

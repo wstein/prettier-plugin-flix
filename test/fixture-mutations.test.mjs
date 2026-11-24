@@ -42,7 +42,7 @@ for (const [title, original, glued, spaced] of tightTokenCases) {
         const loose = fingerprint(original.replace(glued, spaced));
         assert.deepEqual(tight.errors, []);
         assert.deepEqual(loose.errors, []);
-        // Compare raw classes: cons :: may loosen under Rule A, but a glued comment still
+        // Compare raw classes: list cons :: may loosen, but a glued comment still
         // changes the lexer class when space is inserted beside the operator.
         assert.deepEqual(programProblems(tight, loose, { terminators: false }), ["whitespace-sensitive token classes differ"], "adding space changes the token class");
         const gluedProblems = programProblems(loose, tight, { terminators: false });
@@ -55,15 +55,14 @@ for (const [title, original, glued, spaced] of tightTokenCases) {
 
 const consPath = fileURLToPath(new URL("./fixtures/expressions/cons-chain-spacing.md", import.meta.url));
 
-test("fixture mutation: spacing a fitting tight cons chain", async () => {
+test("fixture mutation: leaving a fitting cons chain tight", async () => {
     const { input, outputs } = loadFixture(consPath);
     const options = outputs[0].options;
     const good = await fmt(input.code, options);
-    assert.match(good, /def tightFits\(\): List\[Int32\] = 1::2::Nil/);
-    const mutated = good.replace("def tightFits(): List[Int32] = 1::2::Nil", "def tightFits(): List[Int32] = 1 :: 2 :: Nil");
+    assert.ok(good.includes("def tightFits(): List[Int32] = 1 :: 2 :: Nil"));
+    const mutated = good.replace("def tightFits(): List[Int32] = 1 :: 2 :: Nil", "def tightFits(): List[Int32] = 1::2::Nil");
     assert.notEqual(mutated, good, "mutation must change the fixture");
-    assert.equal(await fmt(input.code, options), good);
-    assert.notEqual(await fmt(input.code, options), mutated);
+    assert.equal(good, outputs[0].code);
 });
 
 test("fixture mutation: overlooking one spaced cons operator", async () => {
@@ -91,4 +90,30 @@ test("program check: tightening a spaced cons chain is rejected", () => {
     assert.deepEqual(before.errors, []);
     assert.deepEqual(after.errors, []);
     assert.match(programProblems(before, after).join("\n"), /cons :: tightened from spaced to tight/);
+});
+
+test("program check: only parsed cons operators may change class", () => {
+    const source = [
+        "use pkg::Mod",
+        "def f(): List[Int32] = 1::Nil",
+        "def head(xs: List[Int32]): Int32 = match xs { case x::_ => x }",
+    ].join("\n");
+    const spaced = source.replace("1::Nil", "1 :: Nil").replace("x::_", "x :: _");
+    for (const flixVersion of ["0.79.0", "0.80.0"]) {
+        const before = fingerprint(source, flixVersion);
+        const after = fingerprint(spaced, flixVersion);
+        assert.deepEqual(before.errors, []);
+        assert.deepEqual(after.errors, []);
+        assert.deepEqual(before.programClasses, ["COLON_COLON_TIGHT", "ConsColonColon", "ConsColonColon"]);
+        assert.deepEqual(programProblems(before, after), []);
+        assert.match(programProblems(after, before).join("\n"), /cons :: tightened from spaced to tight/);
+
+        // Isolate the class check from the parse error caused by an invalid use path.
+        const qualifierMutation = {
+            ...after,
+            classes: ["COLON_COLON", ...after.classes.slice(1)],
+            programClasses: ["COLON_COLON", ...after.programClasses.slice(1)],
+        };
+        assert.deepEqual(programProblems(before, qualifierMutation), ["whitespace-sensitive token classes differ"]);
+    }
 });
