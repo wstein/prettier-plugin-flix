@@ -31,6 +31,7 @@ await build({
     splitting: true,
     format: "esm",
     target: "es2022",
+    minify: true,
     // Parser dispatch depends on generated class names.
     keepNames: true,
     entryNames: "[name]-[hash]",

@@ -119,8 +119,8 @@ const formatterAsset = basename(asset[1] ?? asset[2]);
 const formatterUrl = new URL(`js/${formatterAsset}`, site);
 const { formatFlix, formatFlixPreview } = await import(formatterUrl);
 
-test("the published formatter and one selected grammar are at most 2 MiB uncompressed", async () => {
-    const maxBytes = 2 * 1024 * 1024;
+test("the published formatter and one selected grammar are at most 1 MiB uncompressed", async () => {
+    const maxBytes = 1024 * 1024;
     const dir = new URL("js/", site);
     const files = await readdir(dir);
     const bytes = async (names) => (await Promise.all(names.map(async (name) =>
@@ -179,16 +179,23 @@ test("the formatting reference publishes highlighted examples and links to catal
     }
 });
 
-test("the published browser bundle matches CLI and fixture output", async () => {
-    const path = fileURLToPath(new URL("../test/fixtures/expressions/align-map-comment.md", import.meta.url));
-    const fixture = loadFixture(path);
-    for (const block of fixture.outputs) {
-        const options = optionsFor(fixture, block);
-        const output = await formatFlix(fixture.input.code, options);
-        assert.equal(output, await fmt(fixture.input.code, options));
-        assert.equal(output, block.code);
-    }
-});
+for (const [flixVersion, versionFixture] of [
+    ["0.79.0", "declarations/function-named-val-flix-0.79.md"],
+    ["0.80.0", "declarations/module-value.md"],
+]) {
+    test(`the published browser bundle matches CLI and fixture output on Flix ${flixVersion}`, async () => {
+        for (const name of ["expressions/align-map-comment.md", versionFixture]) {
+            const path = fileURLToPath(new URL(`../test/fixtures/${name}`, import.meta.url));
+            const fixture = loadFixture(path);
+            for (const block of fixture.outputs) {
+                const options = { ...optionsFor(fixture, block), flixVersion };
+                const output = await formatFlix(fixture.input.code, options);
+                assert.equal(output, await fmt(fixture.input.code, options), name);
+                assert.equal(output, block.code, name);
+            }
+        }
+    });
+}
 
 test("the published browser bundle reports syntax error locations", async () => {
     await assert.rejects(() => formatFlix("def", {}), (error) =>
