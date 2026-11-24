@@ -69,12 +69,14 @@ const highlight = (code) => highlighter.codeToHtml(code, {
 
 function describeOptions(fixture, block) {
     const defaults = { ...defaultOptions, printWidth: EXAMPLE_PRINT_WIDTH, useTabs: false };
-    const base = { ...defaults, ...fixture.meta.options };
+    const base = { ...defaults, ...optionsFor(fixture, fixture.outputs[0]) };
     const configured = optionsFor(fixture, block);
     const effective = { ...defaults, ...configured };
     const notes = [];
     if (effective.printWidth !== base.printWidth) {
-        notes.push(`Changes the preferred line width from ${base.printWidth} to ${effective.printWidth} columns.`);
+        notes.push(block.code === fixture.outputs[0].code
+            ? `Same layout as at ${base.printWidth} columns.`
+            : `Changes the preferred line width from ${base.printWidth} to ${effective.printWidth} columns.`);
     }
     if (effective.tabWidth !== base.tabWidth) {
         notes.push(`Changes each indentation level from ${base.tabWidth} to ${effective.tabWidth} columns.`);

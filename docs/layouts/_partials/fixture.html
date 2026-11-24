@@ -53,14 +53,14 @@
   <details>
     <summary>Alternate Prettier output{{ if gt (len $.fixture.outputs) 2 }} {{ add $index 2 }}{{ end }}</summary>
     <figure class="code-sample">
-      {{ $variant.html | safeHTML }}
-      <figcaption>
-        {{ $variant.options }}
-        {{ with $variant.note }}<span>{{ . }}</span>{{ end }}
+      <figcaption class="fixture-variant-caption">
+        <code class="fixture-variant-setting">{{ $variant.options }}</code>
+        {{ with $variant.note }}<p class="fixture-variant-description">{{ . }}</p>{{ end }}
         {{ if $variant.playgroundCompatible }}
         <a class="fixture-variant-link" href="{{ $playground }}?{{ querify "fixture" $.fixture.path "variant" (add $index 1) | safeURL }}">Open with these settings <span aria-hidden="true">↗</span></a>
         {{ end }}
       </figcaption>
+      {{ $variant.html | safeHTML }}
     </figure>
   </details>
   {{ end }}
