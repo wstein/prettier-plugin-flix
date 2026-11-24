@@ -193,20 +193,20 @@ comma stays with the preceding constraint.
 Like `where` clauses in the Rust guide, a wrapped list puts each constraint
 on its own line. Unlike Rust, `with` stays at the end of the signature line,
 the list has no trailing comma, and the `=` or `{` follows the last
-constraint. Wrapped constraints are indented one level deeper than the body
-or members so they do not share a column with the code that follows. The same
-deeper indent separates a wrapped `with` list from a wrapped function return
-type: constraints sit one level deeper than the continued arrow parameters.
-Wrapped constraints and the last result line of a wrapped function return type
-share a column.
+constraint. Wrapped constraints are indented **once** under `with`—the same
+column as the body after `=`—so they do not spend an extra indent of width.
+A wrapped function return type still breaks at its own arrow boundaries; when
+both the return type and `with` wrap, constraints stay one indent under the
+`with` line rather than a second level below the body.
 
 When the signature does not fit on one line but the whole `with` list does,
 the `with` line starts one level below `def`. A short body can follow `=` on
 that line, as in the fixture at widths 70 and 80. If the body moves to the
 next line, it starts in the same column as `with`, as in
 [Flix's Boxable example](https://github.com/flix/flix/blob/v0.80.0/main/src/library/Fixpoint3/Boxable.flix#L168-L170).
-When the constraints themselves wrap, each starts one level deeper than the
-body, as shown in the trait constraint fixture. At width 60:
+When the constraints themselves wrap, each starts one level under `with` (and
+shares the body column after `=`), as shown in the trait constraint fixture.
+At width 60:
 
 ```flix
 pub def lookup(m: Map[a, b], k: a): Option[b]

@@ -18,9 +18,9 @@ pub def f13(x: Int32, y: Int32):
     Int32 -> Int32 -> Txxxxxxxxxxxxx \ (
     ef - Logger
 ) + Fs.FileWrite + Abort + Net.Http + Fs.FileRead with
-        Order[a],
-        Order[b],
-        Order[c],
-        Order[d],
-        Order[e] = x -> y -> z
+    Order[a],
+    Order[b],
+    Order[c],
+    Order[d],
+    Order[e] = x -> y -> z
 ```

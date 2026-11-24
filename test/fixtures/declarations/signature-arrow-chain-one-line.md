@@ -90,31 +90,31 @@ pub def edge0(_f: t1 -> t2 -> t3 -> t4 -> t5 -> t): Vector[String] ->
 
 pub def edge5(_f: t1 -> t2 -> t3 -> t4 -> t5 -> t):
     Vector[String] -> Vector[String] -> Vector[String] -> Vxxxxxxxxxxxxxxxx with
-        Order[t1],
-        Order[t10],
-        Order[t11],
-        Order[t12],
-        Order[t13],
-        Order[t14],
-        Order[t15] = _ -> _ -> _ -> Vector.empty()
+    Order[t1],
+    Order[t10],
+    Order[t11],
+    Order[t12],
+    Order[t13],
+    Order[t14],
+    Order[t15] = _ -> _ -> _ -> Vector.empty()
 
 pub def edge2(_f: t1 -> t2 -> t3 -> t4 -> t5 -> t): Vector[String] ->
         Vector[String] with
-        Order[t1],
-        Order[t10],
-        Order[t11],
-        Order[t12],
-        Order[t13],
-        Order[t14] = _ -> Vector.empty()
+    Order[t1],
+    Order[t10],
+    Order[t11],
+    Order[t12],
+    Order[t13],
+    Order[t14] = _ -> Vector.empty()
 
 pub def edge3(_f: t1 -> t2 -> t3 -> t4 -> t5 -> t): Vector[String] ->
         Vector[String] with
-        Order[t1],
-        Order[t10],
-        Order[t11],
-        Order[t12],
-        Order[t13],
-        Order[t145] = _ -> Vector.empty()
+    Order[t1],
+    Order[t10],
+    Order[t11],
+    Order[t12],
+    Order[t13],
+    Order[t145] = _ -> Vector.empty()
 
 mod Outer {
     pub def edge(_f: t1 -> t2 -> t3 -> t4 -> t5 -> t): Vector[String] ->
@@ -126,12 +126,12 @@ mod Outer {
     mod Inner {
         pub def lift5(_f: t1 -> t2 -> t3 -> t4 -> t5 -> t):
             String -> String -> String -> String -> String -> String with
-                Order[t1],
-                Order[t2],
-                Order[t3],
-                Order[t4],
-                Order[t5],
-                Order[t] = _ -> _ -> _ -> _ -> _ -> ""
+            Order[t1],
+            Order[t2],
+            Order[t3],
+            Order[t4],
+            Order[t5],
+            Order[t] = _ -> _ -> _ -> _ -> _ -> ""
     }
 }
 ```
@@ -145,12 +145,12 @@ pub def lift5(
     String ->
     String ->
         String with
-        Order[t1],
-        Order[t2],
-        Order[t3],
-        Order[t4],
-        Order[t5],
-        Order[t] = _ -> _ -> _ -> _ -> _ -> ""
+    Order[t1],
+    Order[t2],
+    Order[t3],
+    Order[t4],
+    Order[t5],
+    Order[t] = _ -> _ -> _ -> _ -> _ -> ""
 
 pub def lift2(_f: t1 -> t2 -> t): String -> String -> String
     with Order[t1], Order[t2], Order[t] = _ -> _ -> ""
@@ -194,33 +194,33 @@ pub def edge5(_f: t1 -> t2 -> t3 -> t4 -> t5 -> t): Vector[
     Vector[String] ->
     Vector[String] ->
         Vxxxxxxxxxxxxxxxx with
-        Order[t1],
-        Order[t10],
-        Order[t11],
-        Order[t12],
-        Order[t13],
-        Order[t14],
-        Order[t15] = _ -> _ -> _ -> Vector.empty()
+    Order[t1],
+    Order[t10],
+    Order[t11],
+    Order[t12],
+    Order[t13],
+    Order[t14],
+    Order[t15] = _ -> _ -> _ -> Vector.empty()
 
 pub def edge2(_f: t1 -> t2 -> t3 -> t4 -> t5 -> t): Vector[
     String
 ] -> Vector[String] with
-        Order[t1],
-        Order[t10],
-        Order[t11],
-        Order[t12],
-        Order[t13],
-        Order[t14] = _ -> Vector.empty()
+    Order[t1],
+    Order[t10],
+    Order[t11],
+    Order[t12],
+    Order[t13],
+    Order[t14] = _ -> Vector.empty()
 
 pub def edge3(_f: t1 -> t2 -> t3 -> t4 -> t5 -> t): Vector[
     String
 ] -> Vector[String] with
-        Order[t1],
-        Order[t10],
-        Order[t11],
-        Order[t12],
-        Order[t13],
-        Order[t145] = _ -> Vector.empty()
+    Order[t1],
+    Order[t10],
+    Order[t11],
+    Order[t12],
+    Order[t13],
+    Order[t145] = _ -> Vector.empty()
 
 mod Outer {
     pub def edge(
@@ -240,12 +240,12 @@ mod Outer {
             String ->
             String ->
                 String with
-                Order[t1],
-                Order[t2],
-                Order[t3],
-                Order[t4],
-                Order[t5],
-                Order[t] = _ -> _ -> _ -> _ -> _ -> ""
+            Order[t1],
+            Order[t2],
+            Order[t3],
+            Order[t4],
+            Order[t5],
+            Order[t] = _ -> _ -> _ -> _ -> _ -> ""
     }
 }
 ```
@@ -253,12 +253,12 @@ mod Outer {
 ```flix printWidth=70
 pub def lift5(_f: t1 -> t2 -> t3 -> t4 -> t5 -> t):
     String -> String -> String -> String -> String -> String with
-        Order[t1],
-        Order[t2],
-        Order[t3],
-        Order[t4],
-        Order[t5],
-        Order[t] = _ -> _ -> _ -> _ -> _ -> ""
+    Order[t1],
+    Order[t2],
+    Order[t3],
+    Order[t4],
+    Order[t5],
+    Order[t] = _ -> _ -> _ -> _ -> _ -> ""
 
 pub def lift2(_f: t1 -> t2 -> t): String -> String -> String
     with Order[t1], Order[t2], Order[t] = _ -> _ -> ""
@@ -295,31 +295,31 @@ pub def edge5(_f: t1 -> t2 -> t3 -> t4 -> t5 -> t): Vector[String] ->
     Vector[String] ->
     Vector[String] ->
         Vxxxxxxxxxxxxxxxx with
-        Order[t1],
-        Order[t10],
-        Order[t11],
-        Order[t12],
-        Order[t13],
-        Order[t14],
-        Order[t15] = _ -> _ -> _ -> Vector.empty()
+    Order[t1],
+    Order[t10],
+    Order[t11],
+    Order[t12],
+    Order[t13],
+    Order[t14],
+    Order[t15] = _ -> _ -> _ -> Vector.empty()
 
 pub def edge2(_f: t1 -> t2 -> t3 -> t4 -> t5 -> t): Vector[String] ->
         Vector[String] with
-        Order[t1],
-        Order[t10],
-        Order[t11],
-        Order[t12],
-        Order[t13],
-        Order[t14] = _ -> Vector.empty()
+    Order[t1],
+    Order[t10],
+    Order[t11],
+    Order[t12],
+    Order[t13],
+    Order[t14] = _ -> Vector.empty()
 
 pub def edge3(_f: t1 -> t2 -> t3 -> t4 -> t5 -> t): Vector[String] ->
         Vector[String] with
-        Order[t1],
-        Order[t10],
-        Order[t11],
-        Order[t12],
-        Order[t13],
-        Order[t145] = _ -> Vector.empty()
+    Order[t1],
+    Order[t10],
+    Order[t11],
+    Order[t12],
+    Order[t13],
+    Order[t145] = _ -> Vector.empty()
 
 mod Outer {
     pub def edge(_f: t1 -> t2 -> t3 -> t4 -> t5 -> t): Vector[
@@ -337,12 +337,12 @@ mod Outer {
             String ->
             String ->
                 String with
-                Order[t1],
-                Order[t2],
-                Order[t3],
-                Order[t4],
-                Order[t5],
-                Order[t] = _ -> _ -> _ -> _ -> _ -> ""
+            Order[t1],
+            Order[t2],
+            Order[t3],
+            Order[t4],
+            Order[t5],
+            Order[t] = _ -> _ -> _ -> _ -> _ -> ""
     }
 }
 ```

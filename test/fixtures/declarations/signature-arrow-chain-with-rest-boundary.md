@@ -23,7 +23,7 @@ pub def lift2(_f: t1 -> t2 -> t):
 ```flix printWidth=40
 pub def lift2(_f: t1 -> t2 -> t):
     String -> String -> String with
-        Order[t1],
-        Order[t2],
-        Order[t] = _ -> _ -> ""
+    Order[t1],
+    Order[t2],
+    Order[t] = _ -> _ -> ""
 ```

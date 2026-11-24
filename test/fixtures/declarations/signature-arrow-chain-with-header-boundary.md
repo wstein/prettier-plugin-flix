@@ -15,12 +15,12 @@ pub def a3(x: Int32): Int32 -> Int32 -> Int32 with Order[aaaaaaaaaaaaaaaa], Orde
 
 ```flix
 pub def a3(x: Int32): Int32 -> Int32 -> Int32 with
-        Order[aaaaaaaaaaaaaaaa],
-        Order[bbbbbbbbbbbbbbbbbbb] = x -> y -> x
+    Order[aaaaaaaaaaaaaaaa],
+    Order[bbbbbbbbbbbbbbbbbbb] = x -> y -> x
 ```
 
 ```flix printWidth=60
 pub def a3(x: Int32): Int32 -> Int32 -> Int32 with
-        Order[aaaaaaaaaaaaaaaa],
-        Order[bbbbbbbbbbbbbbbbbbb] = x -> y -> x
+    Order[aaaaaaaaaaaaaaaa],
+    Order[bbbbbbbbbbbbbbbbbbb] = x -> y -> x
 ```
