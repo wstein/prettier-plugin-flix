@@ -150,7 +150,10 @@ automatically under `/flix/<version>/`.
 The fixture documentation workflow runs a Playwright smoke test against
 `docs/public` before uploading it to Pages. It checks live formatting, cursor
 and error status, partial formatting and recovery, and Unicode handoff from
-an embedded editor with default and overridden line widths. A cold Playground
+an embedded editor with default and overridden line widths. It also checks
+that an embedded workbench frees its editor views when it leaves the viewport
+margin and restores its draft, undo history and options on return. A focused
+workbench stays active until focus leaves it. A cold Playground
 loads only the selected Flix grammar. Changing versions loads the other grammar
 on demand, and the worker reuses both until it is restarted. The docs build
 checks the shared formatter code plus each selected grammar against the 2 MiB

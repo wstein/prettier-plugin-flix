@@ -34,6 +34,10 @@ export function requestFormat(url, request, receive) {
         const timer = setTimeout(() => reset(current, "timeout"), deadline);
         pending.set(request.id, { timer, receive });
         current.postMessage(request);
+        return () => {
+            clearTimeout(timer);
+            pending.delete(request.id);
+        };
     } catch {
         if (worker) reset(worker, "load");
         else receive({ failure: "load" });

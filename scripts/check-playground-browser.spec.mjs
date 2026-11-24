@@ -1001,6 +1001,54 @@ for (const failure of ["load", "grammar load", "timeout"]) {
     });
 }
 
+test("offscreen embedded editors release views and restore draft settings", async ({ page }) => {
+    await page.goto(siteUrl + "expressions/");
+    const first = page.locator("[data-embedded-playground]").first();
+    const last = page.locator("[data-embedded-playground]").last();
+    const reveal = (embedded) => embedded.evaluate((node) =>
+        node.closest(".fixture").scrollIntoView({ block: "center", behavior: "instant" }));
+    const input = first.getByRole("textbox", { name: "Flix input" });
+    const width = first.getByLabel("Line width");
+    const version = first.getByLabel("Flix version");
+    const sync = first.getByRole("checkbox", { name: "Sync scroll" });
+    await reveal(first);
+    const original = await input.innerText();
+    await width.fill("54");
+    await version.selectOption("0.79.0");
+    await sync.uncheck();
+    await input.fill("def retained():Int32=7");
+    await expect(first.getByRole("textbox", { name: "Preview" })).toHaveText("def retained(): Int32 = 7");
+
+    await reveal(last);
+    await expect(last.getByRole("textbox", { name: "Flix input" })).toBeVisible();
+    await expect(input).toBeFocused();
+    await last.getByLabel("Line width").focus();
+    await expect(first.locator(".cm-editor")).toHaveCount(0);
+
+    for (let round = 0; round < 2; round++) {
+        await reveal(first);
+        await expect(input).toHaveText("def retained():Int32=7");
+        await expect(width).toHaveValue("54");
+        await expect(version).toHaveValue("0.79.0");
+        await expect(sync).not.toBeChecked();
+        await expect(first.getByRole("textbox", { name: "Preview" })).toHaveText("def retained(): Int32 = 7");
+        await reveal(last);
+        await expect(first.locator(".cm-editor")).toHaveCount(0);
+    }
+
+    await reveal(first);
+    await first.getByRole("button", { name: "Diff" }).click();
+    await expect(first.getByRole("button", { name: "Diff" })).toHaveAttribute("aria-pressed", "true");
+    await reveal(last);
+    await last.getByLabel("Line width").focus();
+    await expect(first.locator(".cm-editor")).toHaveCount(0);
+    await reveal(first);
+    await expect(first.getByRole("button", { name: "Diff" })).toHaveAttribute("aria-pressed", "true");
+    await expect(first.locator("[data-diff]")).toContainText("def retained(): Int32 = 7");
+    await input.press("ControlOrMeta+z");
+    await expect.poll(() => input.innerText()).toBe(original);
+});
+
 test("embedded syntax examples keep separate diagnostics and previews", async ({ page }) => {
     await page.goto(siteUrl + "errors/");
     const editors = page.locator("[data-embedded-playground]");
