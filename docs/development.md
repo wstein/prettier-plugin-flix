@@ -156,7 +156,7 @@ margin and restores its draft, undo history and options on return. A focused
 workbench stays active until focus leaves it. A cold Playground
 loads only the selected Flix grammar. Changing versions loads the other grammar
 on demand, and the worker reuses both until it is restarted. The docs build
-checks the shared formatter code plus each selected grammar against the 2 MiB
+checks the shared formatter code plus each selected grammar against the 1 MiB
 uncompressed budget.
 
 With the development dependencies and the fixture workflow's Hugo version
