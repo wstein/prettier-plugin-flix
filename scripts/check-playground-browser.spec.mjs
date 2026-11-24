@@ -156,6 +156,39 @@ test("inline search finds both documentation pages and still finds fixtures", as
     await expect(results).toBeHidden();
 });
 
+test("alternate output shows settings and handoff above the code", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(siteUrl + "declarations/#arrow-return-with-list");
+    const fixture = page.locator("#arrow-return-with-list");
+    const summary = fixture.getByText("Alternate Prettier output 2", { exact: true });
+    await summary.click();
+    const variant = fixture.locator("details").filter({ has: page.getByText("Alternate Prettier output 2", { exact: true }) });
+    const caption = variant.locator("figcaption");
+    const setting = caption.locator("code");
+    const description = caption.getByText("Same layout as at 80 columns.", { exact: true });
+    const link = caption.getByRole("link", { name: "Open with these settings" });
+    const code = variant.locator("pre");
+    await expect(setting).toHaveText("printWidth: 100");
+    await expect(description).toBeVisible();
+    await expect(link).toBeVisible();
+    const boxes = async () => Promise.all([caption, setting, description, link, code].map((item) => item.boundingBox()));
+    let [captionBox, settingBox, descriptionBox, linkBox, codeBox] = await boxes();
+    expect(Math.abs(linkBox.y - settingBox.y)).toBeLessThan(6);
+    expect(Math.abs(captionBox.x + captionBox.width - linkBox.x - linkBox.width)).toBeLessThan(2);
+    expect(descriptionBox.y).toBeGreaterThan(linkBox.y);
+    expect(codeBox.y).toBeGreaterThan(captionBox.y + captionBox.height);
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    [captionBox, settingBox, descriptionBox, linkBox, codeBox] = await boxes();
+    expect(descriptionBox.y).toBeGreaterThan(settingBox.y);
+    expect(linkBox.y).toBeGreaterThan(descriptionBox.y);
+    expect(codeBox.y).toBeGreaterThan(linkBox.y + linkBox.height);
+    await link.click();
+    await expect(page).toHaveURL(/playground\/\?.*variant=1/);
+    await expect(page.getByRole("textbox", { name: "Flix input" })).toContainText("pub def lift5");
+    await expect(page.getByLabel("Line width")).toHaveValue("100");
+});
+
 test("the catalog gives embedded editors room and aligns the header with the chapters", async ({ page }) => {
     const heading = page.getByRole("heading", { name: "Before and after", exact: true });
     const chapters = page.getByRole("navigation", { name: "Documentation" });

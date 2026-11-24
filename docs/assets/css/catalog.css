@@ -128,7 +128,6 @@ h1 { font-size: clamp(2rem, 3.8vw, 3rem); margin-block: 0 0.5rem; }
 .code-sample { margin: 0; }
 .code-sample pre { margin-bottom: 0; }
 .code-sample figcaption { margin-top: 0.2rem; line-height: 1.4; }
-.code-sample figcaption span { display: block; }
 pre { tab-size: 4; overflow-x: auto; padding: 0.85rem; background: var(--surface); border: 1px solid var(--border); border-radius: 0.45rem; margin: 0.5rem 0; }
 code { font-family: ui-monospace, monospace; font-size: 0.875rem; }
 details { border: 1px solid var(--border); border-radius: 0.45rem; padding: 0.6rem 0.85rem; margin-top: 0.65rem; }
@@ -152,7 +151,28 @@ pre.shiki {
   text-decoration: none;
 }
 .fixture-playground:hover { text-decoration: underline; }
-.fixture-variant-link { display: inline-block; margin-top: 0.4rem; }
+.code-sample .fixture-variant-caption {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 0.25rem 1rem;
+  margin-top: 0.65rem;
+}
+.fixture-variant-setting {
+  grid-area: 1 / 1;
+  justify-self: start;
+  padding: 0.15rem 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 0.35rem;
+  background: var(--surface);
+  overflow-wrap: anywhere;
+}
+.fixture-variant-description { grid-area: 2 / 1 / auto / -1; margin: 0; }
+.fixture-variant-link { grid-area: 1 / 2; justify-self: end; }
+@media (max-width: 48rem) {
+  .code-sample .fixture-variant-caption { grid-template-columns: 1fr; }
+  .fixture-variant-caption > * { grid-area: auto / 1; justify-self: start; }
+}
 
 .playground {
   overflow: hidden;
