@@ -168,6 +168,43 @@ npm run docs:test:browser
 To use a local Chromium binary, set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH`.
 The test starts its own loopback server at the same URL prefix as Pages.
 
+### Measure embedded editor retention
+
+Build the catalog, then serve it on loopback with live reload disabled. Run
+the measurement from another terminal.
+
+```sh
+npm run docs:build
+hugo server --source docs --bind 127.0.0.1 --disableLiveReload \
+  --baseURL http://127.0.0.1:1313/prettier-plugin-flix/
+node scripts/measure-embedded-playground.mjs \
+  http://127.0.0.1:1313/prettier-plugin-flix/expressions/
+```
+
+The script opens three fresh Chromium pages at 1280 × 800. It samples at the
+top of the chapter before scrolling, after visiting every fixture, and after
+each of three further passes. Each sample follows a garbage collection and
+reports the page's JavaScript heap, DOM nodes, JavaScript event listeners,
+mounted workbenches, and worker count. Heap and listener counts include the
+whole page. This walkthrough uses baked previews and measures scrolling and
+editor mounting.
+
+On 2026-11-24, Chromium 156.0.8078.79 measured 93 workbenches on
+`/expressions/` at commit `0751b04`. Heap values are ranges over three runs.
+
+| At the top of the chapter | Mounted | JS heap | DOM nodes | JS listeners |
+| --- | ---: | ---: | ---: | ---: |
+| Initial load | 2 | 3.84–3.99 MiB | 39,468 | 188 |
+| After first traversal | 93 | 12.90–12.94 MiB | 64,852 | 7,663 |
+| After three further traversals | 93 | 13.02–13.05 MiB | 64,852 | 7,663 |
+
+Each new workbench adds to the retained heap and listener counts as the
+chapter is visited. Listener and node counts stayed flat on revisits. The
+largest observed heap increase after the first traversal was about 118 KiB
+over the next three passes. The initial mount cost suggests prototyping
+offscreen teardown. Compare the retained heap and the cost of restoring a
+workbench, including edited input and settings, with the measurements above.
+
 ## Review sweeps
 
 `npm run review:sweep -- <command>` runs the sweeps a reviewer would otherwise rebuild by hand. It runs
