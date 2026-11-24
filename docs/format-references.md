@@ -194,7 +194,10 @@ prefers `1 :: 2 :: Nil`.
 **Plugin:** Keeps package qualifiers tight and normalizes list cons to
 `1 :: 2 :: Nil` in expressions and patterns. Wrapped chains start their
 continuations with `::`. Cons operators with glued comments keep their
-spacing so the comments stay attached.
+spacing so the comments stay attached. For example, `flix format` 0.80.0
+prints `1 :: // keep` followed by `2 :: Nil` on the next line. The plugin
+keeps `1::// keep` and prints `2` with `:: Nil` on a separate continuation
+line.
 
 **Justification (Scala) for packages:** Scala paths stay tight (`a.b.C`).
 Flix similarly requires a tight package qualifier such as `pkg::Mod`.

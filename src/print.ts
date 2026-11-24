@@ -1347,8 +1347,8 @@ export class Printer {
             const { formatted } = doc.printer.printDocToString(value, options);
             return formatted.includes("\n") ? Infinity : util.getStringWidth(formatted);
         };
-        // A tight cons pattern is a conditional group: it can fit alone and still wrap in the arm.
-        // Padding the other arms to its flat width would not survive the next pass.
+        // A pattern with alternative layouts can fit alone and still wrap in the arm.
+        // Padding the other arms to its standalone width would not survive the next pass.
         const hasConditionalGroup = (value: Doc): boolean => !!
             doc.utils.findInDoc(value, (part) => (typeof part === "object" && "expandedStates" in part && !!part.expandedStates) || undefined, false);
         const staysFlat = ({ head, gap, tail }: { head: Doc; gap: Doc; tail: Doc }, rowIndent: number): boolean => {
