@@ -14,7 +14,8 @@ import { extractExamples } from "./extract-flix-examples.mjs";
 const exec = promisify(execFile);
 const formatOptions = { ...defaultOptions, printWidth: EXAMPLE_PRINT_WIDTH, useTabs: false, endOfLine: "lf" };
 const hash = (value) => createHash("sha256").update(JSON.stringify(value)).digest("hex");
-const baselineHeader = "case\tstatus\tchange\tsha256";
+const legacyBaselineHeader = "case\tstatus\tchange\tsha256";
+const baselineHeader = `${legacyBaselineHeader}\tlayout_review`;
 const wrapper = "def auditSnippet(): Unit = {\n";
 const declaration = /^(?:@|(?:def|eff|enum|instance|mod|pub|redef|restrictable|sealed|struct|trait|type|val)\b)/;
 const trimLineEnds = (value) => value.replace(/[ \t]+(?=\r?$)/gm, "");
@@ -127,26 +128,34 @@ export function approvalFor(result, approval) {
     return approval.reason.trim();
 }
 
-export function compareBaseline(previous, current) {
+export function compareBaseline(previous, current, { layoutOnly = false } = {}) {
     const parse = (value) => {
         const [header, ...rows] = value.trimEnd().split(/\r?\n/);
-        if (header !== baselineHeader) throw new Error("Invalid official example baseline header");
+        const classified = header === baselineHeader;
+        if (!classified && header !== legacyBaselineHeader) throw new Error("Invalid official example baseline header");
         const entries = new Map();
         for (const row of rows) {
             const fields = row.split("\t");
-            const [name, status, , digest] = fields;
+            const [name, status, , digest, review] = fields;
+            const validReview = status === "layout-change" ? review === "automatic" || review === "manual" : review === "-";
             if (!/^[a-z0-9.-]+$/.test(name) || !status || !/^[a-f0-9]{64}$/.test(digest) ||
-                fields.length !== 4 || entries.has(name)) throw new Error(`Invalid official example baseline row: ${row}`);
-            entries.set(name, row);
+                fields.length !== (classified ? 5 : 4) || (classified && !validReview) ||
+                entries.has(name)) throw new Error(`Invalid official example baseline row: ${row}`);
+            entries.set(name, fields);
         }
-        return entries;
+        return { classified, entries };
     };
     const before = parse(previous);
     const after = parse(current);
+    // A legacy baseline has no review classification. PR approvals concern the layout itself.
+    const columns = !layoutOnly && before.classified && after.classified ? 5 : 4;
+    const signature = (fields) => fields.slice(1, columns).join("\t");
+    const beforeEntries = before.entries;
+    const afterEntries = after.entries;
     return {
-        added: [...after.keys()].filter((name) => !before.has(name)),
-        removed: [...before.keys()].filter((name) => !after.has(name)),
-        changed: [...after.keys()].filter((name) => before.has(name) && before.get(name) !== after.get(name)),
+        added: [...afterEntries.keys()].filter((name) => !beforeEntries.has(name)),
+        removed: [...beforeEntries.keys()].filter((name) => !afterEntries.has(name)),
+        changed: [...afterEntries.keys()].filter((name) => beforeEntries.has(name) && signature(beforeEntries.get(name)) !== signature(afterEntries.get(name))),
     };
 }
 
@@ -206,12 +215,13 @@ async function audit(book, website, output, reviewsPath, baselinePath, reviewBas
             ...(transformations && { reviewedTransformations: transformations }),
             changeKind: outcome.status === "invariant-failure" ? "unsafe" : outcome.changeKind,
         });
-        baselineRows.push([example.case_name, outcome.status, outcome.changeKind ?? "-", signature].join("\t"));
+        const layoutReview = outcome.status === "layout-change" ? (outcome.explanation ? "automatic" : "manual") : "-";
+        baselineRows.push([example.case_name, outcome.status, outcome.changeKind ?? "-", signature, layoutReview].join("\t"));
     }
     const baseline = [baselineHeader, ...baselineRows.sort(), ""].join("\n");
     const drift = previous === undefined ? undefined : compareBaseline(previous, baseline);
     if (drift && Object.values(drift).some((names) => names.length)) failed = true;
-    const reviewDrift = reviewBaseline === undefined ? undefined : compareBaseline(reviewBaseline, baseline);
+    const reviewDrift = reviewBaseline === undefined ? undefined : compareBaseline(reviewBaseline, baseline, { layoutOnly: true });
     const missing = reviewsPath ? unreviewedLayouts(cases, reviewDrift) : [];
     failed = withMissingReviews(failed, missing);
     const explained = cases.filter((item) => item.explanation).length;
