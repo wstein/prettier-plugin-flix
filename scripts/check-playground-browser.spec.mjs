@@ -746,6 +746,25 @@ test("the live preview keeps trailing comments, reports cursor selection, and re
     await expect(status).toBeEmpty();
 });
 
+for (const [flixVersion, column, diagnostic] of [
+    ["0.79.0", 24, /Unexpected input '_'/],
+    ["0.80.0", 23, /Invalid numeric literal/],
+]) {
+    test(`partial recovery after an invalid numeric literal in Flix ${flixVersion}`, async ({ page }) => {
+        await page.goto(siteUrl + "playground/");
+        const input = page.getByRole("textbox", { name: "Flix input" });
+        const preview = page.getByRole("textbox", { name: "Preview" });
+        const status = page.locator("[data-full-playground]").getByRole("status", { includeHidden: true });
+        await page.getByLabel("Flix version").selectOption(flixVersion);
+
+        await input.fill("def broken(): Int32 = 1_\ndef good():Int32=42\n");
+        await expect(status).toContainText(`Partially formatted. Error. Line 1, column ${column}.`);
+        await expect(input).toHaveAccessibleErrorMessage(diagnostic);
+        await expect(preview).toContainText("def broken(): Int32 = 1_");
+        await expect(preview).toContainText("def good(): Int32 = 42");
+    });
+}
+
 test("partial recovery formats module siblings after a bad delimiter", async ({ page }) => {
     await page.goto(siteUrl + "playground/");
     const input = page.getByRole("textbox", { name: "Flix input" });
