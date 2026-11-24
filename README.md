@@ -42,8 +42,8 @@ def label(code: Int32): String =
 
 ## Try it in a project
 
-Install Prettier and the prebuilt plugin from npm. Plugin version 0.1.3 was
-tested with Flix 0.80.0.
+Install Prettier and the prebuilt plugin from npm. Plugin version 0.2.0 was
+tested with Flix 0.79.0 and 0.80.0.
 
 ```sh
 npm install --save-dev --save-exact prettier@3.10.1 prettier-plugin-flix
