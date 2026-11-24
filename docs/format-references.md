@@ -52,7 +52,7 @@ compiling ([#13758](https://github.com/flix/flix/issues/13758)).
 
 **Justification (Scala):** scalafmt leaves end-of-line comments on the same line
 as `=`, `{`, or `=>` when they fit. It never concatenates the next line’s code
-into the comment. Copying Flix’s merge behavior would be uniquely destructive.
+into the comment. Copying Flix’s merge behavior would drop the next token.
 
 ```flix
 // Plugin (matches Scala-style EOL ownership)
@@ -204,8 +204,7 @@ cons (toward Flix built-in *and* Scala/Haskell) is the externally justified
 direction if the plugin tightens that rule later. That is separate from #13760.
 
 **Flix docs (internal — list cons):** Official examples consistently use **spaced**
-list cons. That matches the built-in and contradicts today’s tight plugin
-printing:
+list cons, matching the built-in:
 
 - [Lists](https://doc.flix.dev/lists.html) — `"Hello" :: "World" :: Nil`,
   `1 :: 2 :: 3 :: Nil`
@@ -224,12 +223,15 @@ use museum ::Clerk.welcomeVisitor
 // Flix docs + built-in + Scala/Haskell (list cons)
 1 :: 2 :: Nil
 
-// Plugin today (unjustified against Flix docs)
+// Plugin keeps authored cons spacing: a tight chain stays tight when it fits;
+// a spaced chain stays spaced (see docs/formatting.md).
 1::2::Nil
+1 :: 2 :: Nil
 ```
 
 **Open point:** [#13760](https://github.com/flix/flix/issues/13760) (packages only).
-List-cons spacing is a separate convergence candidate toward the docs.
+Preferring spaced list cons in new code matches the docs; the plugin does not
+rewrite authored tight chains into spaced ones today.
 
 Fixtures: `expressions/list-append.md`, `whitespace/package-qualifier*.md`.
 
@@ -255,20 +257,27 @@ Fixture: `declarations/module-value.md`.
 ## Type parameters and `with`
 
 **Built-in:** `def f [a: Type] (x: a)` / `eff E [a]` — space before `[`
-([#13763](https://github.com/flix/flix/issues/13763)); flatter `with` indent.
+([#13763](https://github.com/flix/flix/issues/13763)); wrapped `with`
+constraints indent once under `with` (same column as the body after `=`).
 
-**Plugin:** `def f[a: Type](x: a)`; constraints indented under `with`.
+**Plugin today:** Type parameters are tight on the name (`def f[a: Type]`),
+then a space before the parameter list: `def f[a: Type] (x: a)`. Effect
+headers stay fully tight: `eff E[a]`. Wrapped `with` lists currently indent
+**twice** under `with` (deeper than flix format).
 
 **Justification (Scala) for tight `[`:** Type parameters are tight:
-`def f[A](x: A)`. scalafmt does not insert `f [A]`. That part stays a solid
-external justification for the plugin against [#13763](https://github.com/flix/flix/issues/13763).
+`def f[A](x: A)`. scalafmt does not insert `f [A]`. That stays an external
+justification for the plugin against [#13763](https://github.com/flix/flix/issues/13763).
+The space before `(x: …)` is the plugin’s own parameter-list rule, not a claim
+that the whole signature is glued.
 
-**`with` indent — weak external + weak Flix docs:** Scala context bounds /
-`using` clauses *can* indent under the signature, but that does not uniquely
-mandate the plugin’s deeper `with` block over the built-in’s flatter list.
+**`with` indent — temporary divergence:** [#275](https://github.com/wstein/prettier-plugin-flix/pull/275)
+changes the plugin to one indent under `with`, matching flix format and the
+body column after `=`. Until that lands, do not treat the deeper list as a
+settled style choice.
 
 **Flix docs (internal — `with`):** Almost only **inline / flat** forms; no
-multi-line `with` block with deep indent is prescribed.
+multi-line `with` block with a prescribed indent depth.
 
 - [Traits](https://doc.flix.dev/traits.html) —
   `def memberOf(...): Bool with Equatable[t] =`
@@ -277,13 +286,12 @@ multi-line `with` block with deep indent is prescribed.
 - [flix.dev](https://flix.dev/) —
   `instance Eq[(a1, a2)] with Eq[a1], Eq[a2]`
 
-Treat the plugin-vs-built-in **indent depth under `with`** as **barely
-specified** upstream; do not claim a Flix-book convention for either side.
-
 **Open point:** [#13763](https://github.com/flix/flix/issues/13763) (space before
-`[` only). `with` wrap/indent remains an open style choice.
+`[` only). Indent depth under `with` tracks [#275](https://github.com/wstein/prettier-plugin-flix/pull/275)
+rather than a Flix-book convention.
 
-Fixtures: `declarations/trait-constraint-lists.md`, `declarations/long-function-types.md`.
+Fixtures: `declarations/trait-constraint-lists.md`, `declarations/long-function-types.md`,
+`declarations/row-type-tails.md`.
 
 ---
 
@@ -348,7 +356,9 @@ Fixtures: `expressions/record-type-pattern-tails.md`, `expressions/record-update
 
 ## Collection literals (`List#{}` / `Map#{}` / …)
 
-**Built-in:** Often breaks before `Map#{` and avoids column alignment inside.
+**Built-in (0.80.0):** Long `Map#{…}` literals often stay on one line; column
+alignment inside is lighter than the plugin’s. Older notes about breaking before
+`Map#{` were not reproduced on 0.80.0.
 
 **Plugin:** May keep `= Map#{` when compact; can align entries / tuple columns.
 
@@ -535,10 +545,10 @@ inside comments is not a reference behavior.
 | Built-in **style** vs FP operators (list cons spaces, arrow/comprehension width) | Follow **Scala and/or Haskell** *and* Flix book examples where they agree (spaced `::`) |
 | Prettier-only features (comment align, `prettier-ignore`, print width) | Cite Scala `align` / `format: off` / `maxColumn` (and Haskell column limits) |
 | Flix-only constructs with clear book layout (`par`/`yield`, compact record `\|`, Datalog `query`/`select`, pipeline `\|>`) | Cite **[doc.flix.dev](https://doc.flix.dev/) / [flix.dev](https://flix.dev/)** as the internal style reference; do not invent an external analogue |
-| Barely specified upstream (declaration blanks, deep `with` indent) | Record both outputs; do **not** claim a Flix-book or Scala/Haskell mandate |
+| Barely specified upstream (declaration blanks; `with` indent until [#275](https://github.com/wstein/prettier-plugin-flix/pull/275)) | Record both outputs; do **not** claim a Flix-book or Scala/Haskell mandate |
 
 ## Related pages
 
-- [Flix formatting style](formatting.md) — normative plugin rules  
-- [Relation to flix format](formatting.md#relation-to-flix-format) — stdlib measurements  
-- Fixture catalog — runnable samples for each construct  
+- [Flix formatting style](formatting.md) — normative plugin rules
+- [Relation to flix format](formatting.md#relation-to-flix-format) — stdlib measurements
+- Fixture catalog — runnable samples for each construct
