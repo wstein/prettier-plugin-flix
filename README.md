@@ -40,6 +40,16 @@ def label(code: Int32): String =
 
 [Open this example in the Playground](https://wstein.github.io/prettier-plugin-flix/playground/#code=ZGVmIGxhYmVsKGNvZGU6SW50MzIpOlN0cmluZz0KbWF0Y2ggY29kZXsKY2FzZSAyMDA9PiJPSyIgLy8gUmVxdWVzdCBjb21wbGV0ZWQKY2FzZSA0MDQgPT4iTm90IGZvdW5kIiAvLyBDaGVjayB0aGUgcmVxdWVzdGVkIFVSTApjYXNlIF8gPT4iT3RoZXIiIC8vIEZhbGxiYWNrIGZvciB1bmtub3duIGNvZGVzCn0K)
 
+## Why this plugin
+
+For Flix developers who want one automatic, consistent layout, and for teams that already run Prettier on the rest of the repository (Markdown, JSON, YAML), this plugin adds Flix to the same command, editor integration and CI check.
+
+- The formatted program keeps the same tokens as the input, apart from optional trailing commas, and the same parse-tree shape.
+- Comments are kept.
+- Formatting the output again changes nothing, from a print width of 40 up.
+
+The style differs from `flix format`; see [the differences from `flix format` 0.80.0 and the reasons](docs/format-references.md).
+
 ## Try it in a project
 
 Install Prettier and the prebuilt plugin from npm. Plugin version 0.2.0 was
