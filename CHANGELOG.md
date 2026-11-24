@@ -35,7 +35,7 @@ Several of these changes alter the output for existing files. Run the formatter 
 - Keep braced effects stable across formatting passes when a match scrutinee has a comment after an access dot. ([PR #261][pr-261])
 - Limit the break after `else` to line comments, and keep a line comment after `else` in front of comments in the else branch. ([PR #225][pr-225])
 - Keep short enum case lists on one line after moving an opening-brace comment. Existing files may reformat. ([PR #252][pr-252])
-- Keep an own-line comment on its own line after a block comment in a match pattern. v0.1.3 inserted a blank line and moved the comment to the start of the line. Align match arms by the printed cons pattern, so a wrapped tight pattern no longer changes the arm padding between passes. Existing files may reformat on upgrade. ([commit][commit-ce3ad45], [commit][commit-2f945dd])
+- Keep an own-line comment on its own line after a block comment in a match pattern. v0.1.3 inserted a blank line and moved the comment back to the `case` column. Align match arms by the printed cons pattern, so a wrapped cons pattern no longer changes the arm padding between passes. Existing files may reformat on upgrade. ([commit][commit-ce3ad45], [commit][commit-2f945dd])
 - Keep signature effect-set breaks stable when a hugged `=` body would not fit on the continuation with the set ([#92][issue-92], [#201][issue-201]).
 - Skip match-arm arrow alignment when padding would wrap a compact body onto the next line ([#154][issue-154]).
 - Keep map, record and match alignment stable when a block comment leads a map key, record field or match `case`, and do not break a list only because a block comment ends its source line before a `,` or `;` ([#137][issue-137], [#187][issue-187]).
