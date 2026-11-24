@@ -90,6 +90,7 @@ if [ "$cmd" = "--version" ]; then
     version-error) echo "Error: Unable to access jarfile $2" >&2; exit 1;;
     version-path) echo "Loading jarfile $2"; exit 0;;
     version-stderr) echo "The Flix Programming Language 0.80.0" >&2; exit 0;;
+    version-extra) echo "The Flix Programming Language 0.80.0 unexpected output"; exit 0;;
   esac
   echo "The Flix Programming Language \${FAKE_FLIX_VERSION:-0.80.0}"
   exit 0
@@ -153,6 +154,7 @@ for (const [mode, message] of [
     ["version-error", /Unable to access jarfile/],
     ["version-path", /Loading jarfile/],
     ["version-stderr", /The Flix Programming Language/],
+    ["version-extra", /The Flix Programming Language 0\.80\.0 unexpected output/],
 ]) {
     test(`rejects unusable compiler version output (${mode})`, { skip: !posix }, () => {
         const versionedJar = join(work, "flix-0.80.0.jar");
