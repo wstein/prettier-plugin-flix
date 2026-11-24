@@ -1,6 +1,6 @@
 ---
 title: "Comment-only collection and record braces stay tight"
-description: "A comment inside `List#{}`, `Array#{}`, `Set#{}`, `Map#{}`, `Vector#{}`, a record, `#{…}`, or `(…)` does not invent a blank line after the opener. Expression and schema braces and parameter lists also drop a source blank there, matching flix format 0.80.0; declaration braces still keep one."
+description: "A comment inside `List#{}`, `Array#{}`, `Set#{}`, `Map#{}`, `Vector#{}`, a record, `#{…}`, or `(…)` (parameter lists, calls, unit, tuple patterns) does not invent a blank line after the opener. Those forms also drop a source blank there, matching flix format 0.80.0; declaration braces still keep one."
 group: "Other constructs"
 minVersion: "0.80.0"
 options: { printWidth: 80 }
@@ -65,6 +65,27 @@ def paramsGap(
 
     /* gap */
 ): Unit = ()
+
+def callGap(): Unit =
+    discard g(
+
+        // gap
+    )
+
+def unitGap(): Unit =
+    discard (
+
+        // gap
+    )
+
+def matchGap(x: Unit): Unit = match x {
+    case (
+
+        // gap
+    ) => ()
+}
+
+def g(): Unit = ()
 ```
 
 ## Output
@@ -137,6 +158,24 @@ def params(
 def paramsGap(
     /* gap */
 ): Unit = ()
+
+def callGap(): Unit =
+    discard g(
+        // gap
+    )
+
+def unitGap(): Unit =
+    discard (
+        // gap
+    )
+
+def matchGap(x: Unit): Unit = match x {
+    case (
+        // gap
+    ) => ()
+}
+
+def g(): Unit = ()
 ```
 
 ```flix printWidth=40
@@ -207,4 +246,22 @@ def params(
 def paramsGap(
     /* gap */
 ): Unit = ()
+
+def callGap(): Unit =
+    discard g(
+        // gap
+    )
+
+def unitGap(): Unit =
+    discard (
+        // gap
+    )
+
+def matchGap(x: Unit): Unit = match x {
+    case (
+        // gap
+    ) => ()
+}
+
+def g(): Unit = ()
 ```
