@@ -55,5 +55,9 @@
   {{- $href = print $repository "README.md" -}}
 {{- else if eq $href "official-examples.md" -}}
   {{- $href = print $repository "docs/official-examples.md" -}}
+{{- else if eq $href "format-references.md" -}}
+  {{- $href = (site.GetPage "format-references").RelPermalink -}}
+{{- else if strings.HasPrefix $href "format-references.md#" -}}
+  {{- $href = printf "%s#%s" (site.GetPage "format-references").RelPermalink (strings.TrimPrefix "format-references.md#" $href) -}}
 {{- end -}}
 <a href="{{ $href }}"{{ with .Title }} title="{{ . }}"{{ end }}>{{ .Text }}</a>

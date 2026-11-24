@@ -639,6 +639,10 @@ This section describes the output. It does not change a rule and promises no
 match with `flix format`. The idempotence guarantee for `printWidth` of 40 or
 more (see [Supported print widths](#supported-print-widths)) is unchanged.
 
+For construct-by-construct differences—and when Scala, Haskell, or the Flix
+book justify a conscious plugin choice—see
+[Built-in Flix format vs Prettier plugin](format-references.md).
+
 The row about blank lines after `{` predates the current rule for
 `mod`, `trait`, `instance`, `eff`, `struct`, and enum bodies.
 

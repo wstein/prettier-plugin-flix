@@ -6,6 +6,13 @@
     "source" (readFile "formatting.md")
     "href" .RelPermalink) }}
 {{ end }}
+{{ with site.GetPage "format-references" }}
+  {{ $entries = $entries | append (dict
+    "title" .Title
+    "chapter" "Documentation"
+    "source" (readFile "format-references.md")
+    "href" .RelPermalink) }}
+{{ end }}
 {{ with site.GetPage "examples" }}
   {{ $entries = $entries | append (dict
     "title" .Title
