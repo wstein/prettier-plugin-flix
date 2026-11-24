@@ -1,6 +1,7 @@
 // Fixtures for the versioned sweep export, shard merge, and review summary (#206).
 import test from "node:test";
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
 import { readFileSync, mkdtempSync, writeFileSync, rmSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { tmpdir } from "node:os";
@@ -234,6 +235,40 @@ test("parseSweepArgs / exportPathForCommand / sweepCommandOptions / parseShardSp
     assert.deepEqual(parseShardSpec("2/3"), { k: 2, n: 3 });
     assert.equal(parseShardSpec(null), null);
     assert.throws(() => parseShardSpec("0/2"), /invalid shard/);
+});
+
+test("combined and standalone sweeps export compatible configurations", (t) => {
+    const work = mkdtempSync(join(tmpdir(), "sweep-export-"));
+    t.after(() => rmSync(work, { recursive: true, force: true }));
+    const input = join(work, "sample.flix");
+    writeFileSync(input, "def sample(): Int32 = 1\n");
+    const script = fileURLToPath(new URL("../scripts/review-sweep.mjs", import.meta.url));
+    const cwd = dirname(dirname(script));
+    const base = execFileSync("git", ["rev-parse", "HEAD"], { cwd, encoding: "utf8" }).trim();
+    const run = (command, output, extra = []) => execFileSync(process.execPath, [
+        script, command, "--no-repo", "--widths", "40", "--every", "6",
+        "--seed", "7", "--export", output, ...extra, input,
+    ], { cwd, env: { ...process.env, TMPDIR: work, TEMP: work, TMP: work, FLIX_STDLIB_DIR: "" } });
+    const read = (path) => parseResultDocument(readFileSync(path, "utf8"), path);
+
+    run("all", join(work, "all.json"), ["--base", "HEAD"]);
+    for (const command of ["idempotence", "sites", "regression"]) {
+        const standalone = join(work, `${command}.json`);
+        run(command, standalone, command === "regression" ? ["--base", base] : []);
+        const combined = read(join(work, `all.${command}.json`));
+        const separate = read(standalone);
+        const names = combined.corpus.inputs;
+        assert.equal(configKey(combined), configKey(separate), command);
+        assert.deepEqual(combined.cases, separate.cases, command);
+        assert.equal(combined.config.base, command === "regression" ? base : null);
+        assert.equal(combined.config.every, command === "sites" ? 6 : null);
+        assert.equal(combined.config.seed, 7);
+        assert.equal(names.length, 1);
+        assert.match(names[0], /sample\.flix$/);
+        assert.equal(combined.corpus.inputCount, 1);
+        assert.equal(combined.corpus.fingerprint, corpusFingerprint(names));
+        assert.ok(combined.cases.length > 0);
+    }
 });
 
 test("safeWriteJson: never throws; reports export failure", () => {
