@@ -66,10 +66,10 @@ pub def lift1X2(_f: t1 -> t2 -> t): String -> String
 
 pub def lift2X1(_f: t1 -> t2 -> t3 -> t): Vector[String] ->
         Vector[String] with
-        Order[t1],
-        Order[t2],
-        Order[t3],
-        Order[t4] = _ -> Vector.empty()
+    Order[t1],
+    Order[t2],
+    Order[t3],
+    Order[t4] = _ -> Vector.empty()
 
 pub def effectOnly(
     _f: t1 -> t2 -> t3 -> t4 -> t5 -> t
@@ -82,9 +82,9 @@ pub def paren1(_f: t1 -> t2 -> t): (String -> String) ->
 
 pub def paren2(_f: t1 -> t2 -> t): String ->
         (String -> String) with
-        Order[t1],
-        Order[t2],
-        Order[t] = _ -> _ -> ""
+    Order[t1],
+    Order[t2],
+    Order[t] = _ -> _ -> ""
 
 pub def paren3(_f: t1 -> t2 -> t): (
     String -> String,
@@ -95,9 +95,9 @@ pub def rec1(_f: t1 -> t2 -> t): {f = String -> String} ->
 
 pub def rec2(_f: t1 -> t2 -> t): String ->
         {f = String -> String, g = Int32} with
-        Order[t1],
-        Order[t2],
-        Order[t] = _ -> {f = _ -> "", g = 1}
+    Order[t1],
+    Order[t2],
+    Order[t] = _ -> {f = _ -> "", g = 1}
 ```
 
 ```flix printWidth=100

@@ -1562,10 +1562,9 @@ export class Printer {
                 separator ? this.after(end, this.after(separator, line)) : "",
             ];
         });
-        // Indent one level deeper than the body so wrapped constraints do not
-        // share a column with the `=` body, members, or arrow continuations.
-        const body = group(indent([this.after(lastTerm(keyword), line), rows]));
-        return [this.print(keyword), indent(body)];
+        // One indent under `with`, matching the body column after `=`, so wrapped
+        // constraints do not burn an extra indent of horizontal width.
+        return [this.print(keyword), group(indent([this.after(lastTerm(keyword), line), rows]))];
     }
 
     private declarationIndent(n: ParserRuleContext): number {
