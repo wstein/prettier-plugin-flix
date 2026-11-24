@@ -170,13 +170,19 @@ The test starts its own loopback server at the same URL prefix as Pages.
 
 ### Measure embedded editor retention
 
-Build the catalog, then serve it on loopback with live reload disabled. Run
-the measurement from another terminal.
+Build the version-filtered catalog and serve the generated `docs/public` at
+the GitHub Pages URL prefix. Use a Python 3 static server on loopback.
 
 ```sh
 npm run docs:build
-hugo server --source docs --bind 127.0.0.1 --disableLiveReload \
-  --baseURL http://127.0.0.1:1313/prettier-plugin-flix/
+site_root=$(mktemp -d)
+ln -s "$PWD/docs/public" "$site_root/prettier-plugin-flix"
+python3 -m http.server 1313 --bind 127.0.0.1 --directory "$site_root"
+```
+
+Run the measurement from a second terminal.
+
+```sh
 node scripts/measure-embedded-playground.mjs \
   http://127.0.0.1:1313/prettier-plugin-flix/expressions/
 ```
