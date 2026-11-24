@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import test from "node:test";
@@ -159,6 +159,21 @@ test("detects additions, deletions and changes beyond the recorded baseline", ()
     assert.throws(() => compareBaseline(previous, current + row("book.same", "a")), /Invalid official example baseline row/);
 });
 
+test("compares classified baselines without losing exact layout drift", () => {
+    const header = "case\tstatus\tchange\tsha256";
+    const row = `book.sample\tlayout-change\tspacing\t${"a".repeat(64)}`;
+    const legacy = `${header}\n${row}\n`;
+    const classified = (kind, digest = "a") =>
+        `${header}\tlayout_review\n${row.replace(/a{64}$/, digest.repeat(64))}\t${kind}\n`;
+    const automatic = classified("automatic");
+    const manual = classified("manual");
+    assert.deepEqual(compareBaseline(legacy, automatic).changed, []);
+    assert.deepEqual(compareBaseline(automatic, manual).changed, ["book.sample"]);
+    assert.deepEqual(compareBaseline(automatic, manual, { layoutOnly: true }).changed, []);
+    assert.deepEqual(compareBaseline(automatic, classified("automatic", "b"), { layoutOnly: true }).changed, ["book.sample"]);
+    assert.throws(() => compareBaseline(legacy, classified("unknown")), /Invalid official example baseline row/);
+});
+
 test("shows inline diffs and escapes source code in the HTML overview", () => {
     const name = "book.general.example.test";
     const diff = `diff --git a/before/${name}.flix b/after/${name}.flix\n@@ -1 +1 @@\n-<script>\n+    <script>\n`;
@@ -212,7 +227,7 @@ test("docs-examples CLI fails when a changed layout diff lacks a review reason",
         await mkdir(join(book, "src"), { recursive: true });
         await writeFile(join(book, "src", "SUMMARY.md"), "* [One](one.md)\n* [Two](two.md)\n");
         await writeFile(join(book, "src", "one.md"), "# One\n\n```flix\ndef one():Int32=1\n```\n");
-        await writeFile(join(book, "src", "two.md"), "# Two\n\n```flix\ndef two():Int32=2\n```\n");
+        await writeFile(join(book, "src", "two.md"), "# Two\n\n```flix\ndef a(): Int32 = 1 // First\ndef longer(): Int32 = 2 // Second\n```\n");
         await mkdir(join(website, "src/lib"), { recursive: true });
         await mkdir(join(website, "src/pages"), { recursive: true });
         await writeFile(join(website, "src/lib/indexExamples.js"), "export const shared = `def site():Int32=3\\n`;\n");
@@ -224,7 +239,7 @@ test("docs-examples CLI fails when a changed layout diff lacks a review reason",
         const reviews = join(root, "reviews.json");
         const reviewBaseline = join(root, "base.tsv");
         await writeFile(reviews, "{}\n");
-        // Empty baseline so both layout-changes count as added and need reviews.
+        // Empty baseline so every changed layout counts as added and needs a review.
         await writeFile(reviewBaseline, "case\tstatus\tchange\tsha256\n");
 
         const usage = await exec("node", [
@@ -245,7 +260,10 @@ test("docs-examples CLI fails when a changed layout diff lacks a review reason",
             (error) => error,
         );
         assert.equal(run.code, 1);
-        assert.match(String(run.stderr), /Missing layout review:/);
+        assert.match(String(run.stderr), /Missing layout review: book\.two\./);
+        const baseline = await readFile(join(out, "baseline.tsv"), "utf8");
+        assert.match(baseline, /book\.two[^\n]*\tautomatic$/m);
+        assert.match(baseline, /book\.one[^\n]*\tmanual$/m);
     } finally {
         await rm(root, { recursive: true, force: true });
     }

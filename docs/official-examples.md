@@ -132,8 +132,15 @@ the entire formatted result. Every changed comment gap is listed by line
 and column width in the HTML and JSON reports. Mixed diffs, including
 changes to code layout or the final newline, stay in the review groups.
 
-The baseline and explicit approval checks still use exact comparisons.
-Changes to the official examples trigger the usual drift check.
+The baseline records these groups in `layout_review`. An explained layout
+change is `automatic`, every other layout change is `manual`, and cases
+without layout changes contain `-`. Weekly drift checks compare the exact
+example fields and this classification. Comparisons with legacy four-column
+baselines use the original fields.
+
+The pull-request approval check still compares the exact example fields and
+requires a case-specific reason for a new or changed layout diff, including
+an automatically explained one.
 
 ### Review a weekly failure
 
