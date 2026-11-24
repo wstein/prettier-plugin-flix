@@ -6,7 +6,7 @@ User-facing changes to Prettier Plugin for Flix. Plugin releases have their own 
 
 ## [0.2.0] - 2026-11-24
 
-Tested with Flix 0.79.0 and 0.80.0 and Prettier 3.10.1.
+Tested with Flix 0.80.0 (compiler and standard library) and Prettier 3.10.1. Flix 0.79.0 is covered by grammar and formatting fixtures only.
 
 ### Formatting changes
 
@@ -16,24 +16,25 @@ Several of these changes alter the output for existing files. Run the formatter 
 - Indent a wrapped `with` constraint list once, in the same column as the body after `=`, as `flix format` does. Existing files with wrapped trait constraints may reformat. ([PR #275][pr-275], [#273][issue-273])
 - Print record types, literals, patterns and updates without inner brace padding (`{x = T}`, `{x = 1 | r}`), matching Flix. Effect sets and schema braces keep a space, an open record keeps a leading space only (`{ | a}`), and a bare `{ x }` keeps block padding. Existing files with padded record braces may reformat. ([PR #249][pr-249])
 - Keep one source blank line after the opening brace of a `mod`, `trait`, `instance`, `eff` or `struct`, and never add one. Remove opening blank lines in enums, and keep a blank line that separates an enum opener comment from the next case or comment. Existing declaration blocks may reformat. ([PR #250][pr-250], [PR #252][pr-252])
-- Remove the blank line after the opening bracket in comment-only expression braces, parameter lists, call arguments and schema braces, as `flix format` does. `List#{ /* c */ }`, `Array#{ /* c */ }` and record braces with only a comment stay tight. Existing files may reformat. ([PR #267][pr-267])
+- Remove the blank line after the opening bracket in comment-only expression braces, parameter lists, call arguments, unit and tuple patterns, and schema braces, as `flix format` does. `List#{ /* c */ }`, `Array#{ /* c */ }` and record braces with only a comment stay tight. Existing files may reformat. ([PR #267][pr-267])
 - Keep a Flixdoc comment (`///`) directly above its declaration. Existing files with a blank line after Flixdoc may reformat. ([PR #245][pr-245], [PR #255][pr-255])
-- Keep a return type arrow chain of two or more arrows on one line when it fits: it moves as a whole to its own continuation line, and a short `with` list follows in the same column. A single arrow, and arrows in parentheses, wrap as before. Existing files may reformat signatures whose chain wrapped at each arrow. ([PR #233][pr-233])
+- Move a return type that is an arrow chain of two or more arrows to its own continuation line when it fits there, and put a short `with` list on the next line in the same column. v0.1.3 could break such signatures inside type brackets (`Order[`, `t1`, `]` on separate lines). A single arrow, and arrows in parentheses, keep the ordinary signature wrap. Existing files may reformat long signatures. ([PR #233][pr-233])
 - Put spaces around list cons in expressions and patterns (`a :: b`), including single cons operators. Wrapped continuations begin with `::`. Glued comments and package qualifiers such as `pkg::Mod` keep their spacing, and `use` paths stay tight. Existing files with tight list cons may reformat. ([PR #145][pr-145], [PR #282][pr-282])
 - Indent a wrapped match-arm guard one level deeper than the arm body. ([PR #151][pr-151])
-- Preserve source blank lines between declarations, including after import and use statements, and collapse multiple blank lines to one. Insert a blank line between sibling declarations when either has a braced body.
+- Preserve source blank lines between declarations, including after import and use statements, and collapse multiple blank lines to one.
 - Wrap long function types at arrows, long trait constraints between entries, and long record and schema row tails before the pipe.
-- Preserve vertical Datalog rules and wrap long query, solve and inject lists between clauses or entries. Own-line comments above `solve`, `query` or `inject` no longer force fitting clauses to wrap. ([PR #264][pr-264])
+- Preserve vertical Datalog rules and wrap long query, solve and inject lists between clauses or entries. Own-line comments above `solve`, `query` or `inject` no longer force fitting clauses to wrap. Existing files in this layout may reformat. ([PR #264][pr-264])
+- Wrap a record update before its base when the final field and base exceed the configured width. Existing files may reformat on upgrade. ([commit][commit-9627ee6])
 - Wrap oversized calls with trailing lambdas while keeping the call head and lambda together when they fit.
 - Give trailing comments that start with four or more slashes the usual two-space minimum and group alignment. Existing files may reformat.
 - Where a match scrutinee has a comment after an access dot, the layout at the affected line-width boundary may change in existing files. ([PR #261][pr-261])
 
 ### Fixes
 
-- Keep solve and query clauses stable across formatting passes when a comment moves off a semicolon. ([PR #264][pr-264])
+- Keep solve and query clauses stable across formatting passes when a comment moves off a semicolon. Existing files in this layout may reformat. ([PR #264][pr-264])
 - Keep braced effects stable across formatting passes when a match scrutinee has a comment after an access dot. ([PR #261][pr-261])
 - Limit the break after `else` to line comments, and keep a line comment after `else` in front of comments in the else branch. ([PR #225][pr-225])
-- Keep short enum case lists on one line after moving an opening-brace comment. ([PR #252][pr-252])
+- Keep short enum case lists on one line after moving an opening-brace comment. Existing files may reformat. ([PR #252][pr-252])
 - Keep signature effect-set breaks stable when a hugged `=` body would not fit on the continuation with the set ([#92][issue-92], [#201][issue-201]).
 - Skip match-arm arrow alignment when padding would wrap a compact body onto the next line ([#154][issue-154]).
 - Keep map, record and match alignment stable when a block comment leads a map key, record field or match `case`, and do not break a list only because a block comment ends its source line before a `,` or `;` ([#137][issue-137], [#187][issue-187]).
@@ -48,7 +49,7 @@ Several of these changes alter the output for existing files. Run the formatter 
 - Soften trailing block-comment breaks in match arms only while measuring arrow alignment, so a block comment that ends its line after `=>` stays broken across passes.
 - Keep single-statement blocks that the source wrote on several lines vertical inside a trailing lambda that hugs its call.
 - After a mismatched or unclosed delimiter, still format valid sibling definitions and Datalog rules.
-- Format correctly when both Flix grammars ship in one bundle. ([PR #172][pr-172])
+- Format correctly when both Flix grammars ship in one bundle. ([PR #224][pr-224])
 
 ### Playground and catalog
 
@@ -60,6 +61,7 @@ Several of these changes alter the output for existing files. Run the formatter 
 - Hide examples whose Flix version range excludes the selected version. ([PR #269][pr-269])
 - Load only the selected Flix grammar at startup, and retry a failed grammar load on the next format. ([PR #265][pr-265])
 - Clear a stale preview after a timeout or load failure, and show a Not formatted status when recovery cannot produce output.
+- Associate syntax and line-width errors with their controls and give diff rows accessible line labels. ([commit][commit-109f02a])
 - Publish the fixture catalog for both Flix versions under `/flix/0.79.0/` and `/flix/0.80.0/`, with a version switcher. Fixtures outside a version's range do not appear in its tree. ([PR #222][pr-222], [PR #266][pr-266], [PR #270][pr-270])
 - Describe how the formatter differs from `flix format`, with references, and group the catalog navigation by topic. ([PR #229][pr-229], [PR #271][pr-271], [PR #263][pr-263])
 - Add the project branding kit: logo, icons, banner and social preview, shown in the README, the catalog and the Playground. ([PR #256][pr-256], [PR #258][pr-258])
@@ -179,6 +181,8 @@ First independently versioned plugin release. Tested with Flix 0.80.0 and Pretti
 [partial-formatting]: https://github.com/wstein/prettier-plugin-flix/commit/12ae844
 [playground-widths]: https://github.com/wstein/prettier-plugin-flix/commit/bc3ef45
 [style-guide]: https://github.com/wstein/prettier-plugin-flix/commit/1ef741b
+[commit-9627ee6]: https://github.com/wstein/prettier-plugin-flix/commit/9627ee6
+[commit-109f02a]: https://github.com/wstein/prettier-plugin-flix/commit/109f02a
 [pr-145]: https://github.com/wstein/prettier-plugin-flix/pull/145
 [pr-149]: https://github.com/wstein/prettier-plugin-flix/pull/149
 [pr-150]: https://github.com/wstein/prettier-plugin-flix/pull/150
