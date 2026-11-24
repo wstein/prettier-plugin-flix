@@ -1,6 +1,6 @@
 ---
 title: "Preserve tight double colons beside comments"
-description: "Keep tight use-path and glued-comment cons :: ; a long tight cons chain wraps and spaces when it no longer fits."
+description: "Keep use paths and cons operators with glued comments tight. Other cons operators are spaced and lead wrapped lines."
 ---
 
 ## Input
@@ -65,7 +65,15 @@ def headOr(l: List[Int32]): Int32 = match l {
 }
 
 def longTight(): List[Int32] =
-    1000000::2000000::3000000::4000000::5000000::6000000::7000000::8000000::Nil
+    1000000
+        :: 2000000
+        :: 3000000
+        :: 4000000
+        :: 5000000
+        :: 6000000
+        :: 7000000
+        :: 8000000
+        :: Nil
 ```
 
 ```flix printWidth=35

@@ -191,17 +191,17 @@ Fixture: `strings/debug-interpolator.md`.
 ([#13760](https://github.com/flix/flix/issues/13760)). For **list** cons it
 prefers `1 :: 2 :: Nil`.
 
-**Plugin:** Keeps package `pkg::Mod` tight. List cons may still print tight
-`1::2::Nil` today.
+**Plugin:** Keeps package qualifiers tight and normalizes list cons to
+`1 :: 2 :: Nil` in expressions and patterns. Wrapped chains start their
+continuations with `::`. Cons operators with glued comments keep their
+spacing so the comments stay attached.
 
-**Justification (Scala) for packages:** Scala paths are dotted and stay tight
-(`a.b.C`). No mainstream Scala formatter inserts a space into a qualified name.
-Flix package `::` must stay tight for the same reason.
+**Justification (Scala) for packages:** Scala paths stay tight (`a.b.C`).
+Flix similarly requires a tight package qualifier such as `pkg::Mod`.
 
 **Justification (Scala + Haskell) for list cons:** Scala writes spaced infix
-`1 :: 2 :: Nil`; Haskell writes spaced `1 : 2 : []`. Preferring spaced **list**
-cons (toward Flix built-in *and* Scala/Haskell) is the externally justified
-direction if the plugin tightens that rule later. That is separate from #13760.
+`1 :: 2 :: Nil` and Haskell writes spaced `1 : 2 : []`. The plugin follows the
+same spacing as the examples in the Flix book.
 
 **Flix docs (internal — list cons):** Official examples consistently use **spaced**
 list cons, matching the built-in:
@@ -222,18 +222,13 @@ use museum ::Clerk.welcomeVisitor
 
 // Flix docs + built-in + Scala/Haskell (list cons)
 1 :: 2 :: Nil
-
-// Plugin keeps authored cons spacing: a tight chain stays tight when it fits;
-// a spaced chain stays spaced (see docs/formatting.md).
-1::2::Nil
-1 :: 2 :: Nil
 ```
 
-**Open point:** [#13760](https://github.com/flix/flix/issues/13760) (packages only).
-Preferring spaced list cons in new code matches the docs; the plugin does not
-rewrite authored tight chains into spaced ones today.
+**Open point:** [#13760](https://github.com/flix/flix/issues/13760) covers
+package qualifiers.
 
-Fixtures: `expressions/list-append.md`, `whitespace/package-qualifier*.md`.
+Fixtures: `expressions/list-cons-normalization.md` and
+`whitespace/package-qualifier-tight-comments.md`.
 
 ---
 
