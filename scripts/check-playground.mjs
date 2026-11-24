@@ -372,6 +372,8 @@ test("GitHub import rejects ambiguous or unpinned source URLs", () => {
     const cases = [
         [`${raw}/flix/flix/${sha.slice(0, 7)}/${file}`, "short SHA"],
         [`${blob}/flix/flix/blob/${sha.slice(0, 7)}/${file}`, "short SHA on blob URL"],
+        [`${blob}/flix/flix/tree/${sha}/${file}`, "tree URL"],
+        [`${raw}/flix/flix/${sha}/main//Boxable.flix`, "empty path segment"],
         [`https://example.raw.githubusercontent.com/flix/flix/${sha}/${file}`, "Raw subdomain"],
         [`https://example.github.com/flix/flix/blob/${sha}/${file}`, "GitHub subdomain"],
         [`${raw}/flix/flix/${sha}/${file}?ref=main`, "query"],
@@ -398,6 +400,18 @@ test("source fetch rejects redirects and bounds streamed file size", async (t) =
     });
     await assert.rejects(fetchSource(url), /Redirect rejected/);
     assert.equal(fetch.mock.calls[0].arguments[0], url);
+
+    const options = fetch.mock.calls[0].arguments[1];
+    assert.equal(options.credentials, "omit");
+    assert.equal(options.referrerPolicy, "no-referrer");
+    assert.ok(options.signal instanceof AbortSignal);
+
+    fetch.mock.mockImplementation(async () => new Response("<p>Not source</p>", {
+        headers: { "Content-Type": "text/html; charset=utf-8" },
+    }));
+    await assert.rejects(fetchSource(url), /did not return a source file/);
+    fetch.mock.mockImplementation(async () => new Response(Uint8Array.of(0xff)));
+    await assert.rejects(fetchSource(url), TypeError);
 
     const chunk = new Uint8Array(limit / 2).fill(120);
     function file(chunks) {

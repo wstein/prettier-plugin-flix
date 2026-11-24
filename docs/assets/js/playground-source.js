@@ -44,13 +44,28 @@ export function sourceReference(value, lines) {
 }
 
 
-export async function fetchSource(url, signal) {
+function requestSignal(signal) {
     const timeout = AbortSignal.timeout(10_000);
+    if (!signal) return timeout;
+    if (AbortSignal.any) return AbortSignal.any([signal, timeout]);
+    if (signal.aborted) return signal;
+
+    const fallback = new AbortController();
+    for (const source of [signal, timeout]) {
+        source.addEventListener("abort", () => fallback.abort(source.reason), {
+            once: true,
+            signal: fallback.signal,
+        });
+    }
+    return fallback.signal;
+}
+
+export async function fetchSource(url, signal) {
     const response = await fetch(url, {
         credentials: "omit",
         redirect: "error",
         referrerPolicy: "no-referrer",
-        signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
+        signal: requestSignal(signal),
     });
     if (!response.ok) throw new Error(`GitHub returned HTTP ${response.status}.`);
     if (!response.body || response.headers.get("content-type")?.startsWith("text/html")) {
