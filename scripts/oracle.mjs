@@ -81,7 +81,7 @@ const harnessFailure = (what, e) => new Error(`harness failure: ${what}: ${e.kil
 const flix = async (cwd, ...cmd) => {
     try {
         const r = await run(java, ["-jar", jar, ...cmd], { cwd, maxBuffer: 1 << 28, timeout: timeoutSeconds * 1000 });
-        return { status: 0, out: r.stdout + r.stderr };
+        return { status: 0, out: r.stdout + r.stderr, stdout: r.stdout };
     } catch (e) {
         if (typeof e.code !== "number" || e.killed || e.signal) throw harnessFailure(`flix ${cmd.join(" ")} in ${cwd}`, e);
         return { status: e.code, out: (e.stdout ?? "") + (e.stderr ?? "") };
@@ -91,7 +91,9 @@ const flix = async (cwd, ...cmd) => {
 /** The Flix version the jar reports; with --pin it must equal the pinned upstream tag. */
 async function jarVersion() {
     const r = await flix(root, "--version");
-    const version = r.status === 0 ? /\b(\d+\.\d+\.\d+)\b/.exec(strip(r.out))?.[1] : undefined;
+    const version = r.status === 0
+        ? /^The Flix Programming Language (\d+\.\d+\.\d+)$/.exec(strip(r.stdout).trim())?.[1]
+        : undefined;
     if (!version) fail(`cannot read a Flix version from \`${jar} --version\`: ${strip(r.out).slice(0, 200)}`);
     if (pinFile) {
         const tag = JSON.parse(readFileSync(pinFile, "utf8")).upstream.tag.replace(/^v/, "");
