@@ -168,7 +168,12 @@ test("the catalog gives embedded editors room and aligns the header with the cha
     await page.goto(siteUrl + "examples/");
     await expect(heading).toBeVisible();
     const guide = chapters.getByRole("list", { name: "Start here" });
-    await expect(guide.getByRole("link")).toHaveText(["Formatting style", "Before and after", "Playground"]);
+    await expect(guide.getByRole("link")).toHaveText([
+        "Formatting style",
+        "Format references",
+        "Before and after",
+        "Playground",
+    ]);
     await expect(guide.getByRole("link", { name: "Before and after" })).toHaveAttribute("aria-current", "page");
     const constructs = chapters.getByRole("list", { name: "By construct" });
     await expect(constructs.locator(":scope > li > a")).toHaveText(["Declarations", "Expressions", "Datalog", "Strings"]);
