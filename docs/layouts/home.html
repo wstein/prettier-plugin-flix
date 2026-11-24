@@ -9,7 +9,7 @@
   <p>
     You are reading the catalog for Flix <strong>{{ $currentFlix }}</strong>.
     The style guide and chapter pages are shared with {{ $latestFlix }}; this tree defaults the Playground and embedded editors to {{ $currentFlix }}.
-    Most fixtures apply under every supported pin - prefer cases that set <code>minVersion</code> / <code>maxVersion</code> or pin <code>flixVersion: {{ $currentFlix }}</code> when checking older syntax, and switch to {{ $latestFlix }} for the default plugin behavior.
+    This tree lists fixtures whose <code>minVersion</code> / <code>maxVersion</code> include {{ $currentFlix }} (and cases with no range). Switch to {{ $latestFlix }} for the default plugin catalog.
   </p>
   {{ $rootHome := strings.TrimSuffix (printf "flix/%s/" $currentFlix) site.BaseURL }}
   <p><a href="{{ $rootHome }}">Open the {{ $latestFlix }} catalog (latest)</a></p>

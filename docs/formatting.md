@@ -8,11 +8,10 @@ examples below come from Markdown fixtures in the test suite.
 The plugin parses Flix **0.80.0** (default) and **0.79.0**. The published
 fixture catalog keeps shared style-guide and chapter pages, and exposes each
 pin under `/flix/<version>/` with a toolbar switcher. Editors in the 0.79
-catalog default to that grammar; most fixtures omit a version range - prefer
-cases that set `minVersion` / `maxVersion` or pin `flixVersion: 0.79.0` when
-checking older syntax. Live preview follows the selected pin, so 0.80-only
-syntax such as module-level `val` errors under 0.79 until you switch the
-control.
+catalog default to that grammar. Fixtures that set `minVersion` / `maxVersion`
+appear only in catalogs whose pin is in range (for example module-level `val`
+is omitted under `/flix/0.79.0/`). Prefer those ranges or `flixVersion: 0.79.0`
+when checking older syntax.
 
 ## Line width and indentation
 

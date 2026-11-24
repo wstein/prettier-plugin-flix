@@ -709,14 +709,14 @@ for (const override of [undefined, "54"]) {
     });
 }
 
-test("a 0.79-only fixture uses its pin in the catalog and the Playground", async ({ page }) => {
+test("a 0.79-only fixture uses its pin in the 0.79 catalog and the Playground", async ({ page }) => {
     const path = "declarations/function-named-val-flix-0.79.md";
     const source = "def val():Int32=40+3";
     await page.goto(siteUrl + "playground/?fixture=" + path);
     await expect(page.getByLabel("Flix version")).toHaveValue("0.79.0");
     await expect(page.getByRole("textbox", { name: "Preview" })).toContainText("def val(): Int32 = 40 + 2");
 
-    await page.goto(siteUrl + "declarations/#function-named-val-flix-0.79");
+    await page.goto(siteUrl + "flix/0.79.0/declarations/#function-named-val-flix-0.79");
     const fixture = page.locator("#function-named-val-flix-0\\.79 [data-embedded-playground]");
     await expect(fixture.getByLabel("Flix version")).toHaveValue("0.79.0");
     await fixture.getByRole("textbox", { name: "Flix input" }).fill(source);
@@ -727,22 +727,18 @@ test("a 0.79-only fixture uses its pin in the catalog and the Playground", async
     await expect(page.getByRole("textbox", { name: "Preview" })).toContainText("def val(): Int32 = 40 + 3");
 });
 
-test("the 0.79 catalog Live-formats unpinned 0.80-only syntax under 0.79", async ({ page }) => {
-    await page.goto(siteUrl + "flix/0.79.0/declarations/#module-value");
+test("the 0.79 catalog omits 0.80-only fixtures and the 0.80 catalog keeps them", async ({ page }) => {
+    await page.goto(siteUrl + "flix/0.79.0/declarations/");
+    await expect(page.locator("#module-value")).toHaveCount(0);
+    await expect(page.getByText("A module-level value uses declaration wrapping")).toHaveCount(0);
+
+    await page.goto(siteUrl + "flix/0.80.0/declarations/#module-value");
     const article = page.locator("#module-value");
     await expect(article.locator(".fixture-flix")).toHaveText("Flix ≥0.80.0");
     const fixture = article.locator("[data-embedded-playground]");
-    await expect(fixture.getByLabel("Flix version")).toHaveValue("0.79.0");
-    await expect(fixture.getByRole("textbox", { name: "Flix input" })).toHaveText("val answer:Int32=42");
-    const status = fixture.getByRole("status", { includeHidden: true });
-    await expect(status).toContainText(/Not formatted|Unexpected input 'val'/);
-    await expect(fixture.getByRole("textbox", { name: "Preview" })).toHaveText("val answer:Int32=42");
-
-    await fixture.getByLabel("Flix version").selectOption("0.80.0");
+    await expect(fixture.getByLabel("Flix version")).toHaveValue("0.80.0");
     await expect(fixture.getByRole("textbox", { name: "Preview" })).toHaveText("val answer: Int32 = 42");
-    await expect(status).not.toHaveAttribute("data-error");
 });
-
 test("the Playground example menu filters by Flix version ranges", async ({ page }) => {
     await page.goto(siteUrl + "playground/");
     const examples = page.getByLabel("Example");

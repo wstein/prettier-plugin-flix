@@ -9,6 +9,7 @@ import {
     compareFlixVersions,
     exampleSupportsVersion,
     filterExampleGroups,
+    filterFixtureCatalog,
     readExampleEntry,
 } from "../docs/assets/js/playground-example-versions.js";
 import { readHandoff, writeHandoff } from "../docs/assets/js/playground-link.js";
@@ -437,14 +438,12 @@ test("each supported Flix pin publishes under /flix/<version>/ while root URLs s
             assert.match(versionHome, /Open the 0\.80\.0 catalog/);
             const comments = await readFile(new URL(`flix/${version}/comments/index.html`, site), "utf8");
             assert.match(comments, /flixVersion 0\.79\.0/);
-            // Range-bounded fixtures stay in the tree and badge their pin range.
+            // Out-of-range fixtures are omitted; in-range pins stay with their badge.
             const declarations = await readFile(new URL(`flix/${version}/declarations/index.html`, site), "utf8");
-            assert.match(declarations, /id=(?:"module-value"|module-value)/);
-            assert.match(declarations, /fixture-flix[^>]*>Flix ≥0\.80\.0/);
-            assert.match(
-                declarations,
-                /id=(?:"module-value-flix-version"|module-value-flix-version)[\s\S]*?<option[^>]*value=(?:"0\.79\.0"|0\.79\.0)[^>]*selected/,
-            );
+            assert.doesNotMatch(declarations, /id=(?:"module-value"|module-value)(?:\s|>)/);
+            assert.doesNotMatch(declarations, /fixture-flix[^>]*>Flix ≥0\.80\.0/);
+            assert.match(declarations, /id=(?:"function-named-val-flix-0\.79"|function-named-val-flix-0\.79)/);
+            assert.match(declarations, /fixture-flix[^>]*>flixVersion 0\.79\.0/);
         }
         const siteRoot = "/prettier-plugin-flix/";
         const prefix = `${siteRoot}flix/${version}/`;
@@ -608,10 +607,69 @@ test("Playground example version ranges filter the menu by selected pin", async 
         },
     ]);
 
+    const catalog = {
+        declarations: {
+            count: 3,
+            groups: [
+                {
+                    title: "Values",
+                    fixtures: [
+                        { id: "checkout", path: "declarations/checkout.md" },
+                        { id: "module-value", path: "declarations/module-value.md", minVersion: "0.80.0" },
+                        {
+                            id: "function-named-val-flix-0.79",
+                            path: "declarations/function-named-val-flix-0.79.md",
+                            minVersion: "0.79.0",
+                            maxVersion: "0.79.0",
+                        },
+                    ],
+                },
+            ],
+        },
+    };
+    assert.deepEqual(filterFixtureCatalog(catalog, "0.79.0"), {
+        declarations: {
+            count: 2,
+            groups: [{
+                title: "Values",
+                fixtures: [
+                    { id: "checkout", path: "declarations/checkout.md" },
+                    {
+                        id: "function-named-val-flix-0.79",
+                        path: "declarations/function-named-val-flix-0.79.md",
+                        minVersion: "0.79.0",
+                        maxVersion: "0.79.0",
+                    },
+                ],
+            }],
+        },
+    });
+    assert.deepEqual(filterFixtureCatalog(catalog, "0.80.0"), {
+        declarations: {
+            count: 2,
+            groups: [{
+                title: "Values",
+                fixtures: [
+                    { id: "checkout", path: "declarations/checkout.md" },
+                    { id: "module-value", path: "declarations/module-value.md", minVersion: "0.80.0" },
+                ],
+            }],
+        },
+    });
+
     const published = JSON.parse(await readFile(new URL("../docs/data/playground.json", import.meta.url), "utf8"));
     assert.equal(published.fixtures["declarations/module-value.md"].minVersion, "0.80.0");
     assert.equal(published.fixtures["declarations/module-value.md"].maxVersion, undefined);
     assert.equal(published.fixtures["declarations/function-named-val-flix-0.79.md"].minVersion, "0.79.0");
     assert.equal(published.fixtures["declarations/function-named-val-flix-0.79.md"].maxVersion, "0.79.0");
     assert.ok(published.groups.some((group) => group.title === "Version pins"));
+
+
+    // Published trees omit out-of-range fixtures (root mirrors 0.80).
+    const rootDeclarations = await readFile(new URL("declarations/index.html", site), "utf8");
+    assert.match(rootDeclarations, /id=(?:"module-value"|module-value)/);
+    assert.doesNotMatch(rootDeclarations, /id=(?:"function-named-val-flix-0\.79"|function-named-val-flix-0\.79)/);
+    const catalog80 = await readFile(new URL("flix/0.80.0/declarations/index.html", site), "utf8");
+    assert.match(catalog80, /id=(?:"module-value"|module-value)/);
+    assert.doesNotMatch(catalog80, /id=(?:"function-named-val-flix-0\.79"|function-named-val-flix-0\.79)/);
 });
