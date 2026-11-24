@@ -42,8 +42,8 @@ export function factsFromKnown(entries) {
 /**
  * Layout changes from an audit report directory (or a pre-parsed
  * `{ layoutChanges }` bag) plus approvals from reviews.json.
- * A review with a mismatched digest is recorded as Approval(name, reviewDigest)
- * so the Flix program can show that it does not cover LayoutChange(name, current).
+ * Approval facts are created only when `approvalFor` accepts the review
+ * (matching digest and non-blank reason), matching the audit helper.
  */
 export function factsFromAudit(auditInput, reviews = {}) {
     const audit = typeof auditInput === "string"
@@ -59,8 +59,10 @@ export function factsFromAudit(auditInput, reviews = {}) {
     for (const c of layoutChanges) {
         const id = c.id ?? c.case_name;
         layouts.push([id, c.digest]);
-        const review = reviews[id];
-        if (review?.digest) approvals.push([id, review.digest]);
+        // Match approvalFor: digest must match and reason must be a non-blank string.
+        // Digest-only rows stay out of Approval so Datalog `not Approval(name, digest)` still fires.
+        const reason = approvalFor({ status: "layout-change", digest: c.digest }, reviews[id]);
+        if (reason) approvals.push([id, c.digest]);
     }
     layouts.sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0));
     approvals.sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0));
@@ -125,8 +127,36 @@ function flixList(items, renderItem) {
 }
 
 /**
- * Emit a self-contained Flix main that embeds the facts, runs ReviewRules.evaluate,
- * and prints FINDING lines for the Node runner to parse.
+ * Escape a field for the FINDING TSV line so embedded tabs/newlines round-trip.
+ * Kept in sync with `escapeFindingField` in ReviewRules.flix.
+ */
+export function escapeFindingField(value) {
+    return String(value)
+        .replace(/\\/g, "\\\\")
+        .replace(/\n/g, "\\n")
+        .replace(/\r/g, "\\r")
+        .replace(/\t/g, "\\t");
+}
+
+/** Inverse of escapeFindingField. */
+export function unescapeFindingField(value) {
+    let out = "";
+    for (let i = 0; i < value.length; i++) {
+        if (value[i] === "\\" && i + 1 < value.length) {
+            const n = value[++i];
+            if (n === "n") out += "\n";
+            else if (n === "r") out += "\r";
+            else if (n === "t") out += "\t";
+            else if (n === "\\") out += "\\";
+            else out += `\\${n}`;
+        } else out += value[i];
+    }
+    return out;
+}
+
+/**
+ * Emit a self-contained Flix main that embeds the facts, runs evaluate,
+ * and prints FINDING lines with escaped fields for the Node runner to parse.
  */
 export function emitRunnerSource(facts) {
     const fails = flixList(facts.fails, ([id, w]) => `(${flixString(id)}, ${w})`);
@@ -144,19 +174,23 @@ def main(): Unit \\ IO =
         ${approvals}
     );
     foreach ((rule, subject, evidence) <- rows)
-        println("FINDING\\t\${rule}\\t\${subject}\\t\${evidence}")
+        println("FINDING\\t\${escapeFindingField(rule)}\\t\${escapeFindingField(subject)}\\t\${escapeFindingField(evidence)}")
 `;
 }
 
-/** Parse FINDING lines from Flix stdout. */
+/** Parse FINDING lines from Flix stdout (escaped TSV fields). */
 export function parseFindingLines(text) {
     const out = [];
     for (const line of String(text).split(/\r?\n/)) {
         if (!line.startsWith("FINDING\t")) continue;
         const parts = line.split("\t");
-        if (parts.length < 4) continue;
+        if (parts.length !== 4) continue;
         const [, rule, subject, evidence] = parts;
-        out.push({ rule, subject, evidence });
+        out.push({
+            rule: unescapeFindingField(rule),
+            subject: unescapeFindingField(subject),
+            evidence: unescapeFindingField(evidence),
+        });
     }
     return out;
 }

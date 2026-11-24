@@ -18,8 +18,8 @@ Exempt / non-findings (covered by fixtures):
 - Known exception for the same case id (`file\|width\|form\|token`)
 - Skipped sweep cases
 - Failures below width 40 (unsupported for sweeps)
-- Layout changes with an approval whose digest equals the current digest
-- Stale approvals (other digest) still produce `R2`
+- Layout changes with an approval whose digest equals the current digest and whose reason is non-blank
+- Stale digests, blank reasons, and missing reviews still produce `R2`
 
 ## Input mapping
 
@@ -29,12 +29,17 @@ Exempt / non-findings (covered by fixtures):
 | Sweep export `cases` with `status=skipped` | `SweepSkip(id, width)` |
 | Known-failure list (`test/known-*.json`) | `KnownException(id)` |
 | Audit `report.json` layout-change rows | `LayoutChange(caseName, digest)` |
-| `docs/official-example-reviews.json` | `Approval(caseName, digest)` |
+| `docs/official-example-reviews.json` | `Approval(caseName, digest)` only when `approvalFor` accepts the row (digest match and non-blank reason) |
 
 Stable case ids match the sweep export / known-failure key:
 `file|width|form|token` (idempotence uses `plain` and `-`).
 
-Findings are `{ rule, subject, evidence }`, sorted by those fields.
+Findings are `{ rule, subject, evidence }`, sorted by those fields. The Flix runner
+prints `FINDING` lines with tab-escaped fields so subjects that contain tabs
+(or newlines) round-trip; the Node mirror does not need that encoding.
+
+Keep this prototype **opt-in**. Prefer the Node helpers for any future gate; use
+the Flix rules when readability of the exception side-by-side matters.
 
 ## Local invocation
 

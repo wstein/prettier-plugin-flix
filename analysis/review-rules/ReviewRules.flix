@@ -47,3 +47,10 @@ def evaluate(
         select (rule, subject, evidence) from Finding(rule, subject, evidence);
     // Sort in Node for a stable Comparison API across Flix versions; return as List.
     Vector.toList(rows)
+
+/// Escape tabs/newlines so FINDING TSV lines round-trip (kept in sync with lib.mjs).
+def escapeFindingField(s: String): String =
+    s |> String.replace(src = "\\", dst = "\\\\")
+      |> String.replace(src = "\n", dst = "\\n")
+      |> String.replace(src = "\r", dst = "\\r")
+      |> String.replace(src = "\t", dst = "\\t")

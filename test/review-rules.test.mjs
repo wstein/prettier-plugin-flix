@@ -15,6 +15,8 @@ import {
     loadAndEvaluate,
     findingsFromExistingTooling,
     emitRunnerSource,
+    escapeFindingField,
+    unescapeFindingField,
     parseFindingLines,
     runFlixPrototype,
 } from "../analysis/review-rules/lib.mjs";
@@ -58,6 +60,24 @@ test("R2: reports missing and stale digests; exempts matching approval", () => {
     assert.deepEqual(tooling, findings);
 });
 
+test("R2: blank approval reason does not create an Approval fact", () => {
+    const digest = "1111111111111111111111111111111111111111111111111111111111111111";
+    const layoutChanges = [{ id: "book.example.blank-reason", digest, status: "layout-change" }];
+    const reviews = {
+        "book.example.blank-reason": { digest, reason: "   " },
+    };
+    const { layouts, approvals } = factsFromAudit({ layoutChanges, present: true }, reviews);
+    assert.deepEqual(approvals, []);
+    const findings = evaluateFindings({ fails: [], skips: [], known: [], layouts, approvals });
+    assert.deepEqual(findings, [
+        { rule: RULE_R2, subject: "book.example.blank-reason", evidence: digest },
+    ]);
+    assert.deepEqual(
+        findings,
+        findingsFromExistingTooling({ sweep: { cases: [] }, knownIds: [], layoutChanges, reviews }),
+    );
+});
+
 test("loadAndEvaluate is deterministic and matches existing tooling", () => {
     const a = loadAndEvaluate({
         sweepPath: join(fixtures, "sweep-mixed.json"),
@@ -96,11 +116,23 @@ test("emitRunnerSource embeds facts; parseFindingLines reads FINDING rows", () =
         approvals: [],
     });
     assert.match(src, /\bevaluate\(/);
+    assert.match(src, /escapeFindingField/);
     assert.match(src, /"a\.flix\|40\|plain\|-"/);
     assert.deepEqual(
-        parseFindingLines("FINDING\tR1-fail-without-exception\ta.flix|40|plain|-\twidth=40\nnoise\n"),
+        parseFindingLines(`FINDING\t${RULE_R1}\ta.flix|40|plain|-\twidth=40\nnoise\n`),
         [{ rule: RULE_R1, subject: "a.flix|40|plain|-", evidence: "width=40" }],
     );
+});
+
+test("FINDING field escape round-trips tabs and newlines", () => {
+    const subject = "tab\tname.flix|40|plain|-";
+    const evidence = "width=40\nmore";
+    const line = ["FINDING", escapeFindingField(RULE_R1), escapeFindingField(subject), escapeFindingField(evidence)].join("\t");
+    assert.equal(line.split("\t").length, 4);
+    assert.deepEqual(parseFindingLines(`${line}\n`), [
+        { rule: RULE_R1, subject, evidence },
+    ]);
+    assert.equal(unescapeFindingField(escapeFindingField("a\\b\tc")), "a\\b\tc");
 });
 
 test("CLI writes findings JSON for the mixed fixtures", () => {
@@ -139,4 +171,33 @@ test("optional Flix jar matches the Node mirror when FLIX_JAR is set", (t) => {
     });
     assert.equal(flix.ok, true, flix.stderr || flix.stdout);
     assert.deepEqual(flix.findings, loaded.findings);
+});
+
+test("optional Flix jar round-trips a tab in the subject and blank-reason R2", (t) => {
+    if (!process.env.FLIX_JAR) {
+        t.skip("FLIX_JAR unset — Flix prototype not exercised in CI");
+        return;
+    }
+    const tabId = "tab\tname.flix|40|plain|-";
+    const digest = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    const facts = {
+        fails: [[tabId, 40]],
+        skips: [],
+        known: [],
+        layouts: [["book.example.blank-reason", digest]],
+        approvals: [],
+    };
+    const expected = evaluateFindings(facts);
+    assert.deepEqual(expected.map((f) => f.subject).sort(), [
+        "book.example.blank-reason",
+        tabId,
+    ]);
+    const outDir = mkdtempSync(join(tmpdir(), "review-rules-flix-tab-"));
+    const flix = runFlixPrototype(facts, {
+        jarPath: process.env.FLIX_JAR,
+        outDir,
+        rulesFile: join(root, "analysis/review-rules/ReviewRules.flix"),
+    });
+    assert.equal(flix.ok, true, flix.stderr || flix.stdout);
+    assert.deepEqual(flix.findings, expected);
 });
