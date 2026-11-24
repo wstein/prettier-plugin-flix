@@ -1049,6 +1049,31 @@ test("offscreen embedded editors release views and restore draft settings", asyn
     await expect.poll(() => input.innerText()).toBe(original);
 });
 
+test("returning to a copied partial preview restores its diagnostic", async ({ context, page }) => {
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+    await page.goto(siteUrl + "expressions/");
+    const editors = page.locator("[data-embedded-playground]");
+    const first = editors.first();
+    const last = editors.last();
+    const reveal = (embedded) => embedded.evaluate((node) =>
+        node.closest(".fixture").scrollIntoView({ block: "center", behavior: "instant" }));
+    const input = first.getByRole("textbox", { name: "Flix input" });
+    const status = first.locator(".playground-status");
+
+    await reveal(first);
+    await input.fill("def first():Int32=1\n\ndef broken():Int32=)\n\ndef second():Int32=2\n");
+    await expect(input).toHaveAccessibleErrorMessage(/Partially formatted/);
+    await first.getByRole("button", { name: "Copy" }).click();
+    await expect(status).toHaveText("Copied to clipboard.");
+    await reveal(last);
+    await last.getByLabel("Line width").focus();
+    await expect(first.locator(".cm-editor")).toHaveCount(0);
+
+    await reveal(first);
+    await expect(input).toHaveAccessibleErrorMessage(/Partially formatted/);
+    await expect(first.getByRole("textbox", { name: "Preview" })).toContainText("def second(): Int32 = 2");
+});
+
 test("embedded syntax examples keep separate diagnostics and previews", async ({ page }) => {
     await page.goto(siteUrl + "errors/");
     const editors = page.locator("[data-embedded-playground]");

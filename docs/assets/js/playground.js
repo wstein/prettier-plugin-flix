@@ -190,7 +190,7 @@ function mountWorkbench(playground, { initial, onChange, saved } = {}) {
             announceTakeOver = false;
         } else if (input.view.contentDOM.hasAttribute("aria-invalid")) input.markError();
         previewSource = input.view.state.doc;
-        preview = { source: previewSource.toString(), output: data.output };
+        preview = { source: previewSource.toString(), output: data.output, error: data.error };
         replaceCode(output.view, preview.output);
         // Remap after layout so Sync survives wrapping that changes the preview height.
         highlighter?.apply(output.view);
@@ -546,7 +546,7 @@ function mountWorkbench(playground, { initial, onChange, saved } = {}) {
         cancelRequest?.();
         const saved = {
             input: input.saveState(),
-            output: previewRevision === revision && !status.hasAttribute("data-error") ? preview?.output : undefined,
+            output: previewRevision === revision && !preview?.error ? preview?.output : undefined,
             scroll: [input, output].map(({ view }) => ({
                 top: view.scrollDOM.scrollTop, left: view.scrollDOM.scrollLeft, behavior: "instant",
             })),
