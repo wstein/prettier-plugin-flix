@@ -55,11 +55,11 @@ as `=`, `{`, or `=>` when they fit. It never concatenates the next line’s code
 into the comment. Copying Flix’s merge behavior would be uniquely destructive.
 
 ```flix
-# Plugin (matches Scala-style EOL ownership)
+// Plugin (matches Scala-style EOL ownership)
 def g(x: Int32): Int32 =  // after the equals
     x + 1
 
-# Built-in second pass (comment demoted — or worse under #13758)
+// Built-in second pass (comment demoted — or worse under #13758)
 def g(x: Int32): Int32 =
     // after the equals
     x + 1
@@ -84,10 +84,10 @@ not strip it. Match/`case` comments stay with their arm. Losing comments is not
 an accepted Scala formatter tradeoff.
 
 ```flix
-# Plugin / valid source
+// Plugin / valid source
 def f(): Int32 = if /* c */ (true) { 1 } else { 2 }
 
-# Built-in (#13761) may drop /* c */
+// Built-in (#13761) may drop /* c */
 ```
 
 **Open point:** [#13761](https://github.com/flix/flix/issues/13761).
@@ -128,11 +128,11 @@ plugin’s alignment is the same product idea under Prettier’s width model—n
 invention relative to Scala tooling.
 
 ```flix
-# Plugin (Scala-like align)
+// Plugin (Scala-like align)
 def f(): Int32 \ IO =    // f is impure
     let r1 = inc1(123);  // pure
 
-# Built-in (single space / possible move)
+// Built-in (single space / possible move)
 def f(): Int32 \ IO =
     // f is impure
     let r1 = inc1(123); // pure
@@ -172,10 +172,10 @@ Fixtures: `comments/prettier-ignore.md`.
 the built-in’s space is not a style reference to follow.
 
 ```flix
-# Plugin (= Scala interpolator adjacency)
+// Plugin (= Scala interpolator adjacency)
 def f(): String = d"Hello World"
 
-# Built-in (#13759) — invalid
+// Built-in (#13759) — invalid
 def f(): String = d "Hello World"
 ```
 
@@ -215,16 +215,16 @@ printing:
 - [List.flix source](https://api.flix.dev/List.src.html) — prose `v :: vs`
 
 ```flix
-# Plugin / required for packages
+// Plugin / required for packages
 use museum::Clerk.welcomeVisitor
 
-# Built-in bug (#13760)
+// Built-in bug (#13760)
 use museum ::Clerk.welcomeVisitor
 
-# Flix docs + built-in + Scala/Haskell (list cons)
+// Flix docs + built-in + Scala/Haskell (list cons)
 1 :: 2 :: Nil
 
-# Plugin today (unjustified against Flix docs)
+// Plugin today (unjustified against Flix docs)
 1::2::Nil
 ```
 
@@ -324,7 +324,7 @@ line** as the fields whenever the form is short. There is no multi-line wrapping
 rule for long tails.
 
 ```flix
-# doc.flix.dev / flix.dev style (compact)
+// doc.flix.dev / flix.dev style (compact)
 def g(r: {x = Int32, y = Int32 | s}): Int32 = r#x + r#y
 let p2 = { x = 3 | p1 };
 ```
@@ -380,7 +380,7 @@ External Scala/Haskell analogies for `|>` + trailing lambdas are thin. Flix’s
 own book is the better internal reference:
 
 ```flix
-# doc.flix.dev/functions.html — leading |>, short lambdas stay on the call line
+// doc.flix.dev/functions.html — trailing |>, short lambdas stay on the call line
 List.range(1, 100) |>
 List.filter(x -> x `Int32.mod` 2 == 0) |>
 List.map(x -> x * x) |>
@@ -395,9 +395,11 @@ List.count(x -> x > 1)
 
 - [Functions (pipelines)](https://doc.flix.dev/functions.html)
 
-That layout supports **leading `|>`** and **inline short lambdas**. It does
-**not** show deep hugging of long trailing lambda bodies the way some plugin
-fixtures do—treat those hugs as Prettier width choices, not a Flix-book rule.
+The book puts `|>` at the end of each line and keeps short lambdas inline.
+The plugin starts each wrapped step with `|>`, following the
+[F# pipeline formatting guidelines](https://learn.microsoft.com/en-us/dotnet/fsharp/style-guide/formatting#formatting-pipeline-expressions).
+The plugin also keeps a fitting trailing lambda in the call, with its body
+laid out according to the configured width.
 
 Fixtures: `expressions/pipeline-trailing-lambda.md`, `whitespace/tight-dot-comments.md`.
 
@@ -447,10 +449,10 @@ ones break **after the constraint inputs**, then indent `select … from`. Rules
 are typically one fact/rule per line inside `#{…}`.
 
 ```flix
-# compact (fixpoints.html)
+// compact (fixpoints.html)
 let paths = query edges, rules select true from Path(src, dst);
 
-# longer — break before select (fixpoints.html / stratified-negation.html)
+// longer — break before select (fixpoints.html / stratified-negation.html)
 query getParents(), getAdoptions(), withAncestors()
     select (x, y) from AncestorOf(x, y) |> println
 
@@ -488,7 +490,7 @@ is no written rule for blanks between members or for comments on the opener
 line.
 
 ```flix
-# automatic-derivation.html — cases right after the brace
+// automatic-derivation.html — cases right after the brace
 enum Shape with Eq, Order {
     case Circle(Int32)
     case Square(Int32)
