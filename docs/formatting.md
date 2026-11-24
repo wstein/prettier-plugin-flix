@@ -462,7 +462,8 @@ record field but printed with padding like a block (`{ x }`), as Flix does.
 A comment-only collection brace (`List#{}`, `Array#{}`, `Set#{}`, `Map#{}`,
 `Vector#{}`), record, schema `#{…}`, or `(…)` (parameter lists, calls, unit,
 and tuple patterns) breaks once after the opener and drops any blank line
-there. Declaration braces preserve one source blank. This follows
+there. Declaration braces for `mod` / `trait` / `instance` / `eff` / `struct`
+preserve one source blank (`enum` bodies still drop it). This follows
 `flix format` 0.80.0 where it retains the comment. The plugin also preserves
 comments in empty call argument lists.
 [Record brace padding fixture](../test/fixtures/expressions/record-no-inner-pad.md) ·
