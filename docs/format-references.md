@@ -325,7 +325,7 @@ consume the next field (scalafmt preserves them)—same invariant the plugin
 keeps, and the same class of bug #13676 fixed upstream.
 
 **Open-row `|` layout — weak external:** There is no Scala clone for Flix open
-rows. Haskell record update `{ r | field = e }` is only a thin analogy.
+rows. Haskell record update `{ r | field = e }` is only a loose analogy.
 
 **Flix docs (internal — `|` tails):** Official examples keep `|` **on the same
 line** as the fields whenever the form is short. There is no multi-line wrapping
@@ -386,7 +386,7 @@ scalafmt does not write `foo. bar`. The plugin’s tight-dot rule is the Scala
 rule.
 
 **Pipeline + trailing lambda — usable Flix layout model (not a hard law):**
-External Scala/Haskell analogies for `|>` + trailing lambdas are thin. Flix’s
+External Scala/Haskell analogies for `|>` + trailing lambdas are limited. Flix’s
 own book is the better internal reference:
 
 ```flix
