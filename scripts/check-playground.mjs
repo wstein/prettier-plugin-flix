@@ -664,7 +664,6 @@ test("Playground example version ranges filter the menu by selected pin", async 
     assert.equal(published.fixtures["declarations/function-named-val-flix-0.79.md"].maxVersion, "0.79.0");
     assert.ok(published.groups.some((group) => group.title === "Version pins"));
 
-
     // Published trees omit out-of-range fixtures (root mirrors 0.80).
     const rootDeclarations = await readFile(new URL("declarations/index.html", site), "utf8");
     assert.match(rootDeclarations, /id=(?:"module-value"|module-value)/);
