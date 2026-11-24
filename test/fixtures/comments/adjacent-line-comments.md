@@ -34,7 +34,7 @@ def b(): Int32 = x +  // after the operator
     y
 
 def table(): List[(String, Int32)] = List#{
-    ("A", 8),  // before the comma
+    ("A",         8),  // before the comma
     // after the comma
     ("Library", 126)
 }

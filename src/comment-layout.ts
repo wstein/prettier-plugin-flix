@@ -404,6 +404,61 @@ function tupleRow(tokens: Token[], text: string, line: number): TupleRow | undef
     return { indent, cells, suffix: chars.slice(close.column + 1).join(""), line };
 }
 
+/** Blank lines separate tables. Standalone comments leave the current table open. */
+function tupleRowGroups(byLine: Map<number, Token[]>, lines: string[], openingLine: number): TupleRow[][] | undefined {
+    const groups: TupleRow[][] = [];
+    let group: TupleRow[] = [];
+    for (let line = openingLine + 1; line <= lines.length; line++) {
+        const tokens = byLine.get(line) ?? [];
+        if (tokens[0]?.type === L.RBRACE) return [...groups, group];
+        if (!lines[line - 1].trim()) {
+            if (group.length > 0) {
+                groups.push(group);
+                group = [];
+            }
+            continue;
+        }
+        const comment = tokens[0];
+        if (tokens.length === 1 && (comment.type === L.LINE_COMMENT || comment.type === L.BLOCK_COMMENT)) {
+            const lastLine = line + commentText(comment).split("\n").length - 1;
+            // A multiline block ending on a code line does not stand alone.
+            if (lastLine === line || !byLine.has(lastLine)) {
+                line = lastLine;
+                continue;
+            }
+        }
+        const row = tupleRow(tokens, lines[line - 1], line);
+        if (!row) return;
+        group.push(row);
+    }
+}
+
+function alignTupleGroup(rows: TupleRow[], lines: string[], options: LayoutOptions): boolean {
+    if (rows.length < 2) return false;
+    const first = rows[0];
+    if (!rows.every((row) => row.indent === first.indent && row.cells.length === first.cells.length &&
+        row.cells.every((cell, col) => cell.kind === first.cells[col].kind))) return false;
+    // Column maxima and pad spaces live in ReScript; discovery/measurement stay here.
+    const fields = alignTupleFields(rows.map((row) =>
+        row.cells.map(({ text, before, after }) => ({ text, before, after }))));
+    const aligned = rows.map((row, i) => row.indent + "(" + fields[i].join("") + ")" + row.suffix);
+    if (aligned.some((text, i) => {
+        const original = lines[rows[i].line - 1];
+        const originalWidth = width(original, options.tabWidth);
+        if (width(text, options.tabWidth) <= Math.max(options.printWidth, originalWidth)) return false;
+        // If a comment alone already exceeds the target, the aligned code still has room.
+        const comment = rows[i].suffix.indexOf("//");
+        return originalWidth <= options.printWidth || comment < 0 ||
+            width(text.slice(0, text.length - rows[i].suffix.length + comment).trimEnd(), options.tabWidth) > options.printWidth;
+    })) return false;
+    let changed = false;
+    rows.forEach((row, i) => {
+        changed ||= lines[row.line - 1] !== aligned[i];
+        lines[row.line - 1] = aligned[i];
+    });
+    return changed;
+}
+
 function alignTupleRows(tokens: Token[], lines: string[], options: LayoutOptions, ignoredLines?: ReadonlySet<number>): boolean {
     const byLine = new Map<number, Token[]>();
     for (const token of tokens) {
@@ -414,34 +469,9 @@ function alignTupleRows(tokens: Token[], lines: string[], options: LayoutOptions
     let changed = false;
     for (const [openingLine, opening] of byLine) {
         if (ignoredLines?.has(openingLine) || opening.at(-1)?.type !== L.LBRACE || !TABLE_COLLECTIONS.has(opening.at(-2)?.type ?? -1)) continue;
-        const rows: TupleRow[] = [];
-        let line = openingLine + 1;
-        for (; line <= lines.length; line++) {
-            const row = tupleRow(byLine.get(line) ?? [], lines[line - 1], line);
-            if (!row) break;
-            rows.push(row);
+        for (const group of tupleRowGroups(byLine, lines, openingLine) ?? []) {
+            if (alignTupleGroup(group, lines, options)) changed = true;
         }
-        if (rows.length < 2 || byLine.get(line)?.[0].type !== L.RBRACE) continue;
-        const first = rows[0];
-        if (!rows.every((row) => row.indent === first.indent && row.cells.length === first.cells.length &&
-            row.cells.every((cell, col) => cell.kind === first.cells[col].kind))) continue;
-        // Column maxima and pad spaces live in ReScript; discovery/measurement stay here.
-        const fields = alignTupleFields(rows.map((row) =>
-            row.cells.map(({ text, before, after }) => ({ text, before, after }))));
-        const aligned = rows.map((row, i) => row.indent + "(" + fields[i].join("") + ")" + row.suffix);
-        if (aligned.some((text, i) => {
-            const original = lines[rows[i].line - 1];
-            const originalWidth = width(original, options.tabWidth);
-            if (width(text, options.tabWidth) <= Math.max(options.printWidth, originalWidth)) return false;
-            // If a comment alone already exceeds the target, the aligned code still has room.
-            const comment = rows[i].suffix.indexOf("//");
-            return originalWidth <= options.printWidth || comment < 0 ||
-                width(text.slice(0, text.length - rows[i].suffix.length + comment).trimEnd(), options.tabWidth) > options.printWidth;
-        })) continue;
-        rows.forEach((row, i) => {
-            changed ||= lines[row.line - 1] !== aligned[i];
-            lines[row.line - 1] = aligned[i];
-        });
     }
     return changed;
 }
@@ -515,7 +545,7 @@ export function layoutSource(root: FlixRoot, value: Doc, options: LayoutOptions)
         trailing += info.trail.filter((comment) => comment.isLine && comment.text.startsWith("//")).length;
         hasCaret ||= info.lead.some((comment) => CARET.test(comment.text));
     }
-    const mayHaveTupleRows = /\b(?:Vector|List|Array|Set)#\s*\{\s*\(/.test(root.text);
+    const mayHaveTupleRows = /\b(?:Vector|List|Array|Set)#\s*\{\s*(?:(?:\/\/[^\r\n]*|\/\*[\s\S]*?\*\/)\s*)*\(/.test(root.text);
     const mayHaveContinuations = /,[ \t]*\/\/[^\n]*\n[ \t]+\/\//.test(root.text);
     const mayHaveHandlers = /\bhandler\s/.test(root.text);
     if (trailing < 2 && !hasCaret && !mayHaveTupleRows && !mayHaveContinuations && !mayHaveHandlers) return value;
