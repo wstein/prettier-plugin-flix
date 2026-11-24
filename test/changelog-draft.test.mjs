@@ -37,7 +37,7 @@ test("release drafts use the stable tag on the first-parent history and read cha
     commit("feat(formatter): add second feature");
     git("tag", "v0.1.1-rc.1");
     commit("fix(formatter): internal subject", "Changelog: Keep comments on the preceding argument.");
-    commit("fix(api): update import", "BREAKING CHANGE: Use the default export.\nChangelog: Update the plugin import.");
+    commit("fix(api): update import", "BREAKING CHANGE: Use the default export.\nchangelog: Update the plugin import.");
     const wrapped = commit(
         "fix(formatter): wrapped misplaced trailer",
         "Changelog: Keep a wrapped Changelog line\nwhole in the draft.\nCloses #1",
@@ -46,7 +46,7 @@ test("release drafts use the stable tag on the first-parent history and read cha
     const empty = commit("fix(formatter): empty misplaced trailer", "Body.\nChangelog:", "Co-authored-by: A <a@example.test>");
     const misplaced = commit(
         "fix(formatter): misplaced trailer still drafts",
-        "Body paragraph that keeps Changelog out of the trailer block.\nChangelog: Keep a misplaced Changelog line in the draft.",
+        "Body paragraph that keeps Changelog out of the trailer block.\nchangelog: Keep a misplaced Changelog line in the draft.",
     );
     const mixed = commit(
         "test(formatter): mixed trailers",
