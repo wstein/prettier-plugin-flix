@@ -1,7 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFile, readdir, stat } from "node:fs/promises";
-import { basename } from "node:path";
+import { cp, mkdir, mkdtemp, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
+import { basename, join } from "node:path";
+import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { loadFixture, optionsFor } from "../test/fixture.mjs";
 import { Text } from "@codemirror/state";
@@ -22,6 +23,7 @@ import {
     matchDeclarationAnchors,
 } from "../docs/assets/js/playground-scroll.js";
 import { fingerprint, fmt, programProblems } from "../test/lib.mjs";
+import { publishFixtureCatalogs } from "./publish-fixture-catalogs.mjs";
 
 const site = new URL("../docs/public/", import.meta.url);
 const page = await readFile(new URL("playground/index.html", site), "utf8");
@@ -491,6 +493,55 @@ test("each supported Flix pin publishes under /flix/<version>/ while root URLs s
             );
         }
     }
+});
+
+test("filtered catalog groups, cross-version anchors and build staging stay consistent", async (t) => {
+    const scratch = await mkdtemp(join(tmpdir(), "flix-catalog-check-"));
+    t.after(() => rm(scratch, { recursive: true, force: true }));
+    const docs = fileURLToPath(new URL("../docs/", import.meta.url));
+    const sourceDataDir = join(scratch, "data");
+    const tempDirectory = join(scratch, "staging");
+    const publicDir = join(scratch, "public");
+    await cp(join(docs, "data"), sourceDataDir, { recursive: true });
+    await mkdir(tempDirectory);
+
+    const fixtureExport = join(sourceDataDir, "fixtures.json");
+    const catalog = JSON.parse(await readFile(fixtureExport, "utf8"));
+    const group = catalog.declarations.groups.find(({ title }) => title === "Declarations");
+    assert.ok(group);
+    for (const fixture of group.fixtures) fixture.minVersion = "0.80.0";
+
+    // Exercise the fallback to an older tree as well as the production 0.80-only link.
+    const olderPath = "expressions/record-no-inner-pad.md";
+    const olderFixture = catalog.expressions.groups.flatMap(({ fixtures }) => fixtures)
+        .find(({ path }) => path === olderPath);
+    assert.ok(olderFixture);
+    olderFixture.maxVersion = "0.79.0";
+    const linkedPath = join(sourceDataDir, "playgroundFixtures.json");
+    const linked = JSON.parse(await readFile(linkedPath, "utf8"));
+    linked[olderPath].maxVersion = olderFixture.maxVersion;
+    await writeFile(linkedPath, JSON.stringify(linked));
+
+    const fixtureData = JSON.stringify(catalog);
+    await writeFile(fixtureExport, fixtureData);
+    publishFixtureCatalogs({
+        docs, baseURL: "https://wstein.github.io/prettier-plugin-flix/", publicDir, sourceDataDir, tempDirectory,
+    });
+    assert.equal(await readFile(fixtureExport, "utf8"), fixtureData);
+    assert.deepEqual(await readdir(tempDirectory), []);
+
+    const older = join(publicDir, "flix/0.79.0");
+    const declarations = await readFile(join(older, "declarations/index.html"), "utf8");
+    assert.doesNotMatch(declarations, /#group-declarations\b|id=["']?group-declarations\b/);
+    assert.match(declarations, /#group-types-and-constraints\b/);
+    const olderGuide = await readFile(join(older, "formatting/index.html"), "utf8");
+    const rootGuide = await readFile(join(publicDir, "formatting/index.html"), "utf8");
+    const olderExpressions = await readFile(join(older, "expressions/index.html"), "utf8");
+    const rootExpressions = await readFile(join(publicDir, "expressions/index.html"), "utf8");
+    assert.match(rootGuide, /\/flix\/0\.79\.0\/expressions\/#record-no-inner-pad/);
+    assert.match(olderExpressions, /id=["']?record-no-inner-pad\b/);
+    assert.match(olderGuide, /\/prettier-plugin-flix\/expressions\/#brace-only-comment/);
+    assert.match(rootExpressions, /id=["']?brace-only-comment\b/);
 });
 
 test("the Flix version switcher keeps the page path when changing catalogs", async () => {
