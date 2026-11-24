@@ -589,6 +589,53 @@ test("a source-only link loads a complete pinned file on request and selects its
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
 });
 
+test("a cancelled GitHub import cannot clear a newer import's loading state", async ({ page }) => {
+    const raw = "https://raw.githubusercontent.com/flix/flix/fe909c20c7213088b72578a4f97f6e6f05f091ff/Example.flix";
+    await page.addInitScript((url) => {
+        AbortSignal.any = undefined;
+        const fetchOriginal = window.fetch;
+        const requests = [];
+        window.importRequests = requests;
+        window.fetch = (input, options) => {
+            if (input !== url) return fetchOriginal(input, options);
+            const { promise, resolve } = Promise.withResolvers();
+            requests.push({ signal: options.signal, resolve });
+            return promise;
+        };
+    }, raw);
+    await page.goto(siteUrl + "playground/");
+    const open = page.getByRole("button", { name: "Load from GitHub…" });
+    const dialog = page.getByRole("dialog", { name: "Load from GitHub" });
+    const load = dialog.getByRole("button", { name: "Load", exact: true });
+    const url = dialog.getByLabel("Source URL");
+    const input = page.getByRole("textbox", { name: "Flix input" });
+    await open.click();
+    await url.fill(raw);
+    await load.click();
+    await expect.poll(() => page.evaluate(() => window.importRequests.length)).toBe(1);
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeHidden();
+    expect(await page.evaluate(() => window.importRequests[0].signal.aborted)).toBe(true);
+
+    await open.click();
+    await expect(url).toBeEnabled();
+    await url.fill(raw);
+    await load.click();
+    await expect.poll(() => page.evaluate(() => window.importRequests.length)).toBe(2);
+    await page.evaluate(async () => {
+        window.importRequests[0].resolve(new Response("def old(): Int32 = 1"));
+        await new Promise(requestAnimationFrame);
+        await new Promise(requestAnimationFrame);
+    });
+    await expect(load).toBeDisabled();
+    await expect(dialog.getByText("Loading source…")).toBeVisible();
+    await expect(input).not.toContainText("def old");
+
+    await page.evaluate(() => window.importRequests[1].resolve(new Response("def newSource(): Int32 = 2")));
+    await expect(dialog).toBeHidden();
+    await expect(input).toHaveText("def newSource(): Int32 = 2");
+});
+
 test("the live preview keeps trailing comments, reports cursor selection, and recovers from a syntax error", async ({ page }) => {
     await page.goto(siteUrl + "playground/");
     const input = page.getByRole("textbox", { name: "Flix input" });

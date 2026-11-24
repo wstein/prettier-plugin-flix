@@ -277,6 +277,14 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
             for (const button of submitButtons) button.disabled = loading;
         }
 
+        function cancelSourceRequest() {
+            const request = sourceRequest;
+            if (!request) return;
+            sourceRequest = undefined;
+            setLoading(false);
+            request.abort();
+        }
+
         setReference(sourceReference(initial?.sourceUrl, initial?.sourceLines));
         playground.querySelector("[data-open-source]").addEventListener("click", () => {
             urlField.value = reference?.sourceUrl ?? "";
@@ -284,10 +292,10 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
             sourceDialog.showModal();
         });
         sourceDialog.querySelector("[data-close-source]").addEventListener("click", () => {
-            sourceRequest?.abort();
+            cancelSourceRequest();
             sourceDialog.close();
         });
-        sourceDialog.addEventListener("cancel", () => sourceRequest?.abort());
+        sourceDialog.addEventListener("cancel", cancelSourceRequest);
         removeReference.addEventListener("click", () => {
             setReference(undefined);
             sourceDialog.close();
@@ -318,6 +326,7 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
         });
         sourceForm.addEventListener("submit", async (event) => {
             event.preventDefault();
+            if (sourceRequest) return;
             const url = urlField.value.trim();
             const requested = sourceReference(url, url === reference?.sourceUrl ? reference.sourceLines : undefined);
             if (!requested) {
@@ -342,7 +351,7 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
             dialogStatus.textContent = "Loading source…";
             try {
                 const source = await fetchSource(requested.downloadUrl, request.signal);
-                if (!sourceDialog.open || request.signal.aborted) return;
+                if (!sourceDialog.open || sourceRequest !== request) return;
                 if (input.view.state.doc !== currentDoc) {
                     dialogStatus.textContent = "Input changed while loading. Click Load to try again.";
                     return;
@@ -366,12 +375,14 @@ function mountWorkbench(playground, { initial, onChange } = {}) {
                 input.view.focus();
                 sourceStatus.textContent = "Source loaded.";
             } catch (error) {
-                if (sourceDialog.open && !request.signal.aborted) {
+                if (sourceDialog.open && sourceRequest === request) {
                     dialogStatus.textContent = `Could not load source. ${error.message}`;
                 }
             } finally {
-                sourceRequest = undefined;
-                setLoading(false);
+                if (sourceRequest === request) {
+                    sourceRequest = undefined;
+                    setLoading(false);
+                }
             }
         });
         select.addEventListener("change", () => setReference(undefined));
