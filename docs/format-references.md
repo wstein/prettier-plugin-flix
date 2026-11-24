@@ -265,8 +265,7 @@ constraints indent once under `with` (same column as the body after `=`).
 space before the parameter list: `def f[a: Type] (x: a)`. Effect headers stay
 fully tight: `eff E[a]`. Wrapped `with` lists indent **once** under `with`,
 sharing the body column after `=` — same depth as flix format when a list is
-already wrapped ([#273](https://github.com/wstein/prettier-plugin-flix/issues/273) /
-this change). Older plugin builds indented twice; that deeper nesting is gone.
+already wrapped ([#273](https://github.com/wstein/prettier-plugin-flix/issues/273)).
 
 **Justification (Scala) for tight `[`:** Type parameters are tight:
 `def f[A](x: A)`. scalafmt does not insert `f [A]`. That stays an external
@@ -276,8 +275,7 @@ that the whole signature is glued.
 
 **`with` indent:** No Scala/Haskell mandate for Flix `with` depth. Aligning with
 flix format’s single indent is the chosen rule: the stdlib has no wrapped
-`with` lists to cite, and the cost is reformatting files that already wrap
-(see the Changelog trailer on this PR).
+`with` lists to cite, and adopting it may reformat files that already wrap.
 
 **Flix docs (internal — `with`):** Almost only **inline / flat** forms; no
 multi-line `with` block with a prescribed indent depth.
