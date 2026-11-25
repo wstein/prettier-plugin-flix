@@ -1,7 +1,7 @@
 import { CharStream, CommonTokenStream, ParserRuleContext, TerminalNode, type ParseTree, type Token } from "antlr4ng";
 import { doc, util, type Doc } from "prettier";
 import { grammarForId, type FlixLexerClass } from "./grammar.js";
-import { ignoredDeclarationEnd, parseFlix, type FlixRoot } from "./parse.js";
+import { ignoredDeclarationEnd, parseFlix, type Comment, type FlixRoot, type TokenInfo } from "./parse.js";
 import { alignTupleFields } from "./TupleColumns.res.mjs";
 
 type LayoutOptions = { printWidth: number; tabWidth: number; useTabs: boolean };
@@ -9,6 +9,17 @@ type Scope = { parent: Scope | undefined };
 type Row = { line: number; scope: Scope | undefined; indent: number; startsBody: boolean; code: string; width: number; comment: string };
 const CARET = /^\/\/[ \t]*\^+/;
 export const LINE_COMMENT_GAP = "  ";
+
+/** A row annotation that can sit between aligned entries. */
+export function isRowLineComment(comment: Comment): boolean {
+    return comment.isLine && !comment.isDoc && !CARET.test(comment.text) &&
+        comment.text.slice(2).trim() !== "prettier-ignore";
+}
+
+export function hasAdjacentRowComments(info: TokenInfo | undefined): boolean {
+    return !!info?.lead.length && info.nlAfter === 1 &&
+        info.lead.every((comment) => comment.nl === 1 && isRowLineComment(comment));
+}
 
 /** Active lexer constants for the grammar of the tree being laid out. */
 let L: FlixLexerClass;
@@ -488,7 +499,9 @@ function alignHandlerClauses(root: FlixRoot, lines: string[], options: LayoutOpt
                 const separator = rule.EQUAL().symbol;
                 const ownLine = start.line === separator.line && !before(lines, start).trim() &&
                     !ignoredLines?.has(start.line);
-                if (!ownLine || start.line !== previousEnd + 1) {
+                const adjacent = start.line === previousEnd + 1 ||
+                    hasAdjacentRowComments(root.info.get(start.tokenIndex));
+                if (!ownLine || !adjacent) {
                     flush(clauses);
                     clauses = [];
                 }

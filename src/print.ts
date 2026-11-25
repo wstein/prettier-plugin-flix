@@ -2,7 +2,7 @@ import { ParserRuleContext, TerminalNode } from "antlr4ng";
 import { doc, util, type Doc } from "prettier";
 import { grammarForId, type FlixLexerClass } from "./grammar.js";
 import { ignoredDeclarationEnd, type Comment, type FlixRoot, type TokenInfo } from "./parse.js";
-import { LINE_COMMENT_GAP } from "./comment-layout.js";
+import { hasAdjacentRowComments, isRowLineComment, LINE_COMMENT_GAP } from "./comment-layout.js";
 
 const { align, breakParent, conditionalGroup, group, indent, line, softline, hardline, join, ifBreak, lineSuffix, literalline } = doc.builders;
 const { willBreak } = doc.utils;
@@ -565,12 +565,8 @@ export class Printer {
         return width + 2 * seps.length;
     }
 
-    // Blank lines and leading comments end an alignment group. An inline block
-    // lead before a later entry becomes own-line after the list wraps, so treat
-    // it like an own-line lead on pass 1 (#137). When the previous entry and its
-    // separator both end with a line comment, the separator's comment prints on
-    // its own line (see separatorTok), so split the group on the first pass the
-    // same way the second pass will.
+    // Keep a direct row annotation in the group. Classify a comment
+    // moved by separatorTok the same way on the first and second passes.
     private alignmentGroups<T>(
         items: T[],
         first: (item: T) => TerminalNode | null,
@@ -584,13 +580,13 @@ export class Printer {
             const token = first(item);
             const prevSep = seps && i > 0 ? seps[i - 1] : null;
             const prevLast = last && i > 0 ? last(items[i - 1]) : null;
-            const sepOwnLine = prevSep !== null && prevLast !== null &&
-                this.hasLineTrail(prevSep) && this.hasLineTrail(prevLast);
-            const lead = token !== null ? this.info(token)?.lead : undefined;
+            const sepBoundary = prevSep !== null && prevLast !== null && this.hasLineTrail(prevLast) &&
+                this.info(prevSep)?.trail.some((comment) => !isRowLineComment(comment));
+            const info = token !== null ? this.info(token) : undefined;
             const splitBefore = group.length > 0 && (
                 this.blankBefore(token) ||
-                (lead?.some((comment) => comment.nl > 0 || !comment.isLine) ?? false) ||
-                sepOwnLine
+                (info?.lead.length && !hasAdjacentRowComments(info)) ||
+                sepBoundary
             );
             if (splitBefore) {
                 groups.push(group);

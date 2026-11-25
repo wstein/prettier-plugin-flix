@@ -1,6 +1,6 @@
 ---
 title: "Map arrows with and without an inline comment"
-description: "The arrows align in both maps. The comments share a column at the default width and stay beside their entries at a narrower width. A line comment before a separator starts a new alignment group."
+description: "The arrows align in both maps. The comments share a column at the default width and stay beside their entries at a narrower width. An adjacent line comment can move off a separator without breaking arrow alignment."
 ---
 
 ## Input
@@ -46,7 +46,7 @@ pub def notedRetryLimits(): Map[String, Int32] = Map#{
     "batch"  => 2,  // first
     "export" => 1,  // note
     // Exports are expensive to retry.
-    "sync" => 120  // Sync attempts are cheap.
+    "sync"   => 120  // Sync attempts are cheap.
 }
 ```
 
@@ -73,6 +73,6 @@ pub def notedRetryLimits(): Map[
     "batch"  => 2,  // first
     "export" => 1,  // note
     // Exports are expensive to retry.
-    "sync" => 120  // Sync attempts are cheap.
+    "sync"   => 120  // Sync attempts are cheap.
 }
 ```
