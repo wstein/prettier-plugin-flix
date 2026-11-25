@@ -23,25 +23,26 @@ export const MIN_GRAMMAR_CHUNK_BYTES = 100 * 1024;
 /** Measure the published or esbuild `outdir` formatter assets. */
 export async function measureFormatterBundle(dir, formatterAsset) {
     const files = await readdir(dir);
+    if (!files.includes(formatterAsset)) {
+        throw new Error(`missing formatter asset ${formatterAsset}`);
+    }
     const sizeOf = async (names) => {
         if (names.length === 0) return 0;
         const sizes = await Promise.all(names.map(async (name) => (await stat(join(dir, name))).size));
         return sizes.reduce((sum, size) => sum + size, 0);
     };
-    const sharedNames = [
-        formatterAsset,
-        ...files.filter((name) => /^chunk-[A-Z0-9]+\.js$/.test(name)),
-    ];
+    const chunkNames = files.filter((name) => /^chunk-[A-Z0-9]+\.js$/.test(name)).sort();
+    const sharedNames = [formatterAsset, ...chunkNames];
     const shared = await sizeOf(sharedNames);
     const grammars = {};
     for (const pin of ["079", "080"]) {
-        const names = files.filter((name) => name.startsWith(`grammar-${pin}-`));
+        const names = files.filter((name) => name.startsWith(`grammar-${pin}-`)).sort();
         grammars[pin] = {
             names,
             size: await sizeOf(names),
         };
     }
-    return { files, shared, grammars };
+    return { files, sharedNames, shared, grammars };
 }
 
 /** Fail when both grammars are eager or a selected grammar exceeds the budget. */
