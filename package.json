@@ -1,6 +1,6 @@
 {
   "name": "prettier-plugin-flix",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": false,
   "description": "Prettier plugin for the Flix programming language (ANTLR4 parser, Prettier doc-IR printer)",
   "type": "module",
