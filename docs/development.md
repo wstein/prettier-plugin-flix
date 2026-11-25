@@ -157,7 +157,9 @@ workbench stays active until focus leaves it. A cold Playground
 loads only the selected Flix grammar. Changing versions loads the other grammar
 on demand, and the worker reuses both until it is restarted. The docs build
 checks the shared formatter code plus each selected grammar against the 1 MiB
-uncompressed budget.
+uncompressed budget, and that each `grammar-*` chunk is large enough that both
+Flix grammars cannot hide in the eager startup payload (see
+`scripts/playground-bundle-budget.mjs` and #214).
 
 With the development dependencies and the fixture workflow's Hugo version
 installed, run:
