@@ -407,29 +407,37 @@ function tupleRow(tokens: Token[], text: string, line: number): TupleRow | undef
 /** Blank lines separate tables. Standalone comments leave the current table open. */
 function tupleRowGroups(byLine: Map<number, Token[]>, lines: string[], openingLine: number): TupleRow[][] | undefined {
     const groups: TupleRow[][] = [];
-    let group: TupleRow[] = [];
+    let group: TupleRow[] | undefined = [];
+    let depth = 0;
     for (let line = openingLine + 1; line <= lines.length; line++) {
         const tokens = byLine.get(line) ?? [];
-        if (tokens[0]?.type === L.RBRACE) return [...groups, group];
-        if (!lines[line - 1].trim()) {
-            if (group.length > 0) {
-                groups.push(group);
-                group = [];
-            }
+        if (depth === 0 && tokens[0]?.type === L.RBRACE) {
+            if (group?.length) groups.push(group);
+            return groups;
+        }
+        if (depth === 0 && !lines[line - 1].trim()) {
+            if (group?.length) groups.push(group);
+            group = [];
             continue;
         }
         const comment = tokens[0];
         if (tokens.length === 1 && (comment.type === L.LINE_COMMENT || comment.type === L.BLOCK_COMMENT)) {
             const lastLine = line + commentText(comment).split("\n").length - 1;
-            // A multiline block ending on a code line does not stand alone.
-            if (lastLine === line || !byLine.has(lastLine)) {
-                line = lastLine;
+            // Revisit the ending line if there is code after a multiline block comment.
+            line = lastLine > line && byLine.has(lastLine) ? lastLine - 1 : lastLine;
+            continue;
+        }
+        if (group) {
+            const row = tupleRow(tokens, lines[line - 1], line);
+            if (row) {
+                group.push(row);
                 continue;
             }
+            // A non-table row disqualifies this group. Track nesting to find the next group's blank line.
+            group = undefined;
         }
-        const row = tupleRow(tokens, lines[line - 1], line);
-        if (!row) return;
-        group.push(row);
+        for (const token of tokens) depth += delimiterDepth(token.type);
+        if (depth < 0) return;
     }
 }
 
