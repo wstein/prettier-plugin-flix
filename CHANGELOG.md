@@ -26,6 +26,10 @@ Existing files may reformat on upgrade. Run the formatter and review the diff.
 - Release embedded editors when they scroll offscreen. Restore their drafts, settings, and partial-format diagnostics when they return. ([commit][commit-dbf6070], [commit][commit-6fb87f3])
 - Show example variant settings above the code. ([commit][commit-08dfe33])
 
+### Documentation
+
+- Explain in the README why the plugin exists, how it integrates with existing Prettier workflows, and where its style differs from `flix format`. ([commit][commit-1e9c8fe])
+
 ## [0.2.0] - 2026-11-24
 
 Tested with Flix 0.80.0 (compiler and standard library) and Prettier 3.10.1. Flix 0.79.0 is covered by grammar and formatting fixtures only.
@@ -262,3 +266,4 @@ First independently versioned plugin release. Tested with Flix 0.80.0 and Pretti
 [commit-dbf6070]: https://github.com/wstein/prettier-plugin-flix/commit/dbf6070
 [commit-6fb87f3]: https://github.com/wstein/prettier-plugin-flix/commit/6fb87f3
 [commit-08dfe33]: https://github.com/wstein/prettier-plugin-flix/commit/08dfe33
+[commit-1e9c8fe]: https://github.com/wstein/prettier-plugin-flix/commit/1e9c8fe5b712db75c8cfc0c95c76bc067fdcbace
