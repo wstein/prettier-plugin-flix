@@ -43,11 +43,16 @@ async function buildFormatter(outdir, plugins) {
     return measureFormatterBundle(outdir, formatterAsset);
 }
 
-/** Write a fixture tree with exact byte sizes for accounting tests. */
-async function writeSizedBundle(dir, { entry = 100, chunk = 200, grammar079, grammar080 }) {
+/**
+ * Write a fixture tree with exact byte sizes for accounting tests.
+ * `chunks` is a list of `[name, size]` pairs; names must match `chunk-[A-Z0-9]+.js`.
+ */
+async function writeSizedBundle(dir, { entry = 100, chunks = [["chunk-BBBB.js", 200]], grammar079, grammar080 }) {
     const formatterAsset = "format-flix-AAAA.js";
     await writeFile(join(dir, formatterAsset), Buffer.alloc(entry));
-    await writeFile(join(dir, "chunk-BBBB.js"), Buffer.alloc(chunk));
+    for (const [name, size] of chunks) {
+        await writeFile(join(dir, name), Buffer.alloc(size));
+    }
     await writeFile(join(dir, "grammar-079-CCCC.js"), Buffer.alloc(grammar079));
     await writeFile(join(dir, "grammar-080-DDDD.js"), Buffer.alloc(grammar080));
     return formatterAsset;
@@ -57,17 +62,21 @@ test("budget accounting totals the formatter entry, every chunk-*, and each gram
     const dir = await mkdtemp(join(tmpdir(), "flix-playground-bytes-"));
     try {
         const entry = 1_000;
-        const chunk = 2_000;
+        const chunkA = 2_000;
+        const chunkB = 3_000;
         const grammar = MIN_GRAMMAR_CHUNK_BYTES;
         const formatterAsset = await writeSizedBundle(dir, {
             entry,
-            chunk,
+            chunks: [
+                ["chunk-AAAA.js", chunkA],
+                ["chunk-BBBB.js", chunkB],
+            ],
             grammar079: grammar,
             grammar080: grammar + 7,
         });
         const measured = await measureFormatterBundle(dir, formatterAsset);
-        assert.deepEqual(measured.sharedNames, [formatterAsset, "chunk-BBBB.js"]);
-        assert.equal(measured.shared, entry + chunk);
+        assert.deepEqual(measured.sharedNames, [formatterAsset, "chunk-AAAA.js", "chunk-BBBB.js"]);
+        assert.equal(measured.shared, entry + chunkA + chunkB);
         assert.equal(measured.grammars["079"].size, grammar);
         assert.equal(measured.grammars["080"].size, grammar + 7);
         assert.deepEqual(measured.grammars["079"].names, ["grammar-079-CCCC.js"]);
@@ -88,18 +97,22 @@ test("the shared-plus-grammar ceiling accepts exactly 1 MiB and rejects one more
 
         const formatterAsset = await writeSizedBundle(dir, {
             entry,
-            chunk,
+            chunks: [["chunk-BBBB.js", chunk]],
             grammar079: grammar,
             grammar080: grammar,
         });
         const atLimit = await measureFormatterBundle(dir, formatterAsset);
         assert.equal(atLimit.shared + atLimit.grammars["079"].size, MAX_FORMATTER_WITH_GRAMMAR_BYTES);
+        assert.equal(atLimit.shared + atLimit.grammars["080"].size, MAX_FORMATTER_WITH_GRAMMAR_BYTES);
         assertLazyGrammarBudget(atLimit);
 
-        await writeFile(join(dir, "chunk-BBBB.js"), Buffer.alloc(chunk + 1));
-        const over = await measureFormatterBundle(dir, formatterAsset);
-        assert.equal(over.shared + over.grammars["079"].size, MAX_FORMATTER_WITH_GRAMMAR_BYTES + 1);
-        assert.throws(() => assertLazyGrammarBudget(over), /maximum 1048576 bytes/);
+        // Only the 0.80 grammar exceeds the ceiling; 0.79 stays at the limit so a
+        // mutant that skips the 0.80 check cannot hide behind a 0.79 failure.
+        await writeFile(join(dir, "grammar-080-DDDD.js"), Buffer.alloc(grammar + 1));
+        const over080 = await measureFormatterBundle(dir, formatterAsset);
+        assert.equal(over080.shared + over080.grammars["079"].size, MAX_FORMATTER_WITH_GRAMMAR_BYTES);
+        assert.equal(over080.shared + over080.grammars["080"].size, MAX_FORMATTER_WITH_GRAMMAR_BYTES + 1);
+        assert.throws(() => assertLazyGrammarBudget(over080), /grammar-080-DDDD\.js.*maximum 1048576 bytes/);
     } finally {
         await rm(dir, { recursive: true, force: true });
     }
