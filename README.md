@@ -52,7 +52,7 @@ The style differs from `flix format`; see [the differences from `flix format` 0.
 
 ## Try it in a project
 
-Install Prettier and the prebuilt plugin from npm. Plugin version 0.2.0 was
+Install Prettier and the prebuilt plugin from npm. Plugin version 0.2.1 was
 tested with Flix 0.80.0 (compiler and standard library). Flix 0.79.0 is covered by
 grammar and formatting fixtures.
 
