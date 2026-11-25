@@ -106,13 +106,20 @@ test("the shared-plus-grammar ceiling accepts exactly 1 MiB and rejects one more
         assert.equal(atLimit.shared + atLimit.grammars["080"].size, MAX_FORMATTER_WITH_GRAMMAR_BYTES);
         assertLazyGrammarBudget(atLimit);
 
-        // Only the 0.80 grammar exceeds the ceiling; 0.79 stays at the limit so a
-        // mutant that skips the 0.80 check cannot hide behind a 0.79 failure.
+        // Each pin must fail the ceiling on its own. A mutant that skips only one
+        // pin's check cannot hide behind the other pin throwing first.
         await writeFile(join(dir, "grammar-080-DDDD.js"), Buffer.alloc(grammar + 1));
         const over080 = await measureFormatterBundle(dir, formatterAsset);
         assert.equal(over080.shared + over080.grammars["079"].size, MAX_FORMATTER_WITH_GRAMMAR_BYTES);
         assert.equal(over080.shared + over080.grammars["080"].size, MAX_FORMATTER_WITH_GRAMMAR_BYTES + 1);
         assert.throws(() => assertLazyGrammarBudget(over080), /grammar-080-DDDD\.js.*maximum 1048576 bytes/);
+
+        await writeFile(join(dir, "grammar-079-CCCC.js"), Buffer.alloc(grammar + 1));
+        await writeFile(join(dir, "grammar-080-DDDD.js"), Buffer.alloc(grammar));
+        const over079 = await measureFormatterBundle(dir, formatterAsset);
+        assert.equal(over079.shared + over079.grammars["079"].size, MAX_FORMATTER_WITH_GRAMMAR_BYTES + 1);
+        assert.equal(over079.shared + over079.grammars["080"].size, MAX_FORMATTER_WITH_GRAMMAR_BYTES);
+        assert.throws(() => assertLazyGrammarBudget(over079), /grammar-079-CCCC\.js.*maximum 1048576 bytes/);
     } finally {
         await rm(dir, { recursive: true, force: true });
     }
