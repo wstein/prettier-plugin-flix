@@ -63,6 +63,17 @@ def clear(c,k)=k()
 // row comment
 def dimensions(k)=k((80,24))
 }
+
+def trail(): Map[String, Int32] = Map#{
+"A"=>1, /* after the comma */
+"Long key"=>2
+}
+
+def moved(): Map[String, Int32] = Map#{
+"A"=>1 // before the comma
+, /* after the comma */
+"Long key"=>2
+}
 ```
 
 ## Output
@@ -122,6 +133,17 @@ def split() = handler Canvas {
     // row comment
     def dimensions(k) = k((80, 24))
 }
+
+def trail(): Map[String, Int32] = Map#{
+    "A"        => 1, /* after the comma */
+    "Long key" => 2
+}
+
+def moved(): Map[String, Int32] = Map#{
+    "A" => 1,  // before the comma
+    /* after the comma */
+    "Long key" => 2
+}
 ```
 
 ```flix printWidth=54
@@ -179,5 +201,16 @@ def split() = handler Canvas {
 
     // row comment
     def dimensions(k) = k((80, 24))
+}
+
+def trail(): Map[String, Int32] = Map#{
+    "A"        => 1, /* after the comma */
+    "Long key" => 2
+}
+
+def moved(): Map[String, Int32] = Map#{
+    "A" => 1,  // before the comma
+    /* after the comma */
+    "Long key" => 2
 }
 ```
