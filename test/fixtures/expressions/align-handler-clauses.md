@@ -32,6 +32,7 @@ def handle(f: Unit -> Int32 \ Canvas): Int32 =
 
         def a(k) = k()
         def entry(k) = k()
+
         // Separate this group from the preceding clauses.
         def byName(k) = k()
         def wideName(k) = k()
@@ -43,6 +44,7 @@ def byCase(xs: List[Int32]): Int32 = match xs {
 
     case 0 :: _ => 0
     case _ => 1
+
     // A separate group.
     case 1 :: _ => 1
     case y :: z :: _ => y + z
@@ -95,6 +97,7 @@ def handle(f: Unit -> Int32 \ Canvas): Int32 =
 
         def a(k)     = k()
         def entry(k) = k()
+
         // Separate this group from the preceding clauses.
         def byName(k)   = k()
         def wideName(k) = k()
@@ -106,6 +109,7 @@ def byCase(xs: List[Int32]): Int32 = match xs {
 
     case 0 :: _ => 0
     case _      => 1
+
     // A separate group.
     case 1 :: _      => 1
     case y :: z :: _ => y + z
@@ -160,6 +164,7 @@ def handle(f: Unit -> Int32 \ Canvas): Int32 =
 
         def a(k)     = k()
         def entry(k) = k()
+
         // Separate this group from the preceding clauses.
         def byName(k)   = k()
         def wideName(k) = k()
@@ -173,6 +178,7 @@ def byCase(
 
     case 0 :: _ => 0
     case _      => 1
+
     // A separate group.
     case 1 :: _      => 1
     case y :: z :: _ => y + z

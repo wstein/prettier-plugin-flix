@@ -413,15 +413,16 @@ parenthesis. Keep `par (` on the binding line when there is room for it.
 ## Alignment
 
 Consecutive items of the same kind in one block can share a separator
-column. A blank line or standalone comment starts a new group. When an
-entry and the following separator both end with a line comment, the
-separator's comment becomes that standalone boundary on the first format
-as well, so alignment stays stable across passes. An inline block comment
-that leads a later map entry, record field or match `case` is treated as
-that same kind of boundary, and a block comment that leads a map key,
-record field or match `case` stays outside the measured head, so the
-padding does not change between passes. The formatter places the
+column. A blank line starts a new group. An ordinary line comment directly
+above a match arm, record field, map entry, or handler clause stays with that
+row and shares its alignment group. An existing blank line on either side of
+the comment separates groups, and consecutive blank lines reduce to one.
+An own-line block comment still separates groups. When a separator's comment
+moves onto its own line, apply the same grouping rule to where it prints.
+Leading comments stay outside the measured head. The formatter places the
 separator one space after the longest single-line head.
+
+[Alignment across row comments](../test/fixtures/expressions/align-commented-rows.md)
 
 Map arrows and record equals signs align in eligible multiline literals
 with short, simple keys and values.

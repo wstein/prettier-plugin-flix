@@ -40,7 +40,7 @@ pub def profile(): {id = Int32, name = String, active = Bool} = {
 }
 
 pub def notedProfile(): {id = Int32, name = String, active = Bool} = {
-    id = 7,  // note
+    id     = 7,  // note
     // Assigned by the server.
     name   = "Flix",
     active = true  // Active accounts can sign in.
@@ -73,7 +73,7 @@ pub def notedProfile(): {
     name = String,
     active = Bool
 } = {
-    id = 7,  // note
+    id     = 7,  // note
     // Assigned by the server.
     name   = "Flix",
     active = true  // Active accounts can sign in.
