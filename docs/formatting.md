@@ -426,9 +426,9 @@ separator one space after the longest single-line head.
 Map arrows and record equals signs align in eligible multiline literals
 with short, simple keys and values.
 Flat `List#{…}` values can also qualify in maps. Short sums or differences
-of simple values can qualify in records. Map and record operator padding
-is capped at eight extra spaces. Complex rows or rows that would exceed
-`printWidth` use ordinary spacing.
+of simple values can qualify in records. Align when the padded row still
+fits `printWidth`. Complex rows or rows that would exceed `printWidth` use
+ordinary spacing.
 Scalafmt's alignment settings illustrate the same trade-off between aligned
 columns and the line width. [Scalafmt configuration](https://scalameta.org/scalafmt/docs/configuration.html#alignallowoverflow)
 

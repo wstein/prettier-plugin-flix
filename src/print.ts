@@ -623,7 +623,6 @@ export class Printer {
         const column = rows.reduce((max, row) => Math.max(max, row.leftWidth), 0);
         const shortest = rows.reduce((min, row) => Math.min(min, row.leftWidth), column);
         const padding = column - shortest;
-        if (padding > 8) return;
         if (padding === 0) return;
         this.hasAlignmentCandidates = true;
         const measured = rows.map(({ delimiter, rightWidth }, i) =>
