@@ -9,6 +9,8 @@ self.addEventListener("message", async ({ data }) => {
         await module.loadFormatterGrammar(options);
         formatFlixPreview = module.formatFlixPreview;
     } catch {
+        // Forget a failed import so the next message can retry in this worker.
+        formatter = undefined;
         self.postMessage({ id, failure: "load" });
         return;
     }
