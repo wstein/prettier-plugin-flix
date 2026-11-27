@@ -14,20 +14,26 @@ function reset(failedWorker, failure) {
     }
 }
 
-export function requestFormat(url, request, receive) {
+function settle(id, data) {
+    const request = pending.get(id);
+    if (!request) return;
+    pending.delete(id);
+    clearTimeout(request.timer);
+    request.receive(data);
+}
+
+/** @param {typeof Worker} [WorkerImpl] injectable for tests */
+export function requestFormat(url, request, receive, WorkerImpl = globalThis.Worker) {
     try {
         if (!worker) {
-            const current = new Worker(url, { type: "module" });
+            const current = new WorkerImpl(url, { type: "module" });
             worker = current;
             current.addEventListener("error", () => reset(current, "load"));
             current.addEventListener("message", ({ data }) => {
                 if (worker !== current) return;
-                if (data.failure === "load") return reset(current, "load");
-                const request = pending.get(data.id);
-                if (!request) return;
-                pending.delete(data.id);
-                clearTimeout(request.timer);
-                request.receive(data);
+                // A load failure is per request: keep the worker so the next format can
+                // retry the grammar import in the same realm (browser-grammar cache).
+                settle(data.id, data);
             });
         }
         const current = worker;
@@ -42,4 +48,14 @@ export function requestFormat(url, request, receive) {
         if (worker) reset(worker, "load");
         else receive({ failure: "load" });
     }
+}
+
+/** Test helper: drop the shared worker between cases. */
+export function resetRequestFormatForTests() {
+    if (worker) {
+        worker.terminate();
+        worker = undefined;
+    }
+    for (const { timer } of pending.values()) clearTimeout(timer);
+    pending.clear();
 }
